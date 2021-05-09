@@ -25,6 +25,13 @@ public:
 
   void *alloc(size_t size);
   void clear();
+
+  template <typename T, typename ...Args>
+  T *emplaceAlloc(Args &&...args) {
+    T *ptr = alloc(sizeof(T));
+    new(ptr) T{std::forward<Args>(args)...};
+    return ptr;
+  }
 private:
   void *mStart;
   void *mCurrent;
@@ -37,6 +44,14 @@ extern LinearAllocator *gLinearAllocator;
 void *lnAlloc(size_t size);
 void lnClear();
 
+template <typename T, typename ...Args>
+T *lnEmplaceAlloc(Args &&...args) {
+  T *ptr = gLinearAllocator->alloc(sizeof(T));
+  new(ptr) T{std::forward<Args>(args)...};
+  return ptr;
+}
+
+/* Free list allocator (TODO) */
 template <typename T, typename ...Args>
 T *flAlloc(Args &&...args) {
   return new T(std::forward<Args>(args)...);

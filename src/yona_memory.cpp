@@ -28,7 +28,7 @@ void LinearAllocator::clear() {
   mCurrent = mStart;
 }
 
-LinearAllocator *gLinearAllocator;
+LinearAllocator *gLinearAllocator = nullptr;
 
 void *lnAlloc(size_t size) {
   return gLinearAllocator->alloc(size);

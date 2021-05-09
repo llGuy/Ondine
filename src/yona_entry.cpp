@@ -1,5 +1,4 @@
 #include "yona_utils.hpp"
-#include "yona_entry.hpp"
 #include "yona_client.hpp"
 #include "yona_memory.hpp"
 
@@ -15,4 +14,8 @@ int entry(int argc, char **argv) {
   return 0;
 }
 
+}
+
+int main(int argc, char **argv) {
+  return Yona::entry(argc, argv);
 }
