@@ -5,7 +5,10 @@
 
 namespace Yona {
 
-constexpr MountPoint APPLICATION_MOUNT_POINT = 0;
+enum class ApplicationMountPoints : uint8_t {
+  Application,
+  Raw
+};
 
 class Application {
 public:

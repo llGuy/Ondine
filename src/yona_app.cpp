@@ -15,21 +15,29 @@ Application::~Application() {
 
 void Application::run() {
   /* Change YONA_PROJECT_ROOT depending on build type */
-  gFileSystem->addMountPoint(APPLICATION_MOUNT_POINT, YONA_PROJECT_ROOT);
+  gFileSystem->addMountPoint(
+    (MountPoint)ApplicationMountPoints::Application,
+    YONA_PROJECT_ROOT);
+
+  gFileSystem->addMountPoint(
+    (MountPoint)ApplicationMountPoints::Raw,
+    "");
 
   File dummyFile = gFileSystem->createFile(
-    APPLICATION_MOUNT_POINT,
+    (MountPoint)ApplicationMountPoints::Application,
     "res/dummy.txt",
     FileOpenType::Text | FileOpenType::In);
 
   auto contents = dummyFile.readText();
 
+  LOG_INFOV("Contents of res/dummy.txt:\n%s\n", contents.c_str());
+
   File otherDummyFile = gFileSystem->createFile(
-    APPLICATION_MOUNT_POINT,
+    (MountPoint)ApplicationMountPoints::Application,
     "res/other_dummy.txt",
     FileOpenType::Text | FileOpenType::Out);
 
-  std::string otherDummyContents = "Here is the other dummy\nCool!\n";
+  std::string otherDummyContents = "Here is the other dummy\nCoool!\n";
   otherDummyFile.write(otherDummyContents.c_str(), otherDummyContents.length());
 
   /* User-defined function which will be overriden */
