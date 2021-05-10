@@ -1,6 +1,7 @@
 #pragma once
 
 #include "yona_event.hpp"
+#include "yona_window.hpp"
 #include "yona_filesystem.hpp"
 
 namespace Yona {
@@ -15,6 +16,7 @@ public:
   Application(int argc, char **argv);
   virtual ~Application();
 
+  /* Core */
   void run();
 
   static void recvEvent(Event *ev, void *app);
@@ -29,6 +31,7 @@ private:
 private:
   bool mIsRunning;
   EventQueue mEventQueue;
+  Window mWindow;
 };
 
 }

@@ -12,4 +12,6 @@
 #define YONA_PROJECT_ROOT ""
 #endif
 
-#define PANIC_AND_EXIT() exit(-1)
+#define PANIC_AND_EXIT()                        \
+  printf("\n***STOPPING SESSION***\n");         \
+  exit(-1)

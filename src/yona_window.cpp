@@ -1,3 +1,4 @@
+#define GLFW_INCLUDE_VULKAN
 #include <stdlib.h>
 #include "yona_log.hpp"
 #include "yona_utils.hpp"
@@ -59,8 +60,46 @@ void Window::init(OnEventProc callback) {
       Window *userPtr = (Window *)glfwGetWindowUserPointer(win);
       userPtr->keyCallback(key, sc, action, mods);
     });
+
+  glfwSetMouseButtonCallback(
+    mHandle,
+    [](GLFWwindow *win, int button, int action, int mods) {
+      Window *userPtr = (Window *)glfwGetWindowUserPointer(win);
+      userPtr->mouseButtonCallback(button, action, mods);
+    });
+
+  glfwSetCharCallback(
+    mHandle,
+    [](GLFWwindow *win, unsigned int codepoint) {
+      Window *userPtr = (Window *)glfwGetWindowUserPointer(win);
+      userPtr->charCallback(codepoint);
+    });
+
+  glfwSetCursorPosCallback(
+    mHandle,
+    [](GLFWwindow *win, double x, double y) {
+      Window *userPtr = (Window *)glfwGetWindowUserPointer(win);
+      userPtr->cursorMoveCallback((float)x, (float)y);
+    });
+
+  glfwSetWindowSizeCallback(
+    mHandle,
+    [](GLFWwindow *win, int width, int height) {
+      Window *userPtr = (Window *)glfwGetWindowUserPointer(win);
+      userPtr->resizeCallback((uint32_t)width, (uint32_t)height);
+    });
+
+  glfwSetScrollCallback(
+    mHandle,
+    [](GLFWwindow *win, double x, double y) {
+      Window *userPtr = (Window *)glfwGetWindowUserPointer(win);
+      userPtr->scrollCallback((float)x, (float)y);
+    });
 }
-      
+
+void Window::pollInput() {
+  glfwPollEvents();
+}
 
 void Window::initWindowAPI() {
   if (!glfwInit()) {
@@ -142,15 +181,78 @@ void Window::keyCallback(int key, int scancode, int action, int mods) {
 }
 
 void Window::mouseButtonCallback(int button, int action, int mods) {
-  
+  auto *mbEvent = lnEmplaceAlloc<EventMouse>(false, EventType::Mouse);
+
+  MouseButton mouseButton;
+
+  switch (button) {
+  case GLFW_MOUSE_BUTTON_LEFT: { mouseButton = MouseButton::Left; } break;
+  case GLFW_MOUSE_BUTTON_RIGHT: { mouseButton = MouseButton::Right; } break;
+  case GLFW_MOUSE_BUTTON_MIDDLE: { mouseButton = MouseButton::Middle; } break;
+  }
+
+  switch (action) {
+  case GLFW_PRESS: case GLFW_REPEAT: {
+    mbEvent->mouseEventType = MouseEventType::Press;
+    mbEvent->press.button = mouseButton;
+  } break;
+
+  case GLFW_RELEASE: {
+    mbEvent->mouseEventType = MouseEventType::Release;
+    mbEvent->release.button = mouseButton;
+  } break;
+  }
+
+  mEventCallback(mbEvent);
 }
 
-void Window::charCallback(int button, int action, int mods) {
-  
+void Window::charCallback(unsigned int codepoint) {
+  auto *kbEvent = lnEmplaceAlloc<EventKeyboard>(false, EventType::Keyboard);
+  kbEvent->keyboardEventType = KeyboardEventType::Type;
+  kbEvent->type.typedChar = codepoint;
+
+  mEventCallback(kbEvent);
 }
 
-void Window::cursorMoveCallback(int button, int action, int mods) {
-  
+void Window::cursorMoveCallback(float x, float y) {
+  auto *mvEvent = lnEmplaceAlloc<EventMouse>(false, EventType::Mouse);
+  mvEvent->mouseEventType = MouseEventType::Move;
+  mvEvent->move.x = x;
+  mvEvent->move.y = y;
+
+  mEventCallback(mvEvent);
+}
+
+void Window::resizeCallback(unsigned width, unsigned height) {
+  auto *resizeEvent = lnEmplaceAlloc<EventResize>(false, EventType::Resize);
+  resizeEvent->newResolution = {width, height};
+
+  mEventCallback(resizeEvent);
+
+  mResolution = resizeEvent->newResolution;
+}
+
+void Window::scrollCallback(float x, float y) {
+  auto *mvEvent = lnEmplaceAlloc<EventMouse>(false, EventType::Mouse);
+  mvEvent->mouseEventType = MouseEventType::Scroll;
+  mvEvent->scroll.x = x;
+  mvEvent->scroll.y = y;
+
+  mEventCallback(mvEvent);
+}
+
+void Window::createVulkanSurface(
+  struct VkInstance_T *instance,
+  struct VkSurfaceKHR_T **surface,
+  void *windowHandle) {
+  if (glfwCreateWindowSurface(
+        instance,
+        (GLFWwindow *)windowHandle,
+        nullptr,
+        surface) != VK_SUCCESS) {
+    LOG_ERROR("Failed to create surface\n");
+    PANIC_AND_EXIT();
+  }
 }
 
 }

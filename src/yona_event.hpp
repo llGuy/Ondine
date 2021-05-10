@@ -10,7 +10,8 @@ enum class EventType {
   Dummy0,
   Dummy1,
   Mouse,
-  Keyboard
+  Keyboard,
+  Resize
 };
 
 #define EVENT_TO_STRING(name) \

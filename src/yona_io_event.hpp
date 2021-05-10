@@ -58,7 +58,7 @@ struct EventKeyboard : Event {
     } release;
 
     struct {
-      char typedChar;
+      unsigned int typedChar;
     } type;
   };
 };

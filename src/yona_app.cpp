@@ -5,7 +5,8 @@
 
 namespace Yona {
 
-Application::Application(int argc, char **argv) {
+Application::Application(int argc, char **argv)
+  : mWindow(WindowMode::Windowed, "Yona") {
   /* Initialise graphics context, etc... */
 }
 
@@ -23,44 +24,20 @@ void Application::run() {
     (MountPoint)ApplicationMountPoints::Raw,
     "");
 
-  File dummyFile = gFileSystem->createFile(
-    (MountPoint)ApplicationMountPoints::Application,
-    "res/dummy.txt",
-    FileOpenType::Text | FileOpenType::In);
-
-  auto contents = dummyFile.readText();
-
-  LOG_INFOV("Contents of res/dummy.txt:\n%s\n", contents.c_str());
-
-  File otherDummyFile = gFileSystem->createFile(
-    (MountPoint)ApplicationMountPoints::Application,
-    "res/other_dummy.txt",
-    FileOpenType::Text | FileOpenType::Out);
-
-  std::string otherDummyContents = "Here is the other dummy\nCoool!\n";
-  otherDummyFile.write(otherDummyContents.c_str(), otherDummyContents.length());
+  mWindow.init(RECV_EVENT_PROC(recvEvent));
 
   /* User-defined function which will be overriden */
   start();
   mIsRunning = true;
 
-  auto submitEventProc = RECV_EVENT_PROC(recvEvent);
-
   while (mIsRunning) {
+    mWindow.pollInput();
+
     tick();
-
-    submitEventProc(
-      lnEmplaceAlloc<Event>(false, EventType::Dummy0));
-
-    submitEventProc(
-      lnEmplaceAlloc<Event>(false, EventType::Dummy1));
 
     /* Go through all pushed events (in future go through layer stack) */
     mEventQueue.process([this](Event *ev) {
       LOG_INFO("Processing event\n");
-
-      if (ev->type == EventType::Dummy0)
-        ev->isHandled = 1;
     });
 
     mEventQueue.clearEvents();
