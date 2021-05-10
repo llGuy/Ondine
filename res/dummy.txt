@@ -1,0 +1,2 @@
+This is a test resource file
+Isn't is a great file?

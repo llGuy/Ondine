@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION "3.2")
 
 project(Yona)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSTB_IMAGE_IMPLEMENTATION -D_MBCS -DCIMGUI_DEFINE_ENUMS_AND_STRUCTS -DCURL_STATICLIB")
 
@@ -19,7 +19,7 @@ if (NOT WIN32)
 endif()
 
 if (NOT WIN32)
-  link_libraries("pthread")
+  link_libraries("pthread" "stdc++fs")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat-security")
 endif()
 
@@ -52,4 +52,4 @@ endif()
 add_executable(yona "${SOURCES}")
 target_link_libraries(yona PUBLIC "${OPENAL_LIBRARY}")
 target_link_libraries(yona PUBLIC "${Vulkan_LIBRARY}" "glfw")
-target_compile_definitions(yona PUBLIC PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+target_compile_definitions(yona PUBLIC YONA_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")

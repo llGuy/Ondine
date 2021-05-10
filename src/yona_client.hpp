@@ -6,7 +6,7 @@ namespace Yona {
 
 class Client : public Application {
 public:
-  Client();
+  Client(int argc, char **argv);
   ~Client() override;
 
 private:

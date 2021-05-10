@@ -1,6 +1,7 @@
 #include "yona_utils.hpp"
 #include "yona_client.hpp"
 #include "yona_memory.hpp"
+#include "yona_filesystem.hpp"
 
 namespace Yona {
 
@@ -9,8 +10,12 @@ int entry(int argc, char **argv) {
   gLinearAllocator = Yona::flAlloc<Yona::LinearAllocator>(megabytes(10));
   gLinearAllocator->init();
 
-  Yona::Application *client = Yona::flAlloc<Yona::Client>();
+  gFileSystem = Yona::flAlloc<Yona::FileSystem>();
+
+  Yona::Application *client = Yona::flAlloc<Yona::Client>(argc, argv);
   client->run();
+  Yona::flFree(client);
+
   return 0;
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <new>
 #include <utility>
 #include <stdint.h>
 #include <stddef.h>
@@ -28,7 +29,7 @@ public:
 
   template <typename T, typename ...Args>
   T *emplaceAlloc(Args &&...args) {
-    T *ptr = alloc(sizeof(T));
+    T *ptr = (T *)alloc(sizeof(T));
     new(ptr) T{std::forward<Args>(args)...};
     return ptr;
   }
@@ -46,9 +47,7 @@ void lnClear();
 
 template <typename T, typename ...Args>
 T *lnEmplaceAlloc(Args &&...args) {
-  T *ptr = gLinearAllocator->alloc(sizeof(T));
-  new(ptr) T{std::forward<Args>(args)...};
-  return ptr;
+  return gLinearAllocator->emplaceAlloc<T>(std::forward<Args>(args)...);
 }
 
 /* Free list allocator (TODO) */

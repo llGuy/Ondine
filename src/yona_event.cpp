@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <string.h>
+#include "yona_utils.hpp"
 #include "yona_event.hpp"
 
 namespace Yona {
@@ -15,21 +17,28 @@ void EventQueue::push(Event *ev) {
   mEvents[mEventCount++] = ev;
 }
 
-void EventQueue::beginProcessing() {
+Event *EventQueue::beginProcessing() {
   mProcessingCounter = 0;
+  mEvents[mEventCount] = nullptr;
+  return mEvents[0];
 }
 
 Event *EventQueue::getNextEvent() {
-  return mEvents[mProcessingCounter++];
+  return mEvents[++mProcessingCounter];
 }
 
 void EventQueue::endProcessing() {
+  Event **tmp = STACK_ALLOC(Event *, mEventCount);
+  size_t eventsLeft = 0;
+
   for (size_t i = 0; i < mEventCount; ++i) {
-    if (mEvents[i]->isHandled) {
-      mEvents[i] = mEvents[mEventCount - 1];
-      --mEventCount;
+    if (!mEvents[i]->isHandled) {
+      tmp[eventsLeft++] = mEvents[i];
     }
   }
+
+  memcpy(mEvents, tmp, sizeof(Event *) * eventsLeft);
+  mEventCount = eventsLeft;
 
   mProcessingCounter = 0;
 }

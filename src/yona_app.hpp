@@ -1,12 +1,15 @@
 #pragma once
 
 #include "yona_event.hpp"
+#include "yona_filesystem.hpp"
 
 namespace Yona {
 
+constexpr MountPoint APPLICATION_MOUNT_POINT = 0;
+
 class Application {
 public:
-  Application();
+  Application(int argc, char **argv);
   virtual ~Application();
 
   void run();
