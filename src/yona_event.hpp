@@ -8,19 +8,25 @@ namespace Yona {
 
 enum class EventType {
   Dummy0,
-  Dummy1
+  Dummy1,
+  Mouse,
+  Keyboard
 };
+
+#define EVENT_TO_STRING(name) \
+  const char *getName() {return #name;}
 
 struct Event {
   bool isHandled;
   EventType type;
-  const char *name;
 };
 
 /* Avoid std::function */
 class OnEventProc {
 public:
   using Callback = void(*)(Event *ev, void *obj);
+
+  OnEventProc() = default;
 
   OnEventProc(Callback proc, void *obj)
     : mProc(proc), mObj(obj) {

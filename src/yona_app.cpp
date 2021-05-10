@@ -50,14 +50,14 @@ void Application::run() {
     tick();
 
     submitEventProc(
-      lnEmplaceAlloc<Event>(false, EventType::Dummy0, "Event0"));
+      lnEmplaceAlloc<Event>(false, EventType::Dummy0));
 
     submitEventProc(
-      lnEmplaceAlloc<Event>(false, EventType::Dummy1, "Event1"));
+      lnEmplaceAlloc<Event>(false, EventType::Dummy1));
 
     /* Go through all pushed events (in future go through layer stack) */
     mEventQueue.process([this](Event *ev) {
-      LOG_INFOV("Processing event %s\n", ev->name);
+      LOG_INFO("Processing event\n");
 
       if (ev->type == EventType::Dummy0)
         ev->isHandled = 1;

@@ -11,3 +11,5 @@
 // This should never happen - just for intellisense (?)
 #define YONA_PROJECT_ROOT ""
 #endif
+
+#define PANIC_AND_EXIT() exit(-1)
