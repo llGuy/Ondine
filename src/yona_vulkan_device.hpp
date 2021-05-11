@@ -4,6 +4,12 @@
 
 namespace Yona {
 
+enum DeviceType {
+  DiscreteGPU,
+  Integrated,
+  Any
+};
+
 struct QueueFamilies {
   int graphicsFamily;
   int presentFamily;
@@ -30,6 +36,11 @@ struct DeviceExtensions {
   }
 };
 
+struct DeviceRequestedFeatures {
+  VkPhysicalDeviceFeatures features;
+  size_t count;
+};
+
 struct DeviceSwapchainSupport {
   VkSurfaceCapabilitiesKHR capabilities;
   uint32_t availableFormatsCount;
@@ -46,14 +57,16 @@ public:
   VulkanDevice() = default;
 
   void init(
+    DeviceType requestedType,
     const VulkanInstance &instance,
     const VulkanSurface &surface,
-    const VkPhysicalDeviceFeatures &features);
+    const DeviceRequestedFeatures &features);
 
 private:
   bool verifyHardwareMeetsRequirements(
+    DeviceType requestedType,
     const VulkanSurface &surface,
-    const VkPhysicalDeviceFeatures &requiredFeatures,
+    const DeviceRequestedFeatures &requiredFeatures,
     const DeviceExtensions &requestedExtensions,
     DeviceExtensions &availableExtensions);
 
@@ -64,7 +77,7 @@ private:
     VkFormatFeatureFlags features) const;
 
   bool checkRequiredFeaturesSupport(
-    const VkPhysicalDeviceFeatures &required,
+    const DeviceRequestedFeatures &required,
     const VkPhysicalDeviceFeatures &available);
 
 private:

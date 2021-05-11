@@ -22,10 +22,11 @@ void VulkanContext::initContext(const WindowContextInfo &surfaceInfo) {
   /* Everything else */
   mSurface.init(mInstance, surfaceInfo);
 
-  VkPhysicalDeviceFeatures requiredFeatures = {};
-  requiredFeatures.geometryShader = VK_TRUE;
+  DeviceRequestedFeatures requiredFeatures = {};
+  requiredFeatures.count = 1;
+  requiredFeatures.features.geometryShader = VK_TRUE;
 
-  mDevice.init(mInstance, mSurface, requiredFeatures);
+  mDevice.init(DeviceType::Any, mInstance, mSurface, requiredFeatures);
 }
 
 VkInstance VulkanContext::instance() const {

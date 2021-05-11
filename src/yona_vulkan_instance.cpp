@@ -68,11 +68,11 @@ void VulkanInstance::init() {
   VkResult result = vkCreateInstance(&instanceInfo, NULL, &mInstance);
   if (result == VK_SUCCESS) {
     LOG_INFO("Created Vulkan instance:\n");
-    LOG_INFO("\tEnabled validation layers:\n");
+    LOG_INFO("\t* Enabled validation layers:\n");
     for (int i = 0; i < mLayers.size; ++i) {
       LOG_INFOV("\t\t- %s\n", mLayers.data[i]);
     }
-    LOG_INFO("\tUsing instance extensions:\n");
+    LOG_INFO("\t* Using instance extensions:\n");
     for (int i = 0; i < extensionCount; ++i) {
       LOG_INFOV("\t\t- %s\n", extensions[i]);
     }

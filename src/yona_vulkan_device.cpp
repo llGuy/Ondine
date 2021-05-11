@@ -9,9 +9,10 @@
 namespace Yona {
 
 void VulkanDevice::init(
+  DeviceType requestedType,
   const VulkanInstance &instance,
   const VulkanSurface &surface,
-  const VkPhysicalDeviceFeatures &requiredFeatures) {
+  const DeviceRequestedFeatures &requiredFeatures) {
   enum {
     SwapchainExtIndex,
     DebugMarkerExtIndex,
@@ -45,10 +46,10 @@ void VulkanDevice::init(
     mPhysicalDevice = devices[i];
 
     vkGetPhysicalDeviceProperties(mPhysicalDevice, &mPhysicalDeviceInfo);
-    LOG_INFOV("\tDevice name: %s\n",mPhysicalDeviceInfo.deviceName);
+    LOG_INFOV("\tDevice name: %s\n", mPhysicalDeviceInfo.deviceName);
         
     if (verifyHardwareMeetsRequirements(
-          surface, requiredFeatures, requestedExt, usedExt)) {
+          requestedType, surface, requiredFeatures, requestedExt, usedExt)) {
       break;
     }
     else {
@@ -123,24 +124,38 @@ void VulkanDevice::init(
   deviceInfo.ppEnabledLayerNames = instance.mLayers.data;
   deviceInfo.enabledExtensionCount = usedExt.count;
   deviceInfo.ppEnabledExtensionNames = usedExt.names;
-  deviceInfo.pEnabledFeatures = &requiredFeatures;
+  deviceInfo.pEnabledFeatures = &requiredFeatures.features;
 
-  VK_CHECK(vkCreateDevice(mPhysicalDevice, &deviceInfo, NULL, &mLogicalDevice));
+  VkResult result = vkCreateDevice(
+    mPhysicalDevice, &deviceInfo, NULL, &mLogicalDevice);
 
   vkGetDeviceQueue(
     mLogicalDevice, mQueueFamilies.graphicsFamily, 0, &mGraphicsQueue);
   vkGetDeviceQueue(
     mLogicalDevice, mQueueFamilies.presentFamily, 0, &mPresentQueue);
+
+  if (result == VK_SUCCESS) {
+    LOG_INFO("Created Vulkan logical device:\n");
+    LOG_INFOV("\t* Physical device name: %s\n", mPhysicalDeviceInfo.deviceName);
+    LOG_INFOV("\t* Enabled %d features\n", (int)requiredFeatures.count);
+    LOG_INFOV("\t* Enabled %d extensions:\n", usedExt.count);
+
+    for (int i = 0; i < usedExt.count; ++i) {
+      LOG_INFOV("\t\t- %s\n", usedExt.names[i]);
+    }
+  }
     
   if (usedExt.available & 1 << DebugMarkerExtIndex) {
     LOG_INFO("Initialising debug procs\n");
+    // TODO once we have a scene rendering
     // initDebugExtProcs();
   }
 }
 
 bool VulkanDevice::verifyHardwareMeetsRequirements(
+  DeviceType requestedType,
   const VulkanSurface &surface,
-  const VkPhysicalDeviceFeatures &requiredFeatures,
+  const DeviceRequestedFeatures &requiredFeatures,
   const DeviceExtensions &requestedExtensions,
   DeviceExtensions &usedExtensions) {
   // Get queue families
@@ -258,18 +273,15 @@ bool VulkanDevice::verifyHardwareMeetsRequirements(
     }
 
     vkGetPhysicalDeviceSurfacePresentModesKHR(
-      mPhysicalDevice,
-      surface.mSurface,
-      &mSwapchainSupport.availablePresentModesCount,
-      NULL);
+      mPhysicalDevice, surface.mSurface,
+      &mSwapchainSupport.availablePresentModesCount, NULL);
 
     if (mSwapchainSupport.availablePresentModesCount != 0) {
       mSwapchainSupport.availablePresentModes = flAllocv<VkPresentModeKHR>(
         mSwapchainSupport.availablePresentModesCount);
 
       vkGetPhysicalDeviceSurfacePresentModesKHR(
-        mPhysicalDevice,
-        surface.mSurface,
+        mPhysicalDevice, surface.mSurface,
         &mSwapchainSupport.availablePresentModesCount,
         mSwapchainSupport.availablePresentModes);
     }
@@ -278,10 +290,27 @@ bool VulkanDevice::verifyHardwareMeetsRequirements(
       mSwapchainSupport.availablePresentModesCount;
   }
 
+  bool isDeviceTypeSatisfied = false;
+  switch (requestedType) {
+  case DeviceType::DiscreteGPU: {
+    isDeviceTypeSatisfied =
+      deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+  } break;
+
+  case DeviceType::Integrated: {
+    isDeviceTypeSatisfied =
+      deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
+  } break;
+
+  case DeviceType::Any: {
+    isDeviceTypeSatisfied = true;
+  } break;
+  }
+
   return isSwapchainSupported && isSwapchainUsable &&
-    deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+    isDeviceTypeSatisfied &&
     mQueueFamilies.isComplete() &&
-    checkRequiredFeaturesSupport(deviceFeatures, requiredFeatures);
+    checkRequiredFeaturesSupport(requiredFeatures, deviceFeatures);
 }
 
 VkFormat VulkanDevice::findSuitableDepthFormat(
@@ -310,15 +339,21 @@ VkFormat VulkanDevice::findSuitableDepthFormat(
 }
 
 bool VulkanDevice::checkRequiredFeaturesSupport(
-  const VkPhysicalDeviceFeatures &required,
+  const DeviceRequestedFeatures &required,
   const VkPhysicalDeviceFeatures &available) {
   uint32_t featureCount = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
   VkBool32 *startRequired = (VkBool32 *)&required;
   VkBool32 *startAvailable = (VkBool32 *)&available;
   
-  for (int i = 0; i < featureCount; ++i) {
-    if (startRequired[i] && !startAvailable[i]) {
-      return false;
+  uint32_t foundFeatures = 0;
+  for (int i = 0; i < featureCount && foundFeatures < required.count; ++i) {
+    if (startRequired[i]) {
+      if (startAvailable[i]) {
+        ++foundFeatures;
+      }
+      else {
+        return false;
+      }
     }
   }
   
