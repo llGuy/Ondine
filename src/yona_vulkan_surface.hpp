@@ -18,6 +18,7 @@ private:
 
   friend class VulkanInstance;
   friend class VulkanDevice;
+  friend class VulkanSwapchain;
 };
 
 }

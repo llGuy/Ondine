@@ -29,12 +29,4 @@ void VulkanContext::initContext(const WindowContextInfo &surfaceInfo) {
   mDevice.init(DeviceType::Any, mInstance, mSurface, requiredFeatures);
 }
 
-VkInstance VulkanContext::instance() const {
-  return mInstance.mInstance;
-}
-
-VkDevice VulkanContext::device() const {
-  return mDevice.mLogicalDevice;
-}
-
 }

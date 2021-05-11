@@ -24,3 +24,6 @@ inline uint32_t popCount(
     return __builtin_popcount(bits);
 #endif
 }
+
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))

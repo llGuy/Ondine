@@ -12,7 +12,12 @@ struct Buffer {
   size_t size;
 };
 
-template <typename T>
+enum class AllocationType {
+  Linear,
+  Freelist
+};
+
+template <typename T, AllocationType A = AllocationType::Freelist>
 struct Array {
   T *data;
   size_t size;
@@ -22,7 +27,12 @@ struct Array {
 
   Array(size_t capacity)
     : capacity(capacity), size(0) {
-    data = flAlloc<T>(capacity);
+    if constexpr (A == AllocationType::Linear) {
+      data = lnAllocv<T>(capacity);
+    }
+    else {
+      data = flAllocv<T>(capacity);
+    }
   }
 
   Array(T *ptr, size_t count)
@@ -33,7 +43,13 @@ struct Array {
   void init(size_t cap) {
     capacity = cap;
     size = 0;
-    data = flAllocv<T>(size);
+
+    if constexpr (A == AllocationType::Linear) {
+      data = lnAllocv<T>(size);
+    }
+    else {
+      data = flAllocv<T>(size);
+    }
   }
 
   void init(T *ptr, size_t count) {
@@ -43,7 +59,9 @@ struct Array {
   }
 
   void free() {
-    flFreev(data);
+    if constexpr (A == AllocationType::Freelist) {
+      flFreev(data);
+    }
   }
 
   inline T &operator[](size_t index) {
@@ -54,5 +72,19 @@ struct Array {
     return data[index];
   }
 };
+
+template <typename T, AllocationType A, typename ...Args>
+Array<T, A> makeArray(Args &&...args) {
+  Array<T, A> arr (sizeof...(Args));
+
+  auto addElement = [] (Array<T, A> &array, T &&element) {
+    array[array.size++] = std::forward<T>(element);
+  };
+
+  /* Dirty trick */
+  char dummy[] = { 0, (addElement(arr, args), 0)... };
+
+  return arr;
+}
 
 }

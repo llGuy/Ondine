@@ -16,11 +16,6 @@ public:
   void initInstance();
   void initContext(const WindowContextInfo &surfaceInfo);
 
-  /* Just so that outside code cannot modify the instance */
-  VkInstance instance() const;
-  /* Same for the logical device */
-  VkDevice device() const;
-
 private:
   VulkanInstance mInstance;
   VulkanSurface mSurface;
