@@ -50,15 +50,30 @@ T *lnEmplaceAlloc(Args &&...args) {
   return gLinearAllocator->emplaceAlloc<T>(std::forward<Args>(args)...);
 }
 
-/* Free list allocator (TODO) */
+template <typename T>
+T *lnAllocv(size_t count) {
+  return (T *)gLinearAllocator->alloc(count * sizeof(T));
+}
+
+/* Free list allocator (TODO) for now just calls new */
 template <typename T, typename ...Args>
 T *flAlloc(Args &&...args) {
   return new T(std::forward<Args>(args)...);
 }
 
+template <typename T, typename ...Args>
+T *flAllocv(size_t count, Args &&...args) {
+  return new T[count] {std::forward<Args>(args)...};
+}
+
 template <typename T>
 void flFree(T *ptr) {
   delete ptr;
+}
+
+template <typename T>
+void flFreev(T *ptr) {
+  delete[] ptr;
 }
 
 }

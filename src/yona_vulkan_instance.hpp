@@ -10,15 +10,33 @@ class VulkanInstance {
 public:
   VulkanInstance(bool enableValidation);
 
-  void init(const std::string_view &appName);
+  void init();
+
+private:
+  void verifyValidationSupport(
+    /* Reads from  */
+    const Array<const char *> &requested,
+    /* Writes to */
+    Array<const char *> &enabled) const;
+
+  void initDebugMessengerCallback();
+
+  static VKAPI_ATTR VkBool32 VKAPI_PTR debugMessengerCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT *callbackData,
+    void *);
 
 private:
   VkInstance mInstance;
   bool mIsValidationEnabled;
   uint32_t mValidationCount;
-  Array<std::string_view> mLayers;
+  Array<const char *> mLayers;
+  VkDebugUtilsMessengerEXT mDebugMessenger;
 
   friend class VulkanContext;
+  friend class VulkanDevice;
+  friend class VulkanSurface;
 };
 
 }

@@ -25,8 +25,12 @@ void Application::run() {
     (MountPoint)ApplicationMountPoints::Raw,
     "");
 
+  mVulkanContext.initInstance();
+
   Window::initWindowAPI();
-  mWindow.init(RECV_EVENT_PROC(recvEvent));
+  auto surfaceInfo = mWindow.init(RECV_EVENT_PROC(recvEvent));
+
+  mVulkanContext.initContext(surfaceInfo);
 
   /* User-defined function which will be overriden */
   start();

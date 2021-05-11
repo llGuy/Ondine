@@ -3,6 +3,7 @@
 #include "yona_event.hpp"
 #include "yona_window.hpp"
 #include "yona_filesystem.hpp"
+#include "yona_vulkan_context.hpp"
 
 namespace Yona {
 
@@ -33,6 +34,7 @@ private:
   bool mIsRunning;
   EventQueue mEventQueue;
   Window mWindow;
+  VulkanContext mVulkanContext;
 };
 
 }

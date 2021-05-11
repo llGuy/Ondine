@@ -15,3 +15,12 @@
 #define PANIC_AND_EXIT()                        \
   printf("\n***STOPPING SESSION***\n");         \
   exit(-1)
+
+inline uint32_t popCount(
+    uint32_t bits) {
+#ifndef __GNUC__
+    return __popcnt(bits);
+#else
+    return __builtin_popcount(bits);
+#endif
+}

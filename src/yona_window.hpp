@@ -18,10 +18,10 @@ using SurfaceCreationProc = void(*)(
   void *windowHandle);
 
 /* To pass to graphics context */
-struct WindowInfo {
+struct WindowContextInfo {
   void *handle;
   Resolution resolution;
-  const std::string_view title;
+  SurfaceCreationProc surfaceCreateProc;
 };
 
 class Window {
@@ -31,19 +31,19 @@ public:
     const std::string_view &title,
     const Resolution &resolution = {});
 
-  void init(OnEventProc callback);
+  WindowContextInfo init(OnEventProc callback);
   void pollInput();
 
   static void initWindowAPI();
 
 private:
-  void keyCallback(int key, int scancode, int action, int mods);
-  void mouseButtonCallback(int button, int action, int mods);
-  void charCallback(unsigned int codePoint);
-  void cursorMoveCallback(float x, float y);
+  void keyCallback(int key, int scancode, int action, int mods) const;
+  void mouseButtonCallback(int button, int action, int mods) const;
+  void charCallback(unsigned int codePoint) const;
+  void cursorMoveCallback(float x, float y) const;
   void resizeCallback(unsigned width, unsigned height);
-  void scrollCallback(float x, float y);
-  void closeCallback();
+  void scrollCallback(float x, float y) const;
+  void closeCallback() const;
 
   static void createVulkanSurface(
     struct VkInstance_T *instance,

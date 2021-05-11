@@ -49,7 +49,7 @@ public:
     
   }
 
-  inline void operator()(Event *ev) {
+  inline void operator()(Event *ev) const {
     mProc(ev, mObj);
   }
 
