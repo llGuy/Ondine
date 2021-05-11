@@ -6,20 +6,35 @@
 
 namespace Yona {
 
-enum class EventType {
-  Dummy0,
-  Dummy1,
-  Mouse,
-  Keyboard,
-  Resize
+enum class EventCategory {
+  Input,
+  Gameplay
 };
 
-#define EVENT_TO_STRING(name) \
-  const char *getName() {return #name;}
+enum class EventType {
+  Mouse,
+  Keyboard,
+  Resize,
+  Close
+};
+
+#define EVENT_DEF(name, category, type)                                 \
+  name() : Event::Event(EventType:: type, EventCategory:: category) {}  \
+  const char *getName() override {return #name;}
 
 struct Event {
   bool isHandled;
   EventType type;
+  EventCategory category;
+
+  Event(EventType evType, EventCategory evCategory)
+    : isHandled(false), type(evType), category(evCategory) {
+    
+  }
+
+#ifndef NDEBUG
+  virtual const char *getName() = 0;
+#endif
 };
 
 /* Avoid std::function */

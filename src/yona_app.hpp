@@ -27,6 +27,7 @@ private:
   virtual void tick() = 0;
 
   void pushEvent(Event *ev);
+  void processInputEvent(Event *ev);
 
 private:
   bool mIsRunning;

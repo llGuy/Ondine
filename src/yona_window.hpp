@@ -43,6 +43,7 @@ private:
   void cursorMoveCallback(float x, float y);
   void resizeCallback(unsigned width, unsigned height);
   void scrollCallback(float x, float y);
+  void closeCallback();
 
   static void createVulkanSurface(
     struct VkInstance_T *instance,

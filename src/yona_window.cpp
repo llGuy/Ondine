@@ -95,6 +95,13 @@ void Window::init(OnEventProc callback) {
       Window *userPtr = (Window *)glfwGetWindowUserPointer(win);
       userPtr->scrollCallback((float)x, (float)y);
     });
+
+  glfwSetWindowCloseCallback(
+    mHandle,
+    [](GLFWwindow *win) {
+      Window *userPtr = (Window *)glfwGetWindowUserPointer(win);
+      userPtr->closeCallback();
+    });
 }
 
 void Window::pollInput() {
@@ -162,7 +169,7 @@ void Window::keyCallback(int key, int scancode, int action, int mods) {
   case GLFW_KEY_F9: { button = KeyboardButton::F9; } break;
   }
 
-  auto *kbEvent = lnEmplaceAlloc<EventKeyboard>(false, EventType::Keyboard);
+  auto *kbEvent = lnEmplaceAlloc<EventKeyboard>();
 
   switch (action) {
   case GLFW_PRESS: case GLFW_REPEAT: {
@@ -181,7 +188,7 @@ void Window::keyCallback(int key, int scancode, int action, int mods) {
 }
 
 void Window::mouseButtonCallback(int button, int action, int mods) {
-  auto *mbEvent = lnEmplaceAlloc<EventMouse>(false, EventType::Mouse);
+  auto *mbEvent = lnEmplaceAlloc<EventMouse>();
 
   MouseButton mouseButton;
 
@@ -207,7 +214,7 @@ void Window::mouseButtonCallback(int button, int action, int mods) {
 }
 
 void Window::charCallback(unsigned int codepoint) {
-  auto *kbEvent = lnEmplaceAlloc<EventKeyboard>(false, EventType::Keyboard);
+  auto *kbEvent = lnEmplaceAlloc<EventKeyboard>();
   kbEvent->keyboardEventType = KeyboardEventType::Type;
   kbEvent->type.typedChar = codepoint;
 
@@ -215,7 +222,7 @@ void Window::charCallback(unsigned int codepoint) {
 }
 
 void Window::cursorMoveCallback(float x, float y) {
-  auto *mvEvent = lnEmplaceAlloc<EventMouse>(false, EventType::Mouse);
+  auto *mvEvent = lnEmplaceAlloc<EventMouse>();
   mvEvent->mouseEventType = MouseEventType::Move;
   mvEvent->move.x = x;
   mvEvent->move.y = y;
@@ -224,7 +231,7 @@ void Window::cursorMoveCallback(float x, float y) {
 }
 
 void Window::resizeCallback(unsigned width, unsigned height) {
-  auto *resizeEvent = lnEmplaceAlloc<EventResize>(false, EventType::Resize);
+  auto *resizeEvent = lnEmplaceAlloc<EventResize>();
   resizeEvent->newResolution = {width, height};
 
   mEventCallback(resizeEvent);
@@ -233,12 +240,17 @@ void Window::resizeCallback(unsigned width, unsigned height) {
 }
 
 void Window::scrollCallback(float x, float y) {
-  auto *mvEvent = lnEmplaceAlloc<EventMouse>(false, EventType::Mouse);
+  auto *mvEvent = lnEmplaceAlloc<EventMouse>();
   mvEvent->mouseEventType = MouseEventType::Scroll;
   mvEvent->scroll.x = x;
   mvEvent->scroll.y = y;
 
   mEventCallback(mvEvent);
+}
+
+void Window::closeCallback() {
+  auto *closeEvent = lnEmplaceAlloc<EventClose>();
+  mEventCallback(closeEvent);
 }
 
 void Window::createVulkanSurface(

@@ -13,7 +13,7 @@ enum class MouseEventType {
 };
 
 struct EventMouse : Event {
-  EVENT_TO_STRING(EventMouse);
+  EVENT_DEF(EventMouse, Input, Mouse);
 
   MouseEventType mouseEventType;
 
@@ -43,7 +43,7 @@ enum class KeyboardEventType {
 };
 
 struct EventKeyboard : Event {
-  EVENT_TO_STRING(EventKeyboard);
+  EVENT_DEF(EventKeyboard, Input, Keyboard);
 
   KeyboardEventType keyboardEventType;
 
@@ -64,9 +64,13 @@ struct EventKeyboard : Event {
 };
 
 struct EventResize : Event {
-  EVENT_TO_STRING(EventResize);
+  EVENT_DEF(EventResize, Input, Resize);
 
   Resolution newResolution;
+};
+
+struct EventClose : Event {
+  EVENT_DEF(EventClose, Input, Close);
 };
 
 }
