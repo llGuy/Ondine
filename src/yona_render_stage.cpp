@@ -4,7 +4,7 @@ namespace Yona {
 
 void RenderStage::init(
   const VulkanDevice &device,
-  const VulkanRenderPassConfig &config) {
+  VulkanRenderPassConfig &config) {
   mRenderPass.init(device, config);
 }
 

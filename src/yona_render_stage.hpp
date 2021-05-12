@@ -7,7 +7,7 @@ namespace Yona {
 
 class RenderStage {
 public:
-  void init(const VulkanDevice &device, const VulkanRenderPassConfig &config);
+  void init(const VulkanDevice &device, VulkanRenderPassConfig &config);
 
   void startStage(const VulkanFrame &frame);
   void nextSubpass(const VulkanFrame &frame);

@@ -47,6 +47,7 @@ public:
     bool hasDepth);
 
 private:
+  /* Gets called by VulkanRenderPass in init */
   void finishConfiguration();
 
   VkPipelineStageFlagBits computeMostRecentStage(const VkSubpassDescription &);
@@ -72,7 +73,7 @@ public:
 
   void init(
     const VulkanDevice &device,
-    const VulkanRenderPassConfig &config);
+    VulkanRenderPassConfig &config);
 
 private:
   VkRenderPass mRenderPass;

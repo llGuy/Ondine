@@ -142,54 +142,57 @@ void VulkanRenderPassConfig::addSubpass(
 }
 
 void VulkanRenderPassConfig::finishConfiguration() {
-  // Create first dependency
-  VkSubpassDependency *firstDep = &mDeps[0];
-  firstDep->srcSubpass = VK_SUBPASS_EXTERNAL;
-  firstDep->dstSubpass = 0;
-  firstDep->srcStageMask = computeMostRecentStage(mSubpasses[0]);
-  firstDep->srcAccessMask = findAccessFlagsForStage(firstDep->srcStageMask);
-  firstDep->dstStageMask = computeSubpassStage(mSubpasses[0]);
-  firstDep->dstAccessMask = findAccessFlagsForStage(firstDep->dstStageMask);
+  // Only if finishConfiguration hasn't been called yet
+  if (mCreateInfo.sType != VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO) {
+    // Create first dependency
+    VkSubpassDependency *firstDep = &mDeps[0];
+    firstDep->srcSubpass = VK_SUBPASS_EXTERNAL;
+    firstDep->dstSubpass = 0;
+    firstDep->srcStageMask = computeMostRecentStage(mSubpasses[0]);
+    firstDep->srcAccessMask = findAccessFlagsForStage(firstDep->srcStageMask);
+    firstDep->dstStageMask = computeSubpassStage(mSubpasses[0]);
+    firstDep->dstAccessMask = findAccessFlagsForStage(firstDep->dstStageMask);
 
-  for (int i = 0; i < mDeps.size - 2; ++i) {
-    VkSubpassDependency *dep = &mDeps[i + 1];
+    for (int i = 0; i < mDeps.size - 2; ++i) {
+      VkSubpassDependency *dep = &mDeps[i + 1];
 
-    VkSubpassDescription *prev = &mSubpasses[i];
-    VkSubpassDescription *next = &mSubpasses[i + 1];
+      VkSubpassDescription *prev = &mSubpasses[i];
+      VkSubpassDescription *next = &mSubpasses[i + 1];
 
-    dep->srcSubpass = i;
-    dep->dstSubpass = i + 1;
+      dep->srcSubpass = i;
+      dep->dstSubpass = i + 1;
 
-    if (prev->colorAttachmentCount > 0)
-      dep->srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    else
-      dep->srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+      if (prev->colorAttachmentCount > 0)
+        dep->srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+      else
+        dep->srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-    if (next->pDepthStencilAttachment)
-      dep->dstStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-    else
-      dep->dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+      if (next->pDepthStencilAttachment)
+        dep->dstStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+      else
+        dep->dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-    dep->srcAccessMask = findAccessFlagsForStage(dep->srcStageMask);
-    dep->dstAccessMask = findAccessFlagsForStage(dep->dstStageMask);
+      dep->srcAccessMask = findAccessFlagsForStage(dep->srcStageMask);
+      dep->dstAccessMask = findAccessFlagsForStage(dep->dstStageMask);
+    }
+
+    VkSubpassDependency *lastDep = &mDeps[mDeps.size - 1];
+    VkSubpassDescription *lastSubpass = &mSubpasses[mSubpasses.size - 1];
+    lastDep->srcSubpass = mSubpasses.size - 1;
+    lastDep->dstSubpass = VK_SUBPASS_EXTERNAL;
+    lastDep->srcStageMask = computeSubpassStage(*lastSubpass);
+    lastDep->srcAccessMask = findAccessFlagsForStage(lastDep->srcStageMask);
+    lastDep->dstStageMask = computeEarliestStage(*lastSubpass);
+    lastDep->dstAccessMask = findAccessFlagsForStage(lastDep->dstStageMask);
+
+    mCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    mCreateInfo.attachmentCount = mAttachments.size;
+    mCreateInfo.pAttachments = mAttachments.data;
+    mCreateInfo.subpassCount = mSubpasses.size;
+    mCreateInfo.pSubpasses = mSubpasses.data;
+    mCreateInfo.dependencyCount = mDeps.size;
+    mCreateInfo.pDependencies = mDeps.data;
   }
-
-  VkSubpassDependency *lastDep = &mDeps[mDeps.size - 1];
-  VkSubpassDescription *lastSubpass = &mSubpasses[mSubpasses.size - 1];
-  lastDep->srcSubpass = mSubpasses.size - 1;
-  lastDep->dstSubpass = VK_SUBPASS_EXTERNAL;
-  lastDep->srcStageMask = computeSubpassStage(*lastSubpass);
-  lastDep->srcAccessMask = findAccessFlagsForStage(lastDep->srcStageMask);
-  lastDep->dstStageMask = computeEarliestStage(*lastSubpass);
-  lastDep->dstAccessMask = findAccessFlagsForStage(lastDep->dstStageMask);
-
-  mCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  mCreateInfo.attachmentCount = mAttachments.size;
-  mCreateInfo.pAttachments = mAttachments.data;
-  mCreateInfo.subpassCount = mSubpasses.size;
-  mCreateInfo.pSubpasses = mSubpasses.data;
-  mCreateInfo.dependencyCount = mDeps.size;
-  mCreateInfo.pDependencies = mDeps.data;
 }
 
 enum class OrderedStage {
@@ -295,7 +298,9 @@ VkPipelineStageFlagBits VulkanRenderPassConfig::computeSubpassStage(
 
 void VulkanRenderPass::init(
   const VulkanDevice &device,
-  const VulkanRenderPassConfig &config) {
+  VulkanRenderPassConfig &config) {
+  config.finishConfiguration();
+
   VK_CHECK(
     vkCreateRenderPass(
       device.mLogicalDevice,
