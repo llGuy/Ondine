@@ -9,14 +9,15 @@ namespace Yona {
 
 VulkanRenderPassConfig::VulkanRenderPassConfig(
   uint32_t attachmentCount,
-  uint32_t subpassCount) {
-  mAttachments.init(attachmentCount);
-  mAttachmentTypes.init(attachmentCount);
-  mOutputUsages.init(attachmentCount);
-  mSubpasses.init(subpassCount);
-  mRefs.init(subpassCount * attachmentCount);
-  mDeps.init(subpassCount + 1);
-  mDepthIdx = -1;
+  uint32_t subpassCount)
+  : mAttachments(attachmentCount),
+    mAttachmentTypes(attachmentCount),
+    mOutputUsages(attachmentCount),
+    mSubpasses(subpassCount),
+    mRefs(subpassCount * attachmentCount),
+    mDeps(subpassCount + 1),
+    mDepthIdx(-1) {
+
 }
 
 void VulkanRenderPassConfig::addAttachment(

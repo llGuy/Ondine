@@ -93,7 +93,7 @@ void VulkanSwapchain::init(
 
   mImageViews.init(imageCount);
 
-  for (uint32_t i = 0; i < imageCount; ++i) {
+  for (uint32_t i = 0; i < imageCount; ++i, ++mImageViews.size) {
     VkImageViewCreateInfo imageViewInfo = {};
     imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     imageViewInfo.image = mImages[i];
@@ -112,6 +112,26 @@ void VulkanSwapchain::init(
         NULL,
         &mImageViews[i]));
   }
+}
+
+Array<VulkanFramebuffer> VulkanSwapchain::makeFramebuffers(
+  const VulkanDevice &device,
+  const VulkanRenderPass &renderPass) const {
+  Array<VulkanFramebuffer> framebuffers(mImageViews.size);
+
+  for (int i = 0; i < mImageViews.size; ++i) {
+    VulkanTexture textureAttachment;
+    textureAttachment.mImageView = mImageViews[i];
+    textureAttachment.mLayerCount = 1;
+    textureAttachment.mResolution = {mExtent.width, mExtent.height};
+
+    VulkanFramebufferConfig framebufferConfig (1, renderPass);
+    framebufferConfig.addAttachment(textureAttachment);
+
+    framebuffers[i].init(device, framebufferConfig);
+  }
+
+  return framebuffers;
 }
 
 VkSurfaceFormatKHR VulkanSwapchain::chooseSurfaceFormat(

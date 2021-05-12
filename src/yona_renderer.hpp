@@ -13,8 +13,6 @@ private:
   void initRenderPipelineStages(const VulkanContext &vulkanContext);
 
 private:
-  /* All the stages in the rendering pipeline */
-  RenderStage mFinalStage;
 };
 
 }

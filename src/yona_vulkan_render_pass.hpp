@@ -32,7 +32,11 @@ enum class AttachmentType {
   Depth
 };
 
-/* This is always going to be a temporary object */
+/* 
+   This is always going to be a temporary object.
+   For more complex vulkan objects (like this one) this sort of paradigm
+   will be followed (having a separate config class and passing to the object)
+*/
 class VulkanRenderPassConfig {
 public:
   VulkanRenderPassConfig(uint32_t attachmentCount, uint32_t subpassCount);
@@ -77,6 +81,8 @@ public:
 
 private:
   VkRenderPass mRenderPass;
+
+  friend class VulkanFramebufferConfig;
 };
 
 }

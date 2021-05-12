@@ -22,6 +22,11 @@ public:
   void initInstance();
   void initContext(const WindowContextInfo &surfaceInfo);
 
+  /* Starts the render pass which renders to the swapchain */
+  void beginSwapchainRender();
+  /* Ends the render pass which renders to the swapchain */
+  void endSwapchainRender();
+
   const VulkanDevice &device() const;
   VulkanContextProperties getProperties() const;
 
@@ -30,6 +35,8 @@ private:
   VulkanSurface mSurface;
   VulkanDevice mDevice;
   VulkanSwapchain mSwapchain;
+  VulkanRenderPass mFinalRenderPass;
+  Array<VulkanFramebuffer> mFinalFramebuffers;
 };
 
 }

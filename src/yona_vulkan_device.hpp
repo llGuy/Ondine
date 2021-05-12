@@ -94,6 +94,7 @@ private:
   friend class VulkanContext;
   friend class VulkanSwapchain;
   friend class VulkanRenderPass;
+  friend class VulkanFramebuffer;
 };
 
 }

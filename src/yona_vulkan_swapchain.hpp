@@ -4,6 +4,7 @@
 #include "yona_buffer.hpp"
 #include <vulkan/vulkan.h>
 #include "yona_vulkan_device.hpp"
+#include "yona_vulkan_framebuffer.hpp"
 
 namespace Yona {
 
@@ -15,6 +16,10 @@ public:
     const VulkanDevice &device,
     const VulkanSurface &surface,
     const Resolution &initialResolution);
+
+  Array<VulkanFramebuffer> makeFramebuffers(
+    const VulkanDevice &device,
+    const VulkanRenderPass &renderPass) const;
 
 private:
   VkSurfaceFormatKHR chooseSurfaceFormat(

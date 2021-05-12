@@ -25,8 +25,33 @@ void VulkanContext::initContext(const WindowContextInfo &surfaceInfo) {
   DeviceRequestedFeatures requiredFeatures = {};
   requiredFeatures.count = 1;
   requiredFeatures.features.geometryShader = VK_TRUE;
-
   mDevice.init(DeviceType::Any, mInstance, mSurface, requiredFeatures);
+
+  mSwapchain.init(mDevice, mSurface, surfaceInfo.resolution);
+
+  VulkanRenderPassConfig finalRenderPassConfig (1, 1);
+
+  finalRenderPassConfig.addAttachment(
+    LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
+    OutputUsage::Present, AttachmentType::Color,
+    mSwapchain.mFormat);
+
+  finalRenderPassConfig.addSubpass(
+    makeArray<uint32_t, AllocationType::Linear>(0U),
+    makeArray<uint32_t, AllocationType::Linear>(),
+    false);
+
+  mFinalRenderPass.init(mDevice, finalRenderPassConfig);
+
+  mFinalFramebuffers = mSwapchain.makeFramebuffers(mDevice, mFinalRenderPass);
+}
+
+void VulkanContext::beginSwapchainRender() {
+  
+}
+
+void VulkanContext::endSwapchainRender() {
+  
 }
 
 const VulkanDevice &VulkanContext::device() const {
