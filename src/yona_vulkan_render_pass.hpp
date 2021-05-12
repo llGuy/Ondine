@@ -3,6 +3,7 @@
 #include "yona_utils.hpp"
 #include "yona_buffer.hpp"
 #include <vulkan/vulkan.h>
+#include "yona_vulkan_device.hpp"
 
 namespace Yona {
 
@@ -21,7 +22,9 @@ enum class SubpassConsequence {
 
 enum class OutputUsage {
   Present,
-  ShaderRead
+  VertexShaderRead, // Rare
+  FragmentShaderRead,
+  None
 };
 
 enum class AttachmentType {
@@ -32,9 +35,7 @@ enum class AttachmentType {
 /* This is always going to be a temporary object */
 class VulkanRenderPassConfig {
 public:
-  VulkanRenderPassConfig() = default;
-
-  void beginConfiguration(uint32_t attachmentCount, uint32_t subpassCount);
+  VulkanRenderPassConfig(uint32_t attachmentCount, uint32_t subpassCount);
 
   void addAttachment(
     LoadAndStoreOp loadAndStore, LoadAndStoreOp stencilLoadAndStore,
@@ -45,16 +46,22 @@ public:
     const Array<uint32_t, AllocationType::Linear> &inputs,
     bool hasDepth);
 
-  void endConfiguration();
+private:
+  void finishConfiguration();
+
+  VkPipelineStageFlagBits computeMostRecentStage(const VkSubpassDescription &);
+  VkPipelineStageFlagBits computeEarliestStage(const VkSubpassDescription &);
+  VkPipelineStageFlagBits computeSubpassStage(const VkSubpassDescription &);
 
 private:
   Array<VkAttachmentDescription, AllocationType::Linear> mAttachments;
   Array<AttachmentType, AllocationType::Linear> mAttachmentTypes;
-  int32_t mDepthIdx;
+  Array<OutputUsage, AllocationType::Linear> mOutputUsages;
   Array<VkSubpassDescription, AllocationType::Linear> mSubpasses;
   Array<VkAttachmentReference, AllocationType::Linear> mRefs;
   Array<VkSubpassDependency, AllocationType::Linear> mDeps;
   VkRenderPassCreateInfo mCreateInfo;
+  int32_t mDepthIdx;
 
   friend class VulkanRenderPass;
 };
@@ -63,7 +70,9 @@ class VulkanRenderPass {
 public:
   VulkanRenderPass() = default;
 
-  void init(const VulkanRenderPassConfig &config);
+  void init(
+    const VulkanDevice &device,
+    const VulkanRenderPassConfig &config);
 
 private:
   VkRenderPass mRenderPass;

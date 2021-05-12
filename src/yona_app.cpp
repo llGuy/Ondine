@@ -32,6 +32,8 @@ void Application::run() {
 
   mVulkanContext.initContext(surfaceInfo);
 
+  mRenderer.init(mVulkanContext);
+
   /* User-defined function which will be overriden */
   start();
   mIsRunning = true;

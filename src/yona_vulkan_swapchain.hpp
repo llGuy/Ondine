@@ -38,6 +38,8 @@ private:
   VkFormat mFormat;
   VkExtent2D mExtent;
   VkPresentModeKHR mPresentMode;
+
+  friend class VulkanContext;
 };
 
 }

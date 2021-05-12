@@ -29,4 +29,15 @@ void VulkanContext::initContext(const WindowContextInfo &surfaceInfo) {
   mDevice.init(DeviceType::Any, mInstance, mSurface, requiredFeatures);
 }
 
+const VulkanDevice &VulkanContext::device() const {
+  return mDevice;
+}
+
+VulkanContextProperties VulkanContext::getProperties() const {
+  VulkanContextProperties properties = {};
+  properties.swapchainFormat = mSwapchain.mFormat;
+  properties.depthFormat = mDevice.mDepthFormat;
+  return properties;
+}
+
 }

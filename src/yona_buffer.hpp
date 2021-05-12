@@ -82,7 +82,7 @@ Array<T, A> makeArray(Args &&...args) {
   };
 
   /* Dirty trick */
-  char dummy[] = { 0, (addElement(arr, args), 0)... };
+  char dummy[] = { (char)0, (addElement(arr, std::forward<Args>(args)), (char)0)... };
 
   return arr;
 }

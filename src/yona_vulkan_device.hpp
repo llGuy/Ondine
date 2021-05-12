@@ -91,7 +91,9 @@ private:
   VkQueue mGraphicsQueue;
   VkQueue mPresentQueue;
 
+  friend class VulkanContext;
   friend class VulkanSwapchain;
+  friend class VulkanRenderPass;
 };
 
 }

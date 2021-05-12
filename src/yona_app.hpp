@@ -2,6 +2,7 @@
 
 #include "yona_event.hpp"
 #include "yona_window.hpp"
+#include "yona_renderer.hpp"
 #include "yona_filesystem.hpp"
 #include "yona_vulkan_context.hpp"
 
@@ -35,6 +36,7 @@ private:
   EventQueue mEventQueue;
   Window mWindow;
   VulkanContext mVulkanContext;
+  Renderer mRenderer;
 };
 
 }
