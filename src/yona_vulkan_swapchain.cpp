@@ -83,7 +83,7 @@ void VulkanSwapchain::init(
 
   mImages.init(imageCount);
 
-  vkGetSwapchainImagesKHR(
+  result = vkGetSwapchainImagesKHR(
     device.mLogicalDevice, mSwapchain,
     &imageCount, mImages.data);
 
@@ -130,6 +130,8 @@ Array<VulkanFramebuffer> VulkanSwapchain::makeFramebuffers(
 
     framebuffers[i].init(device, framebufferConfig);
   }
+
+  framebuffers.size = framebuffers.capacity;
 
   return framebuffers;
 }

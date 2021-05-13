@@ -10,14 +10,15 @@ namespace Yona {
 VulkanRenderPassConfig::VulkanRenderPassConfig(
   uint32_t attachmentCount,
   uint32_t subpassCount)
-  : mAttachments(attachmentCount),
+  : mCreateInfo{},
+    mAttachments(attachmentCount),
     mAttachmentTypes(attachmentCount),
     mOutputUsages(attachmentCount),
     mSubpasses(subpassCount),
     mRefs(subpassCount * attachmentCount),
     mDeps(subpassCount + 1),
     mDepthIdx(-1) {
-
+  mDeps.size = subpassCount + 1;
 }
 
 void VulkanRenderPassConfig::addAttachment(
@@ -82,10 +83,10 @@ void VulkanRenderPassConfig::addAttachment(
   uint32_t stencilLoadOpIdx = (uint32_t)stencilLoadAndStore & 0b11;
   uint32_t stencilStoreOpIdx = ((uint32_t)(stencilLoadAndStore) >> 2) & 0b11;
 
-  desc.loadOp = LOAD_OPS[loadOpIdx];
-  desc.storeOp = STORE_OPS[storeOpIdx];
-  desc.stencilLoadOp = LOAD_OPS[stencilLoadOpIdx];
-  desc.stencilStoreOp = STORE_OPS[stencilStoreOpIdx];
+  desc.loadOp = LOAD_OPS[loadOpIdx - 1];
+  desc.storeOp = STORE_OPS[storeOpIdx - 1];
+  desc.stencilLoadOp = LOAD_OPS[stencilLoadOpIdx - 1];
+  desc.stencilStoreOp = STORE_OPS[stencilStoreOpIdx - 1];
 }
 
 void VulkanRenderPassConfig::addSubpass(
@@ -138,7 +139,7 @@ void VulkanRenderPassConfig::addSubpass(
   desc.colorAttachmentCount = colors.size;
   desc.pColorAttachments = start;
   desc.inputAttachmentCount = inputs.size;
-  desc.pInputAttachments = start;
+  desc.pInputAttachments = inputsPtr;
   desc.pDepthStencilAttachment = depth;
 }
 
@@ -154,7 +155,7 @@ void VulkanRenderPassConfig::finishConfiguration() {
     firstDep->dstStageMask = computeSubpassStage(mSubpasses[0]);
     firstDep->dstAccessMask = findAccessFlagsForStage(firstDep->dstStageMask);
 
-    for (int i = 0; i < mDeps.size - 2; ++i) {
+    for (int i = 0; i < (int)mDeps.size - 2; ++i) {
       VkSubpassDependency *dep = &mDeps[i + 1];
 
       VkSubpassDescription *prev = &mSubpasses[i];
@@ -204,8 +205,8 @@ enum class OrderedStage {
 };
 
 static const VkPipelineStageFlagBits ORDERED_STAGES[] {
-  VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
   VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+  VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
   VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
   VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
 };
@@ -295,6 +296,11 @@ VkPipelineStageFlagBits VulkanRenderPassConfig::computeSubpassStage(
   PANIC_AND_EXIT();
 
   return VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
+}
+
+VulkanRenderPass::VulkanRenderPass()
+  : mRenderPass(VK_NULL_HANDLE) {
+  
 }
 
 void VulkanRenderPass::init(

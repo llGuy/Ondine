@@ -73,7 +73,7 @@ private:
 
 class VulkanRenderPass {
 public:
-  VulkanRenderPass() = default;
+  VulkanRenderPass();
 
   void init(
     const VulkanDevice &device,

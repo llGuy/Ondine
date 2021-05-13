@@ -45,10 +45,10 @@ struct Array {
     size = 0;
 
     if constexpr (A == AllocationType::Linear) {
-      data = lnAllocv<T>(size);
+      data = lnAllocv<T>(cap);
     }
     else {
-      data = flAllocv<T>(size);
+      data = flAllocv<T>(cap);
     }
   }
 

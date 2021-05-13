@@ -8,7 +8,8 @@ namespace Yona {
 VulkanFramebufferConfig::VulkanFramebufferConfig(
   size_t attachmentCount,
   const VulkanRenderPass &renderPass)
-  : mResolution{0, 0},
+  : mCreateInfo{},
+    mResolution{0, 0},
     mAttachments(attachmentCount),
     mCompatibleRenderPass(renderPass) {
 
