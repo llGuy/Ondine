@@ -95,6 +95,7 @@ private:
   friend class VulkanSwapchain;
   friend class VulkanRenderPass;
   friend class VulkanFramebuffer;
+  friend class VulkanCommandPool;
 };
 
 }

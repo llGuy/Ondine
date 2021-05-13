@@ -5,6 +5,7 @@
 #include "yona_vulkan_surface.hpp"
 #include "yona_vulkan_instance.hpp"
 #include "yona_vulkan_swapchain.hpp"
+#include "yona_vulkan_command_pool.hpp"
 
 namespace Yona {
 
@@ -37,6 +38,7 @@ private:
   VulkanSwapchain mSwapchain;
   VulkanRenderPass mFinalRenderPass;
   Array<VulkanFramebuffer> mFinalFramebuffers;
+  VulkanCommandPool mCommandPool;
 };
 
 }

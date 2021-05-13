@@ -44,6 +44,8 @@ void VulkanContext::initContext(const WindowContextInfo &surfaceInfo) {
   mFinalRenderPass.init(mDevice, finalRenderPassConfig);
 
   mFinalFramebuffers = mSwapchain.makeFramebuffers(mDevice, mFinalRenderPass);
+
+  mCommandPool.init(mDevice);
 }
 
 void VulkanContext::beginSwapchainRender() {
