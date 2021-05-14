@@ -1,10 +1,12 @@
 #pragma once
 
 #include "yona_io.hpp"
+#include "yona_vulkan_sync.hpp"
 #include "yona_vulkan_device.hpp"
 #include "yona_vulkan_surface.hpp"
 #include "yona_vulkan_instance.hpp"
 #include "yona_vulkan_swapchain.hpp"
+#include "yona_vulkan_descriptor.hpp"
 #include "yona_vulkan_command_pool.hpp"
 
 namespace Yona {
@@ -39,6 +41,13 @@ private:
   VulkanRenderPass mFinalRenderPass;
   Array<VulkanFramebuffer> mFinalFramebuffers;
   VulkanCommandPool mCommandPool;
+  Array<VulkanCommandBuffer> mPrimaryCommandBuffers;
+  Array<VulkanSemaphore> mImageReadySemaphores;
+  Array<VulkanSemaphore> mRenderFinishedSemaphores;
+  Array<VulkanFence> mFences;
+  uint32_t mFramesInFlight;
+  VulkanDescriptorPool mDescriptorPool;
+  VulkanDescriptorSetLayoutMaker mDescriptorSetLayouts;
 };
 
 }

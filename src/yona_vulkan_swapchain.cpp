@@ -82,6 +82,7 @@ void VulkanSwapchain::init(
   vkGetSwapchainImagesKHR(device.mLogicalDevice, mSwapchain, &imageCount, NULL);
 
   mImages.init(imageCount);
+  mImages.size = imageCount;
 
   result = vkGetSwapchainImagesKHR(
     device.mLogicalDevice, mSwapchain,

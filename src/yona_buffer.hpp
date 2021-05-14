@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "yona_memory.hpp"
 
 namespace Yona {
@@ -58,6 +59,10 @@ struct Array {
     data = ptr;
   }
 
+  void zero() {
+    memset(data, 0, sizeof(T) * capacity);
+  }
+
   void free() {
     if constexpr (A == AllocationType::Freelist) {
       flFreev(data);
@@ -79,6 +84,20 @@ Array<T, A> makeArray(Args &&...args) {
 
   auto addElement = [] (Array<T, A> &array, T &&element) {
     array[array.size++] = std::forward<T>(element);
+  };
+
+  /* Dirty trick */
+  char dummy[] = { (char)0, (addElement(arr, std::forward<Args>(args)), (char)0)... };
+
+  return arr;
+}
+
+template <typename T, AllocationType A, typename Pred, typename ...Args>
+Array<T, A> makeArrayPred(Pred pred, Args &&...args) {
+  Array<T, A> arr (sizeof...(Args));
+
+  auto addElement = [&pred] (Array<T, A> &array, T &&element) {
+    array[array.size++] = pred(std::forward<T>(element));
   };
 
   /* Dirty trick */

@@ -96,6 +96,11 @@ private:
   friend class VulkanRenderPass;
   friend class VulkanFramebuffer;
   friend class VulkanCommandPool;
+  friend class VulkanSemaphore;
+  friend class VulkanFence;
+  friend class VulkanPipeline;
+  friend class VulkanDescriptorPool;
+  friend class VulkanDescriptorSetLayoutCategory;
 };
 
 }

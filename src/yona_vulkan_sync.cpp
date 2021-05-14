@@ -1,6 +1,8 @@
 #include "yona_log.hpp"
 #include "yona_utils.hpp"
+#include "yona_vulkan.hpp"
 #include "yona_vulkan_sync.hpp"
+#include "yona_vulkan_device.hpp"
 
 namespace Yona {
 
@@ -32,6 +34,31 @@ VkAccessFlags findAccessFlagsForStage(VkPipelineStageFlags stage) {
     PANIC_AND_EXIT();
   } return 0;
   }
+}
+
+void VulkanSemaphore::init(const VulkanDevice &device) {
+  VkSemaphoreCreateInfo semaphoreInfo = {};
+  semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+  VK_CHECK(
+    vkCreateSemaphore(
+      device.mLogicalDevice,
+      &semaphoreInfo,
+      NULL,
+      &mSemaphore));
+}
+
+void VulkanFence::init(const VulkanDevice &device, VkFenceCreateFlags flags) {
+  VkFenceCreateInfo fenceInfo = {};
+  fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceInfo.flags = flags;
+
+  VK_CHECK(
+    vkCreateFence(
+      device.mLogicalDevice,
+      &fenceInfo,
+      NULL,
+      &mFence));
 }
 
 }
