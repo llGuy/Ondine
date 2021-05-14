@@ -68,6 +68,7 @@ void VulkanRenderPassConfig::addAttachment(
   desc.format = format;
 
   static const VkAttachmentLoadOp LOAD_OPS[] = {
+    VK_ATTACHMENT_LOAD_OP_LOAD,
     VK_ATTACHMENT_LOAD_OP_CLEAR,
     VK_ATTACHMENT_LOAD_OP_DONT_CARE
   };
@@ -83,10 +84,10 @@ void VulkanRenderPassConfig::addAttachment(
   uint32_t stencilLoadOpIdx = (uint32_t)stencilLoadAndStore & 0b11;
   uint32_t stencilStoreOpIdx = ((uint32_t)(stencilLoadAndStore) >> 2) & 0b11;
 
-  desc.loadOp = LOAD_OPS[loadOpIdx - 1];
-  desc.storeOp = STORE_OPS[storeOpIdx - 1];
-  desc.stencilLoadOp = LOAD_OPS[stencilLoadOpIdx - 1];
-  desc.stencilStoreOp = STORE_OPS[stencilStoreOpIdx - 1];
+  desc.loadOp = LOAD_OPS[loadOpIdx];
+  desc.storeOp = STORE_OPS[storeOpIdx];
+  desc.stencilLoadOp = LOAD_OPS[stencilLoadOpIdx];
+  desc.stencilStoreOp = STORE_OPS[stencilStoreOpIdx];
 }
 
 void VulkanRenderPassConfig::addSubpass(

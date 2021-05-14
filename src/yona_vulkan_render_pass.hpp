@@ -8,11 +8,14 @@
 namespace Yona {
 
 enum class LoadAndStoreOp {
-  ClearThenStore = BIT(0) | BIT(2),
-  ClearThenDontCare = BIT(0) | BIT(3),
+  LoadThenStore        = 0 | (1 << 2),
+  LoadThenDontCare     = 0 | (2 << 2),
 
-  DontCareThenStore = BIT(1) | BIT(2),
-  DontCareThenDontCare = BIT(1) | BIT(3)
+  ClearThenStore       = 1 | (1 << 2),
+  ClearThenDontCare    = 1 | (2 << 2),
+
+  DontCareThenStore    = 2 | (1 << 2),
+  DontCareThenDontCare = 2 | (2 << 2)
 };
 
 enum class SubpassConsequence {
