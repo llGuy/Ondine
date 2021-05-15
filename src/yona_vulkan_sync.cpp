@@ -48,6 +48,11 @@ void VulkanSemaphore::init(const VulkanDevice &device) {
       &mSemaphore));
 }
 
+VulkanFence::VulkanFence()
+  : mFence(VK_NULL_HANDLE) {
+  
+}
+
 void VulkanFence::init(const VulkanDevice &device, VkFenceCreateFlags flags) {
   VkFenceCreateInfo fenceInfo = {};
   fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;

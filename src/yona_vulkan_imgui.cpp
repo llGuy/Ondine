@@ -1,4 +1,5 @@
 #include <imgui.h>
+#include "yona_buffer.hpp"
 #include "yona_window.hpp"
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
@@ -42,7 +43,7 @@ void VulkanImgui::init(
   init_info.PhysicalDevice = device.mPhysicalDevice;
   init_info.Device = device.mLogicalDevice;
   init_info.QueueFamily = device.mQueueFamilies.graphicsFamily;
-  init_info.Queue = device.mGraphicsQueue;
+  init_info.Queue = device.mGraphicsQueue.mQueue;
   init_info.PipelineCache = VK_NULL_HANDLE;
   init_info.DescriptorPool = descriptorPool.mDescriptorPool;
   init_info.Allocator = NULL;
@@ -57,8 +58,16 @@ void VulkanImgui::init(
     device, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
   commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
-  ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
-  end_single_use_command_buffer(command_buffer);
+  ImGui_ImplVulkan_CreateFontsTexture(commandBuffer.mCommandBuffer);
+  commandBuffer.end();
+
+  device.mGraphicsQueue.submitCommandBuffer(
+    commandBuffer,
+    makeArray<VulkanSemaphore, AllocationType::Linear>(),
+    makeArray<VulkanSemaphore, AllocationType::Linear>(),
+    VulkanFence());
+
+  device.mGraphicsQueue.idle();
 }
 
 void VulkanImgui::imguiCallback(VkResult result) {

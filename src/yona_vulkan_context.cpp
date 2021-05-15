@@ -89,6 +89,10 @@ void VulkanContext::initContext(const WindowContextInfo &surfaceInfo) {
     VulkanDescriptorTypeInfo{ 1000, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT });
 
   mDescriptorSetLayouts.init();
+
+  mImgui.init(
+    mInstance, mDevice, mSwapchain, mDescriptorPool,
+    mCommandPool, surfaceInfo);
 }
 
 void VulkanContext::beginSwapchainRender() {

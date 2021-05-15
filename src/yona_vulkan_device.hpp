@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include "yona_vulkan_queue.hpp"
 
 namespace Yona {
 
@@ -88,8 +89,8 @@ private:
   VkPhysicalDeviceMemoryProperties mPhysicalDeviceMemoryInfo;
   VkPhysicalDeviceProperties mPhysicalDeviceInfo;
   VkFormat mDepthFormat;
-  VkQueue mGraphicsQueue;
-  VkQueue mPresentQueue;
+  VulkanQueue mGraphicsQueue;
+  VulkanQueue mPresentQueue;
 
   friend class VulkanContext;
   friend class VulkanSwapchain;

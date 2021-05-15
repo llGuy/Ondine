@@ -1,0 +1,33 @@
+#pragma once
+
+#include <vulkan/vulkan.h>
+#include "yona_buffer.hpp"
+#include "yona_vulkan_sync.hpp"
+
+namespace Yona {
+
+class VulkanCommandBuffer;
+class VulkanSwapchain;
+
+class VulkanQueue {
+public:
+  void idle() const;
+
+  void submitCommandBuffer(
+    const VulkanCommandBuffer &commandBuffer,
+    const Array<VulkanSemaphore, AllocationType::Linear> &waitSemaphores,
+    const Array<VulkanSemaphore, AllocationType::Linear> &signalSemaphores,
+    const VulkanFence &fence) const;
+
+  VkResult present(
+    const VulkanSwapchain &swapchain,
+    const VulkanSemaphore &wait) const;
+
+private:
+  VkQueue mQueue;
+
+  friend class VulkanDevice;
+  friend class VulkanImgui;
+};
+
+}

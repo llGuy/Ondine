@@ -44,8 +44,11 @@ private:
   VkExtent2D mExtent;
   VkPresentModeKHR mPresentMode;
 
+  uint32_t mImageIndex;
+
   friend class VulkanContext;
   friend class VulkanImgui;
+  friend class VulkanQueue;
 };
 
 }

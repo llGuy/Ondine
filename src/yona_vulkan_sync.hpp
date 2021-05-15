@@ -14,14 +14,20 @@ public:
 
 private:
   VkSemaphore mSemaphore;
+
+  friend class VulkanQueue;
 };
 
 class VulkanFence {
 public:
+  VulkanFence();
+
   void init(const VulkanDevice &device, VkFenceCreateFlags flags);
 
 private:
   VkFence mFence;
+
+  friend class VulkanQueue;
 };
 
 }

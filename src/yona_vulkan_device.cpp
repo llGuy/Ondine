@@ -130,9 +130,9 @@ void VulkanDevice::init(
     mPhysicalDevice, &deviceInfo, NULL, &mLogicalDevice);
 
   vkGetDeviceQueue(
-    mLogicalDevice, mQueueFamilies.graphicsFamily, 0, &mGraphicsQueue);
+    mLogicalDevice, mQueueFamilies.graphicsFamily, 0, &mGraphicsQueue.mQueue);
   vkGetDeviceQueue(
-    mLogicalDevice, mQueueFamilies.presentFamily, 0, &mPresentQueue);
+    mLogicalDevice, mQueueFamilies.presentFamily, 0, &mPresentQueue.mQueue);
 
   if (result == VK_SUCCESS) {
     LOG_INFO("Created Vulkan logical device:\n");

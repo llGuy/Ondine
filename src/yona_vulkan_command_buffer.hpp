@@ -17,6 +17,8 @@ private:
   VkCommandBuffer mCommandBuffer;
 
   friend class VulkanCommandPool;
+  friend class VulkanQueue;
+  friend class VulkanImgui;
 };
 
 }

@@ -10,6 +10,8 @@ void VulkanSwapchain::init(
   const VulkanDevice &device,
   const VulkanSurface &surface,
   const Resolution &initialResolution) {
+  mImageIndex = 0;
+
   const DeviceSwapchainSupport &swapchainDetails = device.mSwapchainSupport;
 
   VkSurfaceFormatKHR surfaceFormat = chooseSurfaceFormat(

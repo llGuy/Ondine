@@ -54,6 +54,10 @@ void Application::run() {
       }
     });
 
+    mVulkanContext.beginSwapchainRender();
+    // Render will do final rendering to this backbuffer
+    mVulkanContext.endSwapchainRender();
+
     mEventQueue.clearEvents();
     /* Clears global linear allocator */
     lnClear();
