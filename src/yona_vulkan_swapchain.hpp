@@ -45,6 +45,7 @@ private:
   VkPresentModeKHR mPresentMode;
 
   friend class VulkanContext;
+  friend class VulkanImgui;
 };
 
 }

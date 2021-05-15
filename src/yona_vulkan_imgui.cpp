@@ -3,72 +3,60 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 #include "yona_vulkan_imgui.hpp"
+#include "yona_vulkan_instance.hpp"
+#include "yona_vulkan_swapchain.hpp"
+#include "yona_vulkan_descriptor.hpp"
+#include "yona_vulkan_render_pass.hpp"
+#include "yona_vulkan_command_pool.hpp"
 
 namespace Yona {
 
-VulkanImgui::init() {
-  GLFWwindow *window = (GLFWwindow *)win;
+void VulkanImgui::init(
+  const VulkanInstance &instance,
+  const VulkanDevice &device,
+  const VulkanSwapchain &swapchain,
+  const VulkanDescriptorPool &descriptorPool,
+  const VulkanCommandPool &commandPool,
+  const WindowContextInfo &surfaceInfo) {
+  GLFWwindow *window = (GLFWwindow *)surfaceInfo.handle;
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO &io = ImGui::GetIO(); (void)io;
   ImGui::StyleColorsDark();
 
-  VkAttachmentDescription attachment = {};
-  attachment.format = g_ctx->swapchain.format;
-  attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-  attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-  attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  VulkanRenderPassConfig renderPassConfig(1, 1);
+  renderPassConfig.addAttachment(
+    LoadAndStoreOp::LoadThenStore, LoadAndStoreOp::DontCareThenDontCare,
+    OutputUsage::Present, AttachmentType::Color, swapchain.mFormat);
 
-  VkAttachmentReference color_attachment = {};
-  color_attachment.attachment = 0;
-  color_attachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  renderPassConfig.addSubpass(
+    makeArray<uint32_t, AllocationType::Linear>(0U),
+    makeArray<uint32_t, AllocationType::Linear>(),
+    false);
 
-  VkSubpassDescription subpass = {};
-  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpass.colorAttachmentCount = 1;
-  subpass.pColorAttachments = &color_attachment;
-
-  VkSubpassDependency dependency = {};
-  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-  dependency.dstSubpass = 0;
-  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependency.srcAccessMask = 0;
-  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-  VkRenderPassCreateInfo info = {};
-  info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  info.attachmentCount = 1;
-  info.pAttachments = &attachment;
-  info.subpassCount = 1;
-  info.pSubpasses = &subpass;
-  info.dependencyCount = 1;
-  info.pDependencies = &dependency;
-
-  VK_CHECK(vkCreateRenderPass(g_ctx->device, &info, nullptr, &g_ctx->debug.imgui_render_pass));
+  mImguiRenderPass.init(device, renderPassConfig);
 
   ImGui_ImplGlfw_InitForVulkan(window, true);
   ImGui_ImplVulkan_InitInfo init_info = {};
-  init_info.Instance = g_ctx->instance;
-  init_info.PhysicalDevice = g_ctx->hardware;
-  init_info.Device = g_ctx->device;
-  init_info.QueueFamily = g_ctx->queue_families.graphics_family;
-  init_info.Queue = g_ctx->graphics_queue;
+  init_info.Instance = instance.mInstance;
+  init_info.PhysicalDevice = device.mPhysicalDevice;
+  init_info.Device = device.mLogicalDevice;
+  init_info.QueueFamily = device.mQueueFamilies.graphicsFamily;
+  init_info.Queue = device.mGraphicsQueue;
   init_info.PipelineCache = VK_NULL_HANDLE;
-  init_info.DescriptorPool = g_ctx->descriptor_pool;
+  init_info.DescriptorPool = descriptorPool.mDescriptorPool;
   init_info.Allocator = NULL;
-  init_info.MinImageCount = g_ctx->swapchain.image_count;
-  init_info.ImageCount = g_ctx->swapchain.image_count;
-  init_info.CheckVkResultFn = &s_imgui_callback;
-  ImGui_ImplVulkan_Init(&init_info, g_ctx->debug.imgui_render_pass);
+  init_info.MinImageCount = swapchain.mImages.size;
+  init_info.ImageCount = swapchain.mImages.size;
+  init_info.CheckVkResultFn = imguiCallback;
+  ImGui_ImplVulkan_Init(&init_info, mImguiRenderPass.mRenderPass);
 
   ImGui::StyleColorsDark();
 
-  VkCommandBuffer command_buffer = begin_single_use_command_buffer();
+  VulkanCommandBuffer commandBuffer = commandPool.makeCommandBuffer(
+    device, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+  commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
   ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
   end_single_use_command_buffer(command_buffer);
 }

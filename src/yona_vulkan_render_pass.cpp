@@ -34,9 +34,6 @@ void VulkanRenderPassConfig::addAttachment(
   mOutputUsages[mOutputUsages.size++] = outputUsage;
   VkAttachmentDescription &desc = mAttachments[mAttachments.size++];
 
-  /* Image layouts */
-  desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
   VkImageLayout finalLayout;
   switch (outputUsage) {
   case OutputUsage::Present: {
@@ -88,6 +85,18 @@ void VulkanRenderPassConfig::addAttachment(
   desc.storeOp = STORE_OPS[storeOpIdx];
   desc.stencilLoadOp = LOAD_OPS[stencilLoadOpIdx];
   desc.stencilStoreOp = STORE_OPS[stencilStoreOpIdx];
+
+  if (loadOpIdx == 0) {
+    if (type == AttachmentType::Color) {
+      desc.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    }
+    else if (type == AttachmentType::Depth) {
+      desc.initialLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+    }
+  }
+  else {
+    desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  }
 }
 
 void VulkanRenderPassConfig::addSubpass(

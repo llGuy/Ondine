@@ -101,6 +101,7 @@ private:
   friend class VulkanPipeline;
   friend class VulkanDescriptorPool;
   friend class VulkanDescriptorSetLayoutCategory;
+  friend class VulkanImgui;
 };
 
 }

@@ -15,13 +15,13 @@ public:
 
   VulkanCommandBuffer makeCommandBuffer(
     const VulkanDevice &device,
-    VkCommandBufferLevel level);
+    VkCommandBufferLevel level) const;
 
   template <AllocationType A>
   void makeCommandBuffers(
     const VulkanDevice &device,
     VkCommandBufferLevel level,
-    Array<VulkanCommandBuffer, A> &commandBuffers) {
+    Array<VulkanCommandBuffer, A> &commandBuffers) const {
     size_t count = MAX(commandBuffers.size, commandBuffers.capacity);
 
     VkCommandBuffer *ptr = STACK_ALLOC(
@@ -41,7 +41,7 @@ private:
     const VulkanDevice &device,
     VkCommandBufferLevel level,
     size_t count,
-    VkCommandBuffer *commandBuffers);
+    VkCommandBuffer *commandBuffers) const;
 
 private:
   VkCommandPool mCommandPool;

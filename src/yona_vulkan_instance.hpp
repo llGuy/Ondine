@@ -37,6 +37,7 @@ private:
   friend class VulkanContext;
   friend class VulkanDevice;
   friend class VulkanSurface;
+  friend class VulkanImgui;
 };
 
 }

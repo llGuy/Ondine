@@ -8,14 +8,14 @@
 namespace Yona {
 
 enum class LoadAndStoreOp {
-  LoadThenStore        = 0 | (1 << 2),
-  LoadThenDontCare     = 0 | (2 << 2),
+  LoadThenStore        = 0 | (0 << 2),
+  LoadThenDontCare     = 0 | (1 << 2),
 
-  ClearThenStore       = 1 | (1 << 2),
-  ClearThenDontCare    = 1 | (2 << 2),
+  ClearThenStore       = 1 | (0 << 2),
+  ClearThenDontCare    = 1 | (1 << 2),
 
-  DontCareThenStore    = 2 | (1 << 2),
-  DontCareThenDontCare = 2 | (2 << 2)
+  DontCareThenStore    = 2 | (0 << 2),
+  DontCareThenDontCare = 2 | (1 << 2)
 };
 
 enum class SubpassConsequence {
@@ -86,6 +86,7 @@ private:
   VkRenderPass mRenderPass;
 
   friend class VulkanFramebufferConfig;
+  friend class VulkanImgui;
 };
 
 }
