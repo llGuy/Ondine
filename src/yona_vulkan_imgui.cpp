@@ -39,19 +39,19 @@ void VulkanImgui::init(
   mImguiRenderPass.init(device, renderPassConfig);
 
   ImGui_ImplGlfw_InitForVulkan(window, true);
-  ImGui_ImplVulkan_InitInfo init_info = {};
-  init_info.Instance = instance.mInstance;
-  init_info.PhysicalDevice = device.mPhysicalDevice;
-  init_info.Device = device.mLogicalDevice;
-  init_info.QueueFamily = device.mQueueFamilies.graphicsFamily;
-  init_info.Queue = device.mGraphicsQueue.mQueue;
-  init_info.PipelineCache = VK_NULL_HANDLE;
-  init_info.DescriptorPool = descriptorPool.mDescriptorPool;
-  init_info.Allocator = NULL;
-  init_info.MinImageCount = swapchain.mImages.size;
-  init_info.ImageCount = swapchain.mImages.size;
-  init_info.CheckVkResultFn = imguiCallback;
-  ImGui_ImplVulkan_Init(&init_info, mImguiRenderPass.mRenderPass);
+  ImGui_ImplVulkan_InitInfo initInfo = {};
+  initInfo.Instance = instance.mInstance;
+  initInfo.PhysicalDevice = device.mPhysicalDevice;
+  initInfo.Device = device.mLogicalDevice;
+  initInfo.QueueFamily = device.mQueueFamilies.graphicsFamily;
+  initInfo.Queue = device.mGraphicsQueue.mQueue;
+  initInfo.PipelineCache = VK_NULL_HANDLE;
+  initInfo.DescriptorPool = descriptorPool.mDescriptorPool;
+  initInfo.Allocator = NULL;
+  initInfo.MinImageCount = swapchain.mImages.size;
+  initInfo.ImageCount = swapchain.mImages.size;
+  initInfo.CheckVkResultFn = imguiCallback;
+  ImGui_ImplVulkan_Init(&initInfo, mImguiRenderPass.mRenderPass);
 
   ImGui::StyleColorsDark();
 
