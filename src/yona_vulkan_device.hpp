@@ -81,6 +81,13 @@ private:
     const DeviceRequestedFeatures &required,
     const VkPhysicalDeviceFeatures &available);
 
+  uint32_t findMemoryType(
+    VkMemoryPropertyFlags properties,
+    VkMemoryRequirements &memoryRequirements) const;
+
+  VkDeviceMemory allocateImageMemory(
+    VkImage image, VkMemoryPropertyFlags properties) const;
+
 private:
   VkDevice mLogicalDevice;
   VkPhysicalDevice mPhysicalDevice;
@@ -103,6 +110,10 @@ private:
   friend class VulkanDescriptorPool;
   friend class VulkanDescriptorSetLayoutCategory;
   friend class VulkanImgui;
+  friend class VulkanShader;
+  friend class VulkanPipelineConfig;
+  friend class VulkanPipeline;
+  friend class VulkanTexture;
 };
 
 }

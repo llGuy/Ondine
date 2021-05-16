@@ -4,6 +4,7 @@
 #include "yona_buffer.hpp"
 #include <vulkan/vulkan.h>
 #include "yona_vulkan_device.hpp"
+#include "yona_vulkan_texture.hpp"
 
 namespace Yona {
 
@@ -30,10 +31,7 @@ enum class OutputUsage {
   None
 };
 
-enum class AttachmentType {
-  Color,
-  Depth
-};
+using AttachmentType = TextureContents;
 
 /* 
    This is always going to be a temporary object.
@@ -62,12 +60,12 @@ private:
   VkPipelineStageFlagBits computeSubpassStage(const VkSubpassDescription &);
 
 private:
-  Array<VkAttachmentDescription, AllocationType::Linear> mAttachments;
+  Array<VkAttachmentDescription, AllocationType::Freelist> mAttachments;
   Array<VkClearValue, AllocationType::Linear> mClearValues;
-  Array<AttachmentType, AllocationType::Linear> mAttachmentTypes;
+  Array<AttachmentType, AllocationType::Freelist> mAttachmentTypes;
   Array<OutputUsage, AllocationType::Linear> mOutputUsages;
-  Array<VkSubpassDescription, AllocationType::Linear> mSubpasses;
-  Array<VkAttachmentReference, AllocationType::Linear> mRefs;
+  Array<VkSubpassDescription, AllocationType::Freelist> mSubpasses;
+  Array<VkAttachmentReference, AllocationType::Freelist> mRefs;
   Array<VkSubpassDependency, AllocationType::Linear> mDeps;
   VkRenderPassCreateInfo mCreateInfo;
   int32_t mDepthIdx;
@@ -86,10 +84,15 @@ public:
 private:
   VkRenderPass mRenderPass;
   Array<VkClearValue> mClearValues;
+  Array<VkAttachmentDescription, AllocationType::Freelist> mAttachments;
+  Array<AttachmentType, AllocationType::Freelist> mAttachmentTypes;
+  Array<VkSubpassDescription, AllocationType::Freelist> mSubpasses;
+  Array<VkAttachmentReference, AllocationType::Freelist> mRefs;
 
   friend class VulkanFramebufferConfig;
   friend class VulkanImgui;
   friend class VulkanCommandBuffer;
+  friend class VulkanPipelineConfig;
 };
 
 }

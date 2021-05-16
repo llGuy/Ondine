@@ -38,6 +38,7 @@ public:
   void endSwapchainRender(const VulkanFrame &frame);
 
   const VulkanDevice &device() const;
+  VulkanDescriptorSetLayoutMaker &descriptorLayouts();
   VulkanContextProperties getProperties() const;
 
 private:

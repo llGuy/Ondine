@@ -4,11 +4,13 @@
 
 namespace Yona {
 
-void Renderer::init(const VulkanContext &vulkanContext) {
+void Renderer::init(VulkanContext &vulkanContext) {
+  mRendererSky.init(vulkanContext);
+
   initRenderPipelineStages(vulkanContext);
 }
 
-void Renderer::initRenderPipelineStages(const VulkanContext &vulkanContext) {
+void Renderer::initRenderPipelineStages(VulkanContext &vulkanContext) {
   VulkanContextProperties ctxProperties = vulkanContext.getProperties();
 }
 

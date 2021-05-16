@@ -38,7 +38,7 @@ struct SkyProperties {
   float miePhaseFunctionG;
 
   DensityProfile absorptionDensity;
-  vec3 absorptionExtinction;
+  vec3 absorptionExtinctionCoef;
 
   vec3 groundAlbedo;
 
@@ -49,5 +49,8 @@ struct SkyProperties {
    */
   float muSunMin;
 };
+
+const int TRANSMITTANCE_TEXTURE_WIDTH = 64;
+const int TRANSMITTANCE_TEXTURE_HEIGHT = 256;
 
 #endif

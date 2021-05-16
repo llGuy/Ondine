@@ -360,4 +360,42 @@ bool VulkanDevice::checkRequiredFeaturesSupport(
   return true;
 }
 
+uint32_t VulkanDevice::findMemoryType(
+  VkMemoryPropertyFlags properties,
+  VkMemoryRequirements &memoryRequirements) const {
+  VkPhysicalDeviceMemoryProperties memProperties;
+  vkGetPhysicalDeviceMemoryProperties(mPhysicalDevice, &memProperties);
+
+  for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i) {
+    if (
+      memoryRequirements.memoryTypeBits & (1 << i) &&
+      (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+      return(i);
+    }
+  }
+
+  LOG_ERROR("Unable to find memory type!\n");
+  PANIC_AND_EXIT();
+
+  return 0;
+}
+
+VkDeviceMemory VulkanDevice::allocateImageMemory(
+  VkImage image, VkMemoryPropertyFlags properties) const {
+  VkMemoryRequirements requirements = {};
+  vkGetImageMemoryRequirements(mLogicalDevice, image, &requirements);
+
+  VkMemoryAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = requirements.size;
+  allocInfo.memoryTypeIndex = findMemoryType(properties, requirements);
+
+  VkDeviceMemory memory;
+  vkAllocateMemory(mLogicalDevice, &allocInfo, nullptr, &memory);
+
+  vkBindImageMemory(mLogicalDevice, image, memory, 0);
+
+  return memory;
+}
+
 }

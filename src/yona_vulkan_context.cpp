@@ -159,6 +159,10 @@ const VulkanDevice &VulkanContext::device() const {
   return mDevice;
 }
 
+VulkanDescriptorSetLayoutMaker &VulkanContext::descriptorLayouts() {
+  return mDescriptorSetLayouts;
+}
+
 VulkanContextProperties VulkanContext::getProperties() const {
   VulkanContextProperties properties = {};
   properties.swapchainFormat = mSwapchain.mFormat;

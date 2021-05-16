@@ -6,10 +6,8 @@
 
 namespace Yona {
 
-class VulkanDevice;
-
 enum TextureType {
-  T2D,
+  T2D = VK_IMAGET,
   Cubemap,
   T3D
 };
@@ -24,9 +22,12 @@ public:
   VulkanTexture() = default;
 
   void init(
-    const VulkanDevice &device,
-    TextureType type, TextureContents contents, VkFormat format,
-    VkFilter filter, VkExtent3D extent, size_t layerCount,
+    TextureType type,
+    TextureContents contents,
+    VkFormat format,
+    VkFilter filter,
+    VkExtent3D extent,
+    size_t layerCount,
     size_t mipLevels);
 
 private:
@@ -36,7 +37,6 @@ private:
   VkSampler mSampler;
   Resolution mResolution;
   uint32_t mLayerCount;
-  TextureType mType;
 
   friend class VulkanSwapchain;
   friend class VulkanFramebufferConfig;

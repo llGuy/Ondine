@@ -337,6 +337,11 @@ void VulkanRenderPass::init(
       &config.mCreateInfo,
       NULL,
       &mRenderPass));
+
+  mAttachments = config.mAttachments;
+  mAttachmentTypes = config.mAttachmentTypes;
+  mSubpasses = config.mSubpasses;
+  mRefs = config.mRefs;
 }
 
 }
