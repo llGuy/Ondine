@@ -66,4 +66,12 @@ void VulkanFence::init(const VulkanDevice &device, VkFenceCreateFlags flags) {
       &mFence));
 }
 
+void VulkanFence::wait(const VulkanDevice &device) {
+  vkWaitForFences(device.mLogicalDevice, 1, &mFence, VK_TRUE, UINT64_MAX);
+}
+
+void VulkanFence::reset(const VulkanDevice &device) {
+  vkResetFences(device.mLogicalDevice, 1, &mFence);
+}
+
 }

@@ -12,6 +12,7 @@ VulkanRenderPassConfig::VulkanRenderPassConfig(
   uint32_t subpassCount)
   : mCreateInfo{},
     mAttachments(attachmentCount),
+    mClearValues(attachmentCount),
     mAttachmentTypes(attachmentCount),
     mOutputUsages(attachmentCount),
     mSubpasses(subpassCount),
@@ -19,6 +20,7 @@ VulkanRenderPassConfig::VulkanRenderPassConfig(
     mDeps(subpassCount + 1),
     mDepthIdx(-1) {
   mDeps.size = subpassCount + 1;
+  mClearValues.zero();
 }
 
 void VulkanRenderPassConfig::addAttachment(
@@ -28,6 +30,11 @@ void VulkanRenderPassConfig::addAttachment(
 
   if (type == AttachmentType::Depth) {
     mDepthIdx = mAttachmentTypes.size;
+    mClearValues[mClearValues.size++].depthStencil.depth = 1.0f;
+  }
+  else {
+    // Keep at 0
+    ++mClearValues.size;
   }
 
   mAttachmentTypes[mAttachmentTypes.size++] = type;
@@ -317,6 +324,12 @@ void VulkanRenderPass::init(
   const VulkanDevice &device,
   VulkanRenderPassConfig &config) {
   config.finishConfiguration();
+
+  mClearValues.init(config.mClearValues.size);
+  memcpy(
+    mClearValues.data, config.mClearValues.data,
+    config.mClearValues.size * sizeof(VkClearValue));
+  mClearValues.size = config.mClearValues.size;
 
   VK_CHECK(
     vkCreateRenderPass(

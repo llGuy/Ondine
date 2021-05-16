@@ -12,7 +12,8 @@ namespace Yona {
 
 VulkanContext::VulkanContext()
   : mInstance(ENABLE_VALIDATION),
-    mFramesInFlight(FRAMES_IN_FLIGHT) {
+    mFramesInFlight(FRAMES_IN_FLIGHT),
+    mCurrentFrame(0) {
   
 }
 
@@ -95,12 +96,63 @@ void VulkanContext::initContext(const WindowContextInfo &surfaceInfo) {
     mCommandPool, surfaceInfo);
 }
 
-void VulkanContext::beginSwapchainRender() {
-  
+VulkanFrame VulkanContext::beginFrame() {
+  uint32_t imageIndex = mSwapchain.acquireNextImage(
+    mDevice, mImageReadySemaphores[mCurrentFrame]);
+
+  mFences[mCurrentFrame].wait(mDevice);
+  mFences[mCurrentFrame].reset(mDevice);
+
+  // Begin primary command buffer
+  const VulkanCommandBuffer &currentCommandBuffer =
+    mPrimaryCommandBuffers[imageIndex];
+
+  currentCommandBuffer.begin(0, nullptr);
+
+  VulkanFrame frame {
+    mDevice,
+    currentCommandBuffer,
+    imageIndex,
+    mCurrentFrame
+  };
+
+  return frame;
 }
 
-void VulkanContext::endSwapchainRender() {
-  
+void VulkanContext::endFrame(const VulkanFrame &frame) {
+  frame.primaryCommandBuffer.end();
+
+  const VulkanSemaphore &imageReady = mImageReadySemaphores[mCurrentFrame];
+  const VulkanSemaphore &renderDone = mRenderFinishedSemaphores[mCurrentFrame];
+
+  mDevice.mGraphicsQueue.submitCommandBuffer(
+    frame.primaryCommandBuffer,
+    makeArray<VulkanSemaphore, AllocationType::Linear>(imageReady),
+    makeArray<VulkanSemaphore, AllocationType::Linear>(renderDone),
+    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+    mFences[mCurrentFrame]);
+
+  VkResult result = mDevice.mPresentQueue.present(mSwapchain, renderDone);
+
+  if (result != VK_SUCCESS) {
+    // Need to handle this
+  }
+
+  mCurrentFrame = (mCurrentFrame + 1) % mFramesInFlight;
+}
+
+void VulkanContext::beginSwapchainRender(const VulkanFrame &frame) {
+  frame.primaryCommandBuffer.beginRenderPass(
+    mFinalRenderPass,
+    mFinalFramebuffers[frame.imageIndex],
+    {0, 0},
+    mSwapchain.mExtent);
+}
+
+void VulkanContext::endSwapchainRender(const VulkanFrame &frame) {
+  mImgui.render(frame);
+
+  frame.primaryCommandBuffer.endRenderPass();
 }
 
 const VulkanDevice &VulkanContext::device() const {

@@ -24,6 +24,7 @@ VulkanCommandBuffer VulkanCommandPool::makeCommandBuffer(
   VulkanCommandBuffer commandBuffer;
 
   makeCommandBuffers(device, level, 1, &commandBuffer.mCommandBuffer);
+  commandBuffer.init(commandBuffer.mCommandBuffer, level);
   
   return commandBuffer;
 }

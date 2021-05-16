@@ -8,6 +8,8 @@
 
 namespace Yona {
 
+class VulkanSemaphore;
+
 class VulkanSwapchain {
 public:
   VulkanSwapchain() = default;
@@ -20,6 +22,10 @@ public:
   Array<VulkanFramebuffer> makeFramebuffers(
     const VulkanDevice &device,
     const VulkanRenderPass &renderPass) const;
+
+  uint32_t acquireNextImage(
+    const VulkanDevice &device,
+    const VulkanSemaphore &semaphore);
 
 private:
   VkSurfaceFormatKHR chooseSurfaceFormat(

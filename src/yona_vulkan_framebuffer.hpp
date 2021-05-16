@@ -43,6 +43,7 @@ private:
   Array<VulkanTexture> mAttachments;
 
   friend class VulkanSwapchain;
+  friend class VulkanCommandBuffer;
 };
 
 }

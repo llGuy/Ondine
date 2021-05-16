@@ -201,4 +201,20 @@ VkPresentModeKHR VulkanSwapchain::chooseSurfacePresentMode(
   return bestMode;
 }
 
+uint32_t VulkanSwapchain::acquireNextImage(
+  const VulkanDevice &device,
+  const VulkanSemaphore &semaphore) {
+  VkFence nullFence = VK_NULL_HANDLE;
+
+  VkResult result = vkAcquireNextImageKHR(
+    device.mLogicalDevice, 
+    mSwapchain, 
+    UINT64_MAX, 
+    semaphore.mSemaphore, 
+    nullFence, 
+    &mImageIndex);
+
+  return mImageIndex;
+}
+
 }

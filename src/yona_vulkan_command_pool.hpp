@@ -32,7 +32,7 @@ public:
     makeCommandBuffers(device, level, count, ptr);
 
     for (int i = 0; i < count; ++i) {
-      commandBuffers[i].mCommandBuffer = ptr[i];
+      commandBuffers[i].init(ptr[i], level);
     }
   }
 

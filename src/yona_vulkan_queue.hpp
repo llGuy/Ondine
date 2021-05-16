@@ -17,6 +17,7 @@ public:
     const VulkanCommandBuffer &commandBuffer,
     const Array<VulkanSemaphore, AllocationType::Linear> &waitSemaphores,
     const Array<VulkanSemaphore, AllocationType::Linear> &signalSemaphores,
+    VkPipelineStageFlags waitStage,
     const VulkanFence &fence) const;
 
   VkResult present(

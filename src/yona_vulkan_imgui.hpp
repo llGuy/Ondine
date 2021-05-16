@@ -11,6 +11,7 @@ class VulkanDevice;
 class VulkanInstance;
 class VulkanDescriptorPool;
 class VulkanCommandPool;
+class VulkanFrame;
 
 class VulkanImgui {
 public:
@@ -21,6 +22,8 @@ public:
     const VulkanDescriptorPool &descriptorPool,
     const VulkanCommandPool &commandPool,
     const WindowContextInfo &surfaceInfo);
+
+  void render(const VulkanFrame &frame);
 
 private:
   static void imguiCallback(VkResult result);

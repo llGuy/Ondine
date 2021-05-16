@@ -3,6 +3,7 @@
 #include "yona_io.hpp"
 #include "yona_vulkan_sync.hpp"
 #include "yona_vulkan_imgui.hpp"
+#include "yona_vulkan_frame.hpp"
 #include "yona_vulkan_device.hpp"
 #include "yona_vulkan_surface.hpp"
 #include "yona_vulkan_instance.hpp"
@@ -27,14 +28,14 @@ public:
   void initContext(const WindowContextInfo &surfaceInfo);
 
   /* Acquires the next swapchain image */
-  void beginFrame();
+  VulkanFrame beginFrame();
   /* Presents to the screen */
-  void endFrame();
+  void endFrame(const VulkanFrame &frame);
 
   /* Starts the render pass which renders to the swapchain */
-  void beginSwapchainRender();
+  void beginSwapchainRender(const VulkanFrame &frame);
   /* Ends the render pass which renders to the swapchain */
-  void endSwapchainRender();
+  void endSwapchainRender(const VulkanFrame &frame);
 
   const VulkanDevice &device() const;
   VulkanContextProperties getProperties() const;
@@ -52,6 +53,7 @@ private:
   Array<VulkanSemaphore> mRenderFinishedSemaphores;
   Array<VulkanFence> mFences;
   uint32_t mFramesInFlight;
+  uint32_t mCurrentFrame;
   VulkanDescriptorPool mDescriptorPool;
   VulkanDescriptorSetLayoutMaker mDescriptorSetLayouts;
   VulkanImgui mImgui;

@@ -82,12 +82,15 @@ template <typename T, AllocationType A, typename ...Args>
 Array<T, A> makeArray(Args &&...args) {
   Array<T, A> arr (sizeof...(Args));
 
-  auto addElement = [] (Array<T, A> &array, T &&element) {
-    array[array.size++] = std::forward<T>(element);
+  auto addElement = [] (Array<T, A> &array, const T &element) {
+    array[array.size++] = element;
   };
 
   /* Dirty trick */
-  char dummy[] = { (char)0, (addElement(arr, std::forward<Args>(args)), (char)0)... };
+  char dummy[] = {
+    (char)0,
+    (addElement(arr, std::forward<Args>(args)), (char)0)...
+  };
 
   return arr;
 }
@@ -101,7 +104,10 @@ Array<T, A> makeArrayPred(Pred pred, Args &&...args) {
   };
 
   /* Dirty trick */
-  char dummy[] = { (char)0, (addElement(arr, std::forward<Args>(args)), (char)0)... };
+  char dummy[] = {
+    (char)0,
+    (addElement(arr, std::forward<Args>(args)), (char)0)...
+  };
 
   return arr;
 }

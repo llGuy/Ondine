@@ -54,9 +54,13 @@ void Application::run() {
       }
     });
 
-    mVulkanContext.beginSwapchainRender();
-    // Render will do final rendering to this backbuffer
-    mVulkanContext.endSwapchainRender();
+    VulkanFrame frame = mVulkanContext.beginFrame();
+    { // All rendering here
+      mVulkanContext.beginSwapchainRender(frame);
+      // Render will do final rendering to this backbuffer
+      mVulkanContext.endSwapchainRender(frame);
+    }
+    mVulkanContext.endFrame(frame);
 
     mEventQueue.clearEvents();
     /* Clears global linear allocator */

@@ -63,6 +63,7 @@ private:
 
 private:
   Array<VkAttachmentDescription, AllocationType::Linear> mAttachments;
+  Array<VkClearValue, AllocationType::Linear> mClearValues;
   Array<AttachmentType, AllocationType::Linear> mAttachmentTypes;
   Array<OutputUsage, AllocationType::Linear> mOutputUsages;
   Array<VkSubpassDescription, AllocationType::Linear> mSubpasses;
@@ -84,9 +85,11 @@ public:
 
 private:
   VkRenderPass mRenderPass;
+  Array<VkClearValue> mClearValues;
 
   friend class VulkanFramebufferConfig;
   friend class VulkanImgui;
+  friend class VulkanCommandBuffer;
 };
 
 }

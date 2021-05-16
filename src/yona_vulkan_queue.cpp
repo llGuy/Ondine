@@ -15,6 +15,7 @@ void VulkanQueue::submitCommandBuffer(
   const VulkanCommandBuffer &commandBuffer,
   const Array<VulkanSemaphore, AllocationType::Linear> &waitSemaphores,
   const Array<VulkanSemaphore, AllocationType::Linear> &signalSemaphores,
+  VkPipelineStageFlags waitStage,
   const VulkanFence &fence) const {
   VkSemaphore *waitsRaw = STACK_ALLOC(VkSemaphore, waitSemaphores.size);
   for (int i = 0; i < waitSemaphores.size; ++i) {
@@ -32,6 +33,7 @@ void VulkanQueue::submitCommandBuffer(
   submitInfo.pCommandBuffers = &commandBuffer.mCommandBuffer;
   submitInfo.waitSemaphoreCount = waitSemaphores.size;
   submitInfo.pWaitSemaphores = waitsRaw;
+  submitInfo.pWaitDstStageMask = &waitStage;
   submitInfo.signalSemaphoreCount = signalSemaphores.size;
   submitInfo.pSignalSemaphores = signalsRaw;
 

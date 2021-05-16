@@ -4,6 +4,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 #include "yona_vulkan_imgui.hpp"
+#include "yona_vulkan_frame.hpp"
 #include "yona_vulkan_instance.hpp"
 #include "yona_vulkan_swapchain.hpp"
 #include "yona_vulkan_descriptor.hpp"
@@ -65,13 +66,31 @@ void VulkanImgui::init(
     commandBuffer,
     makeArray<VulkanSemaphore, AllocationType::Linear>(),
     makeArray<VulkanSemaphore, AllocationType::Linear>(),
-    VulkanFence());
+    0, VulkanFence());
 
   device.mGraphicsQueue.idle();
 }
 
 void VulkanImgui::imguiCallback(VkResult result) {
-  
+
+}
+
+void VulkanImgui::render(const VulkanFrame &frame) {
+  ImGui_ImplVulkan_NewFrame();
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
+
+  // General stuff
+  ImGui::Begin("General");
+  ImGui::Text("Framerate: %.1f", ImGui::GetIO().Framerate);
+
+  ImGui::End();
+
+  ImGui::Render();
+
+  ImGui_ImplVulkan_RenderDrawData(
+    ImGui::GetDrawData(),
+    frame.primaryCommandBuffer.mCommandBuffer);
 }
 
 }
