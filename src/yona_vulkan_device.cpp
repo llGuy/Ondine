@@ -398,4 +398,22 @@ VkDeviceMemory VulkanDevice::allocateImageMemory(
   return memory;
 }
 
+VkDeviceMemory VulkanDevice::allocateBufferMemory(
+  VkBuffer buffer, VkMemoryPropertyFlags properties) const {
+  VkMemoryRequirements requirements = {};
+  vkGetBufferMemoryRequirements(mLogicalDevice, buffer, &requirements);
+
+  VkMemoryAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = requirements.size;
+  allocInfo.memoryTypeIndex = findMemoryType(properties, requirements);
+
+  VkDeviceMemory memory;
+  vkAllocateMemory(mLogicalDevice, &allocInfo, nullptr, &memory);
+
+  vkBindBufferMemory(mLogicalDevice, buffer, memory, 0);
+
+  return memory;
+}
+
 }

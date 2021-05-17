@@ -45,4 +45,11 @@ void VulkanCommandPool::makeCommandBuffers(
       device.mLogicalDevice, &allocateInfo, commandBuffers));
 }
 
+void VulkanCommandPool::freeCommandBuffer(
+  const VulkanDevice &device,
+  const VulkanCommandBuffer &commandBuffer) const {
+  vkFreeCommandBuffers(
+    device.mLogicalDevice, mCommandPool, 1, &commandBuffer.mCommandBuffer);
+}
+
 }

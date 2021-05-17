@@ -1,4 +1,5 @@
 #include "yona_log.hpp"
+#include "yona_vulkan_buffer.hpp"
 #include "yona_vulkan_render_pass.hpp"
 #include "yona_vulkan_framebuffer.hpp"
 #include "yona_vulkan_command_buffer.hpp"
@@ -64,6 +65,48 @@ void VulkanCommandBuffer::endRenderPass() const {
 
 void VulkanCommandBuffer::end() const {
   vkEndCommandBuffer(mCommandBuffer);
+}
+
+void VulkanCommandBuffer::copyBuffer(
+  const VulkanBuffer &dst, size_t dstOffset,
+  const VulkanBuffer &src, size_t srcOffset,
+  size_t size) {
+  VkBufferMemoryBarrier barriers[2];
+
+  barriers[0] = dst.makeBarrier(
+    dst.mUsedAt, VK_PIPELINE_STAGE_TRANSFER_BIT, dstOffset, size);
+  barriers[1] = src.makeBarrier(
+    src.mUsedAt, VK_PIPELINE_STAGE_TRANSFER_BIT, srcOffset, size);
+
+  vkCmdPipelineBarrier(
+    mCommandBuffer,
+    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    0,
+    0, NULL,
+    2, barriers,
+    0, NULL);
+
+  VkBufferCopy copyRegion = {};
+  copyRegion.dstOffset = dstOffset;
+  copyRegion.srcOffset = srcOffset;
+  copyRegion.size = size;
+
+  vkCmdCopyBuffer(mCommandBuffer, src.mBuffer, dst.mBuffer, 1, &copyRegion);
+
+  barriers[0] = dst.makeBarrier(
+    VK_PIPELINE_STAGE_TRANSFER_BIT, dst.mUsedAt, dstOffset, size);
+  barriers[1] = src.makeBarrier(
+    VK_PIPELINE_STAGE_TRANSFER_BIT, src.mUsedAt, srcOffset, size);
+
+  vkCmdPipelineBarrier(
+    mCommandBuffer,
+    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    0,
+    0, NULL,
+    2, barriers,
+    0, NULL);
 }
 
 }

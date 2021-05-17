@@ -163,6 +163,14 @@ VulkanDescriptorSetLayoutMaker &VulkanContext::descriptorLayouts() {
   return mDescriptorSetLayouts;
 }
 
+const VulkanCommandPool &VulkanContext::commandPool() const {
+  return mCommandPool;
+}
+
+const VulkanDescriptorPool &VulkanContext::descriptorPool() const {
+  return mDescriptorPool;
+}
+
 VulkanContextProperties VulkanContext::getProperties() const {
   VulkanContextProperties properties = {};
   properties.swapchainFormat = mSwapchain.mFormat;

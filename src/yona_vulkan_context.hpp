@@ -39,6 +39,8 @@ public:
 
   const VulkanDevice &device() const;
   VulkanDescriptorSetLayoutMaker &descriptorLayouts();
+  const VulkanCommandPool &commandPool() const;
+  const VulkanDescriptorPool &descriptorPool() const;
   VulkanContextProperties getProperties() const;
 
 private:

@@ -36,6 +36,10 @@ public:
     }
   }
 
+  void freeCommandBuffer(
+    const VulkanDevice &device,
+    const VulkanCommandBuffer &commandBuffer) const;
+
 private:
   void makeCommandBuffers(
     const VulkanDevice &device,

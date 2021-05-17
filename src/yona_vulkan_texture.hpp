@@ -40,6 +40,7 @@ private:
 
   friend class VulkanSwapchain;
   friend class VulkanFramebufferConfig;
+  friend class VulkanUniform;
 };
 
 }

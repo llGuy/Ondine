@@ -88,6 +88,9 @@ private:
   VkDeviceMemory allocateImageMemory(
     VkImage image, VkMemoryPropertyFlags properties) const;
 
+  VkDeviceMemory allocateBufferMemory(
+    VkBuffer buffer, VkMemoryPropertyFlags properties) const;
+
 private:
   VkDevice mLogicalDevice;
   VkPhysicalDevice mPhysicalDevice;
@@ -114,6 +117,8 @@ private:
   friend class VulkanPipelineConfig;
   friend class VulkanPipeline;
   friend class VulkanTexture;
+  friend class VulkanBuffer;
+  friend class VulkanUniform;
 };
 
 }

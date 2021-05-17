@@ -7,6 +7,17 @@
 #define STACK_ALLOC(type, n) (type *)alloca(sizeof(type) * (n))
 #define BIT(n) (1 << n)
 
+#define DEFINE_BIT_OPS_FOR_ENUM_CLASS(enumClass, bitsType, baseType)    \
+  inline bitsType operator|(enumClass a, enumClass b) {                 \
+    return (bitsType)((baseType)a | (baseType)b);                       \
+  }                                                                     \
+  inline bitsType operator|(bitsType a, enumClass b) {                  \
+    return (bitsType)((baseType)a | (baseType)b);                       \
+  }                                                                     \
+  inline bool operator&(bitsType a, enumClass b) {                      \
+    return (bool)((baseType)a & (baseType)b);                           \
+  }
+
 #ifndef YONA_PROJECT_ROOT
 // This should never happen - just for intellisense (?)
 #define YONA_PROJECT_ROOT ""

@@ -56,6 +56,7 @@ private:
   VkDescriptorPool mDescriptorPool;
 
   friend class VulkanImgui;
+  friend class VulkanUniform;
 };
 
 class VulkanDescriptorSetLayoutCategory {

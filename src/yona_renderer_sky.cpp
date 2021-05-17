@@ -7,7 +7,21 @@
 namespace Yona {
 
 void RendererSky::init(VulkanContext &graphicsContext) {
-  
+  initSkyProperties(graphicsContext);
+  preparePrecompute(graphicsContext);
+}
+
+void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {
+  mSkyPropertiesBuffer.init(
+    graphicsContext.device(),
+    sizeof(SkyProperties),
+    (int)VulkanBufferFlag::UniformBuffer);
+
+  mSkyPropertiesUniform.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorPool(),
+    graphicsContext.descriptorLayouts(),
+    makeArray<VulkanBuffer, AllocationType::Linear>(mSkyPropertiesBuffer));
 }
 
 void RendererSky::preparePrecompute(VulkanContext &graphicsContext) {
@@ -69,6 +83,10 @@ void RendererSky::prepareTransmittancePrecompute(
   fboConfig.addAttachment(mPrecomputedTransmittance);
 
   mPrecomputedTransmittanceFBO.init(graphicsContext.device(), fboConfig);
+}
+
+void RendererSky::precompute(VulkanContext &graphicsContext) {
+
 }
 
 }

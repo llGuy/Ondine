@@ -19,15 +19,8 @@ enum class FileOpenType : uint32_t {
 
 using FileOpenTypeBits = std::ios_base::openmode;
 
-inline FileOpenTypeBits operator|(FileOpenType a, FileOpenType b) {
-  return (FileOpenTypeBits)(
-    (std::ios_base::openmode)a | (std::ios_base::openmode)b);
-}
-
-inline FileOpenTypeBits operator|(FileOpenTypeBits a, FileOpenType b) {
-  return (FileOpenTypeBits)(
-    (std::ios_base::openmode)a | (std::ios_base::openmode)b);
-}
+DEFINE_BIT_OPS_FOR_ENUM_CLASS(
+  FileOpenType, FileOpenTypeBits, std::ios_base::openmode);
 
 class File {
 private:
