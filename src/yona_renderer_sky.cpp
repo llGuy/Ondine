@@ -76,8 +76,9 @@ void RendererSky::prepareTransmittancePrecompute(
     pipelineConfig);
 
   mPrecomputedTransmittance.init(
-    graphicsContext.device(), TextureType::T2D, TextureContents::Color,
-    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_LINEAR, {}, 1, 1);
+    graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
+    TextureContents::Color, VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_LINEAR,
+    {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT, 1}, 1, 1);
 
   VulkanFramebufferConfig fboConfig(1, mPrecomputeTransmittanceRenderPass);
   fboConfig.addAttachment(mPrecomputedTransmittance);

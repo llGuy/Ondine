@@ -18,12 +18,12 @@ VulkanFramebufferConfig::VulkanFramebufferConfig(
 void VulkanFramebufferConfig::addAttachment(const VulkanTexture &texture) {
   // Uninitialised
   if (mResolution.width == 0) {
-    mResolution = texture.mResolution;
+    mResolution = {texture.mExtent.width, texture.mExtent.height};
     mLayerCount = texture.mLayerCount;
   }
   else if (
-    mResolution.width != texture.mResolution.width ||
-    mResolution.height != texture.mResolution.height) {
+    mResolution.width != texture.mExtent.width ||
+    mResolution.height != texture.mExtent.height) {
     LOG_ERROR("Inconsistent framebuffer attachment resolutions!\n");
     PANIC_AND_EXIT();
   }

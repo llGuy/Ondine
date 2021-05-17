@@ -24,7 +24,7 @@ File::File(const std::string &path, FileOpenTypeBits type)
 
 Buffer File::readBinary() {
   Buffer buffer;
-  buffer.data = flAlloc<uint8_t>(size);
+  buffer.data = flAllocv<uint8_t>(size);
   buffer.size = size;
 
   mFileStream.read((char *)buffer.data, buffer.size);

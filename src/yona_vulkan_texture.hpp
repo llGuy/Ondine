@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include "yona_io.hpp"
+#include "yona_utils.hpp"
 #include <vulkan/vulkan.h>
 
 namespace Yona {
@@ -9,10 +10,16 @@ namespace Yona {
 class VulkanDevice;
 
 enum TextureType {
-  T2D,
-  Cubemap,
-  T3D
+  T2D = BIT(0),
+  Cubemap = BIT(1),
+  T3D = BIT(2),
+  Attachment = BIT(3),
+  Input = BIT(4)
 };
+
+using TextureTypeBits = uint32_t;
+
+DEFINE_BIT_OPS_FOR_ENUM_CLASS(TextureType, TextureTypeBits, uint32_t);
 
 enum TextureContents {
   Color,
@@ -25,7 +32,7 @@ public:
 
   void init(
     const VulkanDevice &device,
-    TextureType type, TextureContents contents, VkFormat format,
+    TextureTypeBits type, TextureContents contents, VkFormat format,
     VkFilter filter, VkExtent3D extent, size_t layerCount,
     size_t mipLevels);
 
@@ -34,9 +41,9 @@ private:
   VkDeviceMemory mMemory;
   VkImageView mImageView;
   VkSampler mSampler;
-  Resolution mResolution;
+  VkExtent3D mExtent;
   uint32_t mLayerCount;
-  TextureType mType;
+  TextureTypeBits mType;
 
   friend class VulkanSwapchain;
   friend class VulkanFramebufferConfig;

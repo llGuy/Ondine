@@ -6,14 +6,39 @@ namespace Yona {
 
 void VulkanTexture::init(
   const VulkanDevice &device,
-  TextureType type, TextureContents contents, VkFormat format,
+  TextureTypeBits type, TextureContents contents, VkFormat format,
   VkFilter filter, VkExtent3D extent, size_t layerCount,
   size_t mipLevels) {
+  mExtent = extent;
   mType = type;
+  mLayerCount = layerCount;
 
   VkImageType imageType;
   VkImageCreateFlags imageFlags = 0;
   VkImageViewType viewType;
+
+  VkImageUsageFlags usage =
+    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+
+  if (type & TextureType::Attachment) {
+    type &= ~(TextureType::Attachment);
+
+    // Yes I know we are doing this switch statement but who cares
+    switch (contents) {
+    case TextureContents::Color: {
+      usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    } break;
+
+    case TextureContents::Depth: {
+      usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    } break;
+    }
+  }
+
+  if (type & TextureType::Input) {
+    type &= ~(TextureType::Input);
+    usage |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+  }
 
   switch (type) {
   case TextureType::T2D: {
@@ -59,7 +84,8 @@ void VulkanTexture::init(
   imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageInfo.mipLevels = mipLevels;
   imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-  imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+  imageInfo.usage = usage;
+  imageInfo.extent = extent;
   imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
   imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -91,7 +117,7 @@ void VulkanTexture::init(
   samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  samplerInfo.anisotropyEnable = VK_TRUE;
+  samplerInfo.anisotropyEnable = VK_FALSE;
   samplerInfo.maxAnisotropy = 16;
   samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
   samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;

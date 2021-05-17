@@ -27,6 +27,9 @@ private:
   void precompute(VulkanContext &graphicsContext);
 
 private:
+  static constexpr size_t TRANSMITTANCE_WIDTH = 256;
+  static constexpr size_t TRANSMITTANCE_HEIGHT = 64;
+
   SkyProperties mSkyProperties;
   VulkanBuffer mSkyPropertiesBuffer;
   VulkanUniform mSkyPropertiesUniform;
