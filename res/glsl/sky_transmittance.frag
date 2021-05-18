@@ -9,6 +9,7 @@ layout(set = 0, binding = 0) uniform SkyUniform{
 } uSky;
 
 void main() {
+
   outTransmittance = computeTransmittanceToSkyBoundaryTexture(
     uSky.sky, gl_FragCoord.xy);
 }

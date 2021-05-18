@@ -176,12 +176,16 @@ vec3 computeTransmittanceToSkyBoundaryTexture(
   const vec2 TRANSMITTANCE_TEXTURE_SIZE =
     vec2(TRANSMITTANCE_TEXTURE_WIDTH, TRANSMITTANCE_TEXTURE_HEIGHT);
 
+  // Courtesy to Vulkan flipping the y value
+  vec2 uvFragCoord = fragCoord / TRANSMITTANCE_TEXTURE_SIZE;
+  uvFragCoord.y = 1.0 - uvFragCoord.y;
+
   float centreToPointDist;
   float mu;
 
   getRMuFromTransmittanceTextureUv(
     sky,
-    fragCoord / TRANSMITTANCE_TEXTURE_SIZE,
+    uvFragCoord,
     centreToPointDist,
     mu);
 

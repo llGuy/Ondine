@@ -68,7 +68,7 @@ if (WIN32)
 
 else (WIN32)
 
-  target_link_libraries("pthread" "stdc++fs" "glfw")
+  target_link_libraries(yona PUBLIC "pthread" "stdc++fs" "glfw")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat-security")
 
 endif()

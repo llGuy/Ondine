@@ -50,7 +50,7 @@ struct SkyProperties {
   float muSunMin;
 };
 
-const int TRANSMITTANCE_TEXTURE_WIDTH = 64;
-const int TRANSMITTANCE_TEXTURE_HEIGHT = 256;
+const int TRANSMITTANCE_TEXTURE_WIDTH = 256;
+const int TRANSMITTANCE_TEXTURE_HEIGHT = 64;
 
 #endif
