@@ -15,8 +15,6 @@ VulkanShader::VulkanShader(
   shaderInfo.codeSize = source.size;
   shaderInfo.pCode = (uint32_t *)source.data;
 
-  printf("%zu\n", shaderInfo.codeSize);
-
   VK_CHECK(
     vkCreateShaderModule(
       device.mLogicalDevice,

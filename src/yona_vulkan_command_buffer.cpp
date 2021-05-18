@@ -1,5 +1,6 @@
 #include "yona_log.hpp"
 #include "yona_vulkan_buffer.hpp"
+#include "yona_vulkan_pipeline.hpp"
 #include "yona_vulkan_render_pass.hpp"
 #include "yona_vulkan_framebuffer.hpp"
 #include "yona_vulkan_command_buffer.hpp"
@@ -70,17 +71,17 @@ void VulkanCommandBuffer::end() const {
 void VulkanCommandBuffer::copyBuffer(
   const VulkanBuffer &dst, size_t dstOffset,
   const VulkanBuffer &src, size_t srcOffset,
-  size_t size) {
+  size_t size) const {
   VkBufferMemoryBarrier barriers[2];
 
   barriers[0] = dst.makeBarrier(
-    dst.mUsedAt, VK_PIPELINE_STAGE_TRANSFER_BIT, dstOffset, size);
+    dst.mUsedAtLatest, VK_PIPELINE_STAGE_TRANSFER_BIT, dstOffset, size);
   barriers[1] = src.makeBarrier(
-    src.mUsedAt, VK_PIPELINE_STAGE_TRANSFER_BIT, srcOffset, size);
+    src.mUsedAtLatest, VK_PIPELINE_STAGE_TRANSFER_BIT, srcOffset, size);
 
   vkCmdPipelineBarrier(
     mCommandBuffer,
-    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+    dst.mUsedAtLatest | src.mUsedAtLatest,
     VK_PIPELINE_STAGE_TRANSFER_BIT,
     0,
     0, NULL,
@@ -95,18 +96,51 @@ void VulkanCommandBuffer::copyBuffer(
   vkCmdCopyBuffer(mCommandBuffer, src.mBuffer, dst.mBuffer, 1, &copyRegion);
 
   barriers[0] = dst.makeBarrier(
-    VK_PIPELINE_STAGE_TRANSFER_BIT, dst.mUsedAt, dstOffset, size);
+    VK_PIPELINE_STAGE_TRANSFER_BIT, dst.mUsedAtEarliest, dstOffset, size);
   barriers[1] = src.makeBarrier(
-    VK_PIPELINE_STAGE_TRANSFER_BIT, src.mUsedAt, srcOffset, size);
+    VK_PIPELINE_STAGE_TRANSFER_BIT, src.mUsedAtEarliest, srcOffset, size);
 
   vkCmdPipelineBarrier(
     mCommandBuffer,
-    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
     VK_PIPELINE_STAGE_TRANSFER_BIT,
+    dst.mUsedAtEarliest | src.mUsedAtEarliest,
     0,
     0, NULL,
     2, barriers,
     0, NULL);
+}
+
+void VulkanCommandBuffer::setViewport(
+  VkExtent2D extent, uint32_t maxDepth) const {
+  VkViewport viewport = {};
+  viewport.width = (float)extent.width;
+  viewport.height = (float)extent.height;
+  viewport.maxDepth = 1;
+  vkCmdSetViewport(mCommandBuffer, 0, 1, &viewport);
+}
+
+void VulkanCommandBuffer::setScissor(
+  VkOffset2D offset, VkExtent2D extent) const {
+  VkRect2D rect = {};
+  rect.extent = extent;
+  rect.offset = offset;
+  vkCmdSetScissor(mCommandBuffer, 0, 1, &rect);
+}
+
+void VulkanCommandBuffer::bindPipeline(const VulkanPipeline &pipeline) const {
+  vkCmdBindPipeline(
+    mCommandBuffer,
+    VK_PIPELINE_BIND_POINT_GRAPHICS,
+    pipeline.mPipeline);
+}
+
+void VulkanCommandBuffer::draw(
+  size_t vertexCount, size_t instanceCount,
+  size_t firstVertex, size_t firstInstance) const {
+  vkCmdDraw(
+    mCommandBuffer,
+    vertexCount, instanceCount,
+    firstVertex, firstInstance);
 }
 
 }

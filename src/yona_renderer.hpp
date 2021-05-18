@@ -10,6 +10,8 @@ class Renderer {
 public:
   void init(VulkanContext &vulkanContext);
 
+  void tick(const VulkanFrame &frame);
+
 private:
   void initRenderPipelineStages(VulkanContext &vulkanContext);
 

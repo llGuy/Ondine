@@ -1,6 +1,7 @@
 #pragma once
 
 #include "yona_sky_def.hpp"
+#include "yona_vulkan_frame.hpp"
 #include "yona_vulkan_buffer.hpp"
 #include "yona_vulkan_uniform.hpp"
 #include "yona_vulkan_pipeline.hpp"
@@ -15,6 +16,9 @@ class RendererSky {
 public:
   void init(VulkanContext &graphicsContext);
 
+  // Temporary function
+  void tick(const VulkanFrame &frame);
+
 private:
   void initSkyProperties(VulkanContext &graphicsContext);
 
@@ -23,6 +27,9 @@ private:
   void prepareTransmittancePrecompute(
     const Buffer &precomputeVsh,
     VulkanContext &graphicsContext);
+
+  void precomputeTransmittance(
+    const VulkanCommandBuffer &commandBuffer);
 
   void precompute(VulkanContext &graphicsContext);
 

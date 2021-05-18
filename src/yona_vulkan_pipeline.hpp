@@ -123,6 +123,8 @@ public:
 private:
   VkPipeline mPipeline;
   VkPipelineLayout mPipelineLayout;
+
+  friend class VulkanCommandBuffer;
 };
 
 }

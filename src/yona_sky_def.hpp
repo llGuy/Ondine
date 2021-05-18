@@ -7,15 +7,17 @@ namespace Yona {
 /* Some of the alignas are aren't necessary */
 
 struct DensityLayer {
-  alignas(4) float width;
-  alignas(4) float expTerm;
-  alignas(4) float expScale;
-  alignas(4) float linTerm;
-  alignas(4) float constTerm;
+  float width;
+  float expTerm;
+  float expScale;
+  float linTerm;
+  float constTerm;
+
+  float pad[3];
 };
 
 struct DensityProfile {
-  alignas(4) DensityLayer layers[2];
+  alignas(16) DensityLayer layers[2];
 };
 
 struct SkyProperties {
@@ -23,13 +25,13 @@ struct SkyProperties {
   alignas(4) float solarAngularRadius;
   alignas(4) float bottomRadius;
   alignas(4) float topRadius;
-  alignas(4) DensityProfile rayleighDensity;
+  alignas(16) DensityProfile rayleighDensity;
   alignas(16) glm::vec3 rayleighScatteringCoef;
-  alignas(4) DensityProfile mieDensity;
+  alignas(16) DensityProfile mieDensity;
   alignas(16) glm::vec3 mieScatteringCoef;
   alignas(16) glm::vec3 mieExtinctionCoef;
   alignas(4) float miePhaseFunctionG;
-  alignas(4) DensityProfile absorptionDensity;
+  alignas(16) DensityProfile absorptionDensity;
   alignas(16) glm::vec3 absorptionExtinctionCoef;
   alignas(16) glm::vec3 groundAlbedo;
   alignas(4)float muSunMin;

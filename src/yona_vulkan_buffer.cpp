@@ -12,21 +12,20 @@ void VulkanBuffer::init(
   VulkanBufferFlagBits type) {
   VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
-  mUsedAt = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+  mUsedAtEarliest = mUsedAtLatest = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
   mUsage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
   if (type & VulkanBufferFlag::VertexBuffer) {
     mUsage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    mUsedAt = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+    mUsedAtEarliest = mUsedAtLatest = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
   }
   if (type & VulkanBufferFlag::IndexBuffer) {
     mUsage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    mUsedAt = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+    mUsedAtEarliest = mUsedAtLatest = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
   }
   if (type & VulkanBufferFlag::UniformBuffer) {
     mUsage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    mUsedAt = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT |
-      VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT |
-      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    mUsedAtEarliest = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+    mUsedAtLatest = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
   }
   if (type & VulkanBufferFlag::Mappable) {
     memoryFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
@@ -34,7 +33,7 @@ void VulkanBuffer::init(
   }
   if (type & VulkanBufferFlag::TransferSource) {
     mUsage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    mUsedAt = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    mUsedAtEarliest = mUsedAtLatest = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
   }
 
   mSize = size;

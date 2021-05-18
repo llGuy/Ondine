@@ -11,18 +11,11 @@ void RendererSky::init(VulkanContext &graphicsContext) {
   preparePrecompute(graphicsContext);
 }
 
+void RendererSky::tick(const VulkanFrame &frame) {
+  precomputeTransmittance(frame.primaryCommandBuffer);
+}
+
 void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {
-  mSkyPropertiesBuffer.init(
-    graphicsContext.device(),
-    sizeof(SkyProperties),
-    (int)VulkanBufferFlag::UniformBuffer);
-
-  mSkyPropertiesUniform.init(
-    graphicsContext.device(),
-    graphicsContext.descriptorPool(),
-    graphicsContext.descriptorLayouts(),
-    makeArray<VulkanBuffer, AllocationType::Linear>(mSkyPropertiesBuffer));
-
   /* 
      Based on the values of Eric Bruneton's atmosphere model.
      We aren't going to calculate these manually come on (at least not yet)
@@ -34,7 +27,7 @@ void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {
      respectively. These are in W/m2
   */
   mSkyProperties.solarIrradiance = glm::vec3(1.474f, 1.8504f, 1.91198f);
-  // Angular radius of the Sun
+  // Angular radius of the Sun (radians)
   mSkyProperties.solarAngularRadius = 0.004675f;
   mSkyProperties.bottomRadius = 6360.0f;
   mSkyProperties.topRadius = 6420.0f;
@@ -63,6 +56,22 @@ void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {
     glm::vec3(0.000650f, 0.001881f, 0.000085f);
   mSkyProperties.groundAlbedo = glm::vec3(0.100000f, 0.100000f, 0.100000f);
   mSkyProperties.muSunMin = -0.207912f;
+
+  mSkyPropertiesBuffer.init(
+    graphicsContext.device(),
+    sizeof(SkyProperties),
+    (int)VulkanBufferFlag::UniformBuffer);
+
+  mSkyPropertiesBuffer.fillWithStaging(
+    graphicsContext.device(),
+    graphicsContext.commandPool(),
+    {(uint8_t *)&mSkyProperties, sizeof(mSkyProperties)});
+
+  mSkyPropertiesUniform.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorPool(),
+    graphicsContext.descriptorLayouts(),
+    makeArray<VulkanBuffer, AllocationType::Linear>(mSkyPropertiesBuffer));
 }
 
 void RendererSky::preparePrecompute(VulkanContext &graphicsContext) {
@@ -129,6 +138,27 @@ void RendererSky::prepareTransmittancePrecompute(
 
 void RendererSky::precompute(VulkanContext &graphicsContext) {
 
+}
+
+void RendererSky::precomputeTransmittance(
+  const VulkanCommandBuffer &commandBuffer) {
+  VkExtent2D extent = {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT};
+
+  commandBuffer.beginRenderPass(
+    mPrecomputeTransmittanceRenderPass,
+    mPrecomputedTransmittanceFBO,
+    {}, extent);
+
+  commandBuffer.bindPipeline(mPrecomputeTransmittancePipeline);
+  commandBuffer.bindUniforms(
+    mPrecomputeTransmittancePipeline, mSkyPropertiesUniform);
+
+  commandBuffer.setViewport(extent);
+  commandBuffer.setScissor({}, extent);
+
+  commandBuffer.draw(4, 1, 0, 0);
+
+  commandBuffer.endRenderPass();
 }
 
 }

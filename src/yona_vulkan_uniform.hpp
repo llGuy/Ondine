@@ -28,6 +28,8 @@ public:
 
 private:
   VkDescriptorSet mDescriptorSet;
+
+  friend class VulkanCommandBuffer;
 };
 
 }

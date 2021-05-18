@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <assert.h>
 #include <string.h>
 #include "yona_utils.hpp"
@@ -13,8 +14,10 @@ EventQueue::EventQueue()
 }
 
 void EventQueue::push(Event *ev) {
-  assert(mEventCount < MAX_EVENTS_PER_FRAME_COUNT - 1);
-  mEvents[mEventCount++] = ev;
+  // assert(mEventCount < MAX_EVENTS_PER_FRAME_COUNT - 1);
+  if (mEventCount < MAX_EVENTS_PER_FRAME_COUNT - 1) {
+    mEvents[mEventCount++] = ev;
+  }
 }
 
 Event *EventQueue::beginProcessing() {

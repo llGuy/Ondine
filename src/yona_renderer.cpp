@@ -10,6 +10,10 @@ void Renderer::init(VulkanContext &vulkanContext) {
   initRenderPipelineStages(vulkanContext);
 }
 
+void Renderer::tick(const VulkanFrame &frame) {
+  mRendererSky.tick(frame);
+}
+
 void Renderer::initRenderPipelineStages(VulkanContext &vulkanContext) {
   VulkanContextProperties ctxProperties = vulkanContext.getProperties();
 }

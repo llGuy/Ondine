@@ -48,7 +48,8 @@ private:
   size_t mSize;
   VkDeviceMemory mMemory;
   VkBufferUsageFlags mUsage;
-  VkPipelineStageFlags mUsedAt;
+  VkPipelineStageFlags mUsedAtEarliest;
+  VkPipelineStageFlags mUsedAtLatest;
 
   friend class VulkanCommandBuffer;
   friend class VulkanUniform;
