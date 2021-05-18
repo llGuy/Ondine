@@ -30,6 +30,7 @@ void VulkanPipelineConfig::setDefaultValues() {
 
   uint32_t colorAttachmentCount = subpass.colorAttachmentCount;
   mBlendStates.init(colorAttachmentCount);
+  mBlendStates.zero();
 
   for (int i = 0; i < colorAttachmentCount; ++i) {
     const auto &colorRef = subpass.pColorAttachments[i];

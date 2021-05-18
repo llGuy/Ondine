@@ -21,6 +21,8 @@ VulkanRenderPassConfig::VulkanRenderPassConfig(
     mDepthIdx(-1) {
   mDeps.size = subpassCount + 1;
   mClearValues.zero();
+  mRefs.zero();
+  mDeps.zero();
 }
 
 void VulkanRenderPassConfig::addAttachment(

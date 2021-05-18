@@ -3,6 +3,7 @@
 #include <utility>
 #include <stdint.h>
 #include <stdlib.h>
+#include <malloc.h>
 
 #define STACK_ALLOC(type, n) (type *)alloca(sizeof(type) * (n))
 #define BIT(n) (1 << n)

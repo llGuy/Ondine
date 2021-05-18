@@ -55,8 +55,11 @@ public:
       mLayouts{},
       mShaderStages(sizeof...(shaders)),
       mPushConstantSize(0),
+      mViewportInfo{},
       mTarget(target),
       mCreateInfo{} {
+    mShaderStages.zero();
+
     setDefaultValues();
 
     setShaderStages(

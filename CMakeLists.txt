@@ -13,43 +13,65 @@ include_directories("${CMAKE_SOURCE_DIR}/dep/glm")
 include_directories("${CMAKE_SOURCE_DIR}/dep/imgui/include")
 
 find_package(Vulkan)
+find_package(OpenAL)
 
-if (NOT WIN32)
-  find_package(OpenAL)
-endif()
+add_executable(yona "${SOURCES}")
 
-if (NOT WIN32)
-  link_libraries("pthread" "stdc++fs")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat-security")
-endif()
-
+# OpenAL
 if (OpenAL_FOUND)
+
   message(STATUS "Found OpenAL package in system ${OPENAL_INCLUDE_DIR} ${OPENAL_LIBRARY}")
-  include_directories("${OPENAL_INCLUDE_DIR}")
+  target_include_directories(yona PUBLIC "${OPENAL_INCLUDE_DIR}")
+  target_link_libraries(yona PUBLIC "${OPENAL_LIBRARY}")
+
 else()
+
   # Do something special for Windows as usual
-  include_directories("${CMAKE_SOURCE_DIR}/dependencies/openal-soft-bin-include/include")
+  if (WIN32)
+    target_link_libraries(yona PUBLIC "${CMAKE_SOURCE_DIR}/dep/openal-soft-bin-include/bin/Debug/OpenAL32.lib")
+    target_include_directories(yona PUBLIC "${CMAKE_SOURCE_DIR}/dep/openal-soft-bin-include/include")
+  endif()
+
 endif()
 
+# Vulkan
 if(Vulkan_FOUND)
+
   message(STATUS "Found Vulkan package in system ${Vulkan_LIBRARY}")
-  set(BUILD_CLIENT true)
-  include_directories("${Vulkan_INCLUDE_DIRS}")
+  target_include_directories(yona PUBLIC "${Vulkan_INCLUDE_DIRS}")
+  target_link_libraries(yona PUBLIC "${Vulkan_LIBRARY}")
+
 else(Vulkan_FOUND)
+
   message(WARNING "Failed to find Vulkan package in system")
 
   if(WIN32)
+
     message(STATUS "On Windows, using bundled vulkan version")
-    link_directories("${CMAKE_SOURCE_DIR}/dependencies/vulkan/lib")
-    include_directories("${CMAKE_SOURCE_DIR}/dependencies/vulkan/include")
-    set(BUILD_CLIENT true)
+    target_link_directories(yona PUBLIC "${CMAKE_SOURCE_DIR}/dep/vulkan/lib")
+    target_include_directories(yona PUBLIC "${CMAKE_SOURCE_DIR}/dep/vulkan/include")
+
   else(WIN32)
-    set(BUILD_CLIENT false)
+
     message(WARNING "Cannot use bundled vulkan libraries, on Linux - not buliding client")
+
   endif()
+
 endif()
 
-add_executable(yona "${SOURCES}")
-target_link_libraries(yona PUBLIC "${OPENAL_LIBRARY}")
-target_link_libraries(yona PUBLIC "${Vulkan_LIBRARY}" "glfw")
+
+if (WIN32)
+
+  target_link_directories(yona PUBLIC "${CMAKE_SOURCE_DIR}/dep/glfw/lib")
+  target_link_libraries(yona PUBLIC "glfw3.lib" "user32.lib" "gdi32.lib" "xinput.lib" "ws2_32.lib" "winmm.lib" "msvcrt.lib" "msvcrtd.lib" "libcmtd.lib" "ucrtd.lib")
+  target_include_directories(yona PUBLIC "${CMAKE_SOURCE_DIR}/dep/glfw/include")
+
+else (WIN32)
+
+  target_link_libraries("pthread" "stdc++fs" "glfw")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat-security")
+
+endif()
+
+
 target_compile_definitions(yona PUBLIC YONA_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")

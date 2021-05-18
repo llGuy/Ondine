@@ -1,3 +1,4 @@
+#include <string>
 #include <assert.h>
 #include <filesystem>
 #include "yona_filesystem.hpp"
@@ -5,7 +6,8 @@
 namespace Yona {
 
 void FileSystem::addMountPoint(MountPoint id, const std::string &directory) {
-  mMountPoints[id] = directory + std::filesystem::path::preferred_separator;
+  mMountPoints[id] = directory + 
+    (char)std::filesystem::path::preferred_separator;
 }
 
 File FileSystem::createFile(
