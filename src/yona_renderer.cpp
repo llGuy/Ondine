@@ -11,7 +11,7 @@ void Renderer::init(VulkanContext &vulkanContext) {
 }
 
 void Renderer::tick(const VulkanFrame &frame) {
-  mRendererSky.tick(frame);
+  // mRendererSky.tick(frame);
 }
 
 void Renderer::initRenderPipelineStages(VulkanContext &vulkanContext) {

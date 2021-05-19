@@ -63,6 +63,10 @@ public:
     const VulkanSurface &surface,
     const DeviceRequestedFeatures &features);
 
+  // May need to accomodate multiple queues when multithreading
+  const VulkanQueue &graphicsQueue() const;
+  const VulkanQueue &presentQueue() const;
+
 private:
   bool verifyHardwareMeetsRequirements(
     DeviceType requestedType,

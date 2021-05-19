@@ -16,7 +16,7 @@ class RendererSky {
 public:
   void init(VulkanContext &graphicsContext);
 
-  // Temporary function
+  // For testing
   void tick(const VulkanFrame &frame);
 
 private:

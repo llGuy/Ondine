@@ -416,4 +416,12 @@ VkDeviceMemory VulkanDevice::allocateBufferMemory(
   return memory;
 }
 
+const VulkanQueue &VulkanDevice::graphicsQueue() const {
+  return mGraphicsQueue;
+}
+
+const VulkanQueue &VulkanDevice::presentQueue() const {
+  return mPresentQueue;
+}
+
 }

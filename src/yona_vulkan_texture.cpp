@@ -13,6 +13,8 @@ void VulkanTexture::init(
   mType = type;
   mLayerCount = layerCount;
 
+  size_t imageViewLayerCount = mLayerCount;
+
   VkImageType imageType;
   VkImageCreateFlags imageFlags = 0;
   VkImageViewType viewType;
@@ -53,7 +55,10 @@ void VulkanTexture::init(
 
   case TextureType::T3D: {
     imageType = VK_IMAGE_TYPE_3D;
-    viewType = VK_IMAGE_VIEW_TYPE_3D;
+    // May need to change this to 3D or have multiple views
+    viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+    imageFlags = VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT;
+    imageViewLayerCount = extent.depth;
   } break;
 
   case TextureType::Cubemap: {
@@ -104,7 +109,7 @@ void VulkanTexture::init(
   imageViewInfo.subresourceRange.baseMipLevel = 0;
   imageViewInfo.subresourceRange.levelCount = mipLevels;
   imageViewInfo.subresourceRange.baseArrayLayer = 0;
-  imageViewInfo.subresourceRange.layerCount = layerCount;
+  imageViewInfo.subresourceRange.layerCount = imageViewLayerCount;
 
   VK_CHECK(
     vkCreateImageView(device.mLogicalDevice, &imageViewInfo, NULL, &mImageView));

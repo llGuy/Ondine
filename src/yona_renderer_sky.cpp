@@ -9,10 +9,11 @@ namespace Yona {
 void RendererSky::init(VulkanContext &graphicsContext) {
   initSkyProperties(graphicsContext);
   preparePrecompute(graphicsContext);
+  precompute(graphicsContext);
 }
 
 void RendererSky::tick(const VulkanFrame &frame) {
-  precomputeTransmittance(frame.primaryCommandBuffer);
+  // precomputeTransmittance(frame.primaryCommandBuffer);
 }
 
 void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {
@@ -137,7 +138,26 @@ void RendererSky::prepareTransmittancePrecompute(
 }
 
 void RendererSky::precompute(VulkanContext &graphicsContext) {
+  const auto &commandPool = graphicsContext.commandPool();
+  const auto &device = graphicsContext.device();
+  const auto &queue = device.graphicsQueue();
 
+  VulkanCommandBuffer commandBuffer = commandPool.makeCommandBuffer(
+    device, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+  commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
+  { // Precompute
+    precomputeTransmittance(commandBuffer);
+  }
+  commandBuffer.end();
+
+  queue.submitCommandBuffer(
+    commandBuffer,
+    makeArray<VulkanSemaphore, AllocationType::Linear>(),
+    makeArray<VulkanSemaphore, AllocationType::Linear>(),
+    0, VulkanFence());
+
+  queue.idle();
 }
 
 void RendererSky::precomputeTransmittance(
