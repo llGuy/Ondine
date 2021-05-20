@@ -104,7 +104,7 @@ VulkanFrame VulkanContext::beginFrame() {
   mFences[mCurrentFrame].reset(mDevice);
 
   // Begin primary command buffer
-  const VulkanCommandBuffer &currentCommandBuffer =
+  VulkanCommandBuffer &currentCommandBuffer =
     mPrimaryCommandBuffers[imageIndex];
 
   currentCommandBuffer.begin(0, nullptr);
@@ -174,6 +174,7 @@ const VulkanDescriptorPool &VulkanContext::descriptorPool() const {
 VulkanContextProperties VulkanContext::getProperties() const {
   VulkanContextProperties properties = {};
   properties.swapchainFormat = mSwapchain.mFormat;
+  properties.swapchainExtent = mSwapchain.mExtent;
   properties.depthFormat = mDevice.mDepthFormat;
   return properties;
 }

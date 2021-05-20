@@ -40,7 +40,6 @@ public:
 
 private:
   VkFramebuffer mFramebuffer;
-  Array<VulkanTexture> mAttachments;
 
   friend class VulkanSwapchain;
   friend class VulkanCommandBuffer;

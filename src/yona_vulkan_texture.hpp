@@ -43,6 +43,7 @@ private:
   VkSampler mSampler;
   VkExtent3D mExtent;
   uint32_t mLayerCount;
+  uint32_t mViewLayerCount;
   TextureTypeBits mType;
 
   friend class VulkanSwapchain;

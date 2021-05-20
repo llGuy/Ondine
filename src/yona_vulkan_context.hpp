@@ -18,6 +18,7 @@ struct WindowContextInfo;
 struct VulkanContextProperties {
   VkFormat depthFormat;
   VkFormat swapchainFormat;
+  VkExtent2D swapchainExtent;
 };
 
 class VulkanContext {

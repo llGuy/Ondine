@@ -12,8 +12,11 @@ void RendererSky::init(VulkanContext &graphicsContext) {
   precompute(graphicsContext);
 }
 
-void RendererSky::tick(const VulkanFrame &frame) {
-  // precomputeTransmittance(frame.primaryCommandBuffer);
+void RendererSky::tick(VulkanFrame &frame) {
+#if 0
+  precomputeTransmittance(frame.primaryCommandBuffer);
+  precomputeSingleScattering(frame.primaryCommandBuffer);
+#endif
 }
 
 void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {
@@ -75,66 +78,192 @@ void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {
     makeArray<VulkanBuffer, AllocationType::Linear>(mSkyPropertiesBuffer));
 }
 
+void RendererSky::initTemporaryPrecomputeTextures(
+  VulkanContext &graphicsContext) {
+    VkExtent3D extent = {
+      SCATTERING_TEXTURE_WIDTH,
+      SCATTERING_TEXTURE_HEIGHT,
+      SCATTERING_TEXTURE_DEPTH
+    };
+  
+  mDeltaRayleighScatteringTexture.init(
+    graphicsContext.device(), TextureType::T3D | TextureType::Attachment,
+    TextureContents::Color, VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_LINEAR,
+    extent, 1, 1);
+
+  mDeltaMieScatteringTexture.init(
+    graphicsContext.device(), TextureType::T3D | TextureType::Attachment,
+    TextureContents::Color, VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_LINEAR,
+    extent, 1, 1);
+}
+
 void RendererSky::preparePrecompute(VulkanContext &graphicsContext) {
   File precomputeVshFile = gFileSystem->createFile(
     (MountPoint)ApplicationMountPoints::Application,
     "res/spv/sky_precompute.vert.spv",
     FileOpenType::Binary | FileOpenType::In);
 
+  File precomputeGshFile = gFileSystem->createFile(
+    (MountPoint)ApplicationMountPoints::Application,
+    "res/spv/sky_precompute.geom.spv",
+    FileOpenType::Binary | FileOpenType::In);
+
   Buffer quadVsh = precomputeVshFile.readBinary();
+  Buffer quadGsh = precomputeGshFile.readBinary();
+
+  initTemporaryPrecomputeTextures(graphicsContext);
 
   prepareTransmittancePrecompute(quadVsh, graphicsContext);
+  prepareSingleScatteringPrecompute(quadVsh, quadGsh, graphicsContext);
 }
 
 void RendererSky::prepareTransmittancePrecompute(
   const Buffer &precomputeVsh,
   VulkanContext &graphicsContext) {
-  VulkanRenderPassConfig renderPassConfig(1, 1);
+  { // Create render pass
+    VulkanRenderPassConfig renderPassConfig(1, 1);
 
-  renderPassConfig.addAttachment(
-    LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
-    OutputUsage::FragmentShaderRead, AttachmentType::Color,
-    VK_FORMAT_R32G32B32A32_SFLOAT);
+    renderPassConfig.addAttachment(
+      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
+      OutputUsage::FragmentShaderRead, AttachmentType::Color,
+      VK_FORMAT_R32G32B32A32_SFLOAT);
 
-  renderPassConfig.addSubpass(
-    makeArray<uint32_t, AllocationType::Linear>(0U),
-    makeArray<uint32_t, AllocationType::Linear>(),
-    false);
+    renderPassConfig.addSubpass(
+      makeArray<uint32_t, AllocationType::Linear>(0U),
+      makeArray<uint32_t, AllocationType::Linear>(),
+      false);
 
-  mPrecomputeTransmittanceRenderPass.init(
-    graphicsContext.device(), renderPassConfig);
+    mPrecomputeTransmittanceRenderPass.init(
+      graphicsContext.device(), renderPassConfig);
+  }
 
-  File precomputeTransmittance = gFileSystem->createFile(
-    (MountPoint)ApplicationMountPoints::Application,
-    "res/spv/sky_transmittance.frag.spv",
-    FileOpenType::Binary | FileOpenType::In);
+  { // Create pipeline
+    File precomputeTransmittance = gFileSystem->createFile(
+      (MountPoint)ApplicationMountPoints::Application,
+      "res/spv/sky_transmittance.frag.spv",
+      FileOpenType::Binary | FileOpenType::In);
 
-  Buffer transmittance = precomputeTransmittance.readBinary();
+    Buffer fsh = precomputeTransmittance.readBinary();
 
-  VulkanPipelineConfig pipelineConfig(
-    {mPrecomputeTransmittanceRenderPass, 0},
-    VulkanShader(
-      graphicsContext.device(), precomputeVsh, VulkanShaderType::Vertex),
-    VulkanShader(
-      graphicsContext.device(), transmittance, VulkanShaderType::Fragment));
+    VulkanPipelineConfig pipelineConfig(
+      {mPrecomputeTransmittanceRenderPass, 0},
+      VulkanShader(
+        graphicsContext.device(), precomputeVsh, VulkanShaderType::Vertex),
+      VulkanShader(
+        graphicsContext.device(), fsh, VulkanShaderType::Fragment));
 
-  pipelineConfig.configurePipelineLayout(
-    0, VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
+    pipelineConfig.configurePipelineLayout(
+      0, VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
-  mPrecomputeTransmittancePipeline.init(
-    graphicsContext.device(),
-    graphicsContext.descriptorLayouts(),
-    pipelineConfig);
+    mPrecomputeTransmittancePipeline.init(
+      graphicsContext.device(),
+      graphicsContext.descriptorLayouts(),
+      pipelineConfig);
+  }
 
-  mPrecomputedTransmittance.init(
-    graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
-    TextureContents::Color, VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_LINEAR,
-    {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT, 1}, 1, 1);
+  { // Create attachments and framebuffer
+    mPrecomputedTransmittance.init(
+      graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
+      TextureContents::Color, VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_LINEAR,
+      {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT, 1}, 1, 1);
 
-  VulkanFramebufferConfig fboConfig(1, mPrecomputeTransmittanceRenderPass);
-  fboConfig.addAttachment(mPrecomputedTransmittance);
+    VulkanFramebufferConfig fboConfig(1, mPrecomputeTransmittanceRenderPass);
+    fboConfig.addAttachment(mPrecomputedTransmittance);
 
-  mPrecomputedTransmittanceFBO.init(graphicsContext.device(), fboConfig);
+    mPrecomputeTransmittanceFBO.init(graphicsContext.device(), fboConfig);
+  }
+
+  { // Create uniform for transmittance texture
+    mPrecomputedTransmittanceUniform.init(
+      graphicsContext.device(),
+      graphicsContext.descriptorPool(),
+      graphicsContext.descriptorLayouts(),
+      makeArray<VulkanTexture, AllocationType::Linear>(
+        mPrecomputedTransmittance));
+  }
+}
+
+void RendererSky::prepareSingleScatteringPrecompute(
+  const Buffer &precomputeVsh,
+  const Buffer &precomputeGsh,
+  VulkanContext &graphicsContext) {
+  { // Create render pass
+    VulkanRenderPassConfig renderPassConfig(3, 1);
+
+    renderPassConfig.addAttachment(
+      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
+      OutputUsage::FragmentShaderRead, AttachmentType::Color,
+      VK_FORMAT_R32G32B32A32_SFLOAT);
+
+    renderPassConfig.addAttachment(
+      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
+      OutputUsage::FragmentShaderRead, AttachmentType::Color,
+      VK_FORMAT_R32G32B32A32_SFLOAT);
+
+    // The scattering texture
+    renderPassConfig.addAttachment(
+      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
+      OutputUsage::FragmentShaderRead, AttachmentType::Color,
+      VK_FORMAT_R32G32B32A32_SFLOAT);
+
+    renderPassConfig.addSubpass(
+      makeArray<uint32_t, AllocationType::Linear>(0U, 1U, 2U),
+      makeArray<uint32_t, AllocationType::Linear>(),
+      false);
+
+    mPrecomputeSingleScatteringRenderPass.init(
+      graphicsContext.device(), renderPassConfig);
+  }
+  
+  { // Create pipeline
+    File precomputeSingleScattering = gFileSystem->createFile(
+      (MountPoint)ApplicationMountPoints::Application,
+      "res/spv/sky_single_scattering.frag.spv",
+      FileOpenType::Binary | FileOpenType::In);
+
+    Buffer fsh = precomputeSingleScattering.readBinary();
+
+    VulkanPipelineConfig pipelineConfig(
+      {mPrecomputeSingleScatteringRenderPass, 0},
+      VulkanShader(
+        graphicsContext.device(), precomputeVsh, VulkanShaderType::Vertex),
+      VulkanShader(
+        graphicsContext.device(), precomputeGsh, VulkanShaderType::Geometry),
+      VulkanShader(
+        graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+
+    pipelineConfig.configurePipelineLayout(
+      sizeof(SingleScatteringPushConstant),
+      VulkanPipelineDescriptorLayout{
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      VulkanPipelineDescriptorLayout{
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
+
+    mPrecomputeSingleScatteringPipeline.init(
+      graphicsContext.device(),
+      graphicsContext.descriptorLayouts(),
+      pipelineConfig);
+  }
+
+  { // Create attachments and framebuffer
+    VkExtent3D extent = {
+      SCATTERING_TEXTURE_WIDTH,
+      SCATTERING_TEXTURE_HEIGHT,
+      SCATTERING_TEXTURE_DEPTH
+    };
+
+    mPrecomputedSingleScattering.init(
+      graphicsContext.device(), TextureType::T3D | TextureType::Attachment,
+      TextureContents::Color, VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_LINEAR,
+      extent, 1, 1);
+
+    VulkanFramebufferConfig fboConfig(3, mPrecomputeSingleScatteringRenderPass);
+    fboConfig.addAttachment(mDeltaRayleighScatteringTexture);
+    fboConfig.addAttachment(mDeltaMieScatteringTexture);
+    fboConfig.addAttachment(mPrecomputedSingleScattering);
+
+    mPrecomputeSingleScatteringFBO.init(graphicsContext.device(), fboConfig);
+  }
 }
 
 void RendererSky::precompute(VulkanContext &graphicsContext) {
@@ -148,6 +277,7 @@ void RendererSky::precompute(VulkanContext &graphicsContext) {
   commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
   { // Precompute
     precomputeTransmittance(commandBuffer);
+    precomputeSingleScattering(commandBuffer);
   }
   commandBuffer.end();
 
@@ -161,22 +291,49 @@ void RendererSky::precompute(VulkanContext &graphicsContext) {
 }
 
 void RendererSky::precomputeTransmittance(
-  const VulkanCommandBuffer &commandBuffer) {
+  VulkanCommandBuffer &commandBuffer) {
   VkExtent2D extent = {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT};
 
   commandBuffer.beginRenderPass(
     mPrecomputeTransmittanceRenderPass,
-    mPrecomputedTransmittanceFBO,
+    mPrecomputeTransmittanceFBO,
     {}, extent);
 
   commandBuffer.bindPipeline(mPrecomputeTransmittancePipeline);
-  commandBuffer.bindUniforms(
-    mPrecomputeTransmittancePipeline, mSkyPropertiesUniform);
+  commandBuffer.bindUniforms(mSkyPropertiesUniform);
 
   commandBuffer.setViewport(extent);
   commandBuffer.setScissor({}, extent);
 
   commandBuffer.draw(4, 1, 0, 0);
+
+  commandBuffer.endRenderPass();
+}
+
+void RendererSky::precomputeSingleScattering(
+  VulkanCommandBuffer &commandBuffer) {
+  VkExtent2D extent = {SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT};
+
+  commandBuffer.beginRenderPass(
+    mPrecomputeSingleScatteringRenderPass,
+    mPrecomputeSingleScatteringFBO, {}, extent);
+
+  SingleScatteringPushConstant pushConstant = {};
+
+  for (int layer = 0; layer < SCATTERING_TEXTURE_DEPTH; ++layer) {
+    pushConstant.layer = layer;
+
+    commandBuffer.bindPipeline(mPrecomputeSingleScatteringPipeline);
+    commandBuffer.bindUniforms(
+      mSkyPropertiesUniform, mPrecomputedTransmittanceUniform);
+
+    commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
+
+    commandBuffer.setViewport(extent);
+    commandBuffer.setScissor({}, extent);
+
+    commandBuffer.draw(4, 1, 0, 0);
+  }
 
   commandBuffer.endRenderPass();
 }

@@ -34,7 +34,7 @@ struct SkyProperties {
   alignas(16) DensityProfile absorptionDensity;
   alignas(16) glm::vec3 absorptionExtinctionCoef;
   alignas(16) glm::vec3 groundAlbedo;
-  alignas(4)float muSunMin;
+  alignas(4) float muSunMin;
 };
 
 }

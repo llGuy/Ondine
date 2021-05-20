@@ -17,10 +17,11 @@ public:
   void init(VulkanContext &graphicsContext);
 
   // For testing
-  void tick(const VulkanFrame &frame);
+  void tick(VulkanFrame &frame);
 
 private:
   void initSkyProperties(VulkanContext &graphicsContext);
+  void initTemporaryPrecomputeTextures(VulkanContext &graphicsContext);
 
   void preparePrecompute(VulkanContext &graphicsContext);
 
@@ -28,14 +29,32 @@ private:
     const Buffer &precomputeVsh,
     VulkanContext &graphicsContext);
 
+  void prepareSingleScatteringPrecompute(
+    const Buffer &precomputeVsh,
+    const Buffer &precomputeGsh,
+    VulkanContext &graphicsContext);
+
   void precomputeTransmittance(
-    const VulkanCommandBuffer &commandBuffer);
+    VulkanCommandBuffer &commandBuffer);
+
+  void precomputeSingleScattering(
+    VulkanCommandBuffer &commandBuffer);
 
   void precompute(VulkanContext &graphicsContext);
 
 private:
   static constexpr size_t TRANSMITTANCE_WIDTH = 256;
   static constexpr size_t TRANSMITTANCE_HEIGHT = 64;
+  static constexpr size_t SCATTERING_TEXTURE_R_SIZE = 32;
+  static constexpr size_t SCATTERING_TEXTURE_MU_SIZE = 128;
+  static constexpr size_t SCATTERING_TEXTURE_MU_S_SIZE = 32;
+  static constexpr size_t SCATTERING_TEXTURE_NU_SIZE = 8;
+  static constexpr size_t SCATTERING_TEXTURE_WIDTH =
+    SCATTERING_TEXTURE_NU_SIZE * SCATTERING_TEXTURE_MU_S_SIZE;
+  static constexpr size_t SCATTERING_TEXTURE_HEIGHT = SCATTERING_TEXTURE_MU_SIZE;
+  static constexpr size_t SCATTERING_TEXTURE_DEPTH = SCATTERING_TEXTURE_R_SIZE;
+  static constexpr size_t IRRADIANCE_TEXTURE_WIDTH = 64;
+  static constexpr size_t IRRADIANCE_TEXTURE_HEIGHT = 16;
 
   SkyProperties mSkyProperties;
   VulkanBuffer mSkyPropertiesBuffer;
@@ -43,8 +62,22 @@ private:
 
   VulkanPipeline mPrecomputeTransmittancePipeline;
   VulkanRenderPass mPrecomputeTransmittanceRenderPass;
-  VulkanFramebuffer mPrecomputedTransmittanceFBO;
+  VulkanFramebuffer mPrecomputeTransmittanceFBO;
   VulkanTexture mPrecomputedTransmittance;
+  VulkanUniform mPrecomputedTransmittanceUniform;
+
+  struct SingleScatteringPushConstant {
+    int layer;
+  };
+
+  VulkanPipeline mPrecomputeSingleScatteringPipeline;
+  VulkanRenderPass mPrecomputeSingleScatteringRenderPass;
+  VulkanFramebuffer mPrecomputeSingleScatteringFBO;
+  VulkanTexture mPrecomputedSingleScattering;
+
+  /* Temporary textures */
+  VulkanTexture mDeltaRayleighScatteringTexture;
+  VulkanTexture mDeltaMieScatteringTexture;
 };
 
 }

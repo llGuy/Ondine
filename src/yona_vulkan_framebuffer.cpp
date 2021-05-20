@@ -19,7 +19,7 @@ void VulkanFramebufferConfig::addAttachment(const VulkanTexture &texture) {
   // Uninitialised
   if (mResolution.width == 0) {
     mResolution = {texture.mExtent.width, texture.mExtent.height};
-    mLayerCount = texture.mLayerCount;
+    mLayerCount = texture.mViewLayerCount;
   }
   else if (
     mResolution.width != texture.mExtent.width ||

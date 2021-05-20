@@ -44,7 +44,9 @@ void VulkanCommandBuffer::beginRenderPass(
   const VulkanRenderPass &renderPass,
   const VulkanFramebuffer &framebuffer,
   const VkOffset2D &offset,
-  const VkExtent2D &extent) const {
+  const VkExtent2D &extent) {
+  mCurrentRenderPassExtent = extent;
+
   VkRect2D renderArea = {};
   renderArea.offset = offset;
   renderArea.extent = extent;
@@ -60,7 +62,8 @@ void VulkanCommandBuffer::beginRenderPass(
   vkCmdBeginRenderPass(mCommandBuffer, &renderPassBeginInfo, mSubpassContents);
 }
 
-void VulkanCommandBuffer::endRenderPass() const {
+void VulkanCommandBuffer::endRenderPass() {
+  mCurrentRenderPassExtent = {};
   vkCmdEndRenderPass(mCommandBuffer);
 }
 
@@ -112,6 +115,10 @@ void VulkanCommandBuffer::copyBuffer(
 
 void VulkanCommandBuffer::setViewport(
   VkExtent2D extent, uint32_t maxDepth) const {
+  if (extent.width == 0) {
+    extent = mCurrentRenderPassExtent;
+  }
+
   VkViewport viewport = {};
   viewport.width = (float)extent.width;
   viewport.height = (float)extent.height;
@@ -127,11 +134,20 @@ void VulkanCommandBuffer::setScissor(
   vkCmdSetScissor(mCommandBuffer, 0, 1, &rect);
 }
 
-void VulkanCommandBuffer::bindPipeline(const VulkanPipeline &pipeline) const {
+void VulkanCommandBuffer::bindPipeline(const VulkanPipeline &pipeline) {
   vkCmdBindPipeline(
     mCommandBuffer,
     VK_PIPELINE_BIND_POINT_GRAPHICS,
     pipeline.mPipeline);
+
+  mCurrentPipeline = pipeline.mPipeline;
+  mCurrentPipelineLayout = pipeline.mPipelineLayout;
+}
+
+void VulkanCommandBuffer::pushConstants(size_t size, void *ptr) {
+  vkCmdPushConstants(
+    mCommandBuffer, mCurrentPipelineLayout,
+    VK_SHADER_STAGE_ALL, 0, size, ptr);
 }
 
 void VulkanCommandBuffer::draw(

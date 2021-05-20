@@ -5,17 +5,12 @@
 namespace Yona {
 
 void Renderer::init(VulkanContext &vulkanContext) {
+  mGBuffer.init(vulkanContext);
   mRendererSky.init(vulkanContext);
-
-  initRenderPipelineStages(vulkanContext);
 }
 
-void Renderer::tick(const VulkanFrame &frame) {
-  // mRendererSky.tick(frame);
-}
-
-void Renderer::initRenderPipelineStages(VulkanContext &vulkanContext) {
-  VulkanContextProperties ctxProperties = vulkanContext.getProperties();
+void Renderer::tick(VulkanFrame &frame) {
+  mRendererSky.tick(frame);
 }
 
 }

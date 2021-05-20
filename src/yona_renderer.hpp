@@ -1,5 +1,6 @@
 #pragma once
 
+#include "yona_gbuffer.hpp"
 #include "yona_renderer_sky.hpp"
 #include "yona_render_stage.hpp"
 #include "yona_vulkan_context.hpp"
@@ -10,13 +11,11 @@ class Renderer {
 public:
   void init(VulkanContext &vulkanContext);
 
-  void tick(const VulkanFrame &frame);
-
-private:
-  void initRenderPipelineStages(VulkanContext &vulkanContext);
+  void tick(VulkanFrame &frame);
 
 private:
   RendererSky mRendererSky;
+  GBuffer mGBuffer;
 };
 
 }

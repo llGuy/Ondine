@@ -24,17 +24,18 @@ public:
     const VulkanRenderPass &renderPass,
     const VulkanFramebuffer &framebuffer,
     const VkOffset2D &offset,
-    const VkExtent2D &extent) const;
-  void endRenderPass() const;
+    const VkExtent2D &extent);
+  void endRenderPass();
 
-  void setViewport(VkExtent2D extent, uint32_t maxDepth = 1) const;
+  // With no parameters, set it to the render pass extent
+  void setViewport(VkExtent2D extent = {}, uint32_t maxDepth = 1) const;
   void setScissor(VkOffset2D offset, VkExtent2D extent) const;
 
-  void bindPipeline(const VulkanPipeline &pipeline) const;
+  void bindPipeline(const VulkanPipeline &pipeline);
+  void pushConstants(size_t size, void *ptr);
 
   template <typename ...T>
-  void bindUniforms(
-    const VulkanPipeline &pipeline, const T &...uniforms) const {
+  void bindUniforms(const T &...uniforms) const {
     size_t count = sizeof...(T);
     auto pred = [](const VulkanUniform &uniform) -> VkDescriptorSet {
       return uniform.mDescriptorSet;
@@ -46,7 +47,7 @@ public:
     vkCmdBindDescriptorSets(
         mCommandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipeline.mPipelineLayout,
+        mCurrentPipelineLayout,
         0,
         count,
         sets.data,
@@ -70,6 +71,9 @@ private:
   VkCommandBuffer mCommandBuffer;
   VkCommandBufferLevel mLevel;
   VkSubpassContents mSubpassContents;
+  VkExtent2D mCurrentRenderPassExtent;
+  VkPipeline mCurrentPipeline;
+  VkPipelineLayout mCurrentPipelineLayout;
 
   friend class VulkanCommandPool;
   friend class VulkanQueue;
