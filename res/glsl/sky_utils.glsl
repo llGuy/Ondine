@@ -34,7 +34,7 @@ float distToSkyBoundary(
   float mu) {
   float r = centreToPointDist;
   float delta = r * r * (mu * mu - 1.0) + sky.topRadius * sky.topRadius;
-  return clampRadius(sky, -r * mu + safeSqrt(delta));
+  return clampPositive(-r * mu + safeSqrt(delta));
 }
 
 float distToGroundBoundary(
@@ -43,7 +43,7 @@ float distToGroundBoundary(
   float mu) {
   float r = centreToPointDist;
   float delta = r * r * (mu * mu - 1.0) + sky.bottomRadius * sky.bottomRadius;
-  return clampRadius(sky, -r * mu - safeSqrt(delta));
+  return clampPositive(-r * mu - safeSqrt(delta));
 }
 
 bool doesRayIntersectGround(
@@ -195,7 +195,7 @@ vec3 computeTransmittanceToSkyBoundaryTexture(
 vec3 getTransmittanceToSkyBoundary(
   in SkyProperties sky,
   in sampler2D transmittanceTexture,
-  out float centreToPointDist, float mu) {
+  float centreToPointDist, float mu) {
   vec2 uv = getTransmittanceTextureUVFromRMu(sky, centreToPointDist, mu);
   return vec3(texture(transmittanceTexture, uv));
 }
@@ -203,36 +203,29 @@ vec3 getTransmittanceToSkyBoundary(
 vec3 getTransmittance(
   in SkyProperties sky,
   in sampler2D transmittanceTexture,
-  float centreToPointDist, float mu,
-  float distToOtherPoint,
+  float r, float mu,
+  float d,
   bool doesRMuIntersectGround) {
-  float centreToOtherPointDist = clampRadius(
+  float rD = clampRadius(
     sky,
-    sqrt(distToOtherPoint * distToOtherPoint +
-         2.0 * centreToPointDist * mu * distToOtherPoint +
-         centreToPointDist * centreToPointDist));
+    sqrt(d * d + 2.0 * r * mu * d + r * r));
 
-  float muOtherPoint = clamp0To1(
-    (centreToPointDist * mu + distToOtherPoint) / centreToOtherPointDist);
+  float muD = clamp0To1((r * mu + d) / rD);
 
   if (doesRMuIntersectGround) {
     return min(
       getTransmittanceToSkyBoundary(
-        sky, transmittanceTexture,
-        centreToOtherPointDist, -muOtherPoint) /
+        sky, transmittanceTexture, rD, -muD) /
       getTransmittanceToSkyBoundary(
-        sky, transmittanceTexture,
-        centreToPointDist, -mu),
+        sky, transmittanceTexture, r, -mu),
       vec3(1.0));
   }
   else {
     return min(
       getTransmittanceToSkyBoundary(
-        sky, transmittanceTexture,
-        centreToPointDist, mu) /
+        sky, transmittanceTexture, r, mu) /
       getTransmittanceToSkyBoundary(
-        sky, transmittanceTexture,
-        centreToOtherPointDist, muOtherPoint),
+        sky, transmittanceTexture, rD, muD),
       vec3(1.0));
   }
 }
@@ -240,8 +233,8 @@ vec3 getTransmittance(
 vec3 getTransmittanceToSun(
   in SkyProperties sky,
   in sampler2D transmittanceTexture,
-  float centreToPointDist, float muSun) {
-  float sinThetaH = sky.bottomRadius / centreToPointDist;
+  float r, float muSun) {
+  float sinThetaH = sky.bottomRadius / r;
   float cosThetaH = -sqrt(max(1.0 - sinThetaH * sinThetaH, 0.0));
 
   float visibleFactor = smoothstep(
@@ -250,41 +243,34 @@ vec3 getTransmittanceToSun(
     muSun - cosThetaH);
 
   return getTransmittanceToSkyBoundary(
-    sky, transmittanceTexture, centreToPointDist, muSun) * visibleFactor;
+    sky, transmittanceTexture, r, muSun) * visibleFactor;
 }
 
 void computeSingleScatteringIntegrand(
   in SkyProperties sky,
   in sampler2D transmittanceTexture,
-  float centreToPointDist, float mu,
+  float r, float mu,
   float muSun,
-  float nu, float distToOtherPoint,
+  float nu, float d,
   bool doesRMuIntersectGround,
   out vec3 rayleigh, out vec3 mie) {
-  float centreToOtherPointDist = clampRadius(
-    sky,
-    sqrt(distToOtherPoint * distToOtherPoint +
-         2.0 * centreToPointDist * mu * distToOtherPoint +
-         centreToPointDist * centreToPointDist));
+  float rD = clampRadius(
+    sky, sqrt(d * d + 2.0 * r * mu * d + r * r));
 
-  float muSunAtOtherPoint = clamp0To1(
-    (centreToPointDist * muSun + distToOtherPoint * nu) /
-    centreToOtherPointDist);
+  float muSD = clamp0To1((r * muSun + d * nu) / rD);
 
   vec3 t =
     getTransmittance(
       sky, transmittanceTexture,
-      centreToPointDist, mu, distToOtherPoint,
-      doesRMuIntersectGround) *
+      r, mu, d, doesRMuIntersectGround) *
     getTransmittanceToSun(
-      sky, transmittanceTexture,
-      centreToOtherPointDist, muSunAtOtherPoint);
+      sky, transmittanceTexture, rD, muSD);
 
   rayleigh = t * getProfileDensity(
-    sky.rayleighDensity, centreToOtherPointDist - sky.bottomRadius);
+    sky.rayleighDensity, rD - sky.bottomRadius);
 
   mie = t * getProfileDensity(
-    sky.mieDensity, centreToOtherPointDist - sky.bottomRadius);
+    sky.mieDensity, rD - sky.bottomRadius);
 }
 
 // Ground or Sky
@@ -302,14 +288,14 @@ float distToNearestBoundary(
 void computeSingleScattering(
   in SkyProperties sky,
   in sampler2D transmittanceTexture,
-  float centreToPointDist, float mu,
-  float muSun,
-  float nu, bool doesRMuIntersectGround,
+  float r, float mu,
+  float muSun, float nu,
+  bool doesRMuIntersectGround,
   out vec3 rayleigh, out vec3 mie) {
   const int SAMPLE_COUNT = 50;
 
   float dx = distToNearestBoundary(
-    sky, centreToPointDist, mu, doesRMuIntersectGround) / float(SAMPLE_COUNT);
+    sky, r, mu, doesRMuIntersectGround) / float(SAMPLE_COUNT);
 
   vec3 totalRayleigh = vec3(0.0);
   vec3 totalMie = vec3(0.0);
@@ -322,7 +308,7 @@ void computeSingleScattering(
 
     computeSingleScatteringIntegrand(
       sky, transmittanceTexture,
-      centreToPointDist, mu, muSun, nu, currentDist,
+      r, mu, muSun, nu, currentDist,
       doesRMuIntersectGround, currentRayleigh, currentMie);
 
     float weight = (i == 0 || i == SAMPLE_COUNT) ? 0.5 : 1.0;
@@ -348,10 +334,8 @@ float miePhase(float g, float nu) {
 
 vec4 getScatteringTextureUVWZFromRMuMuSunNu(
   in SkyProperties sky,
-  float centreToPointDist, float mu, float muSun, float nu,
+  float r, float mu, float muSun, float nu,
   bool doesRMuIntersectGround) {
-  float r = centreToPointDist;
-
   float h = sqrt(
     sky.topRadius * sky.topRadius - sky.bottomRadius * sky.bottomRadius);
 
@@ -418,18 +402,28 @@ void getRMuMuSunNuFromScatteringTextureUVWZ(
     doesRMuIntersectGround = true;
   }
   else {
-    float xMuSun = getUnitFromTextureCoord(uvwz.y, SCATTERING_TEXTURE_MU_S_SIZE);
-    float dMin = sky.topRadius - sky.bottomRadius;
-    float dMax = h;
-    float dMuSunMin = distToSkyBoundary(sky, sky.bottomRadius, sky.muSunMin);
-    float aMuSunMin = (dMuSunMin - dMin) / (dMax - dMin);
-    float a = (aMuSunMin - xMuSun * aMuSunMin) / (1.0 + xMuSun * aMuSunMin);
-    float d = dMin + min(a, aMuSunMin) * (dMax - dMin);
-    muSun = (d == 0.0) ? 1.0 :
-      clamp0To1((h * h - d * d) / (2.0 * sky.bottomRadius * d));
+    float dMin = sky.topRadius - r;
+    float dMax = rho + h;
+    float d = dMin + (dMax - dMin) * getUnitFromTextureCoord(
+      2.0 * uvwz.z - 1.0, SCATTERING_TEXTURE_MU_SIZE / 2);
 
-    nu = clamp0To1(uvwz.x * 2.0 - 1.0);
+    mu = (d == 0.0) ? 1.0 :
+      clamp0To1((h * h - rho * rho - d * d) / (2.0 * r * d));
+
+    doesRMuIntersectGround = false;
   }
+
+  float xMuSun =
+    getUnitFromTextureCoord(uvwz.y, SCATTERING_TEXTURE_MU_S_SIZE);
+  float dMin = sky.topRadius - sky.bottomRadius;
+  float dMax = h;
+  float A =
+    -2.0 * sky.muSunMin * sky.bottomRadius / (dMax - dMin);
+  float a = (A - xMuSun * A) / (1.0 + xMuSun * A);
+  float d = dMin + min(a, A) * (dMax - dMin);
+  muSun = d == 0.0 ? float(1.0) :
+    clamp0To1((h * h - d * d) / (2.0 * sky.bottomRadius * d));
+  nu = clamp0To1(uvwz.x * 2.0 - 1.0);
 }
 
 void getRMuMuSunNuFromScatteringTextureFragCoord(
@@ -462,13 +456,16 @@ void getRMuMuSunNuFromScatteringTextureFragCoord(
 void computeSingleScatteringTexture(
   in SkyProperties sky,
   in sampler2D transmittanceTexture,
-  in vec3 fragCoord,
+  vec3 fragCoord,
   out vec3 rayleigh, out vec3 mie) {
   float r;
   float mu;
   float muSun;
   float nu;
   bool doesRMuIntersectGround;
+
+  // Vulkan flipping y
+  fragCoord.y = SCATTERING_TEXTURE_MU_SIZE - fragCoord.y;
 
   getRMuMuSunNuFromScatteringTextureFragCoord(
     sky, fragCoord, r, mu, muSun, nu, doesRMuIntersectGround);

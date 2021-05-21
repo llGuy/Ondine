@@ -1,5 +1,6 @@
 #version 450
 
+#include "sky_def.glsl"
 #include "sky_utils.glsl"
 
 /* These are all texture 3D */
@@ -13,7 +14,7 @@ layout (set = 0, binding = 0) uniform SkyUniform {
 
 layout (set = 1, binding = 0) uniform sampler2D uTransmittanceTexture;
 
-layout(push_constant) uniform PushConstant {
+layout (push_constant) uniform PushConstant {
   int layer;
 } uPushConstant;
 
@@ -23,7 +24,9 @@ void main() {
     vec3(gl_FragCoord.xy, uPushConstant.layer + 0.5),
     outDeltaRayleigh.rgb, outDeltaMie.rgb);
 
-  outDeltaRayleigh.a = 1.0f;
+  outDeltaRayleigh.a = 1.0;
+  outDeltaMie.a = 1.0;
 
   outScattering = vec4(outDeltaRayleigh.rgb, outDeltaMie.r);
+
 }

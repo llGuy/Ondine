@@ -13,10 +13,8 @@ void RendererSky::init(VulkanContext &graphicsContext) {
 }
 
 void RendererSky::tick(VulkanFrame &frame) {
-#if 0
-  precomputeTransmittance(frame.primaryCommandBuffer);
+  // precomputeTransmittance(frame.primaryCommandBuffer);
   precomputeSingleScattering(frame.primaryCommandBuffer);
-#endif
 }
 
 void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {

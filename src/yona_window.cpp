@@ -37,8 +37,8 @@ WindowContextInfo Window::init(OnEventProc callback) {
   case WindowMode::Windowed: {
     const GLFWvidmode *vidmode = glfwGetVideoMode(primaryMonitor);
     if (!mResolution.width) {
-      mResolution.width = vidmode->width / 2;
-      mResolution.height = vidmode->height / 2;
+      mResolution.width = vidmode->width / 1.5f;
+      mResolution.height = vidmode->height / 1.5f;
     }
   } break;
 
