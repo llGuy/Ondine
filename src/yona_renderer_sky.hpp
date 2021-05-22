@@ -56,7 +56,7 @@ private:
   static constexpr size_t IRRADIANCE_TEXTURE_WIDTH = 64;
   static constexpr size_t IRRADIANCE_TEXTURE_HEIGHT = 16;
   static constexpr VkFormat PRECOMPUTED_TEXTURE_FORMAT =
-    VK_FORMAT_R16G16B16A16_SFLOAT;
+    VK_FORMAT_R32G32B32A32_SFLOAT;
 
   SkyProperties mSkyProperties;
   VulkanBuffer mSkyPropertiesBuffer;

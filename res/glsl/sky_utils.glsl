@@ -197,7 +197,7 @@ vec3 getTransmittanceToSkyBoundary(
   in sampler2D transmittanceTexture,
   float centreToPointDist, float mu) {
   vec2 uv = getTransmittanceTextureUVFromRMu(sky, centreToPointDist, mu);
-  return vec3(texture(transmittanceTexture, uv));
+  return vec3(texture(transmittanceTexture, vec2(uv.x, 1.0 - uv.y)));
 }
 
 vec3 getTransmittance(
