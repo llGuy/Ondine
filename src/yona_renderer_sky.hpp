@@ -34,10 +34,17 @@ private:
     const Buffer &precomputeGsh,
     VulkanContext &graphicsContext);
 
+  void prepareDirectIrradiancePrecompute(
+    const Buffer &precomputeVsh,
+    VulkanContext &graphicsContext);
+
   void precomputeTransmittance(
     VulkanCommandBuffer &commandBuffer);
 
   void precomputeSingleScattering(
+    VulkanCommandBuffer &commandBuffer);
+
+  void precomputeDirectIrradiance(
     VulkanCommandBuffer &commandBuffer);
 
   void precompute(VulkanContext &graphicsContext);
@@ -77,9 +84,19 @@ private:
   VulkanFramebuffer mPrecomputeSingleScatteringFBO;
   VulkanTexture mPrecomputedSingleScattering;
 
+  struct IndirectIrradiancePushConstant {
+    int scatteringOrder;
+  };
+
+  VulkanPipeline mPrecomputeDirectIrradiancePipeline;
+  VulkanRenderPass mPrecomputeDirectIrradianceRenderPass;
+  VulkanFramebuffer mPrecomputeDirectIrradianceFBO;
+  VulkanTexture mPrecomputedIrradiance;
+
   /* Temporary textures */
   VulkanTexture mDeltaRayleighScatteringTexture;
   VulkanTexture mDeltaMieScatteringTexture;
+  VulkanTexture mDeltaIrradianceTexture;
 };
 
 }
