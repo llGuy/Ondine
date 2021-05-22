@@ -53,7 +53,7 @@ void VulkanInstance::init() {
   applicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   applicationInfo.pEngineName = "";
   applicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  applicationInfo.apiVersion = VK_API_VERSION_1_0;
+  applicationInfo.apiVersion = VK_API_VERSION_1_1;
 
   VkInstanceCreateInfo instanceInfo = {};
   instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;

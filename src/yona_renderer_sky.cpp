@@ -86,12 +86,12 @@ void RendererSky::initTemporaryPrecomputeTextures(
   
   mDeltaRayleighScatteringTexture.init(
     graphicsContext.device(), TextureType::T3D | TextureType::Attachment,
-    TextureContents::Color, VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_LINEAR,
+    TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT, VK_FILTER_LINEAR,
     extent, 1, 1);
 
   mDeltaMieScatteringTexture.init(
     graphicsContext.device(), TextureType::T3D | TextureType::Attachment,
-    TextureContents::Color, VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_LINEAR,
+    TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT, VK_FILTER_LINEAR,
     extent, 1, 1);
 }
 
@@ -124,7 +124,7 @@ void RendererSky::prepareTransmittancePrecompute(
     renderPassConfig.addAttachment(
       LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
       OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      VK_FORMAT_R32G32B32A32_SFLOAT);
+      PRECOMPUTED_TEXTURE_FORMAT);
 
     renderPassConfig.addSubpass(
       makeArray<uint32_t, AllocationType::Linear>(0U),
@@ -162,7 +162,7 @@ void RendererSky::prepareTransmittancePrecompute(
   { // Create attachments and framebuffer
     mPrecomputedTransmittance.init(
       graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
-      TextureContents::Color, VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_LINEAR,
+      TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT, VK_FILTER_LINEAR,
       {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT, 1}, 1, 1);
 
     VulkanFramebufferConfig fboConfig(1, mPrecomputeTransmittanceRenderPass);
@@ -191,18 +191,18 @@ void RendererSky::prepareSingleScatteringPrecompute(
     renderPassConfig.addAttachment(
       LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
       OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      VK_FORMAT_R32G32B32A32_SFLOAT);
+      PRECOMPUTED_TEXTURE_FORMAT);
 
     renderPassConfig.addAttachment(
       LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
       OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      VK_FORMAT_R32G32B32A32_SFLOAT);
+      PRECOMPUTED_TEXTURE_FORMAT);
 
     // The scattering texture
     renderPassConfig.addAttachment(
       LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
       OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      VK_FORMAT_R32G32B32A32_SFLOAT);
+      PRECOMPUTED_TEXTURE_FORMAT);
 
     renderPassConfig.addSubpass(
       makeArray<uint32_t, AllocationType::Linear>(0U, 1U, 2U),
@@ -252,7 +252,7 @@ void RendererSky::prepareSingleScatteringPrecompute(
 
     mPrecomputedSingleScattering.init(
       graphicsContext.device(), TextureType::T3D | TextureType::Attachment,
-      TextureContents::Color, VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_LINEAR,
+      TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT, VK_FILTER_LINEAR,
       extent, 1, 1);
 
     VulkanFramebufferConfig fboConfig(3, mPrecomputeSingleScatteringRenderPass);
