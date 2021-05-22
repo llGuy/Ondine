@@ -38,16 +38,10 @@ private:
     const Buffer &precomputeVsh,
     VulkanContext &graphicsContext);
 
-  void precomputeTransmittance(
-    VulkanCommandBuffer &commandBuffer);
-
-  void precomputeSingleScattering(
-    VulkanCommandBuffer &commandBuffer);
-
-  void precomputeDirectIrradiance(
-    VulkanCommandBuffer &commandBuffer);
-
   void precompute(VulkanContext &graphicsContext);
+  void precomputeTransmittance(VulkanCommandBuffer &commandBuffer);
+  void precomputeSingleScattering(VulkanCommandBuffer &commandBuffer);
+  void precomputeDirectIrradiance(VulkanCommandBuffer &commandBuffer);
 
 private:
   static constexpr size_t TRANSMITTANCE_WIDTH = 256;

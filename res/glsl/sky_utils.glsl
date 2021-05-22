@@ -109,12 +109,12 @@ vec3 computeTransmittanceToSkyBoundary(
 
   return exp(
     -(sky.rayleighScatteringCoef *
-        computeOpticalLengthToTopSkyBoundary(sky, sky.rayleighDensity, r, mu) +
+      computeOpticalLengthToTopSkyBoundary(sky, sky.rayleighDensity, r, mu) +
       sky.mieExtinctionCoef *
-        computeOpticalLengthToTopSkyBoundary(sky, sky.mieDensity, r, mu) +
+      computeOpticalLengthToTopSkyBoundary(sky, sky.mieDensity, r, mu) +
       sky.absorptionExtinctionCoef *
-        computeOpticalLengthToTopSkyBoundary(sky, sky.absorptionDensity, r, mu))
-  );
+      computeOpticalLengthToTopSkyBoundary(sky, sky.absorptionDensity, r, mu))
+             );
 }
 
 vec2 getTransmittanceTextureUVFromRMu(
@@ -127,7 +127,7 @@ vec2 getTransmittanceTextureUVFromRMu(
     Distance from ground level to top sky boundary along a horizontal ray 
     tangent to the ground
     Simple Pythagoras
-   */
+  */
   float h = sqrt(
     sky.topRadius * sky.topRadius - sky.bottomRadius * sky.bottomRadius);
 
@@ -612,9 +612,9 @@ vec3 computeScatteringDensity(
 
       rayleighMie += incidentRadiance * (
         sky.rayleighScatteringCoef * rayleighDensity *
-          rayleighPhase(nu2) +
+        rayleighPhase(nu2) +
         sky.mieScatteringCoef * mieDensity *
-          miePhase(sky.miePhaseFunctionG, nu2)) * domegaI;
+        miePhase(sky.miePhaseFunctionG, nu2)) * domegaI;
     }
   }
 
@@ -763,22 +763,22 @@ vec2 getIrradianceTextureUVFromRMuSun(
 
 void getRMuSunFromIrradianceTextureUV(
   in SkyProperties sky,
-    in vec2 uv, out float r, out float muSun) {
+  in vec2 uv, out float r, out float muSun) {
   float muSunMapping = getUnitFromTextureCoord(uv.x, IRRADIANCE_TEXTURE_WIDTH);
   float rMapping = getUnitFromTextureCoord(uv.y, IRRADIANCE_TEXTURE_HEIGHT);
 
   r = sky.bottomRadius +
-      rMapping * (sky.topRadius - sky.bottomRadius);
+    rMapping * (sky.topRadius - sky.bottomRadius);
   muSun = clamp0To1(2.0 * muSunMapping - 1.0);
 }
 
 const vec2 IRRADIANCE_TEXTURE_SIZE =
-    vec2(IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT);
+  vec2(IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT);
 
 vec3 computeDirectIrradianceTexture(
-    in SkyProperties sky,
-    in sampler2D transmittanceTexture,
-    in vec2 fragCoord) {
+  in SkyProperties sky,
+  in sampler2D transmittanceTexture,
+  in vec2 fragCoord) {
   float r;
   float muS;
   
@@ -786,16 +786,16 @@ vec3 computeDirectIrradianceTexture(
   uvFragCoord.y = 1.0 - uvFragCoord.y;
 
   getRMuSunFromIrradianceTextureUV(
-      sky, uvFragCoord, r, muS);
+    sky, uvFragCoord, r, muS);
   return computeDirectIrradiance(sky, transmittanceTexture, r, muS);
 }
 
 vec3 computeIndirectIrradianceTexture(
-    in SkyProperties sky,
-    in sampler3D singleRayleighScatteringTexture,
-    in sampler3D singleMieScatteringTexture,
-    in sampler3D multipleScatteringTexture,
-    in vec2 fragCoord, int scatteringOrder) {
+  in SkyProperties sky,
+  in sampler3D singleRayleighScatteringTexture,
+  in sampler3D singleMieScatteringTexture,
+  in sampler3D multipleScatteringTexture,
+  in vec2 fragCoord, int scatteringOrder) {
   float r;
   float muSun;
 
@@ -803,17 +803,18 @@ vec3 computeIndirectIrradianceTexture(
   uvFragCoord.y = 1.0 - uvFragCoord.y;
 
   getRMuSunFromIrradianceTextureUV(
-      sky, uvFragCoord, r, muSun);
+    sky, uvFragCoord, r, muSun);
 
-  return computeIndirectIrradiance(sky,
-      singleRayleighScatteringTexture, singleMieScatteringTexture,
-      multipleScatteringTexture, r, muSun, scatteringOrder);
+  return computeIndirectIrradiance(
+    sky,
+    singleRayleighScatteringTexture, singleMieScatteringTexture,
+    multipleScatteringTexture, r, muSun, scatteringOrder);
 }
 
 vec3 getIrradiance(
-    in SkyProperties sky,
-    in sampler2D irradianceTexture,
-    float r, float muSun) {
+  in SkyProperties sky,
+  in sampler2D irradianceTexture,
+  float r, float muSun) {
   vec2 uv = getIrradianceTextureUVFromRMuSun(sky, r, muSun);
   return vec3(texture(irradianceTexture, vec2(uv.x, 1.0 - uv.y)));
 }
