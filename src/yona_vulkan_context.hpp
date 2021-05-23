@@ -42,6 +42,7 @@ public:
   VulkanDescriptorSetLayoutMaker &descriptorLayouts();
   const VulkanCommandPool &commandPool() const;
   const VulkanDescriptorPool &descriptorPool() const;
+  const VulkanRenderPass &finalRenderPass() const;
   VulkanContextProperties getProperties() const;
 
 private:

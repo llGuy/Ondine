@@ -13,11 +13,22 @@ void RendererSky::init(VulkanContext &graphicsContext) {
 }
 
 void RendererSky::tick(VulkanFrame &frame) {
-  // precomputeTransmittance(frame.primaryCommandBuffer);
-  // precomputeSingleScattering(frame.primaryCommandBuffer);
-  // precomputeDirectIrradiance(frame.primaryCommandBuffer);
-  // precomputeScatteringDensity(
-  // frame.primaryCommandBuffer, 2);
+  auto &commandBuffer = frame.primaryCommandBuffer;
+
+  commandBuffer.bindPipeline(mDummy);
+
+  commandBuffer.bindUniforms(
+    mSkyPropertiesUniform,
+    mPrecomputedTransmittanceUniform,
+    mDeltaRayleighScatteringUniform,
+    mDeltaMieScatteringUniform,
+    mDeltaMultipleScatteringUniform,
+    mDeltaIrradianceUniform);
+
+  commandBuffer.setViewport({25, 25});
+  commandBuffer.setScissor({}, {25, 25});
+
+  commandBuffer.draw(4, 1, 0, 0);
 }
 
 void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {
@@ -128,6 +139,8 @@ void RendererSky::preparePrecompute(VulkanContext &graphicsContext) {
   prepareSingleScatteringPrecompute(quadVsh, quadGsh, graphicsContext);
   prepareDirectIrradiancePrecompute(quadVsh, graphicsContext);
   prepareScatteringDensityPrecompute(quadVsh, quadGsh, graphicsContext);
+
+  initDummyPipeline(quadVsh, graphicsContext);
 }
 
 void RendererSky::prepareTransmittancePrecompute(
@@ -643,6 +656,38 @@ void RendererSky::make2DTextureAndUniform(
     graphicsContext.descriptorPool(),
     graphicsContext.descriptorLayouts(),
     makeArray<VulkanTexture, AllocationType::Linear>(texture));
+}
+
+void RendererSky::initDummyPipeline(
+  const Buffer &vsh,
+  VulkanContext &graphicsContext) {
+  File precomputeScatteringDensity = gFileSystem->createFile(
+    (MountPoint)ApplicationMountPoints::Application,
+    "res/spv/sky_dummy.frag.spv",
+    FileOpenType::Binary | FileOpenType::In);
+
+  Buffer fsh = precomputeScatteringDensity.readBinary();
+
+  VulkanPipelineConfig pipelineConfig(
+    {graphicsContext.finalRenderPass(), 0},
+    VulkanShader(
+      graphicsContext.device(), vsh, VulkanShaderType::Vertex),
+    VulkanShader(
+      graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+
+  VulkanPipelineDescriptorLayout textureUL =
+    {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
+
+  pipelineConfig.configurePipelineLayout(
+    0,
+    VulkanPipelineDescriptorLayout{
+      VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+    textureUL, textureUL, textureUL, textureUL, textureUL);
+
+  mDummy.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorLayouts(),
+    pipelineConfig);
 }
 
 }

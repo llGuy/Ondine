@@ -171,6 +171,10 @@ const VulkanDescriptorPool &VulkanContext::descriptorPool() const {
   return mDescriptorPool;
 }
 
+const VulkanRenderPass &VulkanContext::finalRenderPass() const {
+  return mFinalRenderPass;
+}
+
 VulkanContextProperties VulkanContext::getProperties() const {
   VulkanContextProperties properties = {};
   properties.swapchainFormat = mSwapchain.mFormat;

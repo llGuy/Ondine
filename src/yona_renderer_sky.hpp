@@ -64,6 +64,10 @@ private:
     VulkanTexture &texture, VulkanUniform &uniform,
     VulkanContext &graphicsContext);
 
+  void initDummyPipeline(
+    const Buffer &vsh,
+    VulkanContext &graphicsContext);
+
 private:
   static constexpr size_t NUM_SCATTERING_ORDERS = 2;
   static constexpr size_t TRANSMITTANCE_WIDTH = 256;
@@ -131,6 +135,9 @@ private:
 
   VulkanTexture mDeltaMultipleScatteringTexture;
   VulkanUniform mDeltaMultipleScatteringUniform;
+
+  /* For testing so that Renderdoc can show ressources */
+  VulkanPipeline mDummy;
 };
 
 }
