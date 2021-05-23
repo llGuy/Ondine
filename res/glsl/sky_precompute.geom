@@ -5,6 +5,7 @@ layout (triangle_strip, max_vertices = 3) out;
 
 layout(push_constant) uniform PushConstant {
   int layer;
+  int scatteringOrder;
 } uPushConstant;
 
 void main() {

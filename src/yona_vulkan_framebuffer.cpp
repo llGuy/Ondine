@@ -42,7 +42,7 @@ void VulkanFramebufferConfig::finishConfiguration() {
 
     Array<VkImageView, AllocationType::Linear> views(mAttachments.size);
     for (int i = 0; i < mAttachments.size; ++i) {
-      views[i] = mAttachments[i].mImageView;
+      views[i] = mAttachments[i].mImageViewAttachment;
     }
 
     mCreateInfo.pAttachments = views.data;

@@ -159,4 +159,20 @@ void VulkanCommandBuffer::draw(
     firstVertex, firstInstance);
 }
 
+void VulkanCommandBuffer::transitionImageLayout(
+  const VulkanTexture &texture,
+  VkImageLayout src, VkImageLayout dst,
+  VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage) const {
+  auto barrier = texture.makeBarrier(src, dst);
+
+  vkCmdPipelineBarrier(
+    mCommandBuffer,
+    srcStage,
+    dstStage,
+    0,
+    0, NULL,
+    0, NULL,
+    1, &barrier);
+}
+
 }

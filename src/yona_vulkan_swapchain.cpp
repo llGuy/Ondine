@@ -124,7 +124,8 @@ Array<VulkanFramebuffer> VulkanSwapchain::makeFramebuffers(
 
   for (int i = 0; i < mImageViews.size; ++i) {
     VulkanTexture textureAttachment;
-    textureAttachment.mImageView = mImageViews[i];
+    textureAttachment.mImageViewAttachment = mImageViews[i];
+    textureAttachment.mImageViewSample = mImageViews[i];
     textureAttachment.mLayerCount = 1;
     textureAttachment.mViewLayerCount = 1;
     textureAttachment.mExtent = {mExtent.width, mExtent.height, 1};

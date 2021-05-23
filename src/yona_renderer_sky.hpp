@@ -38,12 +38,32 @@ private:
     const Buffer &precomputeVsh,
     VulkanContext &graphicsContext);
 
+  void prepareScatteringDensityPrecompute(
+    const Buffer &precomputeVsh,
+    const Buffer &precomputeGsh,
+    VulkanContext &graphicsContext);
+
   void precompute(VulkanContext &graphicsContext);
   void precomputeTransmittance(VulkanCommandBuffer &commandBuffer);
   void precomputeSingleScattering(VulkanCommandBuffer &commandBuffer);
   void precomputeDirectIrradiance(VulkanCommandBuffer &commandBuffer);
+  void precomputeScatteringDensity(
+    VulkanCommandBuffer &commandBuffer, int scatteringOrder);
 
 private:
+  // Some utility functions
+  void make3DTextureAndUniform(
+    const VkExtent3D extent,
+    VulkanTexture &texture, VulkanUniform &uniform,
+    VulkanContext &graphicsContext);
+
+  void make2DTextureAndUniform(
+    const VkExtent3D extent,
+    VulkanTexture &texture, VulkanUniform &uniform,
+    VulkanContext &graphicsContext);
+
+private:
+  static constexpr size_t NUM_SCATTERING_ORDERS = 2;
   static constexpr size_t TRANSMITTANCE_WIDTH = 256;
   static constexpr size_t TRANSMITTANCE_HEIGHT = 64;
   static constexpr size_t SCATTERING_TEXTURE_R_SIZE = 32;
@@ -69,28 +89,43 @@ private:
   VulkanTexture mPrecomputedTransmittance;
   VulkanUniform mPrecomputedTransmittanceUniform;
 
-  struct SingleScatteringPushConstant {
+  struct PrecomputePushConstant {
     int layer;
+    int scatteringOrder;
   };
 
   VulkanPipeline mPrecomputeSingleScatteringPipeline;
   VulkanRenderPass mPrecomputeSingleScatteringRenderPass;
   VulkanFramebuffer mPrecomputeSingleScatteringFBO;
-  VulkanTexture mPrecomputedSingleScattering;
 
-  struct IndirectIrradiancePushConstant {
-    int scatteringOrder;
-  };
+  VulkanTexture mPrecomputedScattering;
+  VulkanUniform mPrecomputedScatteringUniform;
 
   VulkanPipeline mPrecomputeDirectIrradiancePipeline;
   VulkanRenderPass mPrecomputeDirectIrradianceRenderPass;
   VulkanFramebuffer mPrecomputeDirectIrradianceFBO;
   VulkanTexture mPrecomputedIrradiance;
+  VulkanUniform mPrecomputedIrradianceUniform;
+
+  VulkanPipeline mPrecomputeScatteringDensityPipeline;
+  VulkanRenderPass mPrecomputeScatteringDensityRenderPass;
+  VulkanFramebuffer mPrecomputeScatteringDensityFBO;
 
   /* Temporary textures */
   VulkanTexture mDeltaRayleighScatteringTexture;
+  VulkanUniform mDeltaRayleighScatteringUniform;
+
   VulkanTexture mDeltaMieScatteringTexture;
+  VulkanUniform mDeltaMieScatteringUniform;
+
   VulkanTexture mDeltaIrradianceTexture;
+  VulkanUniform mDeltaIrradianceUniform;
+
+  VulkanTexture mDeltaScatteringDensityTexture;
+  VulkanUniform mDeltaScatteringDensityUniform;
+
+  VulkanTexture mDeltaMultipleScatteringTexture;
+  VulkanUniform mDeltaMultipleScatteringUniform;
 };
 
 }

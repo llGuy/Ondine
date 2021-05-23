@@ -15,6 +15,7 @@ layout (set = 1, binding = 1) uniform sampler3D uSingleMieScattering;
 layout (set = 1, binding = 2) uniform sampler3D uMultipleScattering;
 
 layout (push_constant) uniform PushConstant {
+  int layer;
   int scatteringOrder;
 } uPushConstant;
 

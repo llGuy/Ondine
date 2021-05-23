@@ -36,6 +36,34 @@ VkAccessFlags findAccessFlagsForStage(VkPipelineStageFlags stage) {
   }
 }
 
+VkAccessFlags findAccessFlagsForImageLayout(VkImageLayout layout) {
+  switch (layout) {
+  case VK_IMAGE_LAYOUT_UNDEFINED:
+    return 0;
+
+  case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+    return VK_ACCESS_TRANSFER_WRITE_BIT | VK_ACCESS_TRANSFER_READ_BIT;
+
+  case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+    return VK_ACCESS_TRANSFER_WRITE_BIT;
+
+  case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+    return VK_ACCESS_SHADER_READ_BIT;
+
+  case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+    return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+      VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+  case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+    return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+  default: {
+    LOG_ERROR("Didn't handle image layout for finding access flags!\n");
+    PANIC_AND_EXIT();
+  } return 0;
+  }
+}
+
 void VulkanSemaphore::init(const VulkanDevice &device) {
   VkSemaphoreCreateInfo semaphoreInfo = {};
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;

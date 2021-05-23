@@ -11,6 +11,7 @@ class VulkanRenderPass;
 class VulkanFramebuffer;
 class VulkanBuffer;
 class VulkanCommandBuffer;
+class VulkanTexture;
 
 class VulkanCommandBuffer {
 public:
@@ -63,6 +64,11 @@ public:
     const VulkanBuffer &dst, size_t dstOffset,
     const VulkanBuffer &src, size_t srcOffset,
     size_t size) const;
+
+  void transitionImageLayout(
+    const VulkanTexture &texture,
+    VkImageLayout src, VkImageLayout dst,
+    VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage) const;
 
 private:
   void init(VkCommandBuffer handle, VkCommandBufferLevel level);

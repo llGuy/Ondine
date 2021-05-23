@@ -16,6 +16,7 @@ layout (set = 1, binding = 0) uniform sampler2D uTransmittanceTexture;
 
 layout (push_constant) uniform PushConstant {
   int layer;
+  int scatteringOrder;
 } uPushConstant;
 
 void main() {

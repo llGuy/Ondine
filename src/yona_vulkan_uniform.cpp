@@ -78,7 +78,7 @@ void VulkanUniform::init(
 
   for (int i = 0; i < textures.size; ++i) {
     imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    imageInfos[i].imageView = textures[i].mImageView;
+    imageInfos[i].imageView = textures[i].mImageViewSample;
     imageInfos[i].sampler = textures[i].mSampler;
 
     writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

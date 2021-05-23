@@ -36,19 +36,27 @@ public:
     VkFilter filter, VkExtent3D extent, size_t layerCount,
     size_t mipLevels);
 
+  VkImageMemoryBarrier makeBarrier(
+    VkImageLayout oldLayout,
+    VkImageLayout newLayout) const;
+
 private:
   VkImage mImage;
   VkDeviceMemory mMemory;
-  VkImageView mImageView;
+  VkImageView mImageViewSample;
+  VkImageView mImageViewAttachment;
   VkSampler mSampler;
   VkExtent3D mExtent;
   uint32_t mLayerCount;
+  uint32_t mLevelCount;
   uint32_t mViewLayerCount;
   TextureTypeBits mType;
+  TextureContents mContents;
 
   friend class VulkanSwapchain;
   friend class VulkanFramebufferConfig;
   friend class VulkanUniform;
+  friend class VulkanCommandBuffer;
 };
 
 }

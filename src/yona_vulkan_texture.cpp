@@ -1,4 +1,5 @@
 #include "yona_vulkan.hpp"
+#include "yona_vulkan_sync.hpp"
 #include "yona_vulkan_device.hpp"
 #include "yona_vulkan_texture.hpp"
 
@@ -12,12 +13,14 @@ void VulkanTexture::init(
   mExtent = extent;
   mType = type;
   mLayerCount = layerCount;
+  mContents  = contents;
+  mLevelCount = mipLevels;
 
   mViewLayerCount = mLayerCount;
 
   VkImageType imageType;
   VkImageCreateFlags imageFlags = 0;
-  VkImageViewType viewType;
+  VkImageViewType viewTypeSample, viewTypeAttachment;
 
   VkImageUsageFlags usage =
     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -46,17 +49,18 @@ void VulkanTexture::init(
   case TextureType::T2D: {
     imageType = VK_IMAGE_TYPE_2D;
     if (layerCount == 1) {
-      viewType = VK_IMAGE_VIEW_TYPE_2D;
+      viewTypeAttachment = viewTypeSample = VK_IMAGE_VIEW_TYPE_2D;
     }
     else {
-      viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+      viewTypeAttachment = viewTypeSample = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
     }
   } break;
 
   case TextureType::T3D: {
     imageType = VK_IMAGE_TYPE_3D;
     // May need to change this to 3D or have multiple views
-    viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+    viewTypeAttachment = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+    viewTypeSample = VK_IMAGE_VIEW_TYPE_3D;
     imageFlags = VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT;
     mViewLayerCount = extent.depth;
   } break;
@@ -64,7 +68,7 @@ void VulkanTexture::init(
   case TextureType::Cubemap: {
     imageType = VK_IMAGE_TYPE_2D;
     imageFlags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-    viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+    viewTypeSample = viewTypeAttachment = VK_IMAGE_VIEW_TYPE_CUBE;
   } break;
   }
 
@@ -103,16 +107,29 @@ void VulkanTexture::init(
   VkImageViewCreateInfo imageViewInfo = {};
   imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   imageViewInfo.image = mImage;
-  imageViewInfo.viewType = viewType;
+  imageViewInfo.viewType = viewTypeSample;
   imageViewInfo.format = format;
   imageViewInfo.subresourceRange.aspectMask = aspect;
   imageViewInfo.subresourceRange.baseMipLevel = 0;
   imageViewInfo.subresourceRange.levelCount = mipLevels;
   imageViewInfo.subresourceRange.baseArrayLayer = 0;
-  imageViewInfo.subresourceRange.layerCount = mViewLayerCount;
+  imageViewInfo.subresourceRange.layerCount = mLayerCount;
 
   VK_CHECK(
-    vkCreateImageView(device.mLogicalDevice, &imageViewInfo, NULL, &mImageView));
+    vkCreateImageView(
+      device.mLogicalDevice, &imageViewInfo, NULL, &mImageViewSample));
+
+  if (type == TextureType::T3D) {
+    imageViewInfo.viewType = viewTypeAttachment;
+    imageViewInfo.subresourceRange.layerCount = mViewLayerCount;
+
+    VK_CHECK(
+      vkCreateImageView(
+        device.mLogicalDevice, &imageViewInfo, NULL, &mImageViewAttachment));
+  }
+  else {
+    mImageViewAttachment = mImageViewSample;
+  }
 
   VkSamplerCreateInfo samplerInfo = {};
   // In future may need to change this
@@ -130,6 +147,35 @@ void VulkanTexture::init(
 
   VK_CHECK(
     vkCreateSampler(device.mLogicalDevice, &samplerInfo, NULL, &mSampler));
+}
+
+VkImageMemoryBarrier VulkanTexture::makeBarrier(
+  VkImageLayout oldLayout,
+  VkImageLayout newLayout) const {
+  VkImageMemoryBarrier imageBarrier = {};
+  imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  imageBarrier.srcAccessMask = findAccessFlagsForImageLayout(oldLayout);
+  imageBarrier.dstAccessMask = findAccessFlagsForImageLayout(newLayout);
+  imageBarrier.oldLayout = oldLayout;
+  imageBarrier.newLayout = newLayout;
+  imageBarrier.image = mImage;
+
+  switch (mContents) {
+  case TextureContents::Color: {
+    imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  } break;
+
+  case TextureContents::Depth: {
+    imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+  } break;
+  }
+
+  imageBarrier.subresourceRange.baseMipLevel = 0;
+  imageBarrier.subresourceRange.levelCount = mLevelCount;
+  imageBarrier.subresourceRange.baseArrayLayer = 0;
+  imageBarrier.subresourceRange.layerCount = mLayerCount;
+
+  return imageBarrier;
 }
 
 }

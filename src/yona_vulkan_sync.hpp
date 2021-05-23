@@ -5,6 +5,7 @@
 namespace Yona {
 
 VkAccessFlags findAccessFlagsForStage(VkPipelineStageFlags stage);
+VkAccessFlags findAccessFlagsForImageLayout(VkImageLayout layout);
 
 class VulkanDevice;
 

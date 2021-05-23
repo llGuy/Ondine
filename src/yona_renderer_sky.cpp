@@ -15,7 +15,9 @@ void RendererSky::init(VulkanContext &graphicsContext) {
 void RendererSky::tick(VulkanFrame &frame) {
   // precomputeTransmittance(frame.primaryCommandBuffer);
   // precomputeSingleScattering(frame.primaryCommandBuffer);
-  precomputeDirectIrradiance(frame.primaryCommandBuffer);
+  // precomputeDirectIrradiance(frame.primaryCommandBuffer);
+  // precomputeScatteringDensity(
+  // frame.primaryCommandBuffer, 2);
 }
 
 void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {
@@ -79,26 +81,31 @@ void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {
 
 void RendererSky::initTemporaryPrecomputeTextures(
   VulkanContext &graphicsContext) {
-    VkExtent3D extent = {
-      SCATTERING_TEXTURE_WIDTH,
-      SCATTERING_TEXTURE_HEIGHT,
-      SCATTERING_TEXTURE_DEPTH
-    };
+  VkExtent3D extent3D = {
+    SCATTERING_TEXTURE_WIDTH,
+    SCATTERING_TEXTURE_HEIGHT,
+    SCATTERING_TEXTURE_DEPTH
+  };
+
+  make3DTextureAndUniform(
+    extent3D, mDeltaRayleighScatteringTexture,
+    mDeltaRayleighScatteringUniform, graphicsContext);
+
+  make3DTextureAndUniform(
+    extent3D, mDeltaMieScatteringTexture,
+    mDeltaMieScatteringUniform, graphicsContext);
   
-  mDeltaRayleighScatteringTexture.init(
-    graphicsContext.device(), TextureType::T3D | TextureType::Attachment,
-    TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT, VK_FILTER_LINEAR,
-    extent, 1, 1);
+  make3DTextureAndUniform(
+    extent3D, mDeltaScatteringDensityTexture,
+    mDeltaScatteringDensityUniform, graphicsContext);
 
-  mDeltaMieScatteringTexture.init(
-    graphicsContext.device(), TextureType::T3D | TextureType::Attachment,
-    TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT, VK_FILTER_LINEAR,
-    extent, 1, 1);
+  make3DTextureAndUniform(
+    extent3D, mDeltaMultipleScatteringTexture,
+    mDeltaMultipleScatteringUniform, graphicsContext);
 
-  mDeltaIrradianceTexture.init(
-    graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
-    TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT, VK_FILTER_LINEAR,
-    {IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT, 1}, 1, 1);
+  make2DTextureAndUniform(
+    {IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT, 1},
+    mDeltaIrradianceTexture, mDeltaIrradianceUniform, graphicsContext);
 }
 
 void RendererSky::preparePrecompute(VulkanContext &graphicsContext) {
@@ -120,6 +127,7 @@ void RendererSky::preparePrecompute(VulkanContext &graphicsContext) {
   prepareTransmittancePrecompute(quadVsh, graphicsContext);
   prepareSingleScatteringPrecompute(quadVsh, quadGsh, graphicsContext);
   prepareDirectIrradiancePrecompute(quadVsh, graphicsContext);
+  prepareScatteringDensityPrecompute(quadVsh, quadGsh, graphicsContext);
 }
 
 void RendererSky::prepareTransmittancePrecompute(
@@ -167,24 +175,15 @@ void RendererSky::prepareTransmittancePrecompute(
   }
 
   { // Create attachments and framebuffer
-    mPrecomputedTransmittance.init(
-      graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
-      TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT, VK_FILTER_LINEAR,
-      {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT, 1}, 1, 1);
+    make2DTextureAndUniform(
+      {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT, 1},
+      mPrecomputedTransmittance, mPrecomputedTransmittanceUniform,
+      graphicsContext);
 
     VulkanFramebufferConfig fboConfig(1, mPrecomputeTransmittanceRenderPass);
     fboConfig.addAttachment(mPrecomputedTransmittance);
 
     mPrecomputeTransmittanceFBO.init(graphicsContext.device(), fboConfig);
-  }
-
-  { // Create uniform for transmittance texture
-    mPrecomputedTransmittanceUniform.init(
-      graphicsContext.device(),
-      graphicsContext.descriptorPool(),
-      graphicsContext.descriptorLayouts(),
-      makeArray<VulkanTexture, AllocationType::Linear>(
-        mPrecomputedTransmittance));
   }
 }
 
@@ -238,7 +237,7 @@ void RendererSky::prepareSingleScatteringPrecompute(
         graphicsContext.device(), fsh, VulkanShaderType::Fragment));
 
     pipelineConfig.configurePipelineLayout(
-      sizeof(SingleScatteringPushConstant),
+      sizeof(PrecomputePushConstant),
       VulkanPipelineDescriptorLayout{
         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       VulkanPipelineDescriptorLayout{
@@ -257,15 +256,14 @@ void RendererSky::prepareSingleScatteringPrecompute(
       SCATTERING_TEXTURE_DEPTH
     };
 
-    mPrecomputedSingleScattering.init(
-      graphicsContext.device(), TextureType::T3D | TextureType::Attachment,
-      TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT, VK_FILTER_LINEAR,
-      extent, 1, 1);
+    make3DTextureAndUniform(
+      extent, mPrecomputedScattering, mPrecomputedScatteringUniform,
+      graphicsContext);
 
     VulkanFramebufferConfig fboConfig(3, mPrecomputeSingleScatteringRenderPass);
     fboConfig.addAttachment(mDeltaRayleighScatteringTexture);
     fboConfig.addAttachment(mDeltaMieScatteringTexture);
-    fboConfig.addAttachment(mPrecomputedSingleScattering);
+    fboConfig.addAttachment(mPrecomputedScattering);
 
     mPrecomputeSingleScatteringFBO.init(graphicsContext.device(), fboConfig);
   }
@@ -328,16 +326,86 @@ void RendererSky::prepareDirectIrradiancePrecompute(
       IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT, 1
     };
 
-    mPrecomputedIrradiance.init(
-      graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
-      TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT, VK_FILTER_LINEAR,
-      extent, 1, 1);
+    make2DTextureAndUniform(
+      extent, mPrecomputedIrradiance, mPrecomputedIrradianceUniform,
+      graphicsContext);
 
     VulkanFramebufferConfig fboConfig(2, mPrecomputeDirectIrradianceRenderPass);
     fboConfig.addAttachment(mDeltaIrradianceTexture);
     fboConfig.addAttachment(mPrecomputedIrradiance);
 
     mPrecomputeDirectIrradianceFBO.init(graphicsContext.device(), fboConfig);
+  }
+}
+
+void RendererSky::prepareScatteringDensityPrecompute(
+  const Buffer &precomputeVsh,
+  const Buffer &precomputeGsh,
+  VulkanContext &graphicsContext) {
+  { // Create render pass
+    VulkanRenderPassConfig renderPassConfig(1, 1);
+
+    renderPassConfig.addAttachment(
+      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
+      OutputUsage::FragmentShaderRead, AttachmentType::Color,
+      PRECOMPUTED_TEXTURE_FORMAT);
+
+    renderPassConfig.addSubpass(
+      makeArray<uint32_t, AllocationType::Linear>(0U),
+      makeArray<uint32_t, AllocationType::Linear>(),
+      false);
+
+    mPrecomputeScatteringDensityRenderPass.init(
+      graphicsContext.device(), renderPassConfig);
+  }
+  
+  { // Create pipeline
+    File precomputeScatteringDensity = gFileSystem->createFile(
+      (MountPoint)ApplicationMountPoints::Application,
+      "res/spv/sky_scattering_density.frag.spv",
+      FileOpenType::Binary | FileOpenType::In);
+
+    Buffer fsh = precomputeScatteringDensity.readBinary();
+
+    VulkanPipelineConfig pipelineConfig(
+      {mPrecomputeScatteringDensityRenderPass, 0},
+      VulkanShader(
+        graphicsContext.device(), precomputeVsh, VulkanShaderType::Vertex),
+      VulkanShader(
+        graphicsContext.device(), precomputeGsh, VulkanShaderType::Geometry),
+      VulkanShader(
+        graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+
+    VulkanPipelineDescriptorLayout textureUL =
+      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
+
+    pipelineConfig.configurePipelineLayout(
+      sizeof(PrecomputePushConstant),
+      VulkanPipelineDescriptorLayout{
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      textureUL, textureUL, textureUL, textureUL, textureUL);
+
+    mPrecomputeScatteringDensityPipeline.init(
+      graphicsContext.device(),
+      graphicsContext.descriptorLayouts(),
+      pipelineConfig);
+  }
+
+  { // Create attachments and framebuffer
+    VkExtent3D extent = {
+      SCATTERING_TEXTURE_WIDTH,
+      SCATTERING_TEXTURE_HEIGHT,
+      SCATTERING_TEXTURE_DEPTH
+    };
+
+    make3DTextureAndUniform(
+      extent, mDeltaScatteringDensityTexture, mDeltaScatteringDensityUniform,
+      graphicsContext);
+
+    VulkanFramebufferConfig fboConfig(1, mPrecomputeScatteringDensityRenderPass);
+    fboConfig.addAttachment(mDeltaScatteringDensityTexture);
+
+    mPrecomputeScatteringDensityFBO.init(graphicsContext.device(), fboConfig);
   }
 }
 
@@ -354,6 +422,40 @@ void RendererSky::precompute(VulkanContext &graphicsContext) {
     precomputeTransmittance(commandBuffer);
     precomputeSingleScattering(commandBuffer);
     precomputeDirectIrradiance(commandBuffer);
+
+    commandBuffer.transitionImageLayout(
+      mDeltaMultipleScatteringTexture,
+      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+    for (
+      int scatteringOrder = 2;
+      scatteringOrder <= NUM_SCATTERING_ORDERS;
+      ++scatteringOrder) {
+      // precomputeScatteringDensity(commandBuffer, scatteringOrder);
+    }
+  }
+  commandBuffer.end();
+
+  queue.submitCommandBuffer(
+    commandBuffer,
+    makeArray<VulkanSemaphore, AllocationType::Linear>(),
+    makeArray<VulkanSemaphore, AllocationType::Linear>(),
+    0, VulkanFence());
+
+  queue.idle();
+
+  commandBuffer = commandPool.makeCommandBuffer(
+    device, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+  commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
+  { // Precompute
+    for (
+      int scatteringOrder = 2;
+      scatteringOrder <= NUM_SCATTERING_ORDERS;
+      ++scatteringOrder) {
+      precomputeScatteringDensity(commandBuffer, scatteringOrder);
+    }
   }
   commandBuffer.end();
 
@@ -394,7 +496,7 @@ void RendererSky::precomputeSingleScattering(
     mPrecomputeSingleScatteringRenderPass,
     mPrecomputeSingleScatteringFBO, {}, extent);
 
-  SingleScatteringPushConstant pushConstant = {};
+  PrecomputePushConstant pushConstant = {};
 
   for (int layer = 0; layer < SCATTERING_TEXTURE_DEPTH; ++layer) {
     pushConstant.layer = layer;
@@ -432,6 +534,76 @@ void RendererSky::precomputeDirectIrradiance(
   commandBuffer.draw(4, 1, 0, 0);
 
   commandBuffer.endRenderPass();
+}
+
+void RendererSky::precomputeScatteringDensity(
+  VulkanCommandBuffer &commandBuffer,
+  int scatteringOrder) {
+  VkExtent2D extent = {SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT};
+
+  commandBuffer.beginRenderPass(
+    mPrecomputeScatteringDensityRenderPass,
+    mPrecomputeScatteringDensityFBO, {}, extent);
+
+  PrecomputePushConstant pushConstant = {};
+
+  for (int layer = 0; layer < SCATTERING_TEXTURE_DEPTH; ++layer) {
+    pushConstant.layer = layer;
+    pushConstant.scatteringOrder = scatteringOrder;
+
+    commandBuffer.bindPipeline(mPrecomputeScatteringDensityPipeline);
+
+    commandBuffer.bindUniforms(
+      mSkyPropertiesUniform,
+      mPrecomputedTransmittanceUniform,
+      mDeltaRayleighScatteringUniform,
+      mDeltaMieScatteringUniform,
+      mDeltaMultipleScatteringUniform,
+      mPrecomputedIrradianceUniform);
+
+    commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
+
+    commandBuffer.setViewport(extent);
+    commandBuffer.setScissor({}, extent);
+
+    commandBuffer.draw(4, 1, 0, 0);
+  }
+
+  commandBuffer.endRenderPass();
+}
+
+void RendererSky::make3DTextureAndUniform(
+  const VkExtent3D extent,
+  VulkanTexture &texture,
+  VulkanUniform &uniform,
+  VulkanContext &graphicsContext) {
+  texture.init(
+    graphicsContext.device(), TextureType::T3D | TextureType::Attachment,
+    TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT, VK_FILTER_LINEAR,
+    extent, 1, 1);
+
+  uniform.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorPool(),
+    graphicsContext.descriptorLayouts(),
+    makeArray<VulkanTexture, AllocationType::Linear>(texture));
+}
+
+void RendererSky::make2DTextureAndUniform(
+  const VkExtent3D extent,
+  VulkanTexture &texture,
+  VulkanUniform &uniform,
+  VulkanContext &graphicsContext) {
+  texture.init(
+    graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
+    TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT, VK_FILTER_LINEAR,
+    extent, 1, 1);
+
+  uniform.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorPool(),
+    graphicsContext.descriptorLayouts(),
+    makeArray<VulkanTexture, AllocationType::Linear>(texture));
 }
 
 }
