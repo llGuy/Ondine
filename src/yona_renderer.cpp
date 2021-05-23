@@ -7,6 +7,9 @@ namespace Yona {
 void Renderer::init(VulkanContext &vulkanContext) {
   mGBuffer.init(vulkanContext);
   mRendererSky.init(vulkanContext);
+
+  // Idle with all precomputation stuff
+  vulkanContext.device().graphicsQueue().idle();
 }
 
 void Renderer::tick(VulkanFrame &frame) {

@@ -414,11 +414,33 @@ void RendererSky::precompute(VulkanContext &graphicsContext) {
   const auto &device = graphicsContext.device();
   const auto &queue = device.graphicsQueue();
 
-  VulkanCommandBuffer commandBuffer = commandPool.makeCommandBuffer(
-    device, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+  static constexpr uint32_t MAX_COMMAND_BUFFERS = 25;
 
-  commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
-  { // Precompute
+  Array<VulkanCommandBuffer, AllocationType::Linear> commandBuffers(
+    MAX_COMMAND_BUFFERS);
+
+  auto recordComputation =
+    [&commandBuffers, &commandPool, &graphicsContext] (auto computation) {
+      const auto &commandPool = graphicsContext.commandPool();
+      const auto &device = graphicsContext.device();
+
+      auto &currentCommandBuffer = commandBuffers[commandBuffers.size];
+
+      currentCommandBuffer = commandPool.makeCommandBuffer(
+        device, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+      currentCommandBuffer.begin(
+        VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
+
+      // Record commands
+      computation(currentCommandBuffer);
+
+      currentCommandBuffer.end();
+
+      commandBuffers.size++;
+    };
+
+  recordComputation([this](VulkanCommandBuffer &commandBuffer) {
     precomputeTransmittance(commandBuffer);
     precomputeSingleScattering(commandBuffer);
     precomputeDirectIrradiance(commandBuffer);
@@ -427,60 +449,56 @@ void RendererSky::precompute(VulkanContext &graphicsContext) {
       mDeltaMultipleScatteringTexture,
       VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
       VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+  });
+
+  for (
+    int scatteringOrder = 2;
+    scatteringOrder <= NUM_SCATTERING_ORDERS;
+    ++scatteringOrder) {
+
+    // Do this one in two passes (quite intense)
+    recordComputation(
+      [this, scatteringOrder](VulkanCommandBuffer &commandBuffer) {
+        precomputeScatteringDensity(
+          commandBuffer, scatteringOrder, 0, SCATTERING_TEXTURE_DEPTH / 2);
+      });
+
+    recordComputation(
+      [this, scatteringOrder](VulkanCommandBuffer &commandBuffer) {
+        precomputeScatteringDensity(
+          commandBuffer, scatteringOrder,
+          SCATTERING_TEXTURE_DEPTH / 2, SCATTERING_TEXTURE_DEPTH);
+      });
   }
-  commandBuffer.end();
 
-  queue.submitCommandBuffer(
-    commandBuffer,
-    makeArray<VulkanSemaphore, AllocationType::Linear>(),
-    makeArray<VulkanSemaphore, AllocationType::Linear>(),
-    0, VulkanFence());
+  /* Initialise the semaphores */
+  Array<VulkanSemaphore, AllocationType::Linear> semaphores(
+    commandBuffers.size - 1);
 
-  queue.idle();
+  for (int i = 0; i < semaphores.capacity; ++i) {
+    semaphores[i].init(graphicsContext.device());
+  }
 
-  commandBuffer = commandPool.makeCommandBuffer(
-    device, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+  for (int i = 0; i < commandBuffers.size; ++i) {
+    auto &commandBuffer = commandBuffers[i];
 
-  commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
-  { // Precompute
-    for (
-      int scatteringOrder = 2;
-      scatteringOrder <= NUM_SCATTERING_ORDERS;
-      ++scatteringOrder) {
-      precomputeScatteringDensity(
-        commandBuffer, scatteringOrder, 0, SCATTERING_TEXTURE_DEPTH / 2);
+    Array<VulkanSemaphore, AllocationType::Linear> wait = {};
+    Array<VulkanSemaphore, AllocationType::Linear> signal = {};
+
+    if (i > 0) {
+      wait = makeArray<VulkanSemaphore, AllocationType::Linear>(
+        semaphores[i - 1]);
     }
-  }
-  commandBuffer.end();
 
-  queue.submitCommandBuffer(
-    commandBuffer,
-    makeArray<VulkanSemaphore, AllocationType::Linear>(),
-    makeArray<VulkanSemaphore, AllocationType::Linear>(),
-    0, VulkanFence());
-
-  queue.idle();
-
-  commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
-  { // Precompute
-    for (
-      int scatteringOrder = 2;
-      scatteringOrder <= NUM_SCATTERING_ORDERS;
-      ++scatteringOrder) {
-      precomputeScatteringDensity(
-        commandBuffer, scatteringOrder,
-        SCATTERING_TEXTURE_DEPTH / 2, SCATTERING_TEXTURE_DEPTH);
+    if (i < commandBuffers.size - 1) {
+      signal = makeArray<VulkanSemaphore, AllocationType::Linear>(
+        semaphores[i]);
     }
+
+    queue.submitCommandBuffer(
+      commandBuffer, wait, signal,
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VulkanFence());
   }
-  commandBuffer.end();
-
-  queue.submitCommandBuffer(
-    commandBuffer,
-    makeArray<VulkanSemaphore, AllocationType::Linear>(),
-    makeArray<VulkanSemaphore, AllocationType::Linear>(),
-    0, VulkanFence());
-
-  queue.idle();
 }
 
 void RendererSky::precomputeTransmittance(
