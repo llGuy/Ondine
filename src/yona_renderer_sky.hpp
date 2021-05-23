@@ -48,14 +48,16 @@ private:
   void precomputeSingleScattering(VulkanCommandBuffer &commandBuffer);
   void precomputeDirectIrradiance(VulkanCommandBuffer &commandBuffer);
   void precomputeScatteringDensity(
-    VulkanCommandBuffer &commandBuffer, int scatteringOrder);
+    VulkanCommandBuffer &commandBuffer, int scatteringOrder,
+    uint32_t startLayer, uint32_t endLayer);
 
 private:
   // Some utility functions
   void make3DTextureAndUniform(
     const VkExtent3D extent,
     VulkanTexture &texture, VulkanUniform &uniform,
-    VulkanContext &graphicsContext);
+    VulkanContext &graphicsContext,
+    bool isTemporary);
 
   void make2DTextureAndUniform(
     const VkExtent3D extent,
@@ -76,8 +78,11 @@ private:
   static constexpr size_t SCATTERING_TEXTURE_DEPTH = SCATTERING_TEXTURE_R_SIZE;
   static constexpr size_t IRRADIANCE_TEXTURE_WIDTH = 64;
   static constexpr size_t IRRADIANCE_TEXTURE_HEIGHT = 16;
-  static constexpr VkFormat PRECOMPUTED_TEXTURE_FORMAT =
+  static constexpr VkFormat PRECOMPUTED_TEXTURE_FORMAT32 =
     VK_FORMAT_R32G32B32A32_SFLOAT;
+  static constexpr VkFormat PRECOMPUTED_TEXTURE_FORMAT16 =
+    VK_FORMAT_R16G16B16A16_SFLOAT;
+    //VK_FORMAT_R8G8B8A8_UNORM;
 
   SkyProperties mSkyProperties;
   VulkanBuffer mSkyPropertiesBuffer;

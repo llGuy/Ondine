@@ -14,7 +14,8 @@ enum TextureType {
   Cubemap = BIT(1),
   T3D = BIT(2),
   Attachment = BIT(3),
-  Input = BIT(4)
+  Input = BIT(4),
+  StoreInRam = BIT(5)
 };
 
 using TextureTypeBits = uint32_t;

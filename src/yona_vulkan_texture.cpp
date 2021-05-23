@@ -21,6 +21,7 @@ void VulkanTexture::init(
   VkImageType imageType;
   VkImageCreateFlags imageFlags = 0;
   VkImageViewType viewTypeSample, viewTypeAttachment;
+  VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
   VkImageUsageFlags usage =
     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -43,6 +44,11 @@ void VulkanTexture::init(
   if (type & TextureType::Input) {
     type &= ~(TextureType::Input);
     usage |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+  }
+
+  if (type & TextureType::StoreInRam) {
+    type &= ~(TextureType::StoreInRam);
+    memoryFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
   }
 
   switch (type) {
@@ -102,7 +108,7 @@ void VulkanTexture::init(
     vkCreateImage(device.mLogicalDevice, &imageInfo, NULL, &mImage));
 
   mMemory = device.allocateImageMemory(
-    mImage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    mImage, memoryFlags);
 
   VkImageViewCreateInfo imageViewInfo = {};
   imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
