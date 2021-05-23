@@ -1,6 +1,6 @@
 #include "yona_vulkan_context.hpp"
 
-#ifndef DEBUG
+#ifndef NDEBUG
 constexpr bool ENABLE_VALIDATION = true;
 #else
 constexpr bool ENABLE_VALIDATION = false;
