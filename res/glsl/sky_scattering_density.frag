@@ -1,7 +1,7 @@
 #version 450
 
 #include "sky_def.glsl"
-#include "sky_utils.glsl"
+#include "sky_utils2.glsl"
 
 layout (location = 0) out vec3 outScatteringDensity;
 
@@ -23,7 +23,7 @@ layout(push_constant) uniform PushConstant {
 } uPushConstant;
 
 void main() {
-  outScatteringDensity = computeScatteringDensityTexture(
+  outScatteringDensity = ComputeScatteringDensityTexture(
     uSky.sky, uTransmittance, uSingleRayleighScattering, uSingleMieScattering,
     uMultipleScattering, uIrradiance,
     vec3(gl_FragCoord.xy, uPushConstant.layer), uPushConstant.scatteringOrder);

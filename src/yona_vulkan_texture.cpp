@@ -107,6 +107,10 @@ void VulkanTexture::init(
   VK_CHECK(
     vkCreateImage(device.mLogicalDevice, &imageInfo, NULL, &mImage));
 
+  if (mImage == (VkImage)0x440000000044) {
+    printf("hi");
+  }
+
   mMemory = device.allocateImageMemory(
     mImage, memoryFlags);
 

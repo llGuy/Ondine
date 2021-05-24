@@ -30,7 +30,7 @@ void VulkanContext::initContext(const WindowContextInfo &surfaceInfo) {
   DeviceRequestedFeatures requiredFeatures = {};
   requiredFeatures.count = 1;
   requiredFeatures.features.geometryShader = VK_TRUE;
-  mDevice.init(DeviceType::Any, mInstance, mSurface, requiredFeatures);
+  mDevice.init(DeviceType::DiscreteGPU, mInstance, mSurface, requiredFeatures);
 
   // Swapchain
   mSwapchain.init(mDevice, mSurface, surfaceInfo.resolution);
