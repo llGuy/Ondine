@@ -47,6 +47,11 @@ private:
     const Buffer &precomputeGsh,
     VulkanContext &graphicsContext);
 
+  void prepareMultipleScatteringPrecompute(
+    const Buffer &precomputeVsh,
+    const Buffer &precomputeGsh,
+    VulkanContext &graphicsContext);
+
   void precompute(VulkanContext &graphicsContext);
   void precomputeTransmittance(VulkanCommandBuffer &commandBuffer);
   void precomputeSingleScattering(VulkanCommandBuffer &commandBuffer);
@@ -54,6 +59,10 @@ private:
   void precomputeIndirectIrradiance(
     VulkanCommandBuffer &commandBuffer, int scatteringOrder);
   void precomputeScatteringDensity(
+    VulkanCommandBuffer &commandBuffer,
+    uint32_t splitIndex, int scatteringOrder,
+    uint32_t startLayer, uint32_t endLayer);
+  void precomputeMultipleScattering(
     VulkanCommandBuffer &commandBuffer,
     uint32_t splitIndex, int scatteringOrder,
     uint32_t startLayer, uint32_t endLayer);
@@ -147,9 +156,13 @@ private:
   };
 
   SplitPrecomputation mPrecomputeScatteringDensity;
+  SplitPrecomputation mPrecomputeMultipleScattering;
 
   /* Temporary textures */
-  VulkanTexture mDeltaRayleighScatteringTexture;
+  union {
+    VulkanTexture mDeltaMultipleScatteringTexture;
+    VulkanTexture mDeltaRayleighScatteringTexture;
+  };
 
   union {
     VulkanUniform mDeltaMultipleScatteringUniform;

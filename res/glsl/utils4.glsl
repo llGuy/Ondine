@@ -1477,7 +1477,9 @@ RadianceDensitySpectrum ComputeScatteringDensityTexture(
     IN(ReducedScatteringTexture) single_mie_scattering_texture,
     IN(ScatteringTexture) multiple_scattering_texture,
     IN(IrradianceTexture) irradiance_texture,
-    IN(vec3) frag_coord, int scattering_order) {
+    vec3 frag_coord, int scattering_order) {
+  frag_coord.y = SCATTERING_TEXTURE_MU_SIZE - frag_coord.y;
+
   Length r;
   Number mu;
   Number mu_s;
@@ -1495,7 +1497,9 @@ RadianceSpectrum ComputeMultipleScatteringTexture(
     IN(AtmosphereParameters) atmosphere,
     IN(TransmittanceTexture) transmittance_texture,
     IN(ScatteringDensityTexture) scattering_density_texture,
-    IN(vec3) frag_coord, OUT(Number) nu) {
+    vec3 frag_coord, OUT(Number) nu) {
+  frag_coord.y = SCATTERING_TEXTURE_MU_SIZE - frag_coord.y;
+
   Length r;
   Number mu;
   Number mu_s;

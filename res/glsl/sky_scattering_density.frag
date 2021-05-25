@@ -1,12 +1,14 @@
 #version 450
 
-#include "sky_def.glsl"
-#include "sky_utils2.glsl"
+// #include "sky_def.glsl"
+// #include "sky_utils2.glsl"
+#include "utils4.glsl"
 
 layout (location = 0) out vec3 outScatteringDensity;
 
 layout (set = 0, binding = 0) uniform SkyUniform {
-  SkyProperties sky;
+  // SkyProperties sky;
+  int a;
 } uSky;
 
 layout (set = 1, binding = 0) uniform sampler2D uTransmittance;
@@ -24,7 +26,7 @@ layout(push_constant) uniform PushConstant {
 
 void main() {
   outScatteringDensity = ComputeScatteringDensityTexture(
-    uSky.sky, uTransmittance, uSingleRayleighScattering, uSingleMieScattering,
+    ATMOSPHERE, uTransmittance, uSingleRayleighScattering, uSingleMieScattering,
     uMultipleScattering, uIrradiance,
     vec3(gl_FragCoord.xy, uPushConstant.layer), uPushConstant.scatteringOrder);
 }

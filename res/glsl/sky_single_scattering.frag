@@ -21,9 +21,6 @@ layout (push_constant) uniform PushConstant {
 } uPushConstant;
 
 void main() {
-  vec2 coord = gl_FragCoord.xy;
-  coord.y = 1.0 - coord.y;
-
   ComputeSingleScatteringTexture(
     ATMOSPHERE, uTransmittanceTexture,
     vec3(gl_FragCoord.xy, uPushConstant.layer + 0.5),
