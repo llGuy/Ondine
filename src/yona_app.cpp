@@ -55,13 +55,13 @@ void Application::run() {
     });
 
     VulkanFrame frame = mVulkanContext.beginFrame();
+
     { // All rendering here
+      mRenderer.tick(frame);
 
       mVulkanContext.beginSwapchainRender(frame);
       // Render will do final rendering to this backbuffer
 
-      // This should be outside the swapchain render - just for testing
-      mRenderer.tick(frame);
 
       mVulkanContext.endSwapchainRender(frame);
     }
@@ -109,7 +109,8 @@ void Application::processInputEvent(Event *ev) {
     } break;
 
     case MouseEventType::Scroll: {
-      LOG_INFOV("Mouse button scroll: %f %f\n", mouseEv->scroll.x, mouseEv->scroll.y);
+      LOG_INFOV
+        ("Mouse button scroll: %f %f\n", mouseEv->scroll.x, mouseEv->scroll.y);
     } break;
     }
   } break;

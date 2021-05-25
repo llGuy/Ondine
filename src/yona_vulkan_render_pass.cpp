@@ -30,11 +30,15 @@ void VulkanRenderPassConfig::addAttachment(
   OutputUsage outputUsage, AttachmentType type, VkFormat format) {
   assert(mAttachments.size < mAttachments.capacity);
 
-  if (type == AttachmentType::Depth) {
+  if (type == AttachmentType::Depth &&
+      (stencilLoadAndStore == LoadAndStoreOp::ClearThenStore ||
+       stencilLoadAndStore == LoadAndStoreOp::ClearThenDontCare)) {
     mDepthIdx = mAttachmentTypes.size;
     mClearValues[mClearValues.size++].depthStencil.depth = 1.0f;
   }
-  else {
+  else if (
+    loadAndStore == LoadAndStoreOp::ClearThenStore ||
+    loadAndStore == LoadAndStoreOp::ClearThenDontCare) {
     // Keep at 0
     ++mClearValues.size;
   }

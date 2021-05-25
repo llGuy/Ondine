@@ -38,7 +38,16 @@ private:
     const Buffer &precomputeVsh,
     VulkanContext &graphicsContext);
 
+  void prepareIndirectIrradiancePrecompute(
+    const Buffer &precomputeVsh,
+    VulkanContext &graphicsContext);
+
   void prepareScatteringDensityPrecompute(
+    const Buffer &precomputeVsh,
+    const Buffer &precomputeGsh,
+    VulkanContext &graphicsContext);
+
+  void prepareMultipleScatteringPrecompute(
     const Buffer &precomputeVsh,
     const Buffer &precomputeGsh,
     VulkanContext &graphicsContext);
@@ -47,8 +56,15 @@ private:
   void precomputeTransmittance(VulkanCommandBuffer &commandBuffer);
   void precomputeSingleScattering(VulkanCommandBuffer &commandBuffer);
   void precomputeDirectIrradiance(VulkanCommandBuffer &commandBuffer);
+  void precomputeIndirectIrradiance(
+    VulkanCommandBuffer &commandBuffer, int scatteringOrder);
   void precomputeScatteringDensity(
-    VulkanCommandBuffer &commandBuffer, int scatteringOrder,
+    VulkanCommandBuffer &commandBuffer,
+    uint32_t splitIndex, int scatteringOrder,
+    uint32_t startLayer, uint32_t endLayer);
+  void precomputeMultipleScattering(
+    VulkanCommandBuffer &commandBuffer,
+    uint32_t splitIndex, int scatteringOrder,
     uint32_t startLayer, uint32_t endLayer);
 
 private:
@@ -113,16 +129,45 @@ private:
   VulkanPipeline mPrecomputeDirectIrradiancePipeline;
   VulkanRenderPass mPrecomputeDirectIrradianceRenderPass;
   VulkanFramebuffer mPrecomputeDirectIrradianceFBO;
+
+  VulkanPipeline mPrecomputeIndirectIrradiancePipeline;
+
   VulkanTexture mPrecomputedIrradiance;
   VulkanUniform mPrecomputedIrradianceUniform;
 
-  VulkanPipeline mPrecomputeScatteringDensityPipeline;
-  VulkanRenderPass mPrecomputeScatteringDensityRenderPass;
-  VulkanFramebuffer mPrecomputeScatteringDensityFBO;
+  struct SplitPrecomputation {
+    VulkanPipeline pipeline[2];
+    VulkanRenderPass renderPass[2];
+    VulkanFramebuffer fbo[2];
+
+    // Function to prepare just one split
+    template <typename Proc>
+    void prepare(Proc prepareProc) {
+      prepareProc(
+        LoadAndStoreOp::ClearThenStore,
+        OutputUsage::None,
+        pipeline[0], renderPass[0], fbo[0]);
+
+      prepareProc(
+        LoadAndStoreOp::LoadThenStore,
+        OutputUsage::FragmentShaderRead,
+        pipeline[1], renderPass[1], fbo[1]);
+    }
+  };
+
+  SplitPrecomputation mPrecomputeScatteringDensity;
+  SplitPrecomputation mPrecomputeMultipleScattering;
 
   /* Temporary textures */
-  VulkanTexture mDeltaRayleighScatteringTexture;
-  VulkanUniform mDeltaRayleighScatteringUniform;
+  union {
+    VulkanTexture mDeltaMultipleScatteringTexture;
+    VulkanTexture mDeltaRayleighScatteringTexture;
+  };
+
+  union {
+    VulkanUniform mDeltaMultipleScatteringUniform;
+    VulkanUniform mDeltaRayleighScatteringUniform;
+  };
 
   VulkanTexture mDeltaMieScatteringTexture;
   VulkanUniform mDeltaMieScatteringUniform;
@@ -132,9 +177,6 @@ private:
 
   VulkanTexture mDeltaScatteringDensityTexture;
   VulkanUniform mDeltaScatteringDensityUniform;
-
-  VulkanTexture mDeltaMultipleScatteringTexture;
-  VulkanUniform mDeltaMultipleScatteringUniform;
 
   /* For testing so that Renderdoc can show ressources */
   VulkanPipeline mDummy;
