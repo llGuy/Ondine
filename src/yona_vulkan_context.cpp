@@ -30,6 +30,7 @@ void VulkanContext::initContext(const WindowContextInfo &surfaceInfo) {
   DeviceRequestedFeatures requiredFeatures = {};
   requiredFeatures.count = 1;
   requiredFeatures.features.geometryShader = VK_TRUE;
+  requiredFeatures.features.independentBlend = VK_TRUE;
   mDevice.init(DeviceType::DiscreteGPU, mInstance, mSurface, requiredFeatures);
 
   // Swapchain
@@ -113,7 +114,8 @@ VulkanFrame VulkanContext::beginFrame() {
     mDevice,
     currentCommandBuffer,
     imageIndex,
-    mCurrentFrame
+    mCurrentFrame,
+    {mSwapchain.mExtent.width, mSwapchain.mExtent.height}
   };
 
   return frame;

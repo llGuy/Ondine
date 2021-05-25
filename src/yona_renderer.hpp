@@ -11,7 +11,8 @@ class Renderer {
 public:
   void init(VulkanContext &vulkanContext);
 
-  void tick(VulkanFrame &frame);
+  void tickIn(VulkanFrame &frame);
+  void tickOut(VulkanFrame &frame);
 
 private:
   RendererSky mRendererSky;

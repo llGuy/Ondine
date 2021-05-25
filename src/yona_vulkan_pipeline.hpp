@@ -66,6 +66,12 @@ public:
       makeArray<VulkanShader, AllocationType::Linear>(shaders...));
   }
 
+  void enableBlendingSame(
+    uint32_t attachmentIndex,
+    VkBlendOp op, VkBlendFactor src, VkBlendFactor dst);
+
+  // void enableBlendingSeparate();
+
   template <typename ...T>
   void configurePipelineLayout(
     size_t pushConstantSize,

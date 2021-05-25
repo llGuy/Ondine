@@ -17,7 +17,8 @@ public:
   void init(VulkanContext &graphicsContext);
 
   // For testing
-  void tick(VulkanFrame &frame);
+  void tickIn(VulkanFrame &frame);
+  void tickOut(VulkanFrame &frame);
 
 private:
   void initSkyProperties(VulkanContext &graphicsContext);
@@ -85,7 +86,7 @@ private:
     VulkanContext &graphicsContext);
 
 private:
-  static constexpr size_t NUM_SCATTERING_ORDERS = 2;
+  static constexpr size_t NUM_SCATTERING_ORDERS = 4;
   static constexpr size_t TRANSMITTANCE_WIDTH = 256;
   static constexpr size_t TRANSMITTANCE_HEIGHT = 64;
   static constexpr size_t SCATTERING_TEXTURE_R_SIZE = 32;
@@ -117,6 +118,18 @@ private:
   struct PrecomputePushConstant {
     int layer;
     int scatteringOrder;
+  };
+
+  struct DummyPushConstant {
+    float modelFromView[16];
+    float viewFromClip[16];
+
+    alignas(16) glm::vec3 camera;
+    alignas(16) glm::vec3 whitePoint;
+    alignas(16) glm::vec3 earthCenter;
+    alignas(16) glm::vec3 sunDirection;
+    alignas(16) glm::vec2 sunSize;
+    float exposure;
   };
 
   VulkanPipeline mPrecomputeSingleScatteringPipeline;
@@ -180,6 +193,13 @@ private:
 
   /* For testing so that Renderdoc can show ressources */
   VulkanPipeline mDummy;
+
+  float mViewDistanceMeters = 9000.000000;
+  float mViewZenithAngleRadians = 1.470000;
+  float mViewAzimuthAngleRadians = 0.000000;
+  float mSunZenithAngleRadians = 1.300000;
+  float mSunAzimuthAngleRadians = 3.000000;
+  float mExposure = 10.000000;
 };
 
 }

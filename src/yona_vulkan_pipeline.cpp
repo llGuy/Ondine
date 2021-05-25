@@ -23,6 +23,24 @@ VulkanShader::VulkanShader(
       &mModule));
 }
 
+void VulkanPipelineConfig::enableBlendingSame(
+  uint32_t attachmentIndex,
+  VkBlendOp op, VkBlendFactor src, VkBlendFactor dst) {
+  auto &blendState = mBlendStates[attachmentIndex];
+
+  blendState.blendEnable = VK_TRUE;
+  blendState.colorBlendOp = op;
+  blendState.alphaBlendOp = op;
+
+  blendState.srcColorBlendFactor = src;
+  blendState.srcAlphaBlendFactor = src;
+
+  blendState.dstColorBlendFactor = dst;
+  blendState.dstAlphaBlendFactor = dst;
+
+  // Color write mask is already set
+}
+
 void VulkanPipelineConfig::setDefaultValues() {
   /* Blend states */
   const auto &renderPass = mTarget.renderPass;

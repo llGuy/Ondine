@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "yona_io.hpp"
 
 namespace Yona {
 
@@ -13,6 +14,7 @@ struct VulkanFrame {
   VulkanCommandBuffer &primaryCommandBuffer;
   uint32_t imageIndex;
   uint32_t frameInFlight;
+  Resolution viewport;
 };
 
 }

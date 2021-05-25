@@ -57,11 +57,13 @@ void Application::run() {
     VulkanFrame frame = mVulkanContext.beginFrame();
 
     { // All rendering here
-      mRenderer.tick(frame);
+      mRenderer.tickOut(frame);
 
       mVulkanContext.beginSwapchainRender(frame);
       // Render will do final rendering to this backbuffer
 
+
+      mRenderer.tickIn(frame);
 
       mVulkanContext.endSwapchainRender(frame);
     }
