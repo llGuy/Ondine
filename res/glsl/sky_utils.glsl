@@ -1,71 +1,3 @@
-#define COMBINED_SCATTERING_TEXTURES
-
-#define Length float
-#define Wavelength float
-#define Angle float
-#define SolidAngle float
-#define Power float
-#define LuminousPower float
-#define Number float
-#define InverseLength float
-#define Area float
-#define Volume float
-#define NumberDensity float
-#define Irradiance float
-#define Radiance float
-#define SpectralPower float
-#define SpectralIrradiance float
-#define SpectralRadiance float
-#define SpectralRadianceDensity float
-#define ScatteringCoefficient float
-#define InverseSolidAngle float
-#define LuminousIntensity float
-#define Luminance float
-#define Illuminance float
-#define AbstractSpectrum vec3
-#define DimensionlessSpectrum vec3
-#define PowerSpectrum vec3
-#define IrradianceSpectrum vec3
-#define RadianceSpectrum vec3
-#define RadianceDensitySpectrum vec3
-#define ScatteringSpectrum vec3
-#define Position vec3
-#define Direction vec3
-#define Luminance3 vec3
-#define Illuminance3 vec3
-#define TransmittanceTexture sampler2D
-#define AbstractScatteringTexture sampler3D
-#define ReducedScatteringTexture sampler3D
-#define ScatteringTexture sampler3D
-#define ScatteringDensityTexture sampler3D
-#define IrradianceTexture sampler2D
-const Length m = 1.0;
-const Wavelength nm = 1.0;
-const Angle rad = 1.0;
-const SolidAngle sr = 1.0;
-const Power watt = 1.0;
-const LuminousPower lm = 1.0;
-const Length km = 1000.0 * m;
-const Area m2 = m * m;
-const Volume m3 = m * m * m;
-const Angle pi = PI * rad;
-const Angle deg = pi / 180.0;
-const Irradiance watt_per_square_meter = watt / m2;
-const Radiance watt_per_square_meter_per_sr = watt / (m2 * sr);
-const SpectralIrradiance watt_per_square_meter_per_nm = watt / (m2 * nm);
-const SpectralRadiance watt_per_square_meter_per_sr_per_nm =
-    watt / (m2 * sr * nm);
-const SpectralRadianceDensity watt_per_cubic_meter_per_sr_per_nm =
-    watt / (m3 * sr * nm);
-const LuminousIntensity cd = lm / sr;
-const LuminousIntensity kcd = 1000.0 * cd;
-const Luminance cd_per_square_meter = cd / m2;
-const Luminance kcd_per_square_meter = kcd / m2;
-/* 
-   !!! Make sure to check that line 499 and 500 don't cause problems
-   because of flipped Y coordinate of UVS
-*/
-
 #ifndef SKY_UTILS_GLSL
 #define SKY_UTILS_GLSL
 
@@ -596,149 +528,10 @@ vec3 getScattering(
   }
 }
 
-#if 0
-vec3 getScattering(
-    in SkyProperties atmosphere,
-    sampler3D scattering_texture,
-    Length r, Number mu, Number mu_s, Number nu,
-    bool ray_r_mu_intersects_ground) {
-  vec4 uvwz = getScatteringTextureUVWZFromRMuMuSunNu(
-      atmosphere, r, mu, mu_s, nu, ray_r_mu_intersects_ground);
-  Number tex_coord_x = uvwz.x * Number(SCATTERING_TEXTURE_NU_SIZE - 1);
-  Number tex_x = floor(tex_coord_x);
-  Number lerp = tex_coord_x - tex_x;
-  vec3 uvw0 = vec3((tex_x + uvwz.y) / Number(SCATTERING_TEXTURE_NU_SIZE),
-      uvwz.z, uvwz.w);
-  vec3 uvw1 = vec3((tex_x + 1.0 + uvwz.y) / Number(SCATTERING_TEXTURE_NU_SIZE),
-      uvwz.z, uvwz.w);
-  return AbstractSpectrum(texture(scattering_texture, uvw0) * (1.0 - lerp) +
-      texture(scattering_texture, uvw1) * lerp);
-}
-
-RadianceSpectrum getScattering(
-    in SkyProperties atmosphere,
-    in ReducedScatteringTexture single_rayleigh_scattering_texture,
-    in ReducedScatteringTexture single_mie_scattering_texture,
-    in ScatteringTexture multiple_scattering_texture,
-    Length r, Number mu, Number mu_s, Number nu,
-    bool ray_r_mu_intersects_ground,
-    int scattering_order) {
-  if (scattering_order == 1) {
-    IrradianceSpectrum rayleigh = getScattering(
-        atmosphere, single_rayleigh_scattering_texture, r, mu, mu_s, nu,
-        ray_r_mu_intersects_ground);
-    IrradianceSpectrum mie = getScattering(
-        atmosphere, single_mie_scattering_texture, r, mu, mu_s, nu,
-        ray_r_mu_intersects_ground);
-    return rayleigh * rayleighPhase(nu) +
-        mie * miePhase(atmosphere.miePhaseFunctionG, nu);
-  } else {
-    return getScattering(
-        atmosphere, multiple_scattering_texture, r, mu, mu_s, nu,
-        ray_r_mu_intersects_ground);
-  }
-}
-#endif
-
 vec3 getIrradiance(
   in SkyProperties sky,
   in sampler2D irradianceTexture,
   float r, float muSun);
-
-#if 0
-vec3 computeScatteringDensity(
-    in SkyProperties atmosphere,
-    in sampler2D transmittance_texture,
-    in sampler3D single_rayleigh_scattering_texture,
-    in sampler3D single_mie_scattering_texture,
-    in sampler3D multiple_scattering_texture,
-    in sampler2D irradiance_texture,
-    float r, float mu, float mu_s, float nu, int scattering_order) {
-  // Compute unit direction vectors for the zenith, the view direction omega and
-  // and the sun direction omega_s, such that the cosine of the view-zenith
-  // angle is mu, the cosine of the sun-zenith angle is mu_s, and the cosine of
-  // the view-sun angle is nu. The goal is to simplify computations below.
-  vec3 zenith_direction = vec3(0.0, 0.0, 1.0);
-  vec3 omega = vec3(sqrt(1.0 - mu * mu), 0.0, mu);
-  Number sun_dir_x = omega.x == 0.0 ? 0.0 : (nu - mu * mu_s) / omega.x;
-  Number sun_dir_y = sqrt(max(1.0 - sun_dir_x * sun_dir_x - mu_s * mu_s, 0.0));
-  vec3 omega_s = vec3(sun_dir_x, sun_dir_y, mu_s);
-
-  const int SAMPLE_COUNT = 16;
-  const Angle dphi = pi / Number(SAMPLE_COUNT);
-  const Angle dtheta = pi / Number(SAMPLE_COUNT);
-  RadianceDensitySpectrum rayleigh_mie =
-      RadianceDensitySpectrum(0.0 * watt_per_cubic_meter_per_sr_per_nm);
-
-  // Nested loops for the integral over all the incident directions omega_i.
-  for (int l = 0; l < SAMPLE_COUNT; ++l) {
-    Angle theta = (Number(l) + 0.5) * dtheta;
-    Number cos_theta = cos(theta);
-    Number sin_theta = sin(theta);
-    bool ray_r_theta_intersects_ground =
-        doesRayIntersectGround(atmosphere, r, cos_theta);
-
-    // The distance and transmittance to the ground only depend on theta, so we
-    // can compute them in the outer loop for efficiency.
-    Length distance_to_ground = 0.0 * m;
-    DimensionlessSpectrum transmittance_to_ground = DimensionlessSpectrum(0.0);
-    DimensionlessSpectrum ground_albedo = DimensionlessSpectrum(0.0);
-    if (ray_r_theta_intersects_ground) {
-      distance_to_ground =
-          distToGroundBoundary(atmosphere, r, cos_theta);
-      transmittance_to_ground =
-          getTransmittance(atmosphere, transmittance_texture, r, cos_theta,
-              distance_to_ground, true /* ray_intersects_ground */);
-      ground_albedo = atmosphere.groundAlbedo;
-    }
-
-    for (int m = 0; m < 2 * SAMPLE_COUNT; ++m) {
-      Angle phi = (Number(m) + 0.5) * dphi;
-      vec3 omega_i =
-          vec3(cos(phi) * sin_theta, sin(phi) * sin_theta, cos_theta);
-      SolidAngle domega_i = (dtheta / rad) * (dphi / rad) * sin(theta) * sr;
-
-      // The radiance L_i arriving from direction omega_i after n-1 bounces is
-      // the sum of a term given by the precomputed scattering texture for the
-      // (n-1)-th order:
-      Number nu1 = dot(omega_s, omega_i);
-      RadianceSpectrum incident_radiance = getScattering(atmosphere,
-          single_rayleigh_scattering_texture, single_mie_scattering_texture,
-          multiple_scattering_texture, r, omega_i.z, mu_s, nu1,
-          ray_r_theta_intersects_ground, scattering_order - 1);
-
-      // and of the contribution from the light paths with n-1 bounces and whose
-      // last bounce is on the ground. This contribution is the product of the
-      // transmittance to the ground, the ground albedo, the ground BRDF, and
-      // the irradiance received on the ground after n-2 bounces.
-      vec3 ground_normal =
-          normalize(zenith_direction * r + omega_i * distance_to_ground);
-      IrradianceSpectrum ground_irradiance = getIrradiance(
-          atmosphere, irradiance_texture, atmosphere.bottomRadius,
-          dot(ground_normal, omega_s));
-      incident_radiance += transmittance_to_ground *
-          ground_albedo * (1.0 / (PI * sr)) * ground_irradiance;
-
-      // The radiance finally scattered from direction omega_i towards direction
-      // -omega is the product of the incident radiance, the scattering
-      // coefficient, and the phase function for directions omega and omega_i
-      // (all this summed over all particle types, i.e. Rayleigh and Mie).
-      Number nu2 = dot(omega, omega_i);
-      Number rayleigh_density = getProfileDensity(
-          atmosphere.rayleighDensity, r - atmosphere.bottomRadius);
-      Number mie_density = getProfileDensity(
-          atmosphere.mieDensity, r - atmosphere.bottomRadius);
-      rayleigh_mie += incident_radiance * (
-          atmosphere.rayleighScatteringCoef * rayleigh_density *
-              rayleighPhase(nu2) +
-          atmosphere.mieScatteringCoef * mie_density *
-              miePhase(atmosphere.miePhaseFunctionG, nu2)) *
-          domega_i;
-    }
-  }
-  return rayleigh_mie;
-}
-#endif
 
 vec3 computeScatteringDensity(
   in SkyProperties sky, in sampler2D transmittanceTexture,
@@ -833,29 +626,30 @@ vec3 computeMultipleScattering(
 
   float dx = distToNearestBoundary(
     sky, r, mu, doesRMuIntersectGround) / float(SAMPLE_COUNT);
-
+  
   vec3 rayleighMieSum = vec3(0.0);
-
   for (int i = 0; i <= SAMPLE_COUNT; ++i) {
-    float currentD = float(i) * dx;
+    float dI = float(i) * dx;
 
-    float currentR = clampRadius(
-      sky, sqrt(currentD * currentD + 2.0 * r * mu * currentD + r * r));
+    // The r, mu and mu_s parameters at the current integration point (see the
+    // single scattering section for a detailed explanation).
+    float rI = clampRadius(sky, sqrt(dI * dI + 2.0 * r * mu * dI + r * r));
+    float muI = clamp0To1((r * mu + dI) / rI);
+    float muSI = clamp0To1((r * muSun + dI * nu) / rI);
 
-    float currentMu = clamp0To1((r * mu * currentD) / currentR);
-    float currentMuSun = clamp0To1((r * muSun + currentD * nu) / currentR);
-
+    // The Rayleigh and Mie multiple scattering at the current sample point.
     vec3 rayleighMieI =
       getScattering(
-        sky, scatteringDensityTexture, currentR, currentMu,
-        currentMuSun, nu, doesRMuIntersectGround) *
+        sky, scatteringDensityTexture, rI, muI, muSI, nu,
+        doesRMuIntersectGround) *
       getTransmittance(
-        sky, transmittanceTexture, r, mu, currentD, doesRMuIntersectGround) * dx;
-
+        sky, transmittanceTexture, r, mu, dI,
+        doesRMuIntersectGround) *
+      dx;
+    // Sample weight (from the trapezoidal rule).
     float weightI = (i == 0 || i == SAMPLE_COUNT) ? 0.5 : 1.0;
     rayleighMieSum += rayleighMieI * weightI;
   }
-
   return rayleighMieSum;
 }
 
@@ -884,7 +678,9 @@ vec3 computeMultipleScatteringTexture(
   in SkyProperties sky,
   in sampler2D transmittanceTexture,
   in sampler3D scatteringDensityTexture,
-  in vec3 fragCoord, out float nu) {
+  vec3 fragCoord, out float nu) {
+  fragCoord.y = SCATTERING_TEXTURE_MU_SIZE - fragCoord.y;
+
   float r;
   float mu;
   float muSun;
@@ -1019,6 +815,11 @@ vec3 getIrradiance(
   float r, float muSun) {
   vec2 uv = getIrradianceTextureUVFromRMuSun(sky, r, muSun);
   return vec3(texture(irradianceTexture, vec2(uv.x, 1.0 - uv.y)));
+}
+
+vec3 getSolarRadiance(in SkyProperties sky) {
+  return sky.solarIrradiance /
+    (PI * sky.solarAngularRadius * sky.solarAngularRadius);
 }
 
 #endif

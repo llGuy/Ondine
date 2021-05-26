@@ -1407,6 +1407,45 @@ instead, using the actual ground albedo.
 <p>The implementation for this second step is straightforward:
 */
 
+/*
+vec3 computeMultipleScattering(
+  in SkyProperties sky,
+  in sampler2D transmittanceTexture,
+  in sampler3D scatteringDensityTexture,
+  float r, float mu, float muSun, float nu,
+  bool doesRMuIntersectGround) {
+  const int SAMPLE_COUNT = 50;
+
+  float dx = distToNearestBoundary(
+    sky, r, mu, doesRMuIntersectGround) / float(SAMPLE_COUNT);
+  
+  vec3 rayleighMieSum = vec3(0.0);
+  for (int i = 0; i <= SAMPLE_COUNT; ++i) {
+    float dI = float(i) * dx;
+
+    // The r, mu and mu_s parameters at the current integration point (see the
+    // single scattering section for a detailed explanation).
+    float rI = clampRadius(sky, sqrt(dI * dI + 2.0 * r * mu * dI + r * r));
+    float muI = clamp0To1((r * mu + dI) / rI);
+    float muSI = clamp0To1((r * muSun + dI * nu) / rI);
+
+    // The Rayleigh and Mie multiple scattering at the current sample point.
+    vec3 rayleighMieI =
+      getScattering(
+        sky, scatteringDensityTexture, rI, muI, muSI, nu,
+        doesRMuIntersectGround) *
+      getTransmittance(
+        sky, transmittanceTexture, r, mu, dI,
+        doesRMuIntersectGround) *
+      dx;
+    // Sample weight (from the trapezoidal rule).
+    float weightI = (i == 0 || i == SAMPLE_COUNT) ? 0.5 : 1.0;
+    rayleighMieSum += rayleighMieI * weightI;
+  }
+  return rayleighMieSum;
+}
+*/
+
 RadianceSpectrum ComputeMultipleScattering(
     IN(AtmosphereParameters) atmosphere,
     IN(TransmittanceTexture) transmittance_texture,
@@ -1806,21 +1845,12 @@ IrradianceSpectrum GetCombinedScattering(
   uvw0.y = 1.0 - uvw0.y;
   uvw1.y = 1.0 - uvw1.y;
 
-#ifdef COMBINED_SCATTERING_TEXTURES
   vec4 combined_scattering =
       texture(scattering_texture, uvw0) * (1.0 - lerp) +
       texture(scattering_texture, uvw1) * lerp;
   IrradianceSpectrum scattering = IrradianceSpectrum(combined_scattering);
   single_mie_scattering =
       GetExtrapolatedSingleMieScattering(atmosphere, combined_scattering);
-#else
-  IrradianceSpectrum scattering = IrradianceSpectrum(
-      texture(scattering_texture, uvw0) * (1.0 - lerp) +
-      texture(scattering_texture, uvw1) * lerp);
-  single_mie_scattering = IrradianceSpectrum(
-      texture(single_mie_scattering_texture, uvw0) * (1.0 - lerp) +
-      texture(single_mie_scattering_texture, uvw1) * lerp);
-#endif
   return scattering;
 }
 

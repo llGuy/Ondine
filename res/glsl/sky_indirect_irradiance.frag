@@ -1,15 +1,13 @@
 #version 450
 
-// #include "sky_def.glsl"
-// #include "sky_utils.glsl"
-#include "utils4.glsl"
+#include "sky_def.glsl"
+#include "sky_utils.glsl"
 
 layout (location = 0) out vec3 outDeltaIrradiance;
 layout (location = 1) out vec3 outIrradiance;
 
 layout (set = 0, binding = 0) uniform SkyUniform {
-  // SkyProperties sky;
-  int a;
+  SkyProperties sky;
 } uSky;
 
 layout (set = 1, binding = 0) uniform sampler3D uSingleRayleighScattering;
@@ -22,8 +20,8 @@ layout (push_constant) uniform PushConstant {
 } uPushConstant;
 
 void main() {
-  outDeltaIrradiance = ComputeIndirectIrradianceTexture(
-    ATMOSPHERE, uSingleRayleighScattering, uSingleMieScattering,
+  outDeltaIrradiance = computeIndirectIrradianceTexture(
+    uSky.sky, uSingleRayleighScattering, uSingleMieScattering,
     uMultipleScattering, gl_FragCoord.xy, uPushConstant.scatteringOrder);
 
   outIrradiance = outDeltaIrradiance;

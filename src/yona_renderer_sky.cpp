@@ -11,7 +11,7 @@ void RendererSky::init(VulkanContext &graphicsContext) {
   preparePrecompute(graphicsContext);
   precompute(graphicsContext);
 
-  mViewDistanceMeters = 20000.000000;
+  mViewDistanceMeters = 9000.000000;
   mViewZenithAngleRadians = 1.470000;
   mViewAzimuthAngleRadians = 0.000000;
   mSunZenithAngleRadians = 1.564000;
@@ -19,7 +19,7 @@ void RendererSky::init(VulkanContext &graphicsContext) {
   mExposure = 10.000000;
 
   /*
-  mViewDistanceMeters = 20000.000000;
+  mViewDistanceMeters = 9000.000000;
   mViewZenithAngleRadians = 1.470000;
   mViewAzimuthAngleRadians = 0.000000;
   mSunZenithAngleRadians = 1.300000;
@@ -52,7 +52,7 @@ void RendererSky::tickIn(VulkanFrame &frame) {
     mDeltaMieScatteringUniform,
     mPrecomputedIrradianceUniform);
 
-  // mSunZenithAngleRadians += 0.000025f;
+  // mSunZenithAngleRadians -= 0.000025f;
 
   float cos_z = cos(mViewZenithAngleRadians);
   float sin_z = sin(mViewZenithAngleRadians);
