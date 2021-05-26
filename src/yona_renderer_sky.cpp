@@ -11,78 +11,33 @@ void RendererSky::init(VulkanContext &graphicsContext) {
   preparePrecompute(graphicsContext);
   precompute(graphicsContext);
 
-  mViewDistanceMeters = 9000.000000;
+  mViewDistanceMeters = 20000.000000;
   mViewZenithAngleRadians = 1.470000;
   mViewAzimuthAngleRadians = 0.000000;
   mSunZenithAngleRadians = 1.564000;
   mSunAzimuthAngleRadians = -3.000000;
   mExposure = 10.000000;
 
-  mViewDistanceMeters = 9000.000000;
+  /*
+  mViewDistanceMeters = 20000.000000;
   mViewZenithAngleRadians = 1.470000;
   mViewAzimuthAngleRadians = 0.000000;
   mSunZenithAngleRadians = 1.300000;
   mSunAzimuthAngleRadians = 3.000000;
   mExposure = 10.000000;
+  */
+
+  /*
+  mViewDistanceMeters = 20000.000000;
+  mViewZenithAngleRadians = 1.500000;
+  mViewAzimuthAngleRadians = 0.000000;
+  mSunZenithAngleRadians = 1.628000;
+  mSunAzimuthAngleRadians = 1.050000;
+  mExposure = 200.000000;
+  */
 }
 
 void RendererSky::tickOut(VulkanFrame &frame) {
-  // precomputeTransmittance(frame.primaryCommandBuffer);
-  // precomputeSingleScattering(frame.primaryCommandBuffer);
-  // precomputeDirectIrradiance(frame.primaryCommandBuffer);
-
-  /*
-  auto recordComputation =
-    [&frame] (auto computation) {
-      computation(frame.primaryCommandBuffer);
-    };
-
-  recordComputation([this](VulkanCommandBuffer &commandBuffer) {
-    precomputeTransmittance(commandBuffer);
-    precomputeSingleScattering(commandBuffer);
-    precomputeDirectIrradiance(commandBuffer);
-  });
-
-  for (
-    int scatteringOrder = 2;
-    scatteringOrder <= NUM_SCATTERING_ORDERS;
-    ++scatteringOrder) {
-
-    // Compute the scattering density in two command buffers (quite intense)
-    recordComputation(
-      [this, scatteringOrder](VulkanCommandBuffer &commandBuffer) {
-        precomputeScatteringDensity(
-          commandBuffer, 0, scatteringOrder,
-          0, SCATTERING_TEXTURE_DEPTH / 2);
-      });
-
-    recordComputation(
-      [this, scatteringOrder](VulkanCommandBuffer &commandBuffer) {
-        precomputeScatteringDensity(
-          commandBuffer, 1, scatteringOrder,
-          SCATTERING_TEXTURE_DEPTH / 2, SCATTERING_TEXTURE_DEPTH);
-      });
-
-    recordComputation(
-      [this, scatteringOrder] (VulkanCommandBuffer &commandBuffer) {
-        precomputeIndirectIrradiance(commandBuffer, scatteringOrder);
-      });
-
-    recordComputation(
-      [this, scatteringOrder](VulkanCommandBuffer &commandBuffer) {
-        precomputeMultipleScattering(
-          commandBuffer, 0, scatteringOrder,
-          0, SCATTERING_TEXTURE_DEPTH / 2);
-      });
-
-    recordComputation(
-      [this, scatteringOrder](VulkanCommandBuffer &commandBuffer) {
-        precomputeMultipleScattering(
-          commandBuffer, 1, scatteringOrder,
-          SCATTERING_TEXTURE_DEPTH / 2, SCATTERING_TEXTURE_DEPTH);
-      });
-  }
-  */
 
 }
 
@@ -97,27 +52,7 @@ void RendererSky::tickIn(VulkanFrame &frame) {
     mDeltaMieScatteringUniform,
     mPrecomputedIrradianceUniform);
 
-  /*
-  mViewDistanceMeters = 9000.000000;
-  mViewZenithAngleRadians = 1.470000;
-  mViewAzimuthAngleRadians = 0.000000;
-  mSunZenithAngleRadians = 1.300000;
-  mSunAzimuthAngleRadians = 3.000000;
-  mExposure = 10.000000;
-  */
-
-  mSunZenithAngleRadians += 0.00001f;
-
-
-
-  /*
-  mViewDistanceMeters = 9000.000000;
-  mViewZenithAngleRadians = 1.500000;
-  mViewAzimuthAngleRadians = 0.000000;
-  mSunZenithAngleRadians = 1.628000;
-  mSunAzimuthAngleRadians = 1.050000;
-  mExposure = 200.000000;
-  */
+  // mSunZenithAngleRadians += 0.000025f;
 
   float cos_z = cos(mViewZenithAngleRadians);
   float sin_z = sin(mViewZenithAngleRadians);
@@ -981,21 +916,19 @@ void RendererSky::precomputeMultipleScattering(
   uint32_t startLayer, uint32_t endLayer) {
   VkExtent2D extent = {SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT};
 
-  /*
   commandBuffer.transitionImageLayout(
     mDeltaMultipleScatteringTexture,
-    VK_IMAGE_LAYOUT_UNDEFINED,
+    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
   commandBuffer.transitionImageLayout(
     mPrecomputedScattering,
-    VK_IMAGE_LAYOUT_UNDEFINED,
+    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-  */
 
   commandBuffer.beginRenderPass(
     mPrecomputeMultipleScattering.renderPass[splitIndex],
@@ -1024,6 +957,22 @@ void RendererSky::precomputeMultipleScattering(
   }
 
   commandBuffer.endRenderPass();
+
+  /*
+  commandBuffer.transitionImageLayout(
+    mDeltaMultipleScatteringTexture,
+    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+  commandBuffer.transitionImageLayout(
+    mPrecomputedScattering,
+    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+  */
 }
 
 void RendererSky::make3DTextureAndUniform(

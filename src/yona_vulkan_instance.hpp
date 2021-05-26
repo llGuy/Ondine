@@ -19,7 +19,7 @@ private:
     /* Writes to */
     Array<const char *> &enabled) const;
 
-  void initDebugMessengerCallback();
+  void initDebugUtils();
 
   static VKAPI_ATTR VkBool32 VKAPI_PTR debugMessengerCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT severity,

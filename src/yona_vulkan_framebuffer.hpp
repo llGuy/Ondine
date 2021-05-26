@@ -43,6 +43,7 @@ private:
 
   friend class VulkanSwapchain;
   friend class VulkanCommandBuffer;
+  friend class VulkanContext;
 };
 
 }

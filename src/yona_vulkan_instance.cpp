@@ -78,7 +78,7 @@ void VulkanInstance::init() {
     }
     
     if (mIsValidationEnabled) {
-      initDebugMessengerCallback();
+      initDebugUtils();
     }
   }
   else {
@@ -121,7 +121,7 @@ void VulkanInstance::verifyValidationSupport(
   enabled.size = requestedVerifiedCount;
 }
 
-void VulkanInstance::initDebugMessengerCallback() {
+void VulkanInstance::initDebugUtils() {
   VkDebugUtilsMessengerCreateInfoEXT debugMessengerInfo = {};
   debugMessengerInfo.sType = 
     VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
