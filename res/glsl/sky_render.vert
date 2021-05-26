@@ -22,7 +22,11 @@ const vec4 POSITIONS[] = vec4[](
 
 void main() {
   vec4 vertex = POSITIONS[gl_VertexIndex];
+
+  gl_Position = vertex;
+
+  vertex.y *= -1.0;
+
   view_ray =
     (uPushConstant.model_from_view * vec4((uPushConstant.view_from_clip * vertex).xyz, 0.0)).xyz;
-  gl_Position = vertex;
 }

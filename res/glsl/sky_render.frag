@@ -387,6 +387,4 @@ the scene:
   color.rgb = 
       pow(vec3(1.0) - exp(-radiance / white_point * exposure), vec3(1.0 / 2.2));
   color.a = 1.0;
-
-  color = vec4(view_direction, 1.0);
 }

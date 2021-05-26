@@ -10,6 +10,20 @@ void RendererSky::init(VulkanContext &graphicsContext) {
   initSkyProperties(graphicsContext);
   preparePrecompute(graphicsContext);
   precompute(graphicsContext);
+
+  mViewDistanceMeters = 9000.000000;
+  mViewZenithAngleRadians = 1.470000;
+  mViewAzimuthAngleRadians = 0.000000;
+  mSunZenithAngleRadians = 1.564000;
+  mSunAzimuthAngleRadians = -3.000000;
+  mExposure = 10.000000;
+
+  mViewDistanceMeters = 9000.000000;
+  mViewZenithAngleRadians = 1.470000;
+  mViewAzimuthAngleRadians = 0.000000;
+  mSunZenithAngleRadians = 1.300000;
+  mSunAzimuthAngleRadians = 3.000000;
+  mExposure = 10.000000;
 }
 
 void RendererSky::tickOut(VulkanFrame &frame) {
@@ -83,12 +97,27 @@ void RendererSky::tickIn(VulkanFrame &frame) {
     mDeltaMieScatteringUniform,
     mPrecomputedIrradianceUniform);
 
+  /*
   mViewDistanceMeters = 9000.000000;
   mViewZenithAngleRadians = 1.470000;
   mViewAzimuthAngleRadians = 0.000000;
   mSunZenithAngleRadians = 1.300000;
   mSunAzimuthAngleRadians = 3.000000;
   mExposure = 10.000000;
+  */
+
+  mSunZenithAngleRadians += 0.00001f;
+
+
+
+  /*
+  mViewDistanceMeters = 9000.000000;
+  mViewZenithAngleRadians = 1.500000;
+  mViewAzimuthAngleRadians = 0.000000;
+  mSunZenithAngleRadians = 1.628000;
+  mSunAzimuthAngleRadians = 1.050000;
+  mExposure = 200.000000;
+  */
 
   float cos_z = cos(mViewZenithAngleRadians);
   float sin_z = sin(mViewZenithAngleRadians);
@@ -102,13 +131,24 @@ void RendererSky::tickIn(VulkanFrame &frame) {
   DummyPushConstant pushConstant = {};
   
   float model_from_view[16] = {
-    ux[0], uy[0], uz[0], uz[0] * l,
-    ux[1], uy[1], uz[1], uz[1] * l,
-    ux[2], uy[2], uz[2], uz[2] * l,
-    0.0, 0.0, 0.0, 1.0
+    // [0]    [1]    [2]       [3]
+      ux[0], uy[0], uz[0], uz[0] * l,
+    // [4]    [5]    [6]       [7]
+      ux[1], uy[1], uz[1], uz[1] * l,
+    // [8]    [9]    [10]      [11]
+      ux[2], uy[2], uz[2], uz[2] * l,
+    //[12]   [13]    [14]      [15]
+      0.0,   0.0,   0.0,   1.0
   };
 
   memcpy(pushConstant.modelFromView, model_from_view, sizeof(float) * 16);
+
+  std::swap(pushConstant.modelFromView[1], pushConstant.modelFromView[4]);
+  std::swap(pushConstant.modelFromView[2], pushConstant.modelFromView[8]);
+  std::swap(pushConstant.modelFromView[3], pushConstant.modelFromView[12]);
+  std::swap(pushConstant.modelFromView[6], pushConstant.modelFromView[9]);
+  std::swap(pushConstant.modelFromView[7], pushConstant.modelFromView[13]);
+  std::swap(pushConstant.modelFromView[11], pushConstant.modelFromView[14]);
 
   const float kFovY = 50.0 / 180.0 * 3.1415f;
   const float kTanFovY = tan(kFovY / 2.0);
@@ -125,8 +165,15 @@ void RendererSky::tickIn(VulkanFrame &frame) {
 
   memcpy(pushConstant.viewFromClip, view_from_clip, sizeof(float) * 16);
 
+  std::swap(pushConstant.viewFromClip[1], pushConstant.viewFromClip[4]);
+  std::swap(pushConstant.viewFromClip[2], pushConstant.viewFromClip[8]);
+  std::swap(pushConstant.viewFromClip[3], pushConstant.viewFromClip[12]);
+  std::swap(pushConstant.viewFromClip[6], pushConstant.viewFromClip[9]);
+  std::swap(pushConstant.viewFromClip[7], pushConstant.viewFromClip[13]);
+  std::swap(pushConstant.viewFromClip[11], pushConstant.viewFromClip[14]);
+
   pushConstant.whitePoint = glm::vec3(1.0f);
-  pushConstant.earthCenter = glm::vec3(-6360.0f);
+  pushConstant.earthCenter = glm::vec3(0.0f, 0.0f, -6360.0f);
   pushConstant.sunSize = glm::vec2(0.0046750340586467079f, 0.99998907220740285f);
   pushConstant.camera = glm::vec3(
     model_from_view[3], model_from_view[7], model_from_view[11]);
