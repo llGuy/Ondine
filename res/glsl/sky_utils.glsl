@@ -427,30 +427,30 @@ void getRMuMuSunNuFromScatteringTextureUVWZ(
 }
 
 void getRMuMuSunNuFromScatteringTextureFragCoord(
-  in SkyProperties sky, in vec3 fragCoord,
-  out float r, out float mu, out float muSun, out float nu,
-  out bool doesRMuIntersectGround) {
+  SkyProperties sky, vec3 fragCoord,
+  out float r, out float mu, out float muS, out float nu,
+  out bool rayRMuIntersectsGround) {
   const vec4 SCATTERING_TEXTURE_SIZE = vec4(
     SCATTERING_TEXTURE_NU_SIZE - 1,
     SCATTERING_TEXTURE_MU_S_SIZE,
     SCATTERING_TEXTURE_MU_SIZE,
     SCATTERING_TEXTURE_R_SIZE);
-
   float fragCoordNu =
     floor(fragCoord.x / float(SCATTERING_TEXTURE_MU_S_SIZE));
-  float fragCoordMuSun =
+
+  float fragCoordMuS =
     mod(fragCoord.x, float(SCATTERING_TEXTURE_MU_S_SIZE));
 
-  vec4 uvwz = vec4(fragCoordNu, fragCoordMuSun, fragCoord.y, fragCoord.z) /
+  vec4 uvwz =
+    vec4(fragCoordNu, fragCoordMuS, fragCoord.y, fragCoord.z) /
     SCATTERING_TEXTURE_SIZE;
 
   getRMuMuSunNuFromScatteringTextureUVWZ(
-    sky, uvwz, r, mu, muSun, nu, doesRMuIntersectGround);
-
+    sky, uvwz, r, mu, muS, nu, rayRMuIntersectsGround);
+  
   nu = clamp(
-    nu,
-    mu * muSun - sqrt((1.0 - mu * mu) * (1.0 - muSun * muSun)),
-    mu * muSun + sqrt((1.0 - mu * mu) * (1.0 - muSun * muSun)));
+    nu, mu * muS - sqrt((1.0 - mu * mu) * (1.0 - muS * muS)),
+    mu * muS + sqrt((1.0 - mu * mu) * (1.0 - muS * muS)));
 }
 
 void computeSingleScatteringTexture(
@@ -475,15 +475,67 @@ void computeSingleScatteringTexture(
     r, mu, muSun, nu, doesRMuIntersectGround, rayleigh, mie);
 }
 
-vec3 getScattering(
+vec3 getIrradiance(
   in SkyProperties sky,
-  in sampler3D scatteringTexture,
-  float r, float mu, float muSun, float nu,
-  bool doesRMuIntersectGround) {
-  vec4 uvwz = getScatteringTextureUVWZFromRMuMuSunNu(
-    sky, r, mu, muSun, nu, doesRMuIntersectGround);
+  in sampler2D irradianceTexture,
+  float r, float muSun);
+
+vec4 getScatteringTextureUvwzFromRMuMuSNu(
+  in SkyProperties sky,
+  float r, float mu, float muS, float nu,
+  bool rayRMuIntersectsGround) {
+  float h = sqrt(
+    sky.topRadius * sky.topRadius - sky.bottomRadius * sky.bottomRadius);
+
+  float rho = safeSqrt(r * r - sky.bottomRadius * sky.bottomRadius);
+  float uR = getTextureCoordFromUnit(rho / h, SCATTERING_TEXTURE_R_SIZE);
+
+  float rMu = r * mu;
+
+  float discriminant = rMu * rMu - r * r + sky.bottomRadius * sky.bottomRadius;
+
+  float uMu;
+
+  if (rayRMuIntersectsGround) {
+    float d = -rMu - safeSqrt(discriminant);
+    float dMin = r - sky.bottomRadius;
+    float dMax = rho;
+    uMu = 0.5 - 0.5 * getTextureCoordFromUnit(
+      dMax == dMin ? 0.0 :
+      (d - dMin) / (dMax - dMin), SCATTERING_TEXTURE_MU_SIZE / 2);
+  }
+  else {
+    float d = -rMu + safeSqrt(discriminant + h * h);
+    float dMin = sky.topRadius - r;
+    float dMax = rho + h;
+    uMu = 0.5 + 0.5 * getTextureCoordFromUnit(
+      (d - dMin) / (dMax - dMin), SCATTERING_TEXTURE_MU_SIZE / 2);
+  }
+
+  float d = distToSkyBoundary(
+    sky, sky.bottomRadius, muS);
+  float dMin = sky.topRadius - sky.bottomRadius;
+  float dMax = h;
+  float a = (d - dMin) / (dMax - dMin);
+  float A =
+    -2.0 * sky.muSunMin * sky.bottomRadius / (dMax - dMin);
+  float uMuS = getTextureCoordFromUnit(
+    max(1.0 - a / A, 0.0) / (1.0 + a), SCATTERING_TEXTURE_MU_S_SIZE);
+
+  float uNu = (nu + 1.0) / 2.0;
+  return vec4(uNu, uMuS, uMu, uR);
+}
+
+vec3 getScattering(
+  SkyProperties sky,
+  sampler3D scatteringTexture,
+  float r, float mu, float muS, float nu,
+  bool rayRMuIntersectsGround) {
+  vec4 uvwz = getScatteringTextureUvwzFromRMuMuSNu(
+    sky, r, mu, muS, nu, rayRMuIntersectsGround);
 
   float texCoordX = uvwz.x * float(SCATTERING_TEXTURE_NU_SIZE - 1);
+
   float texX = floor(texCoordX);
   float lerp = texCoordX - texX;
 
@@ -502,117 +554,108 @@ vec3 getScattering(
 }
 
 vec3 getScattering(
-  in SkyProperties sky,
-  in sampler3D singleRayleighScatteringTexture,
-  in sampler3D singleMieScatteringTexture,
-  in sampler3D multipleScatteringTexture,
-  float r, float mu, float muSun, float nu,
-  bool doesRMuIntersectGround,
+  SkyProperties sky,
+  sampler3D singleRayleighScatteringTexture,
+  sampler3D singleMieScatteringTexture,
+  sampler3D multipleScatteringTexture,
+  float r, float mu, float muS, float nu,
+  bool rayRMuIntersectsGround,
   int scatteringOrder) {
   if (scatteringOrder == 1) {
     vec3 rayleigh = getScattering(
-      sky, singleRayleighScatteringTexture, r, mu, muSun, nu,
-      doesRMuIntersectGround);
+      sky, singleRayleighScatteringTexture, r, mu, muS, nu,
+      rayRMuIntersectsGround);
 
     vec3 mie = getScattering(
-      sky, singleMieScatteringTexture, r, mu, muSun, nu,
-      doesRMuIntersectGround);
+      sky, singleMieScatteringTexture, r, mu, muS, nu,
+      rayRMuIntersectsGround);
 
     return rayleigh * rayleighPhase(nu) +
       mie * miePhase(sky.miePhaseFunctionG, nu);
   }
   else {
     return getScattering(
-      sky, multipleScatteringTexture, r, mu,
-      muSun, nu, doesRMuIntersectGround);
+      sky, multipleScatteringTexture, r, mu, muS, nu,
+      rayRMuIntersectsGround);
   }
 }
 
-vec3 getIrradiance(
-  in SkyProperties sky,
-  in sampler2D irradianceTexture,
-  float r, float muSun);
-
 vec3 computeScatteringDensity(
-  in SkyProperties sky, in sampler2D transmittanceTexture,
-  in sampler3D singleRayleighScatteringTexture,
-  in sampler3D singleMieScatteringTexture,
-  in sampler3D multipleScatteringTexture,
-  in sampler2D irradianceTexture,
-  float r, float mu, float muSun, float nu, int scatteringOrder) {
+  SkyProperties sky,
+  sampler2D transmittanceTexture,
+  sampler3D singleRayleighScatteringTexture,
+  sampler3D singleMieScatteringTexture,
+  sampler3D multipleScatteringTexture,
+  sampler2D irradianceTexture,
+  float r, float mu, float muS, float nu, int scatteringOrder) {
   vec3 zenithDirection = vec3(0.0, 0.0, 1.0);
   vec3 omega = vec3(sqrt(1.0 - mu * mu), 0.0, mu);
-
-  float sunDirX = (omega.x == 0.0) ? 0.0 : (nu - mu * muSun) / omega.x;
-  float sunDirY = sqrt(max(1.0 - sunDirX * sunDirX - muSun * muSun, 0.0));
-
-  vec3 omegaSun = vec3(sunDirX, sunDirY, muSun);
+  float sunDirX = omega.x == 0.0 ? 0.0 : (nu - mu * muS) / omega.x;
+  float sunDirY = sqrt(max(1.0 - sunDirX * sunDirX - muS * muS, 0.0));
+  vec3 omegaS = vec3(sunDirX, sunDirY, muS);
 
   const int SAMPLE_COUNT = 16;
-
-  float dphi = PI / float(SAMPLE_COUNT);
-  float dtheta = PI / float(SAMPLE_COUNT);
-
+  const float dphi = PI / float(SAMPLE_COUNT);
+  const float dtheta = PI / float(SAMPLE_COUNT);
   vec3 rayleighMie = vec3(0.0);
 
   for (int l = 0; l < SAMPLE_COUNT; ++l) {
     float theta = (float(l) + 0.5) * dtheta;
     float cosTheta = cos(theta);
     float sinTheta = sin(theta);
-    bool doesRThetaIntersectGround = doesRayIntersectGround(sky, r, cosTheta);
+    bool rayRThetaIntersectsGround = doesRayIntersectGround(sky, r, cosTheta);
 
-    float distToGround = 0.0;
+    float distanceToGround = 0.0;
     vec3 transmittanceToGround = vec3(0.0);
     vec3 groundAlbedo = vec3(0.0);
-
-    if (doesRThetaIntersectGround) {
-      distToGround = distToGroundBoundary(sky, r, cosTheta);
+    if (rayRThetaIntersectsGround) {
+      distanceToGround = distToGroundBoundary(sky, r, cosTheta);
 
       transmittanceToGround = getTransmittance(
-        sky, transmittanceTexture, r, cosTheta, distToGround, true);
+        sky, transmittanceTexture, r, cosTheta, distanceToGround, true);
 
       groundAlbedo = sky.groundAlbedo;
     }
 
     for (int m = 0; m < 2 * SAMPLE_COUNT; ++m) {
       float phi = (float(m) + 0.5) * dphi;
-
       vec3 omegaI = vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
+      float domegaI = (dtheta) * (dphi) * sin(theta);
 
-      float domegaI = dtheta * dphi * sin(theta);
-
-      float nu1 = dot(omegaSun, omegaI);
+      float nu1 = dot(omegaS, omegaI);
 
       vec3 incidentRadiance = getScattering(
-        sky, singleRayleighScatteringTexture,
-        singleMieScatteringTexture, multipleScatteringTexture,
-        r, omegaI.z, muSun, nu1, doesRThetaIntersectGround, scatteringOrder - 1);
+        sky,
+        singleRayleighScatteringTexture, singleMieScatteringTexture,
+        multipleScatteringTexture, r, omegaI.z, muS, nu1,
+        rayRThetaIntersectsGround, scatteringOrder - 1);
 
-      vec3 groundNormal = normalize(zenithDirection * r + omegaI * distToGround);
+      vec3 groundNormal =
+          normalize(zenithDirection * r + omegaI * distanceToGround);
 
       vec3 groundIrradiance = getIrradiance(
-        sky, irradianceTexture, sky.bottomRadius,
-        dot(groundNormal, omegaSun));
+          sky, irradianceTexture, sky.bottomRadius,
+          dot(groundNormal, omegaS));
 
-      incidentRadiance += transmittanceToGround * groundAlbedo *
-        (1.0 / PI) * groundIrradiance;
+      incidentRadiance += transmittanceToGround *
+          groundAlbedo * (1.0 / (PI)) * groundIrradiance;
 
       float nu2 = dot(omega, omegaI);
 
       float rayleighDensity = getProfileDensity(
-        sky.rayleighDensity, r - sky.bottomRadius);
+          sky.rayleighDensity, r - sky.bottomRadius);
 
       float mieDensity = getProfileDensity(
-        sky.mieDensity, r - sky.bottomRadius);
+          sky.mieDensity, r - sky.bottomRadius);
 
       rayleighMie += incidentRadiance * (
-        sky.rayleighScatteringCoef * rayleighDensity *
-        rayleighPhase(nu2) +
-        sky.mieScatteringCoef * mieDensity *
-        miePhase(sky.miePhaseFunctionG, nu2)) * domegaI;
+          sky.rayleighScatteringCoef * rayleighDensity *
+              rayleighPhase(nu2) +
+          sky.mieScatteringCoef * mieDensity *
+              miePhase(sky.miePhaseFunctionG, nu2)) *
+          domegaI;
     }
   }
-
   return rayleighMie;
 }
 
@@ -631,13 +674,10 @@ vec3 computeMultipleScattering(
   for (int i = 0; i <= SAMPLE_COUNT; ++i) {
     float dI = float(i) * dx;
 
-    // The r, mu and mu_s parameters at the current integration point (see the
-    // single scattering section for a detailed explanation).
     float rI = clampRadius(sky, sqrt(dI * dI + 2.0 * r * mu * dI + r * r));
     float muI = clamp0To1((r * mu + dI) / rI);
     float muSI = clamp0To1((r * muSun + dI * nu) / rI);
 
-    // The Rayleigh and Mie multiple scattering at the current sample point.
     vec3 rayleighMieI =
       getScattering(
         sky, scatteringDensityTexture, rI, muI, muSI, nu,
@@ -646,7 +686,7 @@ vec3 computeMultipleScattering(
         sky, transmittanceTexture, r, mu, dI,
         doesRMuIntersectGround) *
       dx;
-    // Sample weight (from the trapezoidal rule).
+
     float weightI = (i == 0 || i == SAMPLE_COUNT) ? 0.5 : 1.0;
     rayleighMieSum += rayleighMieI * weightI;
   }
@@ -660,7 +700,9 @@ vec3 computeScatteringDensityTexture(
   in sampler3D singleMieScatteringTexture,
   in sampler3D multipleScatteringTexture,
   in sampler2D irradianceTexture,
-  in vec3 fragCoord, int scatteringOrder) {
+  vec3 fragCoord, int scatteringOrder) {
+  fragCoord.y = SCATTERING_TEXTURE_MU_SIZE - fragCoord.y;
+
   float r, mu, muSun, nu;
 
   bool doesRMuIntersectGround;

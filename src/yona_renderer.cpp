@@ -12,12 +12,8 @@ void Renderer::init(VulkanContext &vulkanContext) {
   vulkanContext.device().graphicsQueue().idle();
 }
 
-void Renderer::tickIn(VulkanFrame &frame) {
-  mRendererSky.tickIn(frame);
-}
-
-void Renderer::tickOut(VulkanFrame &frame) {
-  mRendererSky.tickOut(frame);
+void Renderer::tick(const Tick &tick, VulkanFrame &frame) {
+  mRendererSky.tick(tick, frame);
 }
 
 }

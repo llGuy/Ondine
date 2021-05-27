@@ -4,6 +4,7 @@
 #include <string_view>
 #include <GLFW/glfw3.h>
 #include "yona_event.hpp"
+#include "yona_time.hpp"
 
 namespace Yona {
 

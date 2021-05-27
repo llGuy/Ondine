@@ -1,5 +1,6 @@
 #pragma once
 
+#include "yona_tick.hpp"
 #include "yona_sky_def.hpp"
 #include "yona_vulkan_frame.hpp"
 #include "yona_vulkan_buffer.hpp"
@@ -17,8 +18,7 @@ public:
   void init(VulkanContext &graphicsContext);
 
   // For testing
-  void tickIn(VulkanFrame &frame);
-  void tickOut(VulkanFrame &frame);
+  void tick(const Tick &tick, VulkanFrame &frame);
 
 private:
   void initSkyProperties(VulkanContext &graphicsContext);

@@ -2,7 +2,6 @@
 
 #include "sky_def.glsl"
 #include "sky_utils.glsl"
-// #include "utils4.glsl"
 
 layout(location = 0) out vec3 outTransmittance;
 

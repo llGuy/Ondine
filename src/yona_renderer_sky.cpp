@@ -11,11 +11,20 @@ void RendererSky::init(VulkanContext &graphicsContext) {
   preparePrecompute(graphicsContext);
   precompute(graphicsContext);
 
+  /*
   mViewDistanceMeters = 9000.000000;
   mViewZenithAngleRadians = 1.470000;
   mViewAzimuthAngleRadians = 0.000000;
   mSunZenithAngleRadians = 1.564000;
   mSunAzimuthAngleRadians = -3.000000;
+  mExposure = 10.000000;
+  */
+
+  mViewDistanceMeters = 9000.000000;
+  mViewZenithAngleRadians = 1.470000;
+  mViewAzimuthAngleRadians = 0.000000;
+  mSunZenithAngleRadians = 1.300000;
+  mSunAzimuthAngleRadians = 3.000000;
   mExposure = 10.000000;
 
   /*
@@ -28,7 +37,7 @@ void RendererSky::init(VulkanContext &graphicsContext) {
   */
 
   /*
-  mViewDistanceMeters = 20000.000000;
+  mViewDistanceMeters = 9000.000000;
   mViewZenithAngleRadians = 1.500000;
   mViewAzimuthAngleRadians = 0.000000;
   mSunZenithAngleRadians = 1.628000;
@@ -37,22 +46,18 @@ void RendererSky::init(VulkanContext &graphicsContext) {
   */
 }
 
-void RendererSky::tickOut(VulkanFrame &frame) {
-
-}
-
-void RendererSky::tickIn(VulkanFrame &frame) {
+void RendererSky::tick(const Tick &tick, VulkanFrame &frame) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.bindPipeline(mDummy);
+
+  mSunZenithAngleRadians += tick.dt * 0.01f;
 
   commandBuffer.bindUniforms(
     mPrecomputedTransmittanceUniform,
     mPrecomputedScatteringUniform,
     mDeltaMieScatteringUniform,
     mPrecomputedIrradianceUniform);
-
-  // mSunZenithAngleRadians -= 0.000025f;
 
   float cos_z = cos(mViewZenithAngleRadians);
   float sin_z = sin(mViewZenithAngleRadians);

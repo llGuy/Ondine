@@ -9,6 +9,7 @@ namespace Yona {
 Application::Application(int argc, char **argv)
   : mWindow(WindowMode::Windowed, "Yona") {
   /* Initialise graphics context, etc... */
+  setMaxFramerate(60.0f);
 }
 
 Application::~Application() {
@@ -37,8 +38,12 @@ void Application::run() {
   /* User-defined function which will be overriden */
   start();
   mIsRunning = true;
+  mDt = 0.0f;
 
   while (mIsRunning) {
+    Time::TimeStamp frameStart = Time::getCurrentTime();
+    Tick currentTick = { mDt };
+
     mWindow.pollInput();
 
     tick();
@@ -55,15 +60,11 @@ void Application::run() {
     });
 
     VulkanFrame frame = mVulkanContext.beginFrame();
-
     { // All rendering here
-      mRenderer.tickOut(frame);
-
       mVulkanContext.beginSwapchainRender(frame);
+
       // Render will do final rendering to this backbuffer
-
-
-      mRenderer.tickIn(frame);
+      mRenderer.tick(currentTick, frame);
 
       mVulkanContext.endSwapchainRender(frame);
     }
@@ -72,6 +73,14 @@ void Application::run() {
     mEventQueue.clearEvents();
     /* Clears global linear allocator */
     lnClear();
+
+    Time::TimeStamp frameEnd = Time::getCurrentTime();
+    mDt = Time::getTimeDifference(frameEnd, frameStart);
+
+    if (mDt < mMinFrametime) {
+      Time::sleepSeconds(mMinFrametime - mDt);
+      mDt = mMinFrametime;
+    }
   }
 
   /* Shutdown */
@@ -135,6 +144,11 @@ void Application::processInputEvent(Event *ev) {
 
   default:;
   }
+}
+
+void Application::setMaxFramerate(float fps) {
+  mMaxFramerate = fps;
+  mMinFrametime = 1.0f / mMaxFramerate;
 }
 
 }

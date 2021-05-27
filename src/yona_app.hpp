@@ -1,5 +1,6 @@
 #pragma once
 
+#include "yona_time.hpp"
 #include "yona_event.hpp"
 #include "yona_window.hpp"
 #include "yona_renderer.hpp"
@@ -30,6 +31,7 @@ private:
 
   void pushEvent(Event *ev);
   void processInputEvent(Event *ev);
+  void setMaxFramerate(float fps);
 
 private:
   bool mIsRunning;
@@ -37,6 +39,10 @@ private:
   Window mWindow;
   VulkanContext mVulkanContext;
   Renderer mRenderer;
+
+  float mDt;
+  float mMaxFramerate;
+  float mMinFrametime;
 };
 
 }
