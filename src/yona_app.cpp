@@ -122,6 +122,8 @@ void Application::processInputEvent(Event *ev) {
           !kbEvent->press.isRepeat) {
         mWindow.toggleFullscreen();
         mVulkanContext.skipFrame();
+
+        kbEvent->isHandled = true;
       }
     }
   } break;

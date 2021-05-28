@@ -56,6 +56,7 @@ private:
 private:
   GLFWwindow *mHandle;
   Resolution mResolution;
+  Resolution mPreviousWindowedResolution;
   OnEventProc mEventCallback;
   WindowMode mWindowMode;
   bool mIsFullscreen;

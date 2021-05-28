@@ -99,30 +99,44 @@ void VulkanContext::initContext(const WindowContextInfo &surfaceInfo) {
 }
 
 VulkanFrame VulkanContext::beginFrame() {
-  uint32_t imageIndex = mSwapchain.acquireNextImage(
-    mDevice, mImageReadySemaphores[mCurrentFrame]);
+  if (mSkipFrame) {
+    VulkanFrame frame {
+      mDevice,
+      mPrimaryCommandBuffers[0],
+      0,
+      0,
+      {mSwapchain.mExtent.width, mSwapchain.mExtent.height},
+      true
+    };
 
-  mFences[mCurrentFrame].wait(mDevice);
-  mFences[mCurrentFrame].reset(mDevice);
+    mSkipFrame = false;
 
-  // Begin primary command buffer
-  VulkanCommandBuffer &currentCommandBuffer =
-    mPrimaryCommandBuffers[imageIndex];
+    return frame;
+  }
+  else {
+    uint32_t imageIndex = mSwapchain.acquireNextImage(
+      mDevice, mImageReadySemaphores[mCurrentFrame]);
 
-  currentCommandBuffer.begin(0, nullptr);
+    mFences[mCurrentFrame].wait(mDevice);
+    mFences[mCurrentFrame].reset(mDevice);
 
-  VulkanFrame frame {
-    mDevice,
-    currentCommandBuffer,
-    imageIndex,
-    mCurrentFrame,
-    {mSwapchain.mExtent.width, mSwapchain.mExtent.height},
-    mSkipFrame,
-  };
+    // Begin primary command buffer
+    VulkanCommandBuffer &currentCommandBuffer =
+      mPrimaryCommandBuffers[imageIndex];
 
-  mSkipFrame = false;
+    currentCommandBuffer.begin(0, nullptr);
 
-  return frame;
+    VulkanFrame frame {
+      mDevice,
+      currentCommandBuffer,
+      imageIndex,
+      mCurrentFrame,
+      {mSwapchain.mExtent.width, mSwapchain.mExtent.height},
+      false
+    };
+
+    return frame;
+  }
 }
 
 void VulkanContext::endFrame(const VulkanFrame &frame) {

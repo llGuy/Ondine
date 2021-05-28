@@ -33,6 +33,9 @@ WindowContextInfo Window::init(OnEventProc callback) {
     const GLFWvidmode *vidmode = glfwGetVideoMode(monitor);
     mResolution.width = vidmode->width;
     mResolution.height = vidmode->height;
+
+    mPreviousWindowedResolution.width = vidmode->width / 1.5f;
+    mPreviousWindowedResolution.height = vidmode->height / 1.5f;
   } break;
 
   case WindowMode::Windowed: {
@@ -117,6 +120,36 @@ void Window::pollInput() {
 }
 
 void Window::toggleFullscreen() {
+  if (mIsFullscreen) {
+    auto *monitor = glfwGetPrimaryMonitor();
+
+    const GLFWvidmode *vidmode = glfwGetVideoMode(monitor);
+
+    glfwSetWindowMonitor(
+      mHandle,
+      NULL,
+      0, 0,
+      mPreviousWindowedResolution.width, mPreviousWindowedResolution.height,
+      0);
+
+    mIsFullscreen = false;
+  }
+  else {
+    mPreviousWindowedResolution = mResolution;
+
+    auto *monitor = glfwGetPrimaryMonitor();
+
+    const GLFWvidmode *vidmode = glfwGetVideoMode(monitor);
+
+    glfwSetWindowMonitor(
+      mHandle,
+      monitor,
+      0, 0,
+      vidmode->width, vidmode->height,
+      0);
+
+    mIsFullscreen = true;
+  }
 }
 
 void Window::initWindowAPI() {
