@@ -60,6 +60,8 @@ private:
   OnEventProc mEventCallback;
   WindowMode mWindowMode;
   bool mIsFullscreen;
+  bool mResized;
+  glm::ivec2 mPreviousWindowedPosition;
   const std::string_view mTitle;
 };
 

@@ -15,7 +15,8 @@ Window::Window(
   : mResolution(resolution),
     mTitle(title),
     mWindowMode(mode),
-    mIsFullscreen(false) {
+    mIsFullscreen(false),
+    mResized(false) {
   
 }
 
@@ -117,6 +118,16 @@ WindowContextInfo Window::init(OnEventProc callback) {
 
 void Window::pollInput() {
   glfwPollEvents();
+
+  // So that we don't send a ton of resize events to the renderer
+  if (mResized) {
+    auto *resizeEvent = lnEmplaceAlloc<EventResize>();
+    resizeEvent->newResolution = mResolution;
+
+    mEventCallback(resizeEvent);
+
+    mResized = false;
+  }
 }
 
 void Window::toggleFullscreen() {
@@ -125,10 +136,14 @@ void Window::toggleFullscreen() {
 
     const GLFWvidmode *vidmode = glfwGetVideoMode(monitor);
 
+    if (!mPreviousWindowedPosition.x && !mPreviousWindowedPosition.y) {
+      mPreviousWindowedPosition = glm::ivec2(50);
+    }
+
     glfwSetWindowMonitor(
       mHandle,
       NULL,
-      0, 0,
+      mPreviousWindowedPosition.x, mPreviousWindowedPosition.y,
       mPreviousWindowedResolution.width, mPreviousWindowedResolution.height,
       0);
 
@@ -136,6 +151,9 @@ void Window::toggleFullscreen() {
   }
   else {
     mPreviousWindowedResolution = mResolution;
+    glfwGetWindowPos(
+      mHandle,
+      &mPreviousWindowedPosition.x, &mPreviousWindowedPosition.y);
 
     auto *monitor = glfwGetPrimaryMonitor();
 
@@ -211,6 +229,7 @@ void Window::keyCallback(int key, int scancode, int action, int mods) const {
   case GLFW_KEY_ESCAPE: { button = KeyboardButton::Escape; } break;
   case GLFW_KEY_F11: { button = KeyboardButton::F11; } break;
   case GLFW_KEY_F9: { button = KeyboardButton::F9; } break;
+  default: { button = KeyboardButton::Unhandled; } break;
   }
 
   auto *kbEvent = lnEmplaceAlloc<EventKeyboard>();
@@ -240,6 +259,7 @@ void Window::mouseButtonCallback(int button, int action, int mods) const {
   case GLFW_MOUSE_BUTTON_LEFT: { mouseButton = MouseButton::Left; } break;
   case GLFW_MOUSE_BUTTON_RIGHT: { mouseButton = MouseButton::Right; } break;
   case GLFW_MOUSE_BUTTON_MIDDLE: { mouseButton = MouseButton::Middle; } break;
+  default: { mouseButton = MouseButton::Unhandled; } break;
   }
 
   switch (action) {
@@ -275,12 +295,8 @@ void Window::cursorMoveCallback(float x, float y) const {
 }
 
 void Window::resizeCallback(unsigned width, unsigned height) {
-  auto *resizeEvent = lnEmplaceAlloc<EventResize>();
-  resizeEvent->newResolution = {width, height};
-
-  mEventCallback(resizeEvent);
-
-  mResolution = resizeEvent->newResolution;
+  mResolution = { width, height };
+  mResized = true;
 }
 
 void Window::scrollCallback(float x, float y) const {

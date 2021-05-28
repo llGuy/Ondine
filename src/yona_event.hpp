@@ -15,7 +15,8 @@ enum class EventType {
   Mouse,
   Keyboard,
   Resize,
-  Close
+  Close,
+  Invalid
 };
 
 #define EVENT_DEF(name, category, type)                                 \
