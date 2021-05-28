@@ -126,6 +126,8 @@ VulkanFrame VulkanContext::beginFrame() {
 
     currentCommandBuffer.begin(0, nullptr);
 
+    mImgui.beginRender();
+
     VulkanFrame frame {
       mDevice,
       currentCommandBuffer,
@@ -170,7 +172,7 @@ void VulkanContext::beginSwapchainRender(const VulkanFrame &frame) {
 }
 
 void VulkanContext::endSwapchainRender(const VulkanFrame &frame) {
-  mImgui.render(frame);
+  mImgui.endRender(frame);
 
   frame.primaryCommandBuffer.endRenderPass();
 }

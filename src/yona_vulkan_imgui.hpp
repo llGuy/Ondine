@@ -23,7 +23,8 @@ public:
     const VulkanCommandPool &commandPool,
     const WindowContextInfo &surfaceInfo);
 
-  void render(const VulkanFrame &frame);
+  void beginRender();
+  void endRender(const VulkanFrame &frame);
 
 private:
   static void imguiCallback(VkResult result);

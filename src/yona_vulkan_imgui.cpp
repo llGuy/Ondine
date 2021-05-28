@@ -65,8 +65,8 @@ void VulkanImgui::init(
   colors[ImGuiCol_TabActive] = ImVec4(0.195f, 0.195f, 0.195f, 1.000f);
   colors[ImGuiCol_TabUnfocused] = ImVec4(0.098f, 0.098f, 0.098f, 1.000f);
   colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.195f, 0.195f, 0.195f, 1.000f);
-  // colors[ImGuiCol_DockingPreview] = ImVec4(1.000f, 0.391f, 0.000f, 0.781f);
-  // colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.180f, 0.180f, 0.180f, 1.000f);
+  colors[ImGuiCol_DockingPreview] = ImVec4(1.000f, 0.391f, 0.000f, 0.781f);
+  colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.180f, 0.180f, 0.180f, 1.000f);
   colors[ImGuiCol_PlotLines] = ImVec4(0.469f, 0.469f, 0.469f, 1.000f);
   colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
   colors[ImGuiCol_PlotHistogram] = ImVec4(0.586f, 0.586f, 0.586f, 1.000f);
@@ -137,17 +137,13 @@ void VulkanImgui::imguiCallback(VkResult result) {
 
 }
 
-void VulkanImgui::render(const VulkanFrame &frame) {
+void VulkanImgui::beginRender() {
   ImGui_ImplVulkan_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
+}
 
-  // General stuff
-  ImGui::Begin("General");
-  ImGui::Text("Framerate: %.1f", ImGui::GetIO().Framerate);
-
-  ImGui::End();
-
+void VulkanImgui::endRender(const VulkanFrame &frame) {
   ImGui::Render();
 
   ImGui_ImplVulkan_RenderDrawData(
