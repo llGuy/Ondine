@@ -37,6 +37,7 @@ public:
   VulkanFramebuffer() = default;
 
   void init(const VulkanDevice &device, VulkanFramebufferConfig &config);
+  void destroy(const VulkanDevice &device);
 
 private:
   VkFramebuffer mFramebuffer;

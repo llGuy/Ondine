@@ -152,6 +152,15 @@ void VulkanDevice::init(
   }
 }
 
+void VulkanDevice::idle() {
+  vkDeviceWaitIdle(mLogicalDevice);
+}
+
+void VulkanDevice::updateSurfaceCapabilities(const VulkanSurface &surface) {
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+    mPhysicalDevice, surface.mSurface, &mSwapchainSupport.capabilities);
+}
+
 bool VulkanDevice::verifyHardwareMeetsRequirements(
   DeviceType requestedType,
   const VulkanSurface &surface,

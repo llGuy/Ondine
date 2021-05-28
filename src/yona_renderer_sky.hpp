@@ -17,8 +17,10 @@ class RendererSky {
 public:
   void init(VulkanContext &graphicsContext);
 
-  // For testing
   void tick(const Tick &tick, VulkanFrame &frame);
+
+  // Just while the demo is the only thing rendering - will be removed
+  void resize(VulkanContext &graphicsContext);
 
 private:
   void initSkyProperties(VulkanContext &graphicsContext);
@@ -81,7 +83,7 @@ private:
     VulkanTexture &texture, VulkanUniform &uniform,
     VulkanContext &graphicsContext);
 
-  void initDummyPipeline(
+  void initDemoPipeline(
     const Buffer &vsh,
     VulkanContext &graphicsContext);
 

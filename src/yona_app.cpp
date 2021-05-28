@@ -46,9 +46,10 @@ void Application::run() {
 
     mWindow.pollInput();
 
-    tick();
-
-    /* Go through all pushed events (in future go through layer stack) */
+    /* 
+       Go through the core events (window resize, etc...), then offload 
+       to the different views.
+    */
     mEventQueue.process([this](Event *ev) {
       switch (ev->category) {
       case EventCategory::Input: {
@@ -59,16 +60,19 @@ void Application::run() {
       }
     });
 
+    tick();
+
     VulkanFrame frame = mVulkanContext.beginFrame();
-    { // All rendering here
+    if (!frame.skipped) { // All rendering here
       mVulkanContext.beginSwapchainRender(frame);
-
-      // Render will do final rendering to this backbuffer
-      mRenderer.tick(currentTick, frame);
-
+      {
+        // Render will do final rendering to this backbuffer
+        mRenderer.tick(currentTick, frame);
+      }
       mVulkanContext.endSwapchainRender(frame);
+
+      mVulkanContext.endFrame(frame);
     }
-    mVulkanContext.endFrame(frame);
 
     mEventQueue.clearEvents();
     /* Clears global linear allocator */
@@ -102,45 +106,25 @@ void Application::processInputEvent(Event *ev) {
     ev->isHandled = true;
   } break;
 
-    /* For debugging */
-#if 0
-  case EventType::Mouse: {
-    EventMouse *mouseEv = (EventMouse *)ev;
-    switch (mouseEv->mouseEventType) {
-    case MouseEventType::Press: {
-      LOG_INFOV("Mouse button press: %d\n", (int)mouseEv->press.button);
-    } break;
+  case EventType::Resize: {
+    auto *resizeEvent = (EventResize *)ev;
+    mVulkanContext.resize(resizeEvent->newResolution);
+    mRenderer.resize(mVulkanContext);
 
-    case MouseEventType::Release: {
-      LOG_INFOV("Mouse button release: %d\n", (int)mouseEv->release.button);
-    } break;
-
-    case MouseEventType::Move: {
-      LOG_INFOV("Mouse button move: %f %f\n", mouseEv->move.x, mouseEv->move.y);
-    } break;
-
-    case MouseEventType::Scroll: {
-      LOG_INFOV
-        ("Mouse button scroll: %f %f\n", mouseEv->scroll.x, mouseEv->scroll.y);
-    } break;
-    }
+    resizeEvent->isHandled = true;
   } break;
 
+    /* Just for fullscreen toggling */
   case EventType::Keyboard: {
-    EventKeyboard *kbEv = (EventKeyboard *)ev;
-    switch (kbEv->keyboardEventType) {
-    case KeyboardEventType::Press: {
-      LOG_INFOV("Keyboard button press: %d\n", (int)kbEv->press.button);
-    } break;
-
-    case KeyboardEventType::Release: {
-      LOG_INFOV("Keyboard button release: %d\n", (int)kbEv->release.button);
-    } break;
-
-    case KeyboardEventType::Type:;
+    auto *kbEvent = (EventKeyboard *)ev;
+    if (kbEvent->keyboardEventType == KeyboardEventType::Press) {
+      if (kbEvent->press.button == KeyboardButton::F11 &&
+          !kbEvent->press.isRepeat) {
+        mWindow.toggleFullscreen();
+        mVulkanContext.skipFrame();
+      }
     }
   } break;
-#endif
 
   default:;
   }

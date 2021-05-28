@@ -81,9 +81,11 @@ public:
     const VulkanDevice &device,
     VulkanRenderPassConfig &config);
 
+  void destroy(const VulkanDevice &device);
+
 private:
   VkRenderPass mRenderPass;
-  Array<VkClearValue> mClearValues;
+  Array<VkClearValue, AllocationType::Freelist> mClearValues;
   Array<VkAttachmentDescription, AllocationType::Freelist> mAttachments;
   Array<AttachmentType, AllocationType::Freelist> mAttachmentTypes;
   Array<VkSubpassDescription, AllocationType::Freelist> mSubpasses;

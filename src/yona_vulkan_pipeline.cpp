@@ -222,4 +222,9 @@ void VulkanPipeline::init(
   mPipelineLayout = config.mPipelineLayout;
 }
 
+void VulkanPipeline::destroy(const VulkanDevice &device) {
+  vkDestroyPipeline(device.mLogicalDevice, mPipeline, nullptr);
+  vkDestroyPipelineLayout(device.mLogicalDevice, mPipelineLayout, nullptr);
+}
+
 }

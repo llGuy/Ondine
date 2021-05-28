@@ -15,6 +15,7 @@ struct VulkanFrame {
   uint32_t imageIndex;
   uint32_t frameInFlight;
   Resolution viewport;
+  bool skipped;
 };
 
 }

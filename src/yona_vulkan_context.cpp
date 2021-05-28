@@ -13,6 +13,7 @@ namespace Yona {
 VulkanContext::VulkanContext()
   : mInstance(ENABLE_VALIDATION),
     mFramesInFlight(FRAMES_IN_FLIGHT),
+    mSkipFrame(false),
     mCurrentFrame(0) {
   
 }
@@ -115,8 +116,11 @@ VulkanFrame VulkanContext::beginFrame() {
     currentCommandBuffer,
     imageIndex,
     mCurrentFrame,
-    {mSwapchain.mExtent.width, mSwapchain.mExtent.height}
+    {mSwapchain.mExtent.width, mSwapchain.mExtent.height},
+    mSkipFrame,
   };
+
+  mSkipFrame = false;
 
   return frame;
 }
@@ -155,6 +159,40 @@ void VulkanContext::endSwapchainRender(const VulkanFrame &frame) {
   mImgui.render(frame);
 
   frame.primaryCommandBuffer.endRenderPass();
+}
+
+void VulkanContext::resize(const Resolution &newResolution) {
+  mDevice.idle();
+
+  mSwapchain.destroy(mDevice);
+  mFinalRenderPass.destroy(mDevice);
+
+  for (int i = 0; i < mFinalFramebuffers.size; ++i) {
+    mFinalFramebuffers[i].destroy(mDevice);
+  }
+
+  mFinalFramebuffers.free();
+
+  mDevice.updateSurfaceCapabilities(mSurface);
+
+  mSwapchain.init(mDevice, mSurface, newResolution);
+
+  VulkanRenderPassConfig finalRenderPassConfig (1, 1);
+  finalRenderPassConfig.addAttachment(
+    LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
+    OutputUsage::Present, AttachmentType::Color,
+    mSwapchain.mFormat);
+  finalRenderPassConfig.addSubpass(
+    makeArray<uint32_t, AllocationType::Linear>(0U),
+    makeArray<uint32_t, AllocationType::Linear>(),
+    false);
+  mFinalRenderPass.init(mDevice, finalRenderPassConfig);
+
+  mFinalFramebuffers = mSwapchain.makeFramebuffers(mDevice, mFinalRenderPass);
+}
+
+void VulkanContext::skipFrame() {
+  mSkipFrame = true;
 }
 
 const VulkanDevice &VulkanContext::device() const {

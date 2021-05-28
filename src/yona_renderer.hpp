@@ -12,6 +12,7 @@ public:
   void init(VulkanContext &vulkanContext);
 
   void tick(const Tick &tick, VulkanFrame &frame);
+  void resize(VulkanContext &vulkanContext);
 
 private:
   RendererSky mRendererSky;

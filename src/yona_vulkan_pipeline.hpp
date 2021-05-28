@@ -129,6 +129,8 @@ public:
     VulkanDescriptorSetLayoutMaker &layouts,
     VulkanPipelineConfig &config);
 
+  void destroy(const VulkanDevice &device);
+
 private:
   VkPipeline mPipeline;
   VkPipelineLayout mPipelineLayout;

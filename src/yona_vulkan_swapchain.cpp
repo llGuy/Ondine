@@ -112,9 +112,24 @@ void VulkanSwapchain::init(
       vkCreateImageView(
         device.mLogicalDevice,
         &imageViewInfo,
-        NULL,
+        nullptr,
         &mImageViews[i]));
   }
+}
+
+void VulkanSwapchain::destroy(const VulkanDevice &device) {
+  vkDestroySwapchainKHR(device.mLogicalDevice, mSwapchain, nullptr);
+
+  for (int i = 0; i < mImages.size; ++i) {
+    vkDestroyImageView(device.mLogicalDevice, mImageViews[i], nullptr);
+    mImageViews[i] = VK_NULL_HANDLE;
+    mImages[i] = VK_NULL_HANDLE;
+  }
+
+  mSwapchain = VK_NULL_HANDLE;
+
+  mImages.free();
+  mImageViews.free();
 }
 
 Array<VulkanFramebuffer> VulkanSwapchain::makeFramebuffers(

@@ -19,6 +19,8 @@ public:
     const VulkanSurface &surface,
     const Resolution &initialResolution);
 
+  void destroy(const VulkanDevice &device);
+
   Array<VulkanFramebuffer> makeFramebuffers(
     const VulkanDevice &device,
     const VulkanRenderPass &renderPass) const;

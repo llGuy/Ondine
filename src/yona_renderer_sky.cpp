@@ -105,6 +105,12 @@ void RendererSky::tick(const Tick &tick, VulkanFrame &frame) {
   commandBuffer.draw(4, 1, 0, 0);
 }
 
+void RendererSky::resize(VulkanContext &graphicsContext) {
+  mDemo.destroy(graphicsContext.device());
+
+  initDemoPipeline({}, graphicsContext);
+}
+
 void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {
   /* 
      Based on the values of Eric Bruneton's atmosphere model.
@@ -211,7 +217,7 @@ void RendererSky::preparePrecompute(VulkanContext &graphicsContext) {
   prepareScatteringDensityPrecompute(quadVsh, quadGsh, graphicsContext);
   prepareMultipleScatteringPrecompute(quadVsh, quadGsh, graphicsContext);
 
-  initDummyPipeline(quadVsh, graphicsContext);
+  initDemoPipeline(quadVsh, graphicsContext);
 }
 
 void RendererSky::prepareTransmittancePrecompute(
@@ -994,7 +1000,7 @@ void RendererSky::make2DTextureAndUniform(
     makeArray<VulkanTexture, AllocationType::Linear>(texture));
 }
 
-void RendererSky::initDummyPipeline(
+void RendererSky::initDemoPipeline(
   const Buffer &vsha,
   VulkanContext &graphicsContext) {
   File precomputeDummyVsh = gFileSystem->createFile(

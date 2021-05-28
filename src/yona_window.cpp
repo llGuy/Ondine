@@ -14,7 +14,8 @@ Window::Window(
   const Resolution &resolution)
   : mResolution(resolution),
     mTitle(title),
-    mWindowMode(mode) {
+    mWindowMode(mode),
+    mIsFullscreen(false) {
   
 }
 
@@ -113,6 +114,9 @@ WindowContextInfo Window::init(OnEventProc callback) {
 
 void Window::pollInput() {
   glfwPollEvents();
+}
+
+void Window::toggleFullscreen() {
 }
 
 void Window::initWindowAPI() {

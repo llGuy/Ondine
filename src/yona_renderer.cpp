@@ -16,4 +16,8 @@ void Renderer::tick(const Tick &tick, VulkanFrame &frame) {
   mRendererSky.tick(tick, frame);
 }
 
+void Renderer::resize(VulkanContext &vulkanContext) {
+  mRendererSky.resize(vulkanContext);
+}
+
 }

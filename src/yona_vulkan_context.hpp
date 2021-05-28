@@ -38,6 +38,10 @@ public:
   /* Ends the render pass which renders to the swapchain */
   void endSwapchainRender(const VulkanFrame &frame);
 
+  void resize(const Resolution &newResolution);
+
+  void skipFrame();
+
   const VulkanDevice &device() const;
   VulkanDescriptorSetLayoutMaker &descriptorLayouts();
   const VulkanCommandPool &commandPool() const;
@@ -62,6 +66,7 @@ private:
   VulkanDescriptorPool mDescriptorPool;
   VulkanDescriptorSetLayoutMaker mDescriptorSetLayouts;
   VulkanImgui mImgui;
+  bool mSkipFrame;
 };
 
 }

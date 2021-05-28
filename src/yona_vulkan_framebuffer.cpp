@@ -62,4 +62,9 @@ void VulkanFramebuffer::init(
       &mFramebuffer));
 }
 
+void VulkanFramebuffer::destroy(const VulkanDevice &device) {
+  vkDestroyFramebuffer(device.mLogicalDevice, mFramebuffer, nullptr);
+  mFramebuffer = VK_NULL_HANDLE;
+}
+
 }

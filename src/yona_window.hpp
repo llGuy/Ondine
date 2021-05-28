@@ -3,6 +3,7 @@
 #include "yona_io.hpp"
 #include <string_view>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 #include "yona_event.hpp"
 #include "yona_time.hpp"
 
@@ -34,6 +35,7 @@ public:
 
   WindowContextInfo init(OnEventProc callback);
   void pollInput();
+  void toggleFullscreen();
 
   static void initWindowAPI();
 
@@ -56,6 +58,7 @@ private:
   Resolution mResolution;
   OnEventProc mEventCallback;
   WindowMode mWindowMode;
+  bool mIsFullscreen;
   const std::string_view mTitle;
 };
 

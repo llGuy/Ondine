@@ -350,4 +350,15 @@ void VulkanRenderPass::init(
   mRefs = config.mRefs;
 }
 
+void VulkanRenderPass::destroy(const VulkanDevice &device) {
+  vkDestroyRenderPass(device.mLogicalDevice, mRenderPass, nullptr);
+  mRenderPass = VK_NULL_HANDLE;
+
+  mAttachments.free();
+  mClearValues.free();
+  mAttachmentTypes.free();
+  mSubpasses.free();
+  mRefs.free();
+}
+
 }
