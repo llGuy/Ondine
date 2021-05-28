@@ -864,4 +864,188 @@ vec3 getSolarRadiance(in SkyProperties sky) {
     (PI * sky.solarAngularRadius * sky.solarAngularRadius);
 }
 
+vec3 getExtrapolatedSingleMieScattering(
+  in SkyProperties sky, in vec4 scattering) {
+  if (scattering.r == 0.0) {
+    return vec3(0.0);
+  }
+
+  return scattering.rgb * scattering.a / scattering.r *
+    (sky.rayleighScatteringCoef.r / sky.mieScatteringCoef.r) *
+    (sky.mieScatteringCoef / sky.rayleighScatteringCoef);
+}
+
+vec3 getCombinedScattering(
+  in SkyProperties sky,
+  in sampler3D scatteringTexture,
+  in sampler3D singleMieScatteringTexture,
+  float r, float mu, float muSun, float nu,
+  bool doesRMuIntersectGround,
+  out vec3 singleMieScattering) {
+  vec4 uvwz = getScatteringTextureUVWZFromRMuMuSunNu(
+      sky, r, mu, muSun, nu, doesRMuIntersectGround);
+
+  float texCoordX = uvwz.x * float(SCATTERING_TEXTURE_NU_SIZE - 1);
+  float texX = floor(texCoordX);
+  float lerp = texCoordX - texX;
+  vec3 uvw0 = vec3((texX + uvwz.y) / float(SCATTERING_TEXTURE_NU_SIZE),
+      uvwz.z, uvwz.w);
+  vec3 uvw1 = vec3((texX + 1.0 + uvwz.y) / float(SCATTERING_TEXTURE_NU_SIZE),
+      uvwz.z, uvwz.w);
+
+  uvw0.y = 1.0 - uvw0.y;
+  uvw1.y = 1.0 - uvw1.y;
+
+  vec4 combinedScattering =
+      texture(scatteringTexture, uvw0) * (1.0 - lerp) +
+      texture(scatteringTexture, uvw1) * lerp;
+  vec3 scattering = vec3(combinedScattering);
+
+  singleMieScattering = getExtrapolatedSingleMieScattering(
+    sky, combinedScattering);
+  return scattering;
+}
+
+vec3 getSkyRadiance(
+  in SkyProperties sky,
+  in sampler2D transmittanceTexture,
+  in sampler3D scatteringTexture,
+  in sampler3D singleMieScateringTexture,
+  vec3 camera, vec3 viewRay, float shadowLength,
+  vec3 sunDirection, out vec3 transmittance) {
+  float r = length(camera);
+  float rMu = dot(camera, viewRay);
+  
+  float distToTopSkyBoundary = -rMu -
+    sqrt(rMu * rMu - r * r + sky.topRadius * sky.topRadius);
+
+  if (distToTopSkyBoundary > 0.0) {
+    camera = camera + viewRay * distToTopSkyBoundary;
+    r = sky.topRadius;
+    rMu += distToTopSkyBoundary;
+  }
+  else if (r > sky.topRadius) {
+    transmittance = vec3(1.0);
+    // SPACE!
+    return vec3(0.0);
+  }
+
+  // retrieve cos of the zenith angle
+  float mu = rMu / r;
+  float muSun = dot(camera, sunDirection) / r;
+  float nu = dot(viewRay, sunDirection);
+  bool doesRMuIntersectGround = doesRayIntersectGround(sky, r, mu);
+
+  transmittance = doesRMuIntersectGround ? vec3(0.0) :
+    getTransmittanceToSkyBoundary(sky, transmittanceTexture, r, mu);
+
+  vec3 singleMieScattering;
+  vec3 scattering;
+
+  if (shadowLength == 0.0) {
+    scattering = getCombinedScattering(
+      sky, scatteringTexture, singleMieScateringTexture,
+      r, mu, muSun, nu, doesRMuIntersectGround, singleMieScattering);
+  }
+  else {
+    float d = shadowLength;
+    float rP = clampRadius(sky, sqrt(d * d + 2.0 * r * mu * d + r * r));
+    float muP = (r * mu + d) / rP;
+    float muSunP = (r * muSun + d * nu) / rP;
+
+    scattering = getCombinedScattering(
+      sky, scatteringTexture, singleMieScateringTexture,
+      rP, muP, muSunP, nu, doesRMuIntersectGround, singleMieScattering);
+
+    vec3 shadowTransmittance = getTransmittance(
+      sky, transmittanceTexture, r, mu, shadowLength, doesRMuIntersectGround);
+
+    scattering = scattering * shadowTransmittance;
+    singleMieScattering = singleMieScattering * shadowTransmittance;
+  }
+
+  return scattering * rayleighPhase(nu) + singleMieScattering *
+    miePhase(sky.miePhaseFunctionG, nu);
+}
+
+vec3 getSkyRadianceToPoint(
+  in SkyProperties sky,
+  in sampler2D transmittanceTexture,
+  in sampler3D scatteringTexture,
+  in sampler3D singleMieScatteringTexture,
+  vec3 camera, vec3 point, float shadowLength,
+  vec3 sunDirection, out vec3 transmittance) {
+  vec3 viewRay = normalize(point - camera);
+  float r = length(camera);
+  float rmu = dot(camera, viewRay);
+  float distToTopSkyBoundary = -rmu -
+      sqrt(rmu * rmu - r * r + sky.topRadius * sky.topRadius);
+
+  if (distToTopSkyBoundary > 0.0) {
+    camera = camera + viewRay * distToTopSkyBoundary;
+    r = sky.topRadius;
+    rmu += distToTopSkyBoundary;
+  }
+
+  float mu = rmu / r;
+  float muSun = dot(camera, sunDirection) / r;
+  float nu = dot(viewRay, sunDirection);
+  float d = length(point - camera);
+  bool doesRMuIntersectGround = doesRayIntersectGround(sky, r, mu);
+
+  transmittance = getTransmittance(
+    sky, transmittanceTexture, r, mu, d, doesRMuIntersectGround);
+
+  vec3 singleMieScattering;
+  vec3 scattering = getCombinedScattering(
+    sky, scatteringTexture, singleMieScatteringTexture,
+    r, mu, muSun, nu, doesRMuIntersectGround, singleMieScattering);
+
+  d = max(d - shadowLength, 0.0);
+  float rP = clampRadius(sky, sqrt(d * d + 2.0 * r * mu * d + r * r));
+  float muP = (r * mu + d) / rP;
+  float muSunP = (r * muSun + d * nu) / rP;
+
+  vec3 singleMieScatteringP;
+  vec3 scatteringP = getCombinedScattering(
+    sky, scatteringTexture, singleMieScatteringTexture,
+    rP, muP, muSunP, nu, doesRMuIntersectGround, singleMieScatteringP);
+
+  vec3 shadowTransmittance = transmittance;
+  if (shadowLength > 0.0) {
+    shadowTransmittance = getTransmittance(
+      sky, transmittanceTexture,
+      r, mu, d, doesRMuIntersectGround);
+  }
+
+  scattering = scattering - shadowTransmittance * scatteringP;
+  singleMieScattering = singleMieScattering -
+    shadowTransmittance * singleMieScatteringP;
+
+  singleMieScattering = getExtrapolatedSingleMieScattering(
+    sky, vec4(scattering, singleMieScattering.r));
+
+  singleMieScattering = singleMieScattering * smoothstep(0.0, 0.01f, muSun);
+
+  return scattering * rayleighPhase(nu) + singleMieScattering *
+    miePhase(sky.miePhaseFunctionG, nu);
+}
+
+vec3 getSunAndSkyIrradiance(
+  in SkyProperties sky,
+  in sampler2D transmittanceTexture,
+  in sampler2D irradianceTexture,
+  vec3 point, vec3 normal, vec3 sunDirection,
+  out vec3 skyIrradiance) {
+  float r = length(point);
+  float muSun = dot(point, sunDirection) / r;
+
+  skyIrradiance = getIrradiance(sky, irradianceTexture, r, muSun) *
+    (1.0 + dot(normal, point) / r) * 0.5;
+
+  return sky.solarIrradiance *
+    getTransmittanceToSun(sky, transmittanceTexture, r, muSun) *
+    max(dot(normal, sunDirection), 0.0);
+}
+
 #endif

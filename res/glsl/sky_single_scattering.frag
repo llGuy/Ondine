@@ -1,7 +1,7 @@
 #version 450
 
 #include "sky_def.glsl"
-#include "sky_utils.glsl"
+#include "sky.glsl"
 
 /* These are all texture 3D */
 layout (location = 0) out vec4 outDeltaRayleigh;

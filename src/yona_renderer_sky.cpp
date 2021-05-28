@@ -11,49 +11,23 @@ void RendererSky::init(VulkanContext &graphicsContext) {
   preparePrecompute(graphicsContext);
   precompute(graphicsContext);
 
-  /*
-  mViewDistanceMeters = 9000.000000;
-  mViewZenithAngleRadians = 1.470000;
-  mViewAzimuthAngleRadians = 0.000000;
-  mSunZenithAngleRadians = 1.564000;
-  mSunAzimuthAngleRadians = -3.000000;
-  mExposure = 10.000000;
-  */
-
   mViewDistanceMeters = 9000.000000;
   mViewZenithAngleRadians = 1.470000;
   mViewAzimuthAngleRadians = 0.000000;
   mSunZenithAngleRadians = 1.300000;
   mSunAzimuthAngleRadians = 3.000000;
   mExposure = 10.000000;
-
-  /*
-  mViewDistanceMeters = 9000.000000;
-  mViewZenithAngleRadians = 1.470000;
-  mViewAzimuthAngleRadians = 0.000000;
-  mSunZenithAngleRadians = 1.300000;
-  mSunAzimuthAngleRadians = 3.000000;
-  mExposure = 10.000000;
-  */
-
-  /*
-  mViewDistanceMeters = 9000.000000;
-  mViewZenithAngleRadians = 1.500000;
-  mViewAzimuthAngleRadians = 0.000000;
-  mSunZenithAngleRadians = 1.628000;
-  mSunAzimuthAngleRadians = 1.050000;
-  mExposure = 200.000000;
-  */
 }
 
 void RendererSky::tick(const Tick &tick, VulkanFrame &frame) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
-  commandBuffer.bindPipeline(mDummy);
+  commandBuffer.bindPipeline(mDemo);
 
   mSunZenithAngleRadians += tick.dt * 0.01f;
 
   commandBuffer.bindUniforms(
+    mSkyPropertiesUniform,
     mPrecomputedTransmittanceUniform,
     mPrecomputedScatteringUniform,
     mDeltaMieScatteringUniform,
@@ -68,7 +42,7 @@ void RendererSky::tick(const Tick &tick, VulkanFrame &frame) {
   float uz[3] = { sin_z * cos_a, sin_z * sin_a, cos_z };
   float l = mViewDistanceMeters / 1000.0f;
 
-  DummyPushConstant pushConstant = {};
+  DemoPushConstant pushConstant = {};
   
   float model_from_view[16] = {
     // [0]    [1]    [2]       [3]
@@ -123,7 +97,7 @@ void RendererSky::tick(const Tick &tick, VulkanFrame &frame) {
     sin(mSunAzimuthAngleRadians) * sin(mSunZenithAngleRadians),
     cos(mSunZenithAngleRadians));
   
-  commandBuffer.pushConstants(sizeof(DummyPushConstant), &pushConstant);
+  commandBuffer.pushConstants(sizeof(DemoPushConstant), &pushConstant);
 
   commandBuffer.setViewport({frame.viewport.width, frame.viewport.height});
   commandBuffer.setScissor({}, {frame.viewport.width, frame.viewport.height});
@@ -1025,14 +999,14 @@ void RendererSky::initDummyPipeline(
   VulkanContext &graphicsContext) {
   File precomputeDummyVsh = gFileSystem->createFile(
     (MountPoint)ApplicationMountPoints::Application,
-    "res/spv/sky_render.vert.spv",
+    "res/spv/sky_demo.vert.spv",
     FileOpenType::Binary | FileOpenType::In);
 
   Buffer precomputeVsh = precomputeDummyVsh.readBinary();
 
   File precomputeDummy = gFileSystem->createFile(
     (MountPoint)ApplicationMountPoints::Application,
-    "res/spv/sky_render.frag.spv",
+    "res/spv/sky_demo.frag.spv",
     FileOpenType::Binary | FileOpenType::In);
 
   Buffer fsh = precomputeDummy.readBinary();
@@ -1048,10 +1022,11 @@ void RendererSky::initDummyPipeline(
     {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
 
   pipelineConfig.configurePipelineLayout(
-    sizeof(DummyPushConstant),
+    sizeof(DemoPushConstant),
+    VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
     textureUL, textureUL, textureUL, textureUL);
 
-  mDummy.init(
+  mDemo.init(
     graphicsContext.device(),
     graphicsContext.descriptorLayouts(),
     pipelineConfig);

@@ -1,7 +1,7 @@
 #version 450
 
 #include "sky_def.glsl"
-#include "sky_utils.glsl"
+#include "sky.glsl"
 
 layout(location = 0) out vec3 outDeltaMultipleScattering;
 layout(location = 1) out vec4 outScattering;

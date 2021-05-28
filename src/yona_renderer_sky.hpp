@@ -103,7 +103,6 @@ private:
     VK_FORMAT_R32G32B32A32_SFLOAT;
   static constexpr VkFormat PRECOMPUTED_TEXTURE_FORMAT16 =
     VK_FORMAT_R16G16B16A16_SFLOAT;
-    //VK_FORMAT_R8G8B8A8_UNORM;
 
   SkyProperties mSkyProperties;
   VulkanBuffer mSkyPropertiesBuffer;
@@ -120,7 +119,7 @@ private:
     int scatteringOrder;
   };
 
-  struct DummyPushConstant {
+  struct DemoPushConstant {
     float modelFromView[16];
     float viewFromClip[16];
 
@@ -191,8 +190,8 @@ private:
   VulkanTexture mDeltaScatteringDensityTexture;
   VulkanUniform mDeltaScatteringDensityUniform;
 
-  /* For testing so that Renderdoc can show ressources */
-  VulkanPipeline mDummy;
+  /* For now, contain the demo shader */
+  VulkanPipeline mDemo;
 
   float mViewDistanceMeters = 9000.000000;
   float mViewZenithAngleRadians = 1.470000;
