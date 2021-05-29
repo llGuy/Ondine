@@ -97,4 +97,10 @@ void VulkanUniform::init(
     0, nullptr);
 }
 
+void VulkanUniform::destroy(
+  const VulkanDevice &device, const VulkanDescriptorPool &pool) {
+  vkFreeDescriptorSets(
+    device.mLogicalDevice, pool.mDescriptorPool, 1, &mDescriptorSet);
+}
+
 }

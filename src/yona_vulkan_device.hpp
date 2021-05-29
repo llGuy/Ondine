@@ -63,7 +63,7 @@ public:
     const VulkanSurface &surface,
     const DeviceRequestedFeatures &features);
 
-  void idle();
+  void idle() const;
   void updateSurfaceCapabilities(const VulkanSurface &surface);
 
   // May need to accomodate multiple queues when multithreading

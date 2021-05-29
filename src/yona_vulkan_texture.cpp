@@ -188,4 +188,21 @@ VkImageMemoryBarrier VulkanTexture::makeBarrier(
   return imageBarrier;
 }
 
+void VulkanTexture::destroy(const VulkanDevice &device) {
+  vkDestroyImage(device.mLogicalDevice, mImage, nullptr);
+  vkFreeMemory(device.mLogicalDevice, mMemory, nullptr);
+  vkDestroyImageView(device.mLogicalDevice, mImageViewSample, nullptr);
+  if (mImageViewSample != mImageViewAttachment &&
+      mImageViewAttachment != VK_NULL_HANDLE) {
+    vkDestroyImageView(device.mLogicalDevice, mImageViewAttachment, nullptr);
+  }
+  vkDestroySampler(device.mLogicalDevice, mSampler, nullptr);
+
+  mImage = VK_NULL_HANDLE;
+  mImageViewSample = VK_NULL_HANDLE;
+  mImageViewAttachment = VK_NULL_HANDLE;
+  mSampler = VK_NULL_HANDLE;
+  mMemory = VK_NULL_HANDLE;
+}
+
 }

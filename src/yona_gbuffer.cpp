@@ -10,13 +10,9 @@ void GBuffer::init(VulkanContext &graphicsContext) {
     ctxProperties.swapchainExtent.height,
   };
 
-  VkExtent3D extent = {mGBufferExtent.width, mGBufferExtent.height, 1};
-
-  VkFormat attachmentFormats[] = {
-    VK_FORMAT_R8G8B8A8_UNORM,
-    VK_FORMAT_R16G16B16A16_SFLOAT,
-    ctxProperties.depthFormat
-  };
+  mGBufferFormats[0] = VK_FORMAT_R8G8B8A8_UNORM;
+  mGBufferFormats[1] = VK_FORMAT_R16G16B16A16_SFLOAT;
+  mGBufferFormats[2] = ctxProperties.depthFormat;
 
   { // Create render pass
     VulkanRenderPassConfig renderPassConfig(3, 1);
@@ -24,17 +20,17 @@ void GBuffer::init(VulkanContext &graphicsContext) {
     renderPassConfig.addAttachment(
       LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::ClearThenStore,
       OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      attachmentFormats[Albedo]);
+      mGBufferFormats[Albedo]);
 
     renderPassConfig.addAttachment(
       LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::ClearThenStore,
       OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      attachmentFormats[Normal]);
+      mGBufferFormats[Normal]);
 
     renderPassConfig.addAttachment(
       LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::ClearThenStore,
       OutputUsage::FragmentShaderRead, AttachmentType::Depth,
-      attachmentFormats[Depth]);
+      mGBufferFormats[Depth]);
 
     renderPassConfig.addSubpass(
       makeArray<uint32_t, AllocationType::Linear>(0U, 1U),
@@ -44,23 +40,58 @@ void GBuffer::init(VulkanContext &graphicsContext) {
     mGBufferRenderPass.init(graphicsContext.device(), renderPassConfig);
   }
 
-  { // Create attachment textures
-    mGBufferTextures.init(3);
+  initTargets(graphicsContext);
+}
 
+void GBuffer::beginRender(VulkanFrame &frame) {
+  frame.primaryCommandBuffer.beginRenderPass(
+    mGBufferRenderPass,
+    mGBufferFBO,
+    {}, mGBufferExtent);
+}
+
+void GBuffer::endRender(VulkanFrame &frame) {
+  frame.primaryCommandBuffer.endRenderPass();
+}
+
+void GBuffer::resize(VulkanContext &vulkanContext, Resolution newResolution) {
+  destroyTargets(vulkanContext);
+  mGBufferExtent = {newResolution.width, newResolution.height};
+  initTargets(vulkanContext);
+}
+
+const VulkanRenderPass &GBuffer::renderPass() const {
+  return mGBufferRenderPass;
+}
+
+const VulkanFramebuffer &GBuffer::framebuffer() const {
+  return mGBufferFBO;
+}
+
+const VulkanUniform &GBuffer::uniform() const {
+  return mAlbedoUniform;
+}
+
+VkExtent2D GBuffer::extent() const {
+  return mGBufferExtent;
+}
+
+void GBuffer::initTargets(VulkanContext &graphicsContext) {
+  { // Create attachment textures
     mGBufferTextures[Albedo].init(
       graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
-      TextureContents::Color, attachmentFormats[Albedo], VK_FILTER_LINEAR,
-      extent, 1, 1);
+      TextureContents::Color, mGBufferFormats[Albedo], VK_FILTER_LINEAR,
+      {mGBufferExtent.width, mGBufferExtent.height, 1}, 1, 1);
 
     mGBufferTextures[Normal].init(
       graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
-      TextureContents::Color, attachmentFormats[Normal], VK_FILTER_LINEAR,
-      extent, 1, 1);
+      TextureContents::Color, mGBufferFormats[Normal], VK_FILTER_LINEAR,
+      {mGBufferExtent.width, mGBufferExtent.height, 1}, 1, 1);
 
     mGBufferTextures[Depth].init(
       graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
-      TextureContents::Depth, attachmentFormats[Depth], VK_FILTER_LINEAR,
-      extent, 1, 1);
+      TextureContents::Depth, mGBufferFormats[Depth], VK_FILTER_LINEAR,
+      {mGBufferExtent.width, mGBufferExtent.height, 1}, 1, 1);
 
     mAlbedoUniform.init(
       graphicsContext.device(),
@@ -81,31 +112,14 @@ void GBuffer::init(VulkanContext &graphicsContext) {
   }
 }
 
-void GBuffer::beginRender(VulkanFrame &frame) {
-  frame.primaryCommandBuffer.beginRenderPass(
-    mGBufferRenderPass,
-    mGBufferFBO,
-    {}, mGBufferExtent);
-}
+void GBuffer::destroyTargets(VulkanContext &graphicsContext) {
+  mAlbedoUniform.destroy(
+    graphicsContext.device(), graphicsContext.descriptorPool());
+  mGBufferFBO.destroy(graphicsContext.device());
+  for (int i = 0; i < Count; ++i) {
+    mGBufferTextures[i].destroy(graphicsContext.device());
+  }
 
-void GBuffer::endRender(VulkanFrame &frame) {
-  frame.primaryCommandBuffer.endRenderPass();
-}
-
-const VulkanRenderPass &GBuffer::renderPass() const {
-  return mGBufferRenderPass;
-}
-
-const VulkanFramebuffer &GBuffer::framebuffer() const {
-  return mGBufferFBO;
-}
-
-const VulkanUniform &GBuffer::uniform() const {
-  return mAlbedoUniform;
-}
-
-VkExtent2D GBuffer::extent() const {
-  return mGBufferExtent;
 }
 
 }

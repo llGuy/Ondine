@@ -20,10 +20,7 @@ public:
     VulkanContext &graphicsContext,
     const RenderStage &renderStage);
 
-  void tick(const Tick &tick, VulkanFrame &frame);
-
-  // Just while the demo is the only thing rendering - will be removed
-  void resize(VulkanContext &graphicsContext, const RenderStage &);
+  void tick(const Tick &tick, VulkanFrame &frame, Resolution viewport);
 
 private:
   void initSkyProperties(VulkanContext &graphicsContext);

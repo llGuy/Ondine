@@ -4,28 +4,33 @@
 
 namespace Yona {
 
-void Renderer::init(VulkanContext &vulkanContext) {
+void Renderer3D::init(VulkanContext &vulkanContext) {
   mGBuffer.init(vulkanContext);
   mRendererSky.init(vulkanContext, mGBuffer);
 
   // Idle with all precomputation stuff
   vulkanContext.device().graphicsQueue().idle();
+
+  auto properties = vulkanContext.getProperties();
+  mPipelineViewport = {
+    properties.swapchainExtent.width, properties.swapchainExtent.height
+  };
 }
 
-void Renderer::tick(const Tick &tick, VulkanFrame &frame) {
+void Renderer3D::tick(const Tick &tick, VulkanFrame &frame) {
   mGBuffer.beginRender(frame);
   {
     // Renders the demo
-    mRendererSky.tick(tick, frame);
+    mRendererSky.tick(tick, frame, mPipelineViewport);
   }
   mGBuffer.endRender(frame);
 }
 
-void Renderer::resize(VulkanContext &vulkanContext) {
-  mRendererSky.resize(vulkanContext, mGBuffer);
+void Renderer3D::resize(VulkanContext &vulkanContext, Resolution newResolution) {
+  mGBuffer.resize(vulkanContext, newResolution);
 }
 
-const RenderStage &Renderer::mainRenderStage() const {
+const RenderStage &Renderer3D::mainRenderStage() const {
   return mGBuffer;
 }
 

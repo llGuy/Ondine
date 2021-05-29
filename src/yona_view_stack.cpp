@@ -49,7 +49,7 @@ void ViewStack::processEvents(EventQueue &queue, const Tick &tick) {
 }
 
 void ViewStack::render(
-  const VulkanContext &graphicsContext,
+  VulkanContext &graphicsContext,
   const VulkanFrame &frame, const Tick &tick) {
   VulkanUniform previousOutput = {};
   for (int i = 0; i < mViews.size; ++i) {

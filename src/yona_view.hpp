@@ -18,7 +18,7 @@ struct ViewProcessEventsParams {
 };
 
 struct ViewRenderParams {
-  const VulkanContext &graphicsContext;
+  VulkanContext &graphicsContext;
   const VulkanUniform &previousOutput;
   const VulkanFrame &frame;
   const Tick &tick;

@@ -23,7 +23,8 @@ void RendererSky::init(
   initDemoPipeline(graphicsContext, renderStage);
 }
 
-void RendererSky::tick(const Tick &tick, VulkanFrame &frame) {
+void RendererSky::tick(
+  const Tick &tick, VulkanFrame &frame, Resolution viewport) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.bindPipeline(mDemo);
@@ -103,18 +104,10 @@ void RendererSky::tick(const Tick &tick, VulkanFrame &frame) {
   
   commandBuffer.pushConstants(sizeof(DemoPushConstant), &pushConstant);
 
-  commandBuffer.setViewport({frame.viewport.width, frame.viewport.height});
-  commandBuffer.setScissor({}, {frame.viewport.width, frame.viewport.height});
+  commandBuffer.setViewport({viewport.width, viewport.height});
+  commandBuffer.setScissor({}, {viewport.width, viewport.height});
 
   commandBuffer.draw(4, 1, 0, 0);
-}
-
-void RendererSky::resize(
-  VulkanContext &graphicsContext,
-  const RenderStage &renderStage) {
-  mDemo.destroy(graphicsContext.device());
-
-  initDemoPipeline(graphicsContext, renderStage);
 }
 
 void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {

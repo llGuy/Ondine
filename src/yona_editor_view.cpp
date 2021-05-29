@@ -2,18 +2,37 @@
 #include "yona_app.hpp"
 #include "yona_utils.hpp"
 #include <imgui_internal.h>
+#include "yona_io_event.hpp"
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 #include "yona_filesystem.hpp"
 #include "yona_editor_view.hpp"
+#include "yona_event_renderer.hpp"
 #include "yona_vulkan_context.hpp"
 
 namespace Yona {
 
 EditorView::EditorView(
   const WindowContextInfo &contextInfo,
-  VulkanContext &graphicsContext)
-  : mIsDockLayoutInitialised(false) {
+  VulkanContext &graphicsContext,
+  OnEventProc onEventProc)
+  : mIsDockLayoutInitialised(false),
+    mDeferredEventCount(0),
+    mViewportResolution{0, 0},
+    mOnEvent(onEventProc) {
+  { // Create render pass
+    VulkanRenderPassConfig config(1, 1);
+    config.addAttachment(
+      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
+      OutputUsage::FragmentShaderRead, AttachmentType::Color,
+      VK_FORMAT_R8G8B8A8_UNORM);
+    config.addSubpass(
+      makeArray<uint32_t, AllocationType::Linear>(0U),
+      makeArray<uint32_t, AllocationType::Linear>(),
+      false);
+    mRenderPass.init(graphicsContext.device(), config);
+  }
+
   initRenderTarget(graphicsContext);
   initViewportRendering(graphicsContext);
   initImguiContext(contextInfo, graphicsContext);
@@ -24,10 +43,20 @@ EditorView::~EditorView() {
 }
 
 void EditorView::processEvents(ViewProcessEventsParams &params) {
-  
+  params.queue.process([this](Event *ev) {
+    switch (ev->category) {
+    case EventCategory::Input: {
+      processInputEvent(ev);
+    } break;
+
+    default:;
+    }
+  });
 }
 
 void EditorView::render(ViewRenderParams &params) {
+  processDeferredEvents(params.graphicsContext);
+
   auto &commandBuffer = params.frame.primaryCommandBuffer;
 
   commandBuffer.beginRenderPass(
@@ -92,47 +121,77 @@ void EditorView::render(ViewRenderParams &params) {
     ImGui::End();
   }
 
-  ImGui::Begin(
+  if (ImGui::Begin(
     "Assets", nullptr,
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
-  ImGui::End();
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+    
+    ImGui::End();
+  }
 
-  ImGui::Begin(
+  bool renderViewport = false;
+  ImVec2 viewportPos = {};
+  ImVec2 viewportSize = {};
+  if ((renderViewport = ImGui::Begin(
     "Viewport", nullptr,
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
-  auto viewportPos = ImGui::GetWindowPos();
-  auto viewportSize = ImGui::GetWindowSize();
-  ImGui::End();
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration))) {
+    viewportPos = ImGui::GetWindowPos();
+    viewportSize = ImGui::GetWindowSize();
 
-  ImGui::Begin(
+    if (mViewportResolution.width == 0) {
+      mViewportResolution.width = (uint32_t)viewportSize.x;
+      mViewportResolution.height = (uint32_t)viewportSize.y;
+      renderViewport = false;
+    }
+    else if (
+      mViewportResolution.width != (uint32_t)viewportSize.x ||
+      mViewportResolution.height != (uint32_t)viewportSize.y) {
+      // Trigger viewport resize event
+      mViewportResolution.width = (uint32_t)viewportSize.x;
+      mViewportResolution.height = (uint32_t)viewportSize.y;
+
+      auto *resizeEvent = lnEmplaceAlloc<EventViewportResize>();
+      resizeEvent->newResolution = mViewportResolution;
+      // mOnEvent(resizeEvent);
+      renderViewport = false;
+    }
+  
+    ImGui::End();
+  }
+
+  if (ImGui::Begin(
     "Console", nullptr,
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration); 
-  ImGui::End();
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+    ImGui::End();
+  }
 
-  ImGui::Begin(
+  if (ImGui::Begin(
     "Game State", nullptr,
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
-  ImGui::End();
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+    ImGui::End();
+  }
 
-  ImGui::Begin(
-    "General", nullptr,
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
-  ImGui::Text("Framerate: %.1f", ImGui::GetIO().Framerate);
-  ImGui::End();
+  if (ImGui::Begin(
+        "General", nullptr,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+    ImGui::Text("Framerate: %.1f", ImGui::GetIO().Framerate);
+    ImGui::End();
+  }
 
   params.graphicsContext.imgui().endRender(params.frame);
 
   // Render the viewport
-  commandBuffer.bindPipeline(mRenderViewport);
-  commandBuffer.bindUniforms(params.previousOutput);
-  commandBuffer.setScissor(
-    {(int32_t)viewportPos.x, (int32_t)viewportPos.y},
-    {(uint32_t)viewportPos.x + (uint32_t)viewportSize.x,
-    (uint32_t)viewportPos.y + (uint32_t)viewportSize.y});
-  commandBuffer.setViewport(
-    {(uint32_t)viewportSize.x, (uint32_t)viewportSize.y},
-    {(uint32_t)viewportPos.x, (uint32_t)viewportPos.y});
-  commandBuffer.draw(4, 1, 0, 0);
+  if (renderViewport) {
+    commandBuffer.bindPipeline(mRenderViewport);
+    commandBuffer.bindUniforms(params.previousOutput);
+    commandBuffer.setScissor(
+      {(int32_t)viewportPos.x, (int32_t)viewportPos.y},
+      {(uint32_t)viewportPos.x + (uint32_t)viewportSize.x,
+       (uint32_t)viewportPos.y + (uint32_t)viewportSize.y});
+    commandBuffer.setViewport(
+      {(uint32_t)viewportSize.x, (uint32_t)viewportSize.y},
+      {(uint32_t)viewportPos.x, (uint32_t)viewportPos.y});
+    commandBuffer.draw(4, 1, 0, 0);
+  }
 
   commandBuffer.endRenderPass();
 }
@@ -160,20 +219,6 @@ void EditorView::tickMenuBar() {
 
 void EditorView::initRenderTarget(VulkanContext &graphicsContext) {
   auto properties = graphicsContext.getProperties();
-
-  { // Create render pass
-    VulkanRenderPassConfig config(1, 1);
-    config.addAttachment(
-      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
-      OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      VK_FORMAT_R8G8B8A8_UNORM);
-    config.addSubpass(
-      makeArray<uint32_t, AllocationType::Linear>(0U),
-      makeArray<uint32_t, AllocationType::Linear>(),
-      false);
-    mRenderPass.init(graphicsContext.device(), config);
-  }
-
   { // Create target texture + uniform
     mTarget.init(
       graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
@@ -192,6 +237,11 @@ void EditorView::initRenderTarget(VulkanContext &graphicsContext) {
 
     mFramebuffer.init(graphicsContext.device(), config);
   }
+}
+
+void EditorView::destroyRenderTarget(VulkanContext &graphicsContext) {
+  mFramebuffer.destroy(graphicsContext.device());
+  mTarget.destroy(graphicsContext.device());
 }
 
 void EditorView::initViewportRendering(VulkanContext &graphicsContext) {
@@ -301,6 +351,47 @@ void EditorView::initImguiContext(
   style->WindowRounding = 2.0f;
 
   graphicsContext.initImgui(contextInfo, mRenderPass);
+}
+
+void EditorView::processInputEvent(Event *ev) {
+  switch (ev->type) {
+  case EventType::Resize: {
+    auto *resizeEvent = (EventResize *)ev;
+    Resolution *resolution = lnEmplaceAlloc<Resolution>(
+      resizeEvent->newResolution);
+
+    mDeferredEvents[mDeferredEventCount++] = {
+      handleResize,
+      resolution
+    };
+
+    /* 
+       We don't want this event to propagate to further layers. Another
+       event will be sent down - we need to know how big the viewport is.
+    */
+    resizeEvent->isHandled = true;
+  } break;
+
+  default:;
+  }
+}
+
+void EditorView::processDeferredEvents(VulkanContext &graphicsContext) {
+  DeferredEventProcParams params = {
+    this, graphicsContext, nullptr
+  };
+
+  for (int i = 0; i < mDeferredEventCount; ++i) {
+    params.data = mDeferredEvents[i].data;
+    mDeferredEvents[i].proc(params);
+  }
+
+  mDeferredEventCount = 0;
+}
+
+void EditorView::handleResize(DeferredEventProcParams &params) {
+  params.editorView->destroyRenderTarget(params.graphicsContext);
+  params.editorView->initRenderTarget(params.graphicsContext);
 }
 
 }

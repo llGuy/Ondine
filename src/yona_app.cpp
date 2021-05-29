@@ -34,10 +34,13 @@ void Application::run() {
   auto surfaceInfo = mWindow.init(RECV_EVENT_PROC(recvEvent));
 
   mVulkanContext.initContext(surfaceInfo);
-  mRenderer.init(mVulkanContext);
+  mRenderer3D.init(mVulkanContext);
   mViewStack.init(mVulkanContext);
-  mViewStack.push(new GameView(mRenderer.mainRenderStage()));
-  mViewStack.push(new EditorView(surfaceInfo, mVulkanContext));
+
+  mViewStack.push(
+    new GameView(mRenderer3D.mainRenderStage(), mRenderer3D));
+  mViewStack.push(
+    new EditorView(surfaceInfo, mVulkanContext, RECV_EVENT_PROC(recvEvent)));
 
   /* User-defined function which will be overriden */
   start();
@@ -60,18 +63,23 @@ void Application::run() {
         processInputEvent(ev);
       } break;
 
+      case EventCategory::Renderer3D: {
+        processRendererEvent(ev);
+      } break;
+
       default:; /* Only handle the above */
       }
     });
 
     mViewStack.processEvents(mEventQueue, currentTick);
+    mEventQueue.clearEvents();
 
     // Defined in client
     tick();
 
     VulkanFrame frame = mVulkanContext.beginFrame();
     if (!frame.skipped) { // All rendering here
-      mRenderer.tick(currentTick, frame);
+      mRenderer3D.tick(currentTick, frame);
       mViewStack.render(mVulkanContext, frame, currentTick);
 
       mVulkanContext.beginSwapchainRender(frame);
@@ -84,7 +92,6 @@ void Application::run() {
       mVulkanContext.endFrame(frame);
     }
 
-    mEventQueue.clearEvents();
     /* Clears global linear allocator */
     lnClear();
 
@@ -119,9 +126,8 @@ void Application::processInputEvent(Event *ev) {
   case EventType::Resize: {
     auto *resizeEvent = (EventResize *)ev;
     mVulkanContext.resize(resizeEvent->newResolution);
-    mRenderer.resize(mVulkanContext);
 
-    resizeEvent->isHandled = true;
+    // Don't set it to handled - view stack will want to have a look at this
   } break;
 
     /* Just for fullscreen toggling */
@@ -138,6 +144,17 @@ void Application::processInputEvent(Event *ev) {
     }
   } break;
 
+  default:;
+  }
+}
+
+void Application::processRendererEvent(Event *ev) {
+  switch (ev->type) {
+  case EventType::ViewportResize: {
+    mVulkanContext.device().idle();
+
+    // Don't set it to handled - view stack will want to have a look at this
+  } break;
   default:;
   }
 }

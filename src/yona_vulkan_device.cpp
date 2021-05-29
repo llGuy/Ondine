@@ -152,7 +152,7 @@ void VulkanDevice::init(
   }
 }
 
-void VulkanDevice::idle() {
+void VulkanDevice::idle() const {
   vkDeviceWaitIdle(mLogicalDevice);
 }
 

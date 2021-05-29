@@ -41,6 +41,8 @@ public:
     VkImageLayout oldLayout,
     VkImageLayout newLayout) const;
 
+  void destroy(const VulkanDevice &device);
+
 private:
   VkImage mImage;
   VkDeviceMemory mMemory;

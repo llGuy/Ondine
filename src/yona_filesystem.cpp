@@ -5,6 +5,8 @@
 
 namespace Yona {
 
+FileSystem *gFileSystem = nullptr;
+
 void FileSystem::addMountPoint(MountPoint id, const std::string &directory) {
   mMountPoints[id] = directory + 
     (char)std::filesystem::path::preferred_separator;
@@ -19,7 +21,5 @@ File FileSystem::createFile(
   assert(mMountPoints[mountPoint].length() > 0);
   return File(mMountPoints[mountPoint] + path, type);
 }
-
-FileSystem *gFileSystem = nullptr;
 
 }

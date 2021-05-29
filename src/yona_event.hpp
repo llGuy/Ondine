@@ -8,6 +8,7 @@ namespace Yona {
 
 enum class EventCategory {
   Input,
+  Renderer3D,
   Gameplay
 };
 
@@ -16,6 +17,7 @@ enum class EventType {
   Keyboard,
   Resize,
   Close,
+  ViewportResize,
   Invalid
 };
 

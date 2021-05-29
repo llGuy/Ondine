@@ -26,6 +26,9 @@ public:
     const Array<VulkanTexture, AllocationType::Linear> &textures,
     VkDescriptorType type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
+  void destroy(
+    const VulkanDevice &device, const VulkanDescriptorPool &pool);
+
 private:
   VkDescriptorSet mDescriptorSet;
 

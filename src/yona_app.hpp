@@ -32,6 +32,7 @@ private:
 
   void pushEvent(Event *ev);
   void processInputEvent(Event *ev);
+  void processRendererEvent(Event *ev);
   void setMaxFramerate(float fps);
 
 private:
@@ -39,7 +40,7 @@ private:
   EventQueue mEventQueue;
   Window mWindow;
   VulkanContext mVulkanContext;
-  Renderer mRenderer;
+  Renderer3D mRenderer3D;
   ViewStack mViewStack;
 
   float mDt;
