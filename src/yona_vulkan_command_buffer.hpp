@@ -29,7 +29,10 @@ public:
   void endRenderPass();
 
   // With no parameters, set it to the render pass extent
-  void setViewport(VkExtent2D extent = {}, uint32_t maxDepth = 1) const;
+  void setViewport(
+    VkExtent2D extent = {},
+    VkExtent2D offset = {},
+    uint32_t maxDepth = 1) const;
   void setScissor(VkOffset2D offset, VkExtent2D extent) const;
 
   void bindPipeline(const VulkanPipeline &pipeline);

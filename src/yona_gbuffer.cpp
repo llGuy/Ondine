@@ -61,6 +61,13 @@ void GBuffer::init(VulkanContext &graphicsContext) {
       graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
       TextureContents::Depth, attachmentFormats[Depth], VK_FILTER_LINEAR,
       extent, 1, 1);
+
+    mAlbedoUniform.init(
+      graphicsContext.device(),
+      graphicsContext.descriptorPool(),
+      graphicsContext.descriptorLayouts(),
+      makeArray<VulkanTexture, AllocationType::Linear>(
+        mGBufferTextures[Albedo]));
   }
 
   { // Create framebuffer
@@ -83,6 +90,22 @@ void GBuffer::beginRender(VulkanFrame &frame) {
 
 void GBuffer::endRender(VulkanFrame &frame) {
   frame.primaryCommandBuffer.endRenderPass();
+}
+
+const VulkanRenderPass &GBuffer::renderPass() const {
+  return mGBufferRenderPass;
+}
+
+const VulkanFramebuffer &GBuffer::framebuffer() const {
+  return mGBufferFBO;
+}
+
+const VulkanUniform &GBuffer::uniform() const {
+  return mAlbedoUniform;
+}
+
+VkExtent2D GBuffer::extent() const {
+  return mGBufferExtent;
 }
 
 }

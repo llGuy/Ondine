@@ -14,6 +14,8 @@ public:
   void tick(const Tick &tick, VulkanFrame &frame);
   void resize(VulkanContext &vulkanContext);
 
+  const RenderStage &mainRenderStage() const;
+
 private:
   RendererSky mRendererSky;
   GBuffer mGBuffer;

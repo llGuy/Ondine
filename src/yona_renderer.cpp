@@ -6,18 +6,27 @@ namespace Yona {
 
 void Renderer::init(VulkanContext &vulkanContext) {
   mGBuffer.init(vulkanContext);
-  mRendererSky.init(vulkanContext);
+  mRendererSky.init(vulkanContext, mGBuffer);
 
   // Idle with all precomputation stuff
   vulkanContext.device().graphicsQueue().idle();
 }
 
 void Renderer::tick(const Tick &tick, VulkanFrame &frame) {
-  mRendererSky.tick(tick, frame);
+  mGBuffer.beginRender(frame);
+  {
+    // Renders the demo
+    mRendererSky.tick(tick, frame);
+  }
+  mGBuffer.endRender(frame);
 }
 
 void Renderer::resize(VulkanContext &vulkanContext) {
-  mRendererSky.resize(vulkanContext);
+  mRendererSky.resize(vulkanContext, mGBuffer);
+}
+
+const RenderStage &Renderer::mainRenderStage() const {
+  return mGBuffer;
 }
 
 }

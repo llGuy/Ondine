@@ -16,6 +16,8 @@ public:
     const WindowContextInfo &contextInfo,
     VulkanContext &graphicsContext);
 
+  ~EditorView() override;
+
   void processEvents(ViewProcessEventsParams &) override;
   void render(ViewRenderParams &) override;
 
@@ -23,6 +25,7 @@ public:
 
 private:
   void initRenderTarget(VulkanContext &graphicsContext);
+  void initViewportRendering(VulkanContext &graphicsContext);
   void initImguiContext(
     const WindowContextInfo &contextInfo, VulkanContext &graphicsContext);
   void tickMenuBar();
@@ -35,6 +38,8 @@ private:
   VulkanFramebuffer mFramebuffer;
   VulkanTexture mTarget;
   VulkanUniform mTargetUniform;
+
+  VulkanPipeline mRenderViewport;
 };
 
 }

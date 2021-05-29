@@ -2,6 +2,7 @@
 #include "yona_app.hpp"
 #include "yona_memory.hpp"
 #include "yona_io_event.hpp"
+#include "yona_game_view.hpp"
 #include "yona_filesystem.hpp"
 #include "yona_editor_view.hpp"
 
@@ -35,6 +36,7 @@ void Application::run() {
   mVulkanContext.initContext(surfaceInfo);
   mRenderer.init(mVulkanContext);
   mViewStack.init(mVulkanContext);
+  mViewStack.push(new GameView(mRenderer.mainRenderStage()));
   mViewStack.push(new EditorView(surfaceInfo, mVulkanContext));
 
   /* User-defined function which will be overriden */
@@ -69,14 +71,13 @@ void Application::run() {
 
     VulkanFrame frame = mVulkanContext.beginFrame();
     if (!frame.skipped) { // All rendering here
+      mRenderer.tick(currentTick, frame);
       mViewStack.render(mVulkanContext, frame, currentTick);
 
       mVulkanContext.beginSwapchainRender(frame);
       {
         // Grab output of the view stack
         mViewStack.presentOutput(frame);
-
-        // mRenderer.tick(currentTick, frame);
       }
       mVulkanContext.endSwapchainRender(frame);
 

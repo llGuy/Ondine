@@ -1,8 +1,10 @@
 #include <imgui.h>
+#include "yona_app.hpp"
 #include "yona_utils.hpp"
 #include <imgui_internal.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+#include "yona_filesystem.hpp"
 #include "yona_editor_view.hpp"
 #include "yona_vulkan_context.hpp"
 
@@ -13,7 +15,12 @@ EditorView::EditorView(
   VulkanContext &graphicsContext)
   : mIsDockLayoutInitialised(false) {
   initRenderTarget(graphicsContext);
+  initViewportRendering(graphicsContext);
   initImguiContext(contextInfo, graphicsContext);
+}
+
+EditorView::~EditorView() {
+  
 }
 
 void EditorView::processEvents(ViewProcessEventsParams &params) {
@@ -21,7 +28,9 @@ void EditorView::processEvents(ViewProcessEventsParams &params) {
 }
 
 void EditorView::render(ViewRenderParams &params) {
-  params.frame.primaryCommandBuffer.beginRenderPass(
+  auto &commandBuffer = params.frame.primaryCommandBuffer;
+
+  commandBuffer.beginRenderPass(
     mRenderPass, mFramebuffer, {0, 0},
     {params.frame.viewport.width, params.frame.viewport.height});
 
@@ -91,11 +100,13 @@ void EditorView::render(ViewRenderParams &params) {
   ImGui::Begin(
     "Viewport", nullptr,
     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
+  auto viewportPos = ImGui::GetWindowPos();
+  auto viewportSize = ImGui::GetWindowSize();
   ImGui::End();
 
   ImGui::Begin(
     "Console", nullptr,
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration); 
   ImGui::End();
 
   ImGui::Begin(
@@ -111,7 +122,19 @@ void EditorView::render(ViewRenderParams &params) {
 
   params.graphicsContext.imgui().endRender(params.frame);
 
-  params.frame.primaryCommandBuffer.endRenderPass();
+  // Render the viewport
+  commandBuffer.bindPipeline(mRenderViewport);
+  commandBuffer.bindUniforms(params.previousOutput);
+  commandBuffer.setScissor(
+    {(int32_t)viewportPos.x, (int32_t)viewportPos.y},
+    {(uint32_t)viewportPos.x + (uint32_t)viewportSize.x,
+    (uint32_t)viewportPos.y + (uint32_t)viewportSize.y});
+  commandBuffer.setViewport(
+    {(uint32_t)viewportSize.x, (uint32_t)viewportSize.y},
+    {(uint32_t)viewportPos.x, (uint32_t)viewportPos.y});
+  commandBuffer.draw(4, 1, 0, 0);
+
+  commandBuffer.endRenderPass();
 }
 
 const VulkanUniform &EditorView::getOutput() const {
@@ -169,6 +192,39 @@ void EditorView::initRenderTarget(VulkanContext &graphicsContext) {
 
     mFramebuffer.init(graphicsContext.device(), config);
   }
+}
+
+void EditorView::initViewportRendering(VulkanContext &graphicsContext) {
+  File vshFile = gFileSystem->createFile(
+    (MountPoint)ApplicationMountPoints::Application,
+    "res/spv/render_sampled_quad.vert.spv",
+    FileOpenType::Binary | FileOpenType::In);
+
+  Buffer vsh = vshFile.readBinary();
+
+  File fshFile = gFileSystem->createFile(
+    (MountPoint)ApplicationMountPoints::Application,
+    "res/spv/render_sampled_quad.frag.spv",
+    FileOpenType::Binary | FileOpenType::In);
+
+  Buffer fsh = fshFile.readBinary();
+
+  VulkanPipelineConfig pipelineConfig(
+    {mRenderPass, 0},
+    VulkanShader(
+      graphicsContext.device(), vsh, VulkanShaderType::Vertex),
+    VulkanShader(
+      graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+
+  pipelineConfig.configurePipelineLayout(
+    0,
+    VulkanPipelineDescriptorLayout{
+      VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
+
+  mRenderViewport.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorLayouts(),
+    pipelineConfig);
 }
 
 void EditorView::initImguiContext(

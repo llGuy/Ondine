@@ -3,6 +3,7 @@
 #include "yona_tick.hpp"
 #include "yona_sky_def.hpp"
 #include "yona_vulkan_frame.hpp"
+#include "yona_render_stage.hpp"
 #include "yona_vulkan_buffer.hpp"
 #include "yona_vulkan_uniform.hpp"
 #include "yona_vulkan_pipeline.hpp"
@@ -15,12 +16,14 @@ class VulkanContext;
 
 class RendererSky {
 public:
-  void init(VulkanContext &graphicsContext);
+  void init(
+    VulkanContext &graphicsContext,
+    const RenderStage &renderStage);
 
   void tick(const Tick &tick, VulkanFrame &frame);
 
   // Just while the demo is the only thing rendering - will be removed
-  void resize(VulkanContext &graphicsContext);
+  void resize(VulkanContext &graphicsContext, const RenderStage &);
 
 private:
   void initSkyProperties(VulkanContext &graphicsContext);
@@ -84,8 +87,8 @@ private:
     VulkanContext &graphicsContext);
 
   void initDemoPipeline(
-    const Buffer &vsh,
-    VulkanContext &graphicsContext);
+    VulkanContext &graphicsContext,
+    const RenderStage &renderStage);
 
 private:
   static constexpr size_t NUM_SCATTERING_ORDERS = 4;

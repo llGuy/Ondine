@@ -6,7 +6,9 @@
 
 namespace Yona {
 
-void RendererSky::init(VulkanContext &graphicsContext) {
+void RendererSky::init(
+  VulkanContext &graphicsContext,
+  const RenderStage &renderStage) {
   initSkyProperties(graphicsContext);
   preparePrecompute(graphicsContext);
   precompute(graphicsContext);
@@ -17,6 +19,8 @@ void RendererSky::init(VulkanContext &graphicsContext) {
   mSunZenithAngleRadians = 1.300000;
   mSunAzimuthAngleRadians = 3.000000;
   mExposure = 10.000000;
+
+  initDemoPipeline(graphicsContext, renderStage);
 }
 
 void RendererSky::tick(const Tick &tick, VulkanFrame &frame) {
@@ -105,10 +109,12 @@ void RendererSky::tick(const Tick &tick, VulkanFrame &frame) {
   commandBuffer.draw(4, 1, 0, 0);
 }
 
-void RendererSky::resize(VulkanContext &graphicsContext) {
+void RendererSky::resize(
+  VulkanContext &graphicsContext,
+  const RenderStage &renderStage) {
   mDemo.destroy(graphicsContext.device());
 
-  initDemoPipeline({}, graphicsContext);
+  initDemoPipeline(graphicsContext, renderStage);
 }
 
 void RendererSky::initSkyProperties(VulkanContext &graphicsContext) {
@@ -216,8 +222,6 @@ void RendererSky::preparePrecompute(VulkanContext &graphicsContext) {
   prepareDirectIrradiancePrecompute(quadVsh, graphicsContext);
   prepareScatteringDensityPrecompute(quadVsh, quadGsh, graphicsContext);
   prepareMultipleScatteringPrecompute(quadVsh, quadGsh, graphicsContext);
-
-  initDemoPipeline(quadVsh, graphicsContext);
 }
 
 void RendererSky::prepareTransmittancePrecompute(
@@ -1001,8 +1005,8 @@ void RendererSky::make2DTextureAndUniform(
 }
 
 void RendererSky::initDemoPipeline(
-  const Buffer &vsha,
-  VulkanContext &graphicsContext) {
+  VulkanContext &graphicsContext,
+  const RenderStage &renderStage) {
   File precomputeDummyVsh = gFileSystem->createFile(
     (MountPoint)ApplicationMountPoints::Application,
     "res/spv/sky_demo.vert.spv",
@@ -1018,7 +1022,7 @@ void RendererSky::initDemoPipeline(
   Buffer fsh = precomputeDummy.readBinary();
 
   VulkanPipelineConfig pipelineConfig(
-    {graphicsContext.finalRenderPass(), 0},
+    {renderStage.renderPass(), 0},
     VulkanShader(
       graphicsContext.device(), precomputeVsh, VulkanShaderType::Vertex),
     VulkanShader(

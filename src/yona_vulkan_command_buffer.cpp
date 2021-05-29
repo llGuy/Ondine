@@ -114,7 +114,7 @@ void VulkanCommandBuffer::copyBuffer(
 }
 
 void VulkanCommandBuffer::setViewport(
-  VkExtent2D extent, uint32_t maxDepth) const {
+  VkExtent2D extent, VkExtent2D offset, uint32_t maxDepth) const {
   if (extent.width == 0) {
     extent = mCurrentRenderPassExtent;
   }
@@ -122,6 +122,8 @@ void VulkanCommandBuffer::setViewport(
   VkViewport viewport = {};
   viewport.width = (float)extent.width;
   viewport.height = (float)extent.height;
+  viewport.x = offset.width;
+  viewport.y = offset.height;
   viewport.maxDepth = 1;
   vkCmdSetViewport(mCommandBuffer, 0, 1, &viewport);
 }
