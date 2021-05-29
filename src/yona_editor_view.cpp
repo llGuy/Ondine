@@ -63,7 +63,7 @@ void EditorView::render(ViewRenderParams &params) {
 
       ImGuiID top;
       ImGuiID bottom = ImGui::DockBuilderSplitNode(
-        mDock, ImGuiDir_Down, 0.15f, NULL, &top);
+        mDock, ImGuiDir_Down, 0.3f, NULL, &top);
 
       ImGuiID console;
       ImGuiID assets = ImGui::DockBuilderSplitNode(
@@ -71,7 +71,7 @@ void EditorView::render(ViewRenderParams &params) {
 
       ImGuiID viewport;
       ImGuiID general = ImGui::DockBuilderSplitNode(
-        top, ImGuiDir_Left, 0.15f, NULL, &viewport);
+        top, ImGuiDir_Left, 0.3f, NULL, &viewport);
 
       ImGuiID game = ImGui::DockBuilderSplitNode(
         general, ImGuiDir_Down, 0.5f, NULL, &general);
@@ -248,7 +248,7 @@ void EditorView::initImguiContext(
   colors[ImGuiCol_FrameBgHovered] = ImVec4(0.200f, 0.200f, 0.200f, 1.000f);
   colors[ImGuiCol_FrameBgActive] = ImVec4(0.280f, 0.280f, 0.280f, 1.000f);
   colors[ImGuiCol_TitleBg] = ImVec4(0.148f, 0.148f, 0.148f, 1.000f);
-  colors[ImGuiCol_TitleBgActive] = ImVec4(0.148f, 0.148f, 0.148f, 1.000f);
+  colors[ImGuiCol_TitleBgActive] = ImVec4(0.048f, 0.048f, 0.048f, 1.000f);
   colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.148f, 0.148f, 0.148f, 1.000f);
   colors[ImGuiCol_MenuBarBg] = ImVec4(0.195f, 0.195f, 0.195f, 1.000f);
   colors[ImGuiCol_ScrollbarBg] = ImVec4(0.160f, 0.160f, 0.160f, 1.000f);
