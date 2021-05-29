@@ -92,10 +92,14 @@ void VulkanContext::initContext(const WindowContextInfo &surfaceInfo) {
     VulkanDescriptorTypeInfo{ 1000, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT });
 
   mDescriptorSetLayouts.init();
+}
 
+void VulkanContext::initImgui(
+  const WindowContextInfo &surfaceInfo,
+  const VulkanRenderPass &renderPass) {
   mImgui.init(
     mInstance, mDevice, mSwapchain, mDescriptorPool,
-    mCommandPool, surfaceInfo);
+    mCommandPool, surfaceInfo, renderPass);
 }
 
 VulkanFrame VulkanContext::beginFrame() {
@@ -125,8 +129,6 @@ VulkanFrame VulkanContext::beginFrame() {
       mPrimaryCommandBuffers[imageIndex];
 
     currentCommandBuffer.begin(0, nullptr);
-
-    mImgui.beginRender();
 
     VulkanFrame frame {
       mDevice,
@@ -172,8 +174,6 @@ void VulkanContext::beginSwapchainRender(const VulkanFrame &frame) {
 }
 
 void VulkanContext::endSwapchainRender(const VulkanFrame &frame) {
-  mImgui.endRender(frame);
-
   frame.primaryCommandBuffer.endRenderPass();
 }
 
@@ -237,6 +237,10 @@ VulkanContextProperties VulkanContext::getProperties() const {
   properties.swapchainExtent = mSwapchain.mExtent;
   properties.depthFormat = mDevice.mDepthFormat;
   return properties;
+}
+
+const VulkanImgui &VulkanContext::imgui() const {
+  return mImgui;
 }
 
 }

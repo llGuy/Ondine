@@ -3,6 +3,7 @@
 #include "yona_memory.hpp"
 #include "yona_io_event.hpp"
 #include "yona_filesystem.hpp"
+#include "yona_editor_view.hpp"
 
 namespace Yona {
 
@@ -32,8 +33,8 @@ void Application::run() {
   auto surfaceInfo = mWindow.init(RECV_EVENT_PROC(recvEvent));
 
   mVulkanContext.initContext(surfaceInfo);
-
   mRenderer.init(mVulkanContext);
+  mViewStack.push(new EditorView(surfaceInfo, mVulkanContext));
 
   /* User-defined function which will be overriden */
   start();
@@ -60,14 +61,21 @@ void Application::run() {
       }
     });
 
+    mViewStack.processEvents(mEventQueue, currentTick);
+
+    // Defined in client
     tick();
 
     VulkanFrame frame = mVulkanContext.beginFrame();
     if (!frame.skipped) { // All rendering here
+      mViewStack.render(mVulkanContext, frame, currentTick);
+
       mVulkanContext.beginSwapchainRender(frame);
       {
+        // Grab output of the view stack
+
         // Render will do final rendering to this backbuffer
-        mRenderer.tick(currentTick, frame);
+        // mRenderer.tick(currentTick, frame);
       }
       mVulkanContext.endSwapchainRender(frame);
 

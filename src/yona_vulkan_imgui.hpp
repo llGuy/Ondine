@@ -21,18 +21,17 @@ public:
     const VulkanSwapchain &swapchain,
     const VulkanDescriptorPool &descriptorPool,
     const VulkanCommandPool &commandPool,
-    const WindowContextInfo &surfaceInfo);
+    const WindowContextInfo &surfaceInfo,
+    const VulkanRenderPass &renderPass);
 
-  void beginRender();
-  void endRender(const VulkanFrame &frame);
+  void beginRender() const;
+  void endRender(const VulkanFrame &frame) const;
 
 private:
   static void imguiCallback(VkResult result);
 
 private:
-  VulkanRenderPass mImguiRenderPass;
-
-  // Store debug procs
+  // Doesn't contain state for now
 };
 
 }

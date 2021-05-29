@@ -27,6 +27,9 @@ public:
 
   void initInstance();
   void initContext(const WindowContextInfo &surfaceInfo);
+  void initImgui(
+    const WindowContextInfo &surfaceInfo,
+    const VulkanRenderPass &renderPass);
 
   /* Acquires the next swapchain image */
   VulkanFrame beginFrame();
@@ -48,6 +51,7 @@ public:
   const VulkanDescriptorPool &descriptorPool() const;
   const VulkanRenderPass &finalRenderPass() const;
   VulkanContextProperties getProperties() const;
+  const VulkanImgui &imgui() const;
 
 private:
   VulkanInstance mInstance;
