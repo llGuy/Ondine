@@ -27,12 +27,6 @@ void EditorView::render(ViewRenderParams &params) {
 
   params.graphicsContext.imgui().beginRender();
 
-#if 0
-  ImGui::Begin("General");
-  ImGui::Text("Framerate: %.1f", ImGui::GetIO().Framerate);
-  ImGui::End();
-#endif
-  
   ImGuiViewport *viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(viewport->Pos);
   ImGui::SetNextWindowSize(viewport->Size);
@@ -46,32 +40,44 @@ void EditorView::render(ViewRenderParams &params) {
     ImGuiWindowFlags_NoSavedSettings |
     ImGuiWindowFlags_MenuBar;
 
+  ImGuiID dock;
+
   if (ImGui::Begin("Main Window", NULL, flags)) {
-    mDock = ImGui::GetID("Main Dockspace");
+    mDock = dock = ImGui::GetID("Main Dockspace");
 
     if (!mIsDockLayoutInitialised) {
       mIsDockLayoutInitialised = true;
 
-      ImGui::DockBuilderRemoveNode(mDock);
-      ImGui::DockBuilderAddNode(mDock, ImGuiDockNodeFlags_DockSpace);
-      ImGui::DockBuilderSetNodeSize(mDock, viewport->Size);
+      ImGui::DockBuilderRemoveNode(dock);
+      ImGui::DockBuilderAddNode(dock, ImGuiDockNodeFlags_DockSpace);
+      ImGui::DockBuilderSetNodeSize(dock, viewport->Size);
 
-      ImGuiID left = ImGui::DockBuilderSplitNode(
-        mDock, ImGuiDir_Left, 0.5f, NULL, &mDock);
+      ImGuiID top;
+      ImGuiID bottom = ImGui::DockBuilderSplitNode(
+        mDock, ImGuiDir_Down, 0.15f, NULL, &top);
 
-      ImGuiID left_split = ImGui::DockBuilderSplitNode(
-        left, ImGuiDir_Up, 0.7f, NULL, &left);
+      ImGuiID console;
+      ImGuiID assets = ImGui::DockBuilderSplitNode(
+        bottom, ImGuiDir_Left, 0.5f, NULL, &console);
 
-      ImGui::DockBuilderDockWindow("Assets", left_split);
-      ImGui::DockBuilderDockWindow("Viewport", mDock);
-      ImGui::DockBuilderDockWindow("Console", left);
-      ImGui::DockBuilderDockWindow("Game", left);
+      ImGuiID viewport;
+      ImGuiID general = ImGui::DockBuilderSplitNode(
+        top, ImGuiDir_Left, 0.15f, NULL, &viewport);
+
+      ImGuiID game = ImGui::DockBuilderSplitNode(
+        general, ImGuiDir_Down, 0.5f, NULL, &general);
+
+      ImGui::DockBuilderDockWindow("Assets", assets);
+      ImGui::DockBuilderDockWindow("Viewport", viewport);
+      ImGui::DockBuilderDockWindow("Console", console);
+      ImGui::DockBuilderDockWindow("Game State", game);
+      ImGui::DockBuilderDockWindow("General", general);
     }
 
     tickMenuBar();
 
     ImGui::DockSpace(
-      mDock, ImVec2(0.0f, 0.0f),
+      dock, ImVec2(0.0f, 0.0f),
       ImGuiDockNodeFlags_None | ImGuiDockNodeFlags_PassthruCentralNode);
 
     ImGui::End();
@@ -80,27 +86,27 @@ void EditorView::render(ViewRenderParams &params) {
   ImGui::Begin(
     "Assets", nullptr,
     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
-  
-  ImGui::Text("Framerate: %.1f", ImGui::GetIO().Framerate);
-
   ImGui::End();
 
   ImGui::Begin(
     "Viewport", nullptr,
     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
-
   ImGui::End();
 
   ImGui::Begin(
     "Console", nullptr,
     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
-
   ImGui::End();
 
   ImGui::Begin(
-    "Game", nullptr,
+    "Game State", nullptr,
     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
+  ImGui::End();
 
+  ImGui::Begin(
+    "General", nullptr,
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
+  ImGui::Text("Framerate: %.1f", ImGui::GetIO().Framerate);
   ImGui::End();
 
   params.graphicsContext.imgui().endRender(params.frame);

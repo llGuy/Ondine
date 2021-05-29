@@ -34,6 +34,7 @@ void Application::run() {
 
   mVulkanContext.initContext(surfaceInfo);
   mRenderer.init(mVulkanContext);
+  mViewStack.init(mVulkanContext);
   mViewStack.push(new EditorView(surfaceInfo, mVulkanContext));
 
   /* User-defined function which will be overriden */
@@ -73,8 +74,8 @@ void Application::run() {
       mVulkanContext.beginSwapchainRender(frame);
       {
         // Grab output of the view stack
+        mViewStack.presentOutput(frame);
 
-        // Render will do final rendering to this backbuffer
         // mRenderer.tick(currentTick, frame);
       }
       mVulkanContext.endSwapchainRender(frame);

@@ -1,13 +1,11 @@
 #pragma once
 
+#include "yona_tick.hpp"
+#include "yona_event.hpp"
+#include "yona_vulkan_context.hpp"
 #include "yona_vulkan_uniform.hpp"
 
 namespace Yona {
-
-class EventQueue;
-class Tick;
-class VulkanFrame;
-class VulkanContext;
 
 /* 
    These structures are here so that when changing params, don't need to
