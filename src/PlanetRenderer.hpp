@@ -1,10 +1,15 @@
 #pragma once
 
+#include "IO.hpp"
 #include <glm/glm.hpp>
 #include "VulkanPipeline.hpp"
 
 namespace Yona {
 
+struct Tick;
+struct VulkanFrame;
+
+class Camera;
 class RenderStage;
 class VulkanContext;
 
@@ -46,6 +51,12 @@ public:
   void init(
     VulkanContext &graphicsContext,
     const RenderStage &renderStage);
+
+  void tick(
+    const Tick &tick,
+    VulkanFrame &frame,
+    Resolution viewport,
+    const Camera &camera);
 
 private:
   VulkanPipeline mPipeline;

@@ -113,6 +113,37 @@ void VulkanCommandBuffer::copyBuffer(
     0, NULL);
 }
 
+void VulkanCommandBuffer::updateBuffer(
+  const VulkanBuffer &buffer,
+  size_t offset, size_t size,
+  const void *data) const {
+  auto barrier = buffer.makeBarrier(
+    buffer.mUsedAtLatest, VK_PIPELINE_STAGE_TRANSFER_BIT, offset, size);
+
+  vkCmdPipelineBarrier(
+    mCommandBuffer,
+    buffer.mUsedAtLatest,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    0,
+    0, NULL,
+    1, &barrier,
+    0, NULL);
+
+  vkCmdUpdateBuffer(mCommandBuffer, buffer.mBuffer, offset, size, data);
+
+  barrier = buffer.makeBarrier(
+    VK_PIPELINE_STAGE_TRANSFER_BIT, buffer.mUsedAtEarliest, offset, size);
+
+  vkCmdPipelineBarrier(
+    mCommandBuffer,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    buffer.mUsedAtEarliest,
+    0,
+    0, NULL,
+    1, &barrier,
+    0, NULL);
+}
+
 void VulkanCommandBuffer::setViewport(
   VkExtent2D extent, VkExtent2D offset, uint32_t maxDepth) const {
   if (extent.width == 0) {

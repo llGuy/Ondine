@@ -2,6 +2,7 @@
 
 #include "Event.hpp"
 #include "Window.hpp"
+#include "Camera.hpp"
 #include "GBuffer.hpp"
 #include "SkyRenderer.hpp"
 #include "RenderStage.hpp"
@@ -22,8 +23,9 @@ public:
   const RenderStage &mainRenderStage() const;
 
 private:
-  SkyRenderer mSkyRenderer;
+  Camera mCamera;
   GBuffer mGBuffer;
+  SkyRenderer mSkyRenderer;
   Resolution mPipelineViewport;
   VulkanContext &mGraphicsContext;
 };

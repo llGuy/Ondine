@@ -1,8 +1,13 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include "VulkanFrame.hpp"
+#include "VulkanBuffer.hpp"
+#include "VulkanUniform.hpp"
 
 namespace Yona {
+
+class VulkanContext;
 
 struct CameraProperties {
   glm::mat4 mProjection;
@@ -18,11 +23,20 @@ struct CameraProperties {
   float mFar;
 };
 
-class WorldCamera {
+class Camera {
 public:
+  Camera() = default;
+
+  void init(VulkanContext &graphicsContext);
+  void updateData(
+    const VulkanFrame &frame,
+    const CameraProperties &properties);
+
+  const VulkanUniform &uniform() const;
 
 private:
-  CameraProperties mProperties;
+  VulkanBuffer mCameraBuffer;
+  VulkanUniform mUniform;
 };
 
 }

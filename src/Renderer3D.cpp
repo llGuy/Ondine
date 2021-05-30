@@ -10,6 +10,7 @@ Renderer3D::Renderer3D(VulkanContext &graphicsContext)
 }
 
 void Renderer3D::init() {
+  mCamera.init(mGraphicsContext);
   mGBuffer.init(mGraphicsContext);
   mSkyRenderer.init(mGraphicsContext, mGBuffer);
 

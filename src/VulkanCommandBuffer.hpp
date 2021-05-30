@@ -68,6 +68,10 @@ public:
     const VulkanBuffer &src, size_t srcOffset,
     size_t size) const;
 
+  void updateBuffer(
+    const VulkanBuffer &buffer,
+    size_t offset, size_t size, const void *data) const;
+
   void transitionImageLayout(
     const VulkanTexture &texture,
     VkImageLayout src, VkImageLayout dst,

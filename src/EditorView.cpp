@@ -206,7 +206,17 @@ void EditorView::tickMenuBar() {
       }
       if (ImGui::MenuItem("Console")) {
       }
+      if (ImGui::MenuItem("Game State")) {
+      }
+      if (ImGui::MenuItem("General")) {
+      }
+      ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Viewport")) {
       if (ImGui::MenuItem("Game")) {
+      }
+      if (ImGui::MenuItem("Level Editor")) {
       }
       ImGui::EndMenu();
     }
