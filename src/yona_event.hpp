@@ -96,4 +96,46 @@ private:
   uint32_t mProcessingCounter;
 };
 
+// Data needs to be some sort of union which doesn't call linear allocations
+template <typename Params, typename Data, int MaxFunctors = 20>
+class DeferredEventProcessor {
+public:
+  using ProcParams = Params;
+  using EventData = Data;
+  using FunctorProc = void (*)(ProcParams &, EventData &);
+
+  DeferredEventProcessor()
+    : mDeferredEventCount(0) {
+    
+  }
+
+  void push(FunctorProc proc, const EventData &data) {
+    mFunctors[mDeferredEventCount].proc = proc;
+    mFunctors[mDeferredEventCount].data = data;
+    ++mDeferredEventCount;
+  }
+
+  void process(ProcParams &params) {
+    for (int i = 0; i < mDeferredEventCount; ++i) {
+      mFunctors[i](params);
+    }
+
+    mDeferredEventCount = 0;
+  }
+
+private:
+  struct DeferredFunctor {
+    void (*proc)(ProcParams &params, EventData &eventData);
+    EventData data;
+
+    void operator()(ProcParams &params) {
+      proc(params, data);
+    }
+  };
+
+private:
+  DeferredFunctor mFunctors[MaxFunctors];
+  uint32_t mDeferredEventCount;
+};
+
 }

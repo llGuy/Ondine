@@ -8,14 +8,13 @@ namespace Yona {
 
 class ViewStack {
 public:
-  ViewStack() = default;
+  ViewStack(VulkanContext &graphicsContext);
 
-  void init(VulkanContext &graphicsContext);
+  void init();
 
   void processEvents(EventQueue &queue, const Tick &tick);
   /* Gets called inside the swapchain render pass */
   void render(
-    VulkanContext &graphicsContext,
     const VulkanFrame &frame, const Tick &tick);
 
   void presentOutput(const VulkanFrame &frame);
@@ -28,8 +27,8 @@ private:
 
   // Usually, at index 0, you would have the game world view
   Array<View *> mViews;
-
   VulkanPipeline mFinalRender;
+  VulkanContext &mGraphicsContext;
 };
 
 }

@@ -15,6 +15,7 @@ namespace Yona {
 struct ViewProcessEventsParams {
   EventQueue &queue;
   const Tick &tick;
+  VulkanContext &graphicsContext;
 };
 
 struct ViewRenderParams {

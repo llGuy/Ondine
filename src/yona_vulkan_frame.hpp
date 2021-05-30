@@ -5,12 +5,11 @@
 
 namespace Yona {
 
-class VulkanDevice;
+class VulkanContext;
 class VulkanCommandBuffer;
 
 /* Contains stuff like the render target, command buffers, etc... */
 struct VulkanFrame {
-  const VulkanDevice &device;
   VulkanCommandBuffer &primaryCommandBuffer;
   uint32_t imageIndex;
   uint32_t frameInFlight;

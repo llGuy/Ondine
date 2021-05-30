@@ -8,8 +8,7 @@ class VulkanContext;
 
 class DelegateResize {
 public:
-  virtual void resize(
-    VulkanContext &vulkanContext, Resolution newResolution) = 0;
+  virtual void resize(Resolution newResolution) = 0;
 };
 
 }

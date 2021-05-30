@@ -39,7 +39,7 @@ private:
   bool mIsRunning;
   EventQueue mEventQueue;
   Window mWindow;
-  VulkanContext mVulkanContext;
+  VulkanContext mGraphicsContext;
   Renderer3D mRenderer3D;
   ViewStack mViewStack;
 

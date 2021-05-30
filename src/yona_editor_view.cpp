@@ -17,7 +17,6 @@ EditorView::EditorView(
   VulkanContext &graphicsContext,
   OnEventProc onEventProc)
   : mIsDockLayoutInitialised(false),
-    mDeferredEventCount(0),
     mViewportResolution{0, 0},
     mOnEvent(onEventProc) {
   { // Create render pass
@@ -43,10 +42,10 @@ EditorView::~EditorView() {
 }
 
 void EditorView::processEvents(ViewProcessEventsParams &params) {
-  params.queue.process([this](Event *ev) {
+  params.queue.process([this, &params](Event *ev) {
     switch (ev->category) {
     case EventCategory::Input: {
-      processInputEvent(ev);
+      processInputEvent(ev, params);
     } break;
 
     default:;
@@ -55,8 +54,6 @@ void EditorView::processEvents(ViewProcessEventsParams &params) {
 }
 
 void EditorView::render(ViewRenderParams &params) {
-  processDeferredEvents(params.graphicsContext);
-
   auto &commandBuffer = params.frame.primaryCommandBuffer;
 
   commandBuffer.beginRenderPass(
@@ -151,8 +148,8 @@ void EditorView::render(ViewRenderParams &params) {
 
       auto *resizeEvent = lnEmplaceAlloc<EventViewportResize>();
       resizeEvent->newResolution = mViewportResolution;
-      // mOnEvent(resizeEvent);
-      renderViewport = false;
+      mOnEvent(resizeEvent);
+      // renderViewport = false;
     }
   
     ImGui::End();
@@ -353,17 +350,13 @@ void EditorView::initImguiContext(
   graphicsContext.initImgui(contextInfo, mRenderPass);
 }
 
-void EditorView::processInputEvent(Event *ev) {
+void EditorView::processInputEvent(Event *ev, ViewProcessEventsParams &params) {
   switch (ev->type) {
   case EventType::Resize: {
     auto *resizeEvent = (EventResize *)ev;
-    Resolution *resolution = lnEmplaceAlloc<Resolution>(
-      resizeEvent->newResolution);
-
-    mDeferredEvents[mDeferredEventCount++] = {
-      handleResize,
-      resolution
-    };
+    
+    destroyRenderTarget(params.graphicsContext);
+    initRenderTarget(params.graphicsContext);
 
     /* 
        We don't want this event to propagate to further layers. Another
@@ -374,24 +367,6 @@ void EditorView::processInputEvent(Event *ev) {
 
   default:;
   }
-}
-
-void EditorView::processDeferredEvents(VulkanContext &graphicsContext) {
-  DeferredEventProcParams params = {
-    this, graphicsContext, nullptr
-  };
-
-  for (int i = 0; i < mDeferredEventCount; ++i) {
-    params.data = mDeferredEvents[i].data;
-    mDeferredEvents[i].proc(params);
-  }
-
-  mDeferredEventCount = 0;
-}
-
-void EditorView::handleResize(DeferredEventProcParams &params) {
-  params.editorView->destroyRenderTarget(params.graphicsContext);
-  params.editorView->initRenderTarget(params.graphicsContext);
 }
 
 }

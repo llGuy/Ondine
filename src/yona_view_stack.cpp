@@ -6,7 +6,12 @@
 
 namespace Yona {
 
-void ViewStack::init(VulkanContext &graphicsContext) {
+ViewStack::ViewStack(VulkanContext &graphicsContext)
+  : mGraphicsContext(graphicsContext) {
+  
+}
+
+void ViewStack::init() {
   mViews.init(MAX_VIEWS);
 
   File vshFile = gFileSystem->createFile(
@@ -24,11 +29,11 @@ void ViewStack::init(VulkanContext &graphicsContext) {
   Buffer fsh = fshFile.readBinary();
 
   VulkanPipelineConfig pipelineConfig(
-    {graphicsContext.finalRenderPass(), 0},
+    {mGraphicsContext.finalRenderPass(), 0},
     VulkanShader(
-      graphicsContext.device(), vsh, VulkanShaderType::Vertex),
+      mGraphicsContext.device(), vsh, VulkanShaderType::Vertex),
     VulkanShader(
-      graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+      mGraphicsContext.device(), fsh, VulkanShaderType::Fragment));
 
   pipelineConfig.configurePipelineLayout(
     0,
@@ -36,25 +41,24 @@ void ViewStack::init(VulkanContext &graphicsContext) {
       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
 
   mFinalRender.init(
-    graphicsContext.device(),
-    graphicsContext.descriptorLayouts(),
+    mGraphicsContext.device(),
+    mGraphicsContext.descriptorLayouts(),
     pipelineConfig);
 }
 
 void ViewStack::processEvents(EventQueue &queue, const Tick &tick) {
   for (int i = mViews.size - 1; i >= 0; --i) {
-    ViewProcessEventsParams params {queue, tick};
+    ViewProcessEventsParams params {queue, tick, mGraphicsContext};
     mViews[i]->processEvents(params);
   }
 }
 
 void ViewStack::render(
-  VulkanContext &graphicsContext,
   const VulkanFrame &frame, const Tick &tick) {
   VulkanUniform previousOutput = {};
   for (int i = 0; i < mViews.size; ++i) {
     ViewRenderParams params {
-      graphicsContext,
+      mGraphicsContext,
       previousOutput,
       frame,
       tick

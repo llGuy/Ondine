@@ -9,7 +9,9 @@
 namespace Yona {
 
 Application::Application(int argc, char **argv)
-  : mWindow(WindowMode::Windowed, "Yona") {
+  : mWindow(WindowMode::Windowed, "Yona"),
+    mRenderer3D(mGraphicsContext),
+    mViewStack(mGraphicsContext) {
   /* Initialise graphics context, etc... */
   setMaxFramerate(60.0f);
 }
@@ -28,19 +30,19 @@ void Application::run() {
     (MountPoint)ApplicationMountPoints::Raw,
     "");
 
-  mVulkanContext.initInstance();
+  mGraphicsContext.initInstance();
 
   Window::initWindowAPI();
   auto surfaceInfo = mWindow.init(RECV_EVENT_PROC(recvEvent));
 
-  mVulkanContext.initContext(surfaceInfo);
-  mRenderer3D.init(mVulkanContext);
-  mViewStack.init(mVulkanContext);
+  mGraphicsContext.initContext(surfaceInfo);
+  mRenderer3D.init();
+  mViewStack.init();
 
   mViewStack.push(
     new GameView(mRenderer3D.mainRenderStage(), mRenderer3D));
   mViewStack.push(
-    new EditorView(surfaceInfo, mVulkanContext, RECV_EVENT_PROC(recvEvent)));
+    new EditorView(surfaceInfo, mGraphicsContext, RECV_EVENT_PROC(recvEvent)));
 
   /* User-defined function which will be overriden */
   start();
@@ -74,26 +76,26 @@ void Application::run() {
     mViewStack.processEvents(mEventQueue, currentTick);
     mEventQueue.clearEvents();
 
+    /* Clears global linear allocator */
+    lnClear();
+
     // Defined in client
     tick();
 
-    VulkanFrame frame = mVulkanContext.beginFrame();
+    VulkanFrame frame = mGraphicsContext.beginFrame();
     if (!frame.skipped) { // All rendering here
       mRenderer3D.tick(currentTick, frame);
-      mViewStack.render(mVulkanContext, frame, currentTick);
+      mViewStack.render(frame, currentTick);
 
-      mVulkanContext.beginSwapchainRender(frame);
+      mGraphicsContext.beginSwapchainRender(frame);
       {
         // Grab output of the view stack
         mViewStack.presentOutput(frame);
       }
-      mVulkanContext.endSwapchainRender(frame);
+      mGraphicsContext.endSwapchainRender(frame);
 
-      mVulkanContext.endFrame(frame);
+      mGraphicsContext.endFrame(frame);
     }
-
-    /* Clears global linear allocator */
-    lnClear();
 
     Time::TimeStamp frameEnd = Time::getCurrentTime();
     mDt = Time::getTimeDifference(frameEnd, frameStart);
@@ -125,7 +127,7 @@ void Application::processInputEvent(Event *ev) {
 
   case EventType::Resize: {
     auto *resizeEvent = (EventResize *)ev;
-    mVulkanContext.resize(resizeEvent->newResolution);
+    mGraphicsContext.resize(resizeEvent->newResolution);
 
     // Don't set it to handled - view stack will want to have a look at this
   } break;
@@ -137,7 +139,7 @@ void Application::processInputEvent(Event *ev) {
       if (kbEvent->press.button == KeyboardButton::F11 &&
           !kbEvent->press.isRepeat) {
         mWindow.toggleFullscreen();
-        mVulkanContext.skipFrame();
+        mGraphicsContext.skipFrame();
 
         kbEvent->isHandled = true;
       }
@@ -151,7 +153,7 @@ void Application::processInputEvent(Event *ev) {
 void Application::processRendererEvent(Event *ev) {
   switch (ev->type) {
   case EventType::ViewportResize: {
-    mVulkanContext.device().idle();
+    mGraphicsContext.device().idle();
 
     // Don't set it to handled - view stack will want to have a look at this
   } break;

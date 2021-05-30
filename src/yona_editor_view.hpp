@@ -32,24 +32,8 @@ private:
     const WindowContextInfo &contextInfo, VulkanContext &graphicsContext);
   void tickMenuBar();
 
-  void processInputEvent(Event *ev);
+  void processInputEvent(Event *ev, ViewProcessEventsParams &params);
   void processDeferredEvents(VulkanContext &graphicsContext);
-
-private:
-  static constexpr uint32_t MAX_EVENT_FUNCTORS = 20;
-
-  struct DeferredEventProcParams {
-    EditorView *editorView;
-    VulkanContext &graphicsContext;
-    void *data;
-  };
-
-  static void handleResize(DeferredEventProcParams &params);
-
-  struct DeferredEventFunctor {
-    void (*proc)(DeferredEventProcParams &params);
-    void *data;
-  };
 
 private:
   ImGuiID mDock;
@@ -61,9 +45,6 @@ private:
   VulkanUniform mTargetUniform;
   Resolution mViewportResolution;
   VulkanPipeline mRenderViewport;
-  // Some events cannot be handled directly - need to wait for render to start
-  DeferredEventFunctor mDeferredEvents[MAX_EVENT_FUNCTORS];
-  uint32_t mDeferredEventCount;
 };
 
 }

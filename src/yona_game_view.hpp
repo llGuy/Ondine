@@ -20,30 +20,11 @@ public:
 
 private:
   void processRendererEvent(Event *ev);
-  void processDeferredEvents(VulkanContext &graphicsContext);
-
-private:
-  static constexpr uint32_t MAX_EVENT_FUNCTORS = 20;
-
-  struct DeferredEventProcParams {
-    GameView *gameView;
-    VulkanContext &graphicsContext;
-    void *data;
-  };
-
-  static void handleResize(DeferredEventProcParams &params);
-
-  struct DeferredEventFunctor {
-    void (*proc)(DeferredEventProcParams &params);
-    void *data;
-  };
 
 private:
   const RenderStage &mGameRenderStage;
   // Allows to call Renderer3D::resize
   DelegateResize &mDelegateResize3D;
-  DeferredEventFunctor mDeferredEvents[MAX_EVENT_FUNCTORS];
-  uint32_t mDeferredEventCount;
 };
 
 }

@@ -71,7 +71,7 @@ void RendererSky::tick(
 
   const float kFovY = 50.0 / 180.0 * 3.1415f;
   const float kTanFovY = tan(kFovY / 2.0);
-  float aspectRatio = static_cast<float>(frame.viewport.width) / frame.viewport.height;
+  float aspectRatio = static_cast<float>(viewport.width) /viewport.height;
 
   // Transform matrix from clip space to camera space (i.e. the inverse of a
   // GL_PROJECTION matrix).

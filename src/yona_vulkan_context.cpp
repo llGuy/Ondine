@@ -105,7 +105,6 @@ void VulkanContext::initImgui(
 VulkanFrame VulkanContext::beginFrame() {
   if (mSkipFrame) {
     VulkanFrame frame {
-      mDevice,
       mPrimaryCommandBuffers[0],
       0,
       0,
@@ -131,7 +130,6 @@ VulkanFrame VulkanContext::beginFrame() {
     currentCommandBuffer.begin(0, nullptr);
 
     VulkanFrame frame {
-      mDevice,
       currentCommandBuffer,
       imageIndex,
       mCurrentFrame,
