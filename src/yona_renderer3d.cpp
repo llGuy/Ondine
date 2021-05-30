@@ -1,5 +1,5 @@
 #include "yona_buffer.hpp"
-#include "yona_renderer.hpp"
+#include "yona_renderer3d.hpp"
 #include "yona_vulkan_render_pass.hpp"
 
 namespace Yona {
@@ -39,8 +39,6 @@ void Renderer3D::resize(Resolution newResolution) {
   };
 
   mGBuffer.resize(mGraphicsContext, newResolution);
-
-  LOG_INFOV("Resized to %d %d\n", newResolution.width, newResolution.height);
 }
 
 const RenderStage &Renderer3D::mainRenderStage() const {

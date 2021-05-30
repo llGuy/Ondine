@@ -152,11 +152,6 @@ void Application::processInputEvent(Event *ev) {
 
 void Application::processRendererEvent(Event *ev) {
   switch (ev->type) {
-  case EventType::ViewportResize: {
-    mGraphicsContext.device().idle();
-
-    // Don't set it to handled - view stack will want to have a look at this
-  } break;
   default:;
   }
 }
