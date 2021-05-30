@@ -1,7 +1,6 @@
 #version 450
 
-#include "sky_def.glsl"
-#include "sky.glsl"
+#include "Sky.glsl"
 
 #define IN(x) const in x
 #define OUT(x) out x

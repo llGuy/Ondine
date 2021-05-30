@@ -1,7 +1,6 @@
 #version 450
 
-#include "sky_def.glsl"
-#include "sky.glsl"
+#include "Sky.glsl"
 
 layout (location = 0) out vec3 outDeltaIrradiance;
 layout (location = 1) out vec3 outIrradiance;

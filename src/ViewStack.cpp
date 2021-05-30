@@ -16,14 +16,14 @@ void ViewStack::init() {
 
   File vshFile = gFileSystem->createFile(
     (MountPoint)ApplicationMountPoints::Application,
-    "res/spv/render_sampled_quad.vert.spv",
+    "res/spv/TexturedQuad.vert.spv",
     FileOpenType::Binary | FileOpenType::In);
 
   Buffer vsh = vshFile.readBinary();
 
   File fshFile = gFileSystem->createFile(
     (MountPoint)ApplicationMountPoints::Application,
-    "res/spv/render_sampled_quad.frag.spv",
+    "res/spv/TexturedQuad.frag.spv",
     FileOpenType::Binary | FileOpenType::In);
 
   Buffer fsh = fshFile.readBinary();

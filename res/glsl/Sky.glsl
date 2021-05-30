@@ -1,7 +1,7 @@
 #ifndef SKY_UTILS_GLSL
 #define SKY_UTILS_GLSL
 
-#include "sky_def.glsl"
+#include "SkyDef.glsl"
 
 /* Some utility functions */
 float clamp0To1(float a) {

@@ -197,12 +197,12 @@ void SkyRenderer::initTemporaryPrecomputeTextures(
 void SkyRenderer::preparePrecompute(VulkanContext &graphicsContext) {
   File precomputeVshFile = gFileSystem->createFile(
     (MountPoint)ApplicationMountPoints::Application,
-    "res/spv/sky_precompute.vert.spv",
+    "res/spv/SkyPrecompute.vert.spv",
     FileOpenType::Binary | FileOpenType::In);
 
   File precomputeGshFile = gFileSystem->createFile(
     (MountPoint)ApplicationMountPoints::Application,
-    "res/spv/sky_precompute.geom.spv",
+    "res/spv/SkyPrecompute.geom.spv",
     FileOpenType::Binary | FileOpenType::In);
 
   Buffer quadVsh = precomputeVshFile.readBinary();
@@ -240,7 +240,7 @@ void SkyRenderer::prepareTransmittancePrecompute(
   { // Create pipeline
     File precomputeTransmittance = gFileSystem->createFile(
       (MountPoint)ApplicationMountPoints::Application,
-      "res/spv/sky_transmittance.frag.spv",
+      "res/spv/SkyTransmittance.frag.spv",
       FileOpenType::Binary | FileOpenType::In);
 
     Buffer fsh = precomputeTransmittance.readBinary();
@@ -309,7 +309,7 @@ void SkyRenderer::prepareSingleScatteringPrecompute(
   { // Create pipeline
     File precomputeSingleScattering = gFileSystem->createFile(
       (MountPoint)ApplicationMountPoints::Application,
-      "res/spv/sky_single_scattering.frag.spv",
+      "res/spv/SkySingleScattering.frag.spv",
       FileOpenType::Binary | FileOpenType::In);
 
     Buffer fsh = precomputeSingleScattering.readBinary();
@@ -384,7 +384,7 @@ void SkyRenderer::prepareDirectIrradiancePrecompute(
   { // Create pipeline (direct irradiance)
     File precomputeDirectIrradiance = gFileSystem->createFile(
       (MountPoint)ApplicationMountPoints::Application,
-      "res/spv/sky_direct_irradiance.frag.spv",
+      "res/spv/SkyDirectIrradiance.frag.spv",
       FileOpenType::Binary | FileOpenType::In);
 
     Buffer fsh = precomputeDirectIrradiance.readBinary();
@@ -411,7 +411,7 @@ void SkyRenderer::prepareDirectIrradiancePrecompute(
   { // Create pipeline (indirect irradiance)
     File precomputeIndirectIrradiance = gFileSystem->createFile(
       (MountPoint)ApplicationMountPoints::Application,
-      "res/spv/sky_indirect_irradiance.frag.spv",
+      "res/spv/SkyIndirectIrradiance.frag.spv",
       FileOpenType::Binary | FileOpenType::In);
 
     Buffer fsh = precomputeIndirectIrradiance.readBinary();
@@ -464,7 +464,7 @@ void SkyRenderer::prepareScatteringDensityPrecompute(
   VulkanContext &graphicsContext) {
   File precomputeScatteringDensity = gFileSystem->createFile(
     (MountPoint)ApplicationMountPoints::Application,
-    "res/spv/sky_scattering_density.frag.spv",
+    "res/spv/SkyScatteringDensity.frag.spv",
     FileOpenType::Binary | FileOpenType::In);
 
   Buffer fsh = precomputeScatteringDensity.readBinary();
@@ -541,7 +541,7 @@ void SkyRenderer::prepareMultipleScatteringPrecompute(
   VulkanContext &graphicsContext) {
   File precomputeMultipleScattering = gFileSystem->createFile(
     (MountPoint)ApplicationMountPoints::Application,
-    "res/spv/sky_multiple_scattering.frag.spv",
+    "res/spv/SkyMultipleScattering.frag.spv",
     FileOpenType::Binary | FileOpenType::In);
 
   Buffer fsh = precomputeMultipleScattering.readBinary();
@@ -1002,14 +1002,14 @@ void SkyRenderer::initDemoPipeline(
   const RenderStage &renderStage) {
   File precomputeDummyVsh = gFileSystem->createFile(
     (MountPoint)ApplicationMountPoints::Application,
-    "res/spv/sky_demo.vert.spv",
+    "res/spv/SkyDemo.vert.spv",
     FileOpenType::Binary | FileOpenType::In);
 
   Buffer precomputeVsh = precomputeDummyVsh.readBinary();
 
   File precomputeDummy = gFileSystem->createFile(
     (MountPoint)ApplicationMountPoints::Application,
-    "res/spv/sky_demo.frag.spv",
+    "res/spv/SkyDemo.frag.spv",
     FileOpenType::Binary | FileOpenType::In);
 
   Buffer fsh = precomputeDummy.readBinary();
