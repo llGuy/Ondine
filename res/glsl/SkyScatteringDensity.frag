@@ -4,8 +4,8 @@
 
 layout (location = 0) out vec3 outScatteringDensity;
 
-layout (set = 0, binding = 0) uniform SkyUniform {
-  SkyProperties sky;
+layout (set = 0, binding = 0) uniform PlanetUniform {
+  PlanetProperties sky;
 } uSky;
 
 layout (set = 1, binding = 0) uniform sampler2D uTransmittance;

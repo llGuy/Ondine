@@ -7,8 +7,8 @@ layout (location = 0) out vec4 outDeltaRayleigh;
 layout (location = 1) out vec4 outDeltaMie;
 layout (location = 2) out vec4 outScattering;
 
-layout (set = 0, binding = 0) uniform SkyUniform {
-  SkyProperties sky;
+layout (set = 0, binding = 0) uniform PlanetUniform {
+  PlanetProperties sky;
 } uSky;
 
 layout (set = 1, binding = 0) uniform sampler2D uTransmittanceTexture;

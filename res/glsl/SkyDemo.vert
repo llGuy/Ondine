@@ -11,7 +11,7 @@ layout (push_constant) uniform PushConstant {
   float exposure;
 } uPushConstant;
 
-layout (location = 0) out vec3 view_ray;
+layout (location = 0) out vec3 outViewRay;
 
 const vec4 POSITIONS[] = vec4[](
   vec4(-1.0, -1.0, 0.0, 1.0),
@@ -27,6 +27,8 @@ void main() {
 
   vertex.y *= -1.0;
 
-  view_ray =
-    (uPushConstant.model_from_view * vec4((uPushConstant.view_from_clip * vertex).xyz, 0.0)).xyz;
+  outViewRay =
+    (uPushConstant.model_from_view *
+     vec4((uPushConstant.view_from_clip *
+           vertex).xyz, 0.0)).xyz;
 }

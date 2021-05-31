@@ -10,17 +10,17 @@ namespace Yona {
 class VulkanContext;
 
 struct CameraProperties {
-  glm::mat4 mProjection;
-  glm::mat4 mView;
-  glm::mat4 mInverseProjection;
-  glm::mat4 mInverseView;
-  glm::mat4 mViewProjection;
-  alignas(16) glm::vec3 mWPosition;
-  alignas(16) glm::vec3 mWViewDirection;
-  float mFOV;
-  float mAspectRatio;
-  float mNear;
-  float mFar;
+  glm::mat4 projection;
+  glm::mat4 view;
+  glm::mat4 inverseProjection;
+  glm::mat4 inverseView;
+  glm::mat4 viewProjection;
+  alignas(16) glm::vec3 wPosition;
+  alignas(16) glm::vec3 wViewDirection;
+  float fov;
+  float aspectRatio;
+  float near;
+  float far;
 };
 
 class Camera {
@@ -29,7 +29,7 @@ public:
 
   void init(VulkanContext &graphicsContext);
   void updateData(
-    const VulkanFrame &frame,
+    const VulkanCommandBuffer commandBuffer,
     const CameraProperties &properties);
 
   const VulkanUniform &uniform() const;

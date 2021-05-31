@@ -24,7 +24,9 @@ void SkyRenderer::init(
 }
 
 void SkyRenderer::tick(
-  const Tick &tick, VulkanFrame &frame, Resolution viewport) {
+  const Tick &tick,
+  VulkanFrame &frame,
+  const CameraProperties &camera) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.bindPipeline(mDemo);
@@ -71,7 +73,7 @@ void SkyRenderer::tick(
 
   const float kFovY = 50.0 / 180.0 * 3.1415f;
   const float kTanFovY = tan(kFovY / 2.0);
-  float aspectRatio = static_cast<float>(viewport.width) /viewport.height;
+  float aspectRatio = camera.aspectRatio;
 
   // Transform matrix from clip space to camera space (i.e. the inverse of a
   // GL_PROJECTION matrix).
@@ -104,8 +106,8 @@ void SkyRenderer::tick(
   
   commandBuffer.pushConstants(sizeof(DemoPushConstant), &pushConstant);
 
-  commandBuffer.setViewport({viewport.width, viewport.height});
-  commandBuffer.setScissor({}, {viewport.width, viewport.height});
+  commandBuffer.setViewport();
+  commandBuffer.setScissor();
 
   commandBuffer.draw(4, 1, 0, 0);
 }

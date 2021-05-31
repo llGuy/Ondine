@@ -19,7 +19,7 @@ struct DensityProfile {
   DensityLayer layers[2];
 };
 
-struct SkyProperties {
+struct PlanetProperties {
   vec3 solarIrradiance;
 
   float solarAngularRadius;
@@ -48,6 +48,8 @@ struct SkyProperties {
     (cos(102 degrees))
    */
   float muSunMin;
+
+  vec3 wPlanetCenter;
 };
 
 const int TRANSMITTANCE_TEXTURE_WIDTH = 256;

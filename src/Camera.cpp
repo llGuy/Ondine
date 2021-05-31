@@ -17,9 +17,9 @@ void Camera::init(VulkanContext &graphicsContext) {
 }
 
 void Camera::updateData(
-  const VulkanFrame &frame,
+  const VulkanCommandBuffer commandBuffer,
   const CameraProperties &properties) {
-  frame.primaryCommandBuffer.updateBuffer(
+  commandBuffer.updateBuffer(
     mCameraBuffer, 0, sizeof(properties), &properties);
 }
 

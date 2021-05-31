@@ -1,7 +1,7 @@
 #ifndef SKY_UTILS_GLSL
 #define SKY_UTILS_GLSL
 
-#include "SkyDef.glsl"
+#include "PlanetDef.glsl"
 
 /* Some utility functions */
 float clamp0To1(float a) {
@@ -12,7 +12,7 @@ float clampPositive(float a) {
   return max(a, 0.0);
 }
 
-float clampRadius(in SkyProperties sky, float radius) {
+float clampRadius(in PlanetProperties sky, float radius) {
   return clamp(radius, sky.bottomRadius, sky.topRadius);
 }
 
@@ -29,7 +29,7 @@ float getUnitFromTextureCoord(float u, int textureSize) {
 }
 
 float distToSkyBoundary(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   float centreToPointDist,
   float mu) {
   float r = centreToPointDist;
@@ -38,7 +38,7 @@ float distToSkyBoundary(
 }
 
 float distToGroundBoundary(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   float centreToPointDist,
   float mu) {
   float r = centreToPointDist;
@@ -47,7 +47,7 @@ float distToGroundBoundary(
 }
 
 bool doesRayIntersectGround(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   float centreToPointDist,
   float mu) {
   float r = centreToPointDist;
@@ -72,7 +72,7 @@ float getProfileDensity(in DensityProfile profile, float altitude) {
 /* Code for transmittance */
 
 float computeOpticalLengthToTopSkyBoundary(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in DensityProfile profile,
   float centreToPointDist,
   float mu) {
@@ -99,7 +99,7 @@ float computeOpticalLengthToTopSkyBoundary(
 }
 
 vec3 computeTransmittanceToSkyBoundary(
-  in SkyProperties sky, float centreToPointDist, float mu) {
+  in PlanetProperties sky, float centreToPointDist, float mu) {
   float r = centreToPointDist;
 
   return exp(
@@ -113,7 +113,7 @@ vec3 computeTransmittanceToSkyBoundary(
 }
 
 vec2 getTransmittanceTextureUVFromRMu(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   float centreToPointDist,
   float mu) {
   float r = centreToPointDist;
@@ -144,7 +144,7 @@ vec2 getTransmittanceTextureUVFromRMu(
 }
 
 void getRMuFromTransmittanceTextureUv(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in vec2 uvs,
   out float centreToPointDist,
   out float mu) {
@@ -171,7 +171,7 @@ void getRMuFromTransmittanceTextureUv(
 
 // Used for precomputing the transmittance
 vec3 computeTransmittanceToSkyBoundaryTexture(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in vec2 fragCoord) {
   const vec2 TRANSMITTANCE_TEXTURE_SIZE =
     vec2(TRANSMITTANCE_TEXTURE_WIDTH, TRANSMITTANCE_TEXTURE_HEIGHT);
@@ -193,7 +193,7 @@ vec3 computeTransmittanceToSkyBoundaryTexture(
 }
 
 vec3 getTransmittanceToSkyBoundary(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   float centreToPointDist, float mu) {
   vec2 uv = getTransmittanceTextureUVFromRMu(sky, centreToPointDist, mu);
@@ -201,7 +201,7 @@ vec3 getTransmittanceToSkyBoundary(
 }
 
 vec3 getTransmittance(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   float r, float mu,
   float d,
@@ -231,7 +231,7 @@ vec3 getTransmittance(
 }
 
 vec3 getTransmittanceToSun(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   float r, float muSun) {
   float sinThetaH = sky.bottomRadius / r;
@@ -247,7 +247,7 @@ vec3 getTransmittanceToSun(
 }
 
 void computeSingleScatteringIntegrand(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   float r, float mu,
   float muSun,
@@ -275,7 +275,7 @@ void computeSingleScatteringIntegrand(
 
 // Ground or Sky
 float distToNearestBoundary(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   float centreToPointDist, float mu, bool doesRMuIntersectGround) {
   if (doesRMuIntersectGround) {
     return distToGroundBoundary(sky, centreToPointDist, mu);
@@ -286,7 +286,7 @@ float distToNearestBoundary(
 }
 
 void computeSingleScattering(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   float r, float mu,
   float muSun, float nu,
@@ -333,7 +333,7 @@ float miePhase(float g, float nu) {
 }
 
 vec4 getScatteringTextureUVWZFromRMuMuSunNu(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   float r, float mu, float muSun, float nu,
   bool doesRMuIntersectGround) {
   float h = sqrt(
@@ -380,7 +380,7 @@ vec4 getScatteringTextureUVWZFromRMuMuSunNu(
 }
 
 void getRMuMuSunNuFromScatteringTextureUVWZ(
-  in SkyProperties sky, in vec4 uvwz,
+  in PlanetProperties sky, in vec4 uvwz,
   out float r, out float mu, out float muSun, out float nu,
   out bool doesRMuIntersectGround) {
   float h = sqrt(
@@ -427,7 +427,7 @@ void getRMuMuSunNuFromScatteringTextureUVWZ(
 }
 
 void getRMuMuSunNuFromScatteringTextureFragCoord(
-  SkyProperties sky, vec3 fragCoord,
+  PlanetProperties sky, vec3 fragCoord,
   out float r, out float mu, out float muS, out float nu,
   out bool rayRMuIntersectsGround) {
   const vec4 SCATTERING_TEXTURE_SIZE = vec4(
@@ -454,7 +454,7 @@ void getRMuMuSunNuFromScatteringTextureFragCoord(
 }
 
 void computeSingleScatteringTexture(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   vec3 fragCoord,
   out vec3 rayleigh, out vec3 mie) {
@@ -476,12 +476,12 @@ void computeSingleScatteringTexture(
 }
 
 vec3 getIrradiance(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D irradianceTexture,
   float r, float muSun);
 
 vec4 getScatteringTextureUvwzFromRMuMuSNu(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   float r, float mu, float muS, float nu,
   bool rayRMuIntersectsGround) {
   float h = sqrt(
@@ -527,7 +527,7 @@ vec4 getScatteringTextureUvwzFromRMuMuSNu(
 }
 
 vec3 getScattering(
-  SkyProperties sky,
+  PlanetProperties sky,
   sampler3D scatteringTexture,
   float r, float mu, float muS, float nu,
   bool rayRMuIntersectsGround) {
@@ -554,7 +554,7 @@ vec3 getScattering(
 }
 
 vec3 getScattering(
-  SkyProperties sky,
+  PlanetProperties sky,
   sampler3D singleRayleighScatteringTexture,
   sampler3D singleMieScatteringTexture,
   sampler3D multipleScatteringTexture,
@@ -581,7 +581,7 @@ vec3 getScattering(
 }
 
 vec3 computeScatteringDensity(
-  SkyProperties sky,
+  PlanetProperties sky,
   sampler2D transmittanceTexture,
   sampler3D singleRayleighScatteringTexture,
   sampler3D singleMieScatteringTexture,
@@ -660,7 +660,7 @@ vec3 computeScatteringDensity(
 }
 
 vec3 computeMultipleScattering(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   in sampler3D scatteringDensityTexture,
   float r, float mu, float muSun, float nu,
@@ -694,7 +694,7 @@ vec3 computeMultipleScattering(
 }
 
 vec3 computeScatteringDensityTexture(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   in sampler3D singleRayleighScatteringTexture,
   in sampler3D singleMieScatteringTexture,
@@ -717,7 +717,7 @@ vec3 computeScatteringDensityTexture(
 }
 
 vec3 computeMultipleScatteringTexture(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   in sampler3D scatteringDensityTexture,
   vec3 fragCoord, out float nu) {
@@ -738,7 +738,7 @@ vec3 computeMultipleScatteringTexture(
 }
 
 vec3 computeDirectIrradiance(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   float r, float muSun) {
   float alphaSun = sky.solarAngularRadius;
@@ -754,7 +754,7 @@ vec3 computeDirectIrradiance(
 }
 
 vec3 computeIndirectIrradiance(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler3D singleRayleighScatteringTexture,
   in sampler3D singleMieScatteringTexture,
   in sampler3D multipleScatteringTexture,
@@ -791,7 +791,7 @@ vec3 computeIndirectIrradiance(
 }
 
 vec2 getIrradianceTextureUVFromRMuSun(
-  in SkyProperties sky, float r, float muSun) {
+  in PlanetProperties sky, float r, float muSun) {
   float rMapping = (r - sky.bottomRadius) /
     (sky.topRadius - sky.bottomRadius);
   float muSunMapping = muSun * 0.5 + 0.5;
@@ -802,7 +802,7 @@ vec2 getIrradianceTextureUVFromRMuSun(
 }
 
 void getRMuSunFromIrradianceTextureUV(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in vec2 uv, out float r, out float muSun) {
   float muSunMapping = getUnitFromTextureCoord(uv.x, IRRADIANCE_TEXTURE_WIDTH);
   float rMapping = getUnitFromTextureCoord(uv.y, IRRADIANCE_TEXTURE_HEIGHT);
@@ -816,7 +816,7 @@ const vec2 IRRADIANCE_TEXTURE_SIZE =
   vec2(IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT);
 
 vec3 computeDirectIrradianceTexture(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   in vec2 fragCoord) {
   float r;
@@ -831,7 +831,7 @@ vec3 computeDirectIrradianceTexture(
 }
 
 vec3 computeIndirectIrradianceTexture(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler3D singleRayleighScatteringTexture,
   in sampler3D singleMieScatteringTexture,
   in sampler3D multipleScatteringTexture,
@@ -852,20 +852,20 @@ vec3 computeIndirectIrradianceTexture(
 }
 
 vec3 getIrradiance(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D irradianceTexture,
   float r, float muSun) {
   vec2 uv = getIrradianceTextureUVFromRMuSun(sky, r, muSun);
   return vec3(texture(irradianceTexture, vec2(uv.x, 1.0 - uv.y)));
 }
 
-vec3 getSolarRadiance(in SkyProperties sky) {
+vec3 getSolarRadiance(in PlanetProperties sky) {
   return sky.solarIrradiance /
     (PI * sky.solarAngularRadius * sky.solarAngularRadius);
 }
 
 vec3 getExtrapolatedSingleMieScattering(
-  in SkyProperties sky, in vec4 scattering) {
+  in PlanetProperties sky, in vec4 scattering) {
   if (scattering.r == 0.0) {
     return vec3(0.0);
   }
@@ -876,7 +876,7 @@ vec3 getExtrapolatedSingleMieScattering(
 }
 
 vec3 getCombinedScattering(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler3D scatteringTexture,
   in sampler3D singleMieScatteringTexture,
   float r, float mu, float muSun, float nu,
@@ -907,7 +907,7 @@ vec3 getCombinedScattering(
 }
 
 vec3 getSkyRadiance(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   in sampler3D scatteringTexture,
   in sampler3D singleMieScateringTexture,
@@ -969,7 +969,7 @@ vec3 getSkyRadiance(
 }
 
 vec3 getSkyRadianceToPoint(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   in sampler3D scatteringTexture,
   in sampler3D singleMieScatteringTexture,
@@ -1032,7 +1032,7 @@ vec3 getSkyRadianceToPoint(
 }
 
 vec3 getSunAndSkyIrradiance(
-  in SkyProperties sky,
+  in PlanetProperties sky,
   in sampler2D transmittanceTexture,
   in sampler2D irradianceTexture,
   vec3 point, vec3 normal, vec3 sunDirection,

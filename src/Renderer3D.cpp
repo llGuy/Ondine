@@ -24,10 +24,13 @@ void Renderer3D::init() {
 }
 
 void Renderer3D::tick(const Tick &tick, VulkanFrame &frame) {
+  mCameraProperties.aspectRatio =
+    (float)mPipelineViewport.width / (float)mPipelineViewport.height;
+     
   mGBuffer.beginRender(frame);
   {
     // Renders the demo
-    mSkyRenderer.tick(tick, frame, mPipelineViewport);
+    mSkyRenderer.tick(tick, frame, mCameraProperties);
   }
   mGBuffer.endRender(frame);
 }

@@ -72,8 +72,8 @@ const LuminousIntensity kcd = 1000.0 * cd;
 const Luminance cd_per_square_meter = cd / m2;
 const Luminance kcd_per_square_meter = kcd / m2;
 
-layout(set = 0, binding = 0) uniform SkyUniform {
-  SkyProperties sky;
+layout(set = 0, binding = 0) uniform PlanetUniform {
+  PlanetProperties sky;
 } uSky;
 
 layout (set = 1, binding = 0) uniform sampler2D transmittance_texture;

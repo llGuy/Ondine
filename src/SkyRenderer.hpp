@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Tick.hpp"
+#include "Camera.hpp"
 #include "VulkanFrame.hpp"
 #include "RenderStage.hpp"
 #include "VulkanBuffer.hpp"
@@ -20,7 +21,10 @@ public:
     VulkanContext &graphicsContext,
     const RenderStage &renderStage);
 
-  void tick(const Tick &tick, VulkanFrame &frame, Resolution viewport);
+  void tick(
+    const Tick &tick,
+    VulkanFrame &frame,
+    const CameraProperties &camera);
 
 private:
   void initSkyProperties(VulkanContext &graphicsContext);

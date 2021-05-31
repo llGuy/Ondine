@@ -2,6 +2,8 @@
 
 #include "IO.hpp"
 #include <glm/glm.hpp>
+#include "VulkanBuffer.hpp"
+#include "VulkanUniform.hpp"
 #include "VulkanPipeline.hpp"
 
 namespace Yona {
@@ -45,7 +47,9 @@ struct PlanetProperties {
   alignas(4) float muSunMin;
 };
 
-/* Only one planet to be rendered (using raytracing for a magnificent sphere) */
+/* 
+   Renders the planet sphere using ray tracing.
+*/
 class PlanetRenderer {
 public:
   void init(
@@ -55,12 +59,16 @@ public:
   void tick(
     const Tick &tick,
     VulkanFrame &frame,
-    Resolution viewport,
     const Camera &camera);
+
+  void updateData(
+    const VulkanCommandBuffer &commandBuffer,
+    const PlanetProperties &properties);
 
 private:
   VulkanPipeline mPipeline;
-  PlanetProperties mPlanetProperties;
+  VulkanBuffer mPlanetPropertiesBuffer;
+  VulkanUniform mPlanetPropertiesUniform;
 };
 
 }

@@ -1,4 +1,5 @@
 #include "Log.hpp"
+#include <assert.h>
 #include "VulkanBuffer.hpp"
 #include "VulkanPipeline.hpp"
 #include "VulkanRenderPass.hpp"
@@ -10,6 +11,7 @@ namespace Yona {
 void VulkanCommandBuffer::init(
   VkCommandBuffer handle,
   VkCommandBufferLevel level) {
+  mViewportCount = 0;
   mCommandBuffer = handle;
   mLevel = level;
 
@@ -45,7 +47,7 @@ void VulkanCommandBuffer::beginRenderPass(
   const VulkanFramebuffer &framebuffer,
   const VkOffset2D &offset,
   const VkExtent2D &extent) {
-  mCurrentRenderPassExtent = extent;
+  pushViewport(extent);
 
   VkRect2D renderArea = {};
   renderArea.offset = offset;
@@ -63,7 +65,7 @@ void VulkanCommandBuffer::beginRenderPass(
 }
 
 void VulkanCommandBuffer::endRenderPass() {
-  mCurrentRenderPassExtent = {};
+  popViewport();
   vkCmdEndRenderPass(mCommandBuffer);
 }
 
@@ -147,7 +149,7 @@ void VulkanCommandBuffer::updateBuffer(
 void VulkanCommandBuffer::setViewport(
   VkExtent2D extent, VkExtent2D offset, uint32_t maxDepth) const {
   if (extent.width == 0) {
-    extent = mCurrentRenderPassExtent;
+    extent = mViewports[mViewportCount - 1];
   }
 
   VkViewport viewport = {};
@@ -161,10 +163,24 @@ void VulkanCommandBuffer::setViewport(
 
 void VulkanCommandBuffer::setScissor(
   VkOffset2D offset, VkExtent2D extent) const {
+  if (extent.width == 0) {
+    extent = mViewports[mViewportCount - 1];
+  }
+
   VkRect2D rect = {};
   rect.extent = extent;
   rect.offset = offset;
   vkCmdSetScissor(mCommandBuffer, 0, 1, &rect);
+}
+
+void VulkanCommandBuffer::pushViewport(VkExtent2D viewport) {
+  assert(mViewportCount < MAX_VIEWPORT_COUNT);
+  mViewports[mViewportCount++] = viewport;
+}
+
+VkExtent2D VulkanCommandBuffer::popViewport() {
+  assert(mViewportCount > 0);
+  return mViewports[mViewportCount--];
 }
 
 void VulkanCommandBuffer::bindPipeline(const VulkanPipeline &pipeline) {

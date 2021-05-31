@@ -24,6 +24,9 @@ public:
 
 private:
   Camera mCamera;
+  /* Temporary */
+  CameraProperties mCameraProperties;
+
   GBuffer mGBuffer;
   SkyRenderer mSkyRenderer;
   Resolution mPipelineViewport;

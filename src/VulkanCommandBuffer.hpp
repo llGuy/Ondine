@@ -33,7 +33,10 @@ public:
     VkExtent2D extent = {},
     VkExtent2D offset = {},
     uint32_t maxDepth = 1) const;
-  void setScissor(VkOffset2D offset, VkExtent2D extent) const;
+  void setScissor(VkOffset2D offset = {}, VkExtent2D extent = {}) const;
+
+  void pushViewport(VkExtent2D viewport);
+  VkExtent2D popViewport();
 
   void bindPipeline(const VulkanPipeline &pipeline);
   void pushConstants(size_t size, void *ptr);
@@ -81,10 +84,13 @@ private:
   void init(VkCommandBuffer handle, VkCommandBufferLevel level);
 
 private:
+  static constexpr uint32_t MAX_VIEWPORT_COUNT = 5;
+
   VkCommandBuffer mCommandBuffer;
   VkCommandBufferLevel mLevel;
   VkSubpassContents mSubpassContents;
-  VkExtent2D mCurrentRenderPassExtent;
+  VkExtent2D mViewports[MAX_VIEWPORT_COUNT];
+  size_t mViewportCount;
   VkPipeline mCurrentPipeline;
   VkPipelineLayout mCurrentPipelineLayout;
 
