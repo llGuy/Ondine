@@ -687,6 +687,20 @@ void SkyRenderer::precompute(VulkanContext &graphicsContext) {
 
     recordComputation(
       [this, scatteringOrder](VulkanCommandBuffer &commandBuffer) {
+        commandBuffer.transitionImageLayout(
+          mDeltaMultipleScatteringTexture,
+          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+        commandBuffer.transitionImageLayout(
+          mPrecomputedScattering,
+          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
         precomputeMultipleScattering(
           commandBuffer, 0, scatteringOrder,
           0, SCATTERING_TEXTURE_DEPTH / 2);
@@ -899,20 +913,6 @@ void SkyRenderer::precomputeMultipleScattering(
   uint32_t splitIndex, int scatteringOrder,
   uint32_t startLayer, uint32_t endLayer) {
   VkExtent2D extent = {SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT};
-
-  commandBuffer.transitionImageLayout(
-    mDeltaMultipleScatteringTexture,
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-  commandBuffer.transitionImageLayout(
-    mPrecomputedScattering,
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
   commandBuffer.beginRenderPass(
     mPrecomputeMultipleScattering.renderPass[splitIndex],
