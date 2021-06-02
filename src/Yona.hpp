@@ -1,7 +1,13 @@
 #pragma once
 
-namespace yona {
+namespace Yona {
 
+/* Contains the game state */
+class YonaState {
+public:
 
+private:
+
+};
 
 }

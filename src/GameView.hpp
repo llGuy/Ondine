@@ -1,11 +1,12 @@
 #pragma once
 
 #include "View.hpp"
+#include "Delegate.hpp"
 #include "RenderStage.hpp"
-#include "DelegateResize.hpp"
 
 namespace Yona {
 
+/* Forwards events to the game state */
 class GameView : public View {
 public:
   GameView(

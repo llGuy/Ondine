@@ -1,6 +1,9 @@
 #pragma once
 
+#include "Tick.hpp"
 #include <stdint.h>
+#include "Event.hpp"
+#include <glm/glm.hpp>
 
 namespace Yona {
 
@@ -26,6 +29,56 @@ enum class KeyboardButton {
 struct Resolution {
   uint32_t width;
   uint32_t height;
+};
+
+struct ButtonState {
+  float downAmount;
+  uint32_t isDown : 1;
+  uint32_t didInstant : 1;
+  uint32_t didRelease : 1;
+  uint32_t pad : 5;
+};
+
+struct Cursor {
+  bool didCursorMove;
+  glm::ivec2 cursorPos;
+  glm::ivec2 previousPos;
+};
+
+struct EventMouse;
+struct EventKeyboard;
+
+class InputTracker {
+public:
+  InputTracker();
+
+  // Need to call this before window input polling
+  void tick(const Tick &tick);
+
+  // Gets called after input polling
+  void handleKeyboardEvent(EventKeyboard *ev, const Tick &tick);
+  void handleMouseEvent(EventMouse *ev, const Tick &tick);
+
+  ButtonState &key(KeyboardButton button);
+  ButtonState &mouseButton(MouseButton button);
+  Cursor &cursor();
+
+private:
+  ButtonState mKeyboardButtons[(int)KeyboardButton::Unhandled];
+  // Keep track of this so that we can update the downAmount for each frame
+  size_t mPressedKeyCount;
+  int mPressedKeys[(int)KeyboardButton::Unhandled];
+  // Keep track of this so that in the next frame, we can clear the released
+  size_t mReleasedKeyCount;
+  int mReleasedKeys[(int)KeyboardButton::Unhandled];
+
+  ButtonState mMouseButtons[(int)MouseButton::Unhandled];
+  size_t mPressedMouseButtonCount;
+  int mPressedMouseButtons[(int)MouseButton::Unhandled];
+  size_t mReleasedMouseButtonCount;
+  int mReleasedMouseButtons[(int)MouseButton::Unhandled];
+
+  Cursor mCursor;
 };
 
 }

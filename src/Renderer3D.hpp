@@ -4,10 +4,10 @@
 #include "Window.hpp"
 #include "Camera.hpp"
 #include "GBuffer.hpp"
+#include "Delegate.hpp"
 #include "SkyRenderer.hpp"
 #include "RenderStage.hpp"
 #include "VulkanContext.hpp"
-#include "DelegateResize.hpp"
 
 namespace Yona {
 
