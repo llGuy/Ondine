@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-namespace Yona::Time {
+namespace Ondine::Time {
 
 using TimeStamp = std::chrono::high_resolution_clock::time_point;
 

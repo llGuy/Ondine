@@ -2,7 +2,7 @@
 
 #include "IO.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class VulkanContext;
 

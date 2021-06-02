@@ -5,7 +5,7 @@
 #include <string.h>
 #include "Memory.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 /* Fixed size */
 struct Buffer {

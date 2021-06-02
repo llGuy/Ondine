@@ -1,7 +1,7 @@
 #include <thread>
 #include "Time.hpp"
 
-namespace Yona::Time {
+namespace Ondine::Time {
 
 TimeStamp getCurrentTime() {
     return std::chrono::high_resolution_clock::now();

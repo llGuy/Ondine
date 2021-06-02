@@ -5,7 +5,7 @@
 
 #include "File.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 constexpr uint32_t MAX_MOUNT_POINTS = 16;
 

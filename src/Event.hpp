@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-namespace Yona {
+namespace Ondine {
 
 enum class EventCategory {
   Input,

@@ -4,7 +4,7 @@
 #include "Delegate.hpp"
 #include "RenderStage.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 /* Forwards events to the game state */
 class GameView : public View {

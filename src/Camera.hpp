@@ -5,7 +5,7 @@
 #include "VulkanBuffer.hpp"
 #include "VulkanUniform.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class VulkanContext;
 

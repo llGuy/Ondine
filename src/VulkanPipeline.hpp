@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.h>
 #include "Buffer.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class VulkanDevice;
 class VulkanRenderPass;

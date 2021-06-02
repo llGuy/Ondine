@@ -4,7 +4,7 @@
 #include "ViewStack.hpp"
 #include "FileSystem.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 ViewStack::ViewStack(VulkanContext &graphicsContext)
   : mGraphicsContext(graphicsContext) {

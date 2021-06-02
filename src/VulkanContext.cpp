@@ -8,7 +8,7 @@ constexpr bool ENABLE_VALIDATION = false;
 
 constexpr uint32_t FRAMES_IN_FLIGHT = 2;
 
-namespace Yona {
+namespace Ondine {
 
 VulkanContext::VulkanContext()
   : mInstance(ENABLE_VALIDATION),

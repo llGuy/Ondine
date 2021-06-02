@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "Memory.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 LinearAllocator::LinearAllocator(uint32_t maxSize)
   : mStart(nullptr),

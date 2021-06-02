@@ -3,7 +3,7 @@
 #include "RenderStage.hpp"
 #include "VulkanContext.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class GBuffer : public RenderStage {
 public:

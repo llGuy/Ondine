@@ -4,7 +4,7 @@
 #include "Utils.hpp"
 #include "Event.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 EventQueue::EventQueue()
   : mProcessingCounter(0),

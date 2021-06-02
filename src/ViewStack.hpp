@@ -4,7 +4,7 @@
 #include "Buffer.hpp"
 #include "VulkanPipeline.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class ViewStack {
 public:

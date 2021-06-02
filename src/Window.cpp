@@ -6,7 +6,21 @@
 #include "Memory.hpp"
 #include "IOEvent.hpp"
 
-namespace Yona {
+#ifdef _WIN32
+#include <shellscalingapi.h>
+#endif
+
+namespace Ondine {
+
+#ifdef _WIN32
+static void ignoreDPIScaling() {
+  SetProcessDpiAwareness(PROCESS_DPI_UNAWARE);
+}
+#else
+static void ignoreDPIScaling() {
+  // TODO
+}
+#endif
 
 Window::Window(
   WindowMode mode,
@@ -171,6 +185,8 @@ void Window::toggleFullscreen() {
 }
 
 void Window::initWindowAPI() {
+  ignoreDPIScaling();
+
   if (!glfwInit()) {
     LOG_ERROR("Failed to initialise GLFW\n");
     PANIC_AND_EXIT();

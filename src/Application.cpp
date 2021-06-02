@@ -6,10 +6,10 @@
 #include "FileSystem.hpp"
 #include "EditorView.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 Application::Application(int argc, char **argv)
-  : mWindow(WindowMode::Windowed, "Yona"),
+  : mWindow(WindowMode::Windowed, "Ondine"),
     mRenderer3D(mGraphicsContext, mInputTracker),
     mViewStack(mGraphicsContext) {
   /* Initialise graphics context, etc... */

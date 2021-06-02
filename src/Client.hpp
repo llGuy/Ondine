@@ -2,7 +2,7 @@
 
 #include "Application.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class Client : public Application {
 public:

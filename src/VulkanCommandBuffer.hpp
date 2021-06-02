@@ -5,7 +5,7 @@
 #include "VulkanUniform.hpp"
 #include "VulkanPipeline.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class VulkanRenderPass;
 class VulkanFramebuffer;

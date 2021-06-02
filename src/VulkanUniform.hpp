@@ -5,7 +5,7 @@
 #include "VulkanTexture.hpp"
 #include "VulkanDescriptor.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 /* 
    We call descriptor sets uniforms.

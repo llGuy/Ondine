@@ -1,6 +1,6 @@
 #include "VulkanDescriptor.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 VulkanDescriptorSetLayoutCategory::VulkanDescriptorSetLayoutCategory()
   : mLayouts{} {

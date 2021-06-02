@@ -6,7 +6,7 @@
 #include "VulkanDevice.hpp"
 #include "VulkanFramebuffer.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class VulkanSemaphore;
 

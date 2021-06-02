@@ -7,7 +7,7 @@
 #include "Event.hpp"
 #include "Time.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 enum class WindowMode {
   Fullscreen,

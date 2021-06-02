@@ -11,7 +11,7 @@
 #include "VulkanRenderPass.hpp"
 #include "VulkanFramebuffer.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class VulkanContext;
 

@@ -2,7 +2,7 @@
 #include "Renderer3D.hpp"
 #include "VulkanRenderPass.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 Renderer3D::Renderer3D(
   VulkanContext &graphicsContext,

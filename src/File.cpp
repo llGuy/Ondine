@@ -4,7 +4,7 @@
 #include "File.hpp"
 #include "Memory.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 File::File(const std::string &path, FileOpenTypeBits type)
   : path(path), mFileType(type) {

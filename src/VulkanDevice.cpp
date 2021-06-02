@@ -6,7 +6,7 @@
 #include "VulkanSurface.hpp"
 #include "VulkanInstance.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 void VulkanDevice::init(
   DeviceType requestedType,

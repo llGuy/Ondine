@@ -5,7 +5,7 @@
 #include "VulkanSwapchain.hpp"
 #include "VulkanCommandBuffer.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 void VulkanQueue::idle() const {
   vkQueueWaitIdle(mQueue);

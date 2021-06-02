@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Yona {
+namespace Ondine {
 
 struct Tick {
   float dt;

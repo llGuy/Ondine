@@ -4,7 +4,7 @@
 #include "VulkanContext.hpp"
 #include "VulkanTexture.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 void SkyRenderer::init(
   VulkanContext &graphicsContext,

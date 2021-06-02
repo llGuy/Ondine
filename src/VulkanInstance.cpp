@@ -4,7 +4,7 @@
 #include "Vulkan.hpp"
 #include "VulkanInstance.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 VulkanInstance::VulkanInstance(bool enableValidation)
   : mIsValidationEnabled(enableValidation) {

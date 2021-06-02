@@ -10,7 +10,7 @@
 #include "GraphicsEvent.hpp"
 #include "VulkanContext.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 EditorView::EditorView(
   const WindowContextInfo &contextInfo,

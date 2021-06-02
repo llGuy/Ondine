@@ -4,17 +4,17 @@
 #include "FileSystem.hpp"
 #include "VulkanContext.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 int entry(int argc, char **argv) {
   /* Make sure to also write FL allocator at some point */
-  gLinearAllocator = Yona::flAlloc<Yona::LinearAllocator>(megabytes(10));
+  gLinearAllocator = Ondine::flAlloc<Ondine::LinearAllocator>(megabytes(10));
   gLinearAllocator->init();
-  gFileSystem = Yona::flAlloc<Yona::FileSystem>();
+  gFileSystem = Ondine::flAlloc<Ondine::FileSystem>();
 
-  Yona::Application *client = Yona::flAlloc<Yona::Client>(argc, argv);
+  Ondine::Application *client = Ondine::flAlloc<Ondine::Client>(argc, argv);
   client->run();
-  Yona::flFree(client);
+  Ondine::flFree(client);
 
   return 0;
 }
@@ -22,5 +22,5 @@ int entry(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-  return Yona::entry(argc, argv);
+  return Ondine::entry(argc, argv);
 }

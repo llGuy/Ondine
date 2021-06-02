@@ -6,7 +6,7 @@
 #include "VulkanUniform.hpp"
 #include "VulkanPipeline.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 struct Tick;
 struct VulkanFrame;

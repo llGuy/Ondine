@@ -1,7 +1,7 @@
 #include "VulkanSurface.hpp"
 #include "VulkanInstance.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 void VulkanSurface::init(
   const VulkanInstance &instance,

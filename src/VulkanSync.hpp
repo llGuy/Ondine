@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
-namespace Yona {
+namespace Ondine {
 
 VkAccessFlags findAccessFlagsForStage(VkPipelineStageFlags stage);
 VkAccessFlags findAccessFlagsForImageLayout(VkImageLayout layout);

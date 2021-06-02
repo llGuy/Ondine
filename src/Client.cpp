@@ -1,6 +1,6 @@
 #include "Client.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 Client::Client(int argc, char **argv)
   : Application(argc, argv) {

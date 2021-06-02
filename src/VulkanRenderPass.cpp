@@ -5,7 +5,7 @@
 #include "VulkanDevice.hpp"
 #include "VulkanRenderPass.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 VulkanRenderPassConfig::VulkanRenderPassConfig(
   uint32_t attachmentCount,

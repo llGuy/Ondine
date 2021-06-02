@@ -5,7 +5,7 @@
 #include "Buffer.hpp"
 #include "VulkanCommandBuffer.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class VulkanDevice;
 

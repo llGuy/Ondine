@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "IO.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class VulkanContext;
 class VulkanCommandBuffer;

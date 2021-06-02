@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.h>
 #include "VulkanRenderPass.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 struct WindowContextInfo;
 class VulkanSwapchain;
@@ -11,7 +11,7 @@ class VulkanDevice;
 class VulkanInstance;
 class VulkanDescriptorPool;
 class VulkanCommandPool;
-class VulkanFrame;
+struct VulkanFrame;
 
 class VulkanImgui {
 public:

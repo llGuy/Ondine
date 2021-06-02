@@ -5,7 +5,7 @@
 #include "VulkanFrame.hpp"
 #include "PlanetRenderer.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 void PlanetRenderer::init(
   VulkanContext &graphicsContext,

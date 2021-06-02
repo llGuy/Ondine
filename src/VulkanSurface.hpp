@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.h>
 #include "Window.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class VulkanSurface {
 public:

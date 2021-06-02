@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Yona {
+namespace Ondine {
 
 /* Contains the game state */
 class YonaState {

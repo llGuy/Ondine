@@ -4,7 +4,7 @@
 #include "Buffer.hpp"
 #include <vulkan/vulkan.h>
 
-namespace Yona {
+namespace Ondine {
 
 class VulkanDevice;
 class VulkanCommandPool;

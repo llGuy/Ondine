@@ -11,7 +11,7 @@
 #include "VulkanRenderPass.hpp"
 #include "VulkanCommandPool.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 void VulkanImgui::init(
   const VulkanInstance &instance,

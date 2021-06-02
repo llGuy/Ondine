@@ -3,7 +3,7 @@
 #include "VulkanDevice.hpp"
 #include "VulkanTexture.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 void VulkanTexture::init(
   const VulkanDevice &device,

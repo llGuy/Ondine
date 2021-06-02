@@ -10,7 +10,7 @@
 #include "RenderStage.hpp"
 #include "VulkanContext.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class Renderer3D : public DelegateResize {
 public:

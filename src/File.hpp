@@ -7,7 +7,7 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 enum class FileOpenType : uint32_t {
   Text = 0,

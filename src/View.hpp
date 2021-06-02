@@ -5,7 +5,7 @@
 #include "VulkanContext.hpp"
 #include "VulkanUniform.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 /* 
    These structures are here so that when changing params, don't need to

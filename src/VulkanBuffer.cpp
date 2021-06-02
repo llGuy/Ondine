@@ -4,7 +4,7 @@
 #include "VulkanCommandPool.hpp"
 #include "VulkanCommandBuffer.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 void VulkanBuffer::init(
   const VulkanDevice &device,

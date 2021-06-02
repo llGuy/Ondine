@@ -1,6 +1,6 @@
 #include "VulkanUniform.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 void VulkanUniform::init(
   const VulkanDevice &device,

@@ -3,7 +3,7 @@
 #include "IO.hpp"
 #include "Event.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 struct EventViewportResize : Event {
   EVENT_DEF(EventViewportResize, Graphics, ViewportResize);

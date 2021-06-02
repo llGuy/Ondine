@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-namespace Yona {
+namespace Ondine {
 
 inline uint32_t kilobytes(uint32_t kb) {
     return(kb * 1024);

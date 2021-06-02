@@ -1,7 +1,7 @@
 #include "Camera.hpp"
 #include "VulkanContext.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 void Camera::init(VulkanContext &graphicsContext) {
   mCameraBuffer.init(

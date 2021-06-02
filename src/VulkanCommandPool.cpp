@@ -2,7 +2,7 @@
 #include "VulkanDevice.hpp"
 #include "VulkanCommandPool.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 void VulkanCommandPool::init(const VulkanDevice &device) {
   VkCommandPoolCreateInfo commandPoolInfo = {};

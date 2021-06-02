@@ -5,7 +5,7 @@
 #include "Event.hpp"
 #include <glm/glm.hpp>
 
-namespace Yona {
+namespace Ondine {
 
 enum class MouseButton {
   Left,

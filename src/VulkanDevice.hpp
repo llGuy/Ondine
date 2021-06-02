@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.h>
 #include "VulkanQueue.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 enum DeviceType {
   DiscreteGPU,

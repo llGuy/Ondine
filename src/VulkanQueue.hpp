@@ -4,7 +4,7 @@
 #include "Buffer.hpp"
 #include "VulkanSync.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 class VulkanCommandBuffer;
 class VulkanSwapchain;

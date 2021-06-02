@@ -1,7 +1,7 @@
 #include "IO.hpp"
 #include "IOEvent.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 InputTracker::InputTracker()
   : mKeyboardButtons{},

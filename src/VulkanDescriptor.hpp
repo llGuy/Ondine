@@ -6,7 +6,7 @@
 #include <vulkan/vulkan.h>
 #include "VulkanDevice.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 struct VulkanDescriptorTypeInfo {
   size_t size;

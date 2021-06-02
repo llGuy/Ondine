@@ -6,7 +6,7 @@
 #include "VulkanDevice.hpp"
 #include "VulkanTexture.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 enum class LoadAndStoreOp {
   LoadThenStore        = 0 | (0 << 2),

@@ -3,7 +3,7 @@
 #include "IO.hpp"
 #include "Event.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 enum class MouseEventType {
   Press,

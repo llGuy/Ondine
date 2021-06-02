@@ -3,7 +3,7 @@
 #include <filesystem>
 #include "FileSystem.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 FileSystem *gFileSystem = nullptr;
 

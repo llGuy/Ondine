@@ -11,7 +11,7 @@
 #include "VulkanDescriptor.hpp"
 #include "VulkanCommandPool.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 struct WindowContextInfo;
 

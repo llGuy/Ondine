@@ -2,7 +2,7 @@
 #include "IOEvent.hpp"
 #include "GraphicsEvent.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 GameView::GameView(
   const RenderStage &gameRenderStage,

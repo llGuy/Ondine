@@ -9,7 +9,7 @@
 #include "FileSystem.hpp"
 #include "VulkanContext.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 enum class ApplicationMountPoints : uint8_t {
   Application,

@@ -5,7 +5,7 @@
 #include "VulkanFramebuffer.hpp"
 #include "VulkanRenderPass.hpp"
 
-namespace Yona {
+namespace Ondine {
 
 /* 
    Doesn't declare any state because the render stage may want
