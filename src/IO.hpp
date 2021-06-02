@@ -32,8 +32,8 @@ struct Resolution {
 };
 
 struct ButtonState {
-  float downAmount;
   uint32_t isDown : 1;
+  /* Was the key pressed at this instant (only true for one frame) */
   uint32_t didInstant : 1;
   uint32_t didRelease : 1;
   uint32_t pad : 5;
@@ -56,9 +56,14 @@ public:
   void tick(const Tick &tick);
 
   // Gets called after input polling
-  void handleKeyboardEvent(EventKeyboard *ev, const Tick &tick);
-  void handleMouseEvent(EventMouse *ev, const Tick &tick);
+  void handleKeyboardEvent(EventKeyboard *ev);
+  void handleMouseEvent(EventMouse *ev);
 
+  const ButtonState &key(KeyboardButton button) const;
+  const ButtonState &mouseButton(MouseButton button) const;
+  const Cursor &cursor() const;
+
+private:
   ButtonState &key(KeyboardButton button);
   ButtonState &mouseButton(MouseButton button);
   Cursor &cursor();

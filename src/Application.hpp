@@ -1,5 +1,6 @@
 #pragma once
 
+#include "IO.hpp"
 #include "Time.hpp"
 #include "Event.hpp"
 #include "Window.hpp"
@@ -42,6 +43,7 @@ private:
   VulkanContext mGraphicsContext;
   Renderer3D mRenderer3D;
   ViewStack mViewStack;
+  InputTracker mInputTracker;
 
   float mDt;
   float mMaxFramerate;

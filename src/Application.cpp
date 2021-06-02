@@ -10,7 +10,7 @@ namespace Yona {
 
 Application::Application(int argc, char **argv)
   : mWindow(WindowMode::Windowed, "Yona"),
-    mRenderer3D(mGraphicsContext),
+    mRenderer3D(mGraphicsContext, mInputTracker),
     mViewStack(mGraphicsContext) {
   /* Initialise graphics context, etc... */
   setMaxFramerate(60.0f);
@@ -53,6 +53,7 @@ void Application::run() {
     Time::TimeStamp frameStart = Time::getCurrentTime();
     Tick currentTick = { mDt };
 
+    mInputTracker.tick(currentTick);
     mWindow.pollInput();
 
     /* 
@@ -135,15 +136,24 @@ void Application::processInputEvent(Event *ev) {
     /* Just for fullscreen toggling */
   case EventType::Keyboard: {
     auto *kbEvent = (EventKeyboard *)ev;
+    mInputTracker.handleKeyboardEvent(kbEvent);
+
     if (kbEvent->keyboardEventType == KeyboardEventType::Press) {
       if (kbEvent->press.button == KeyboardButton::F11 &&
           !kbEvent->press.isRepeat) {
         mWindow.toggleFullscreen();
         mGraphicsContext.skipFrame();
-
-        kbEvent->isHandled = true;
       }
     }
+
+    kbEvent->isHandled = true;
+  } break;
+
+  case EventType::Mouse: {
+    auto *event = (EventMouse *)ev;
+    mInputTracker.handleMouseEvent(event);
+
+    event->isHandled = true;
   } break;
 
   default:;

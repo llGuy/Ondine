@@ -1,5 +1,6 @@
 #pragma once
 
+#include "IO.hpp"
 #include "Event.hpp"
 #include "Window.hpp"
 #include "Camera.hpp"
@@ -13,7 +14,9 @@ namespace Yona {
 
 class Renderer3D : public DelegateResize {
 public:
-  Renderer3D(VulkanContext &graphicsContext);
+  Renderer3D(
+    VulkanContext &graphicsContext,
+    const InputTracker &inputTracker);
 
   void init();
   void tick(const Tick &tick, VulkanFrame &frame);
@@ -24,13 +27,19 @@ public:
 
 private:
   Camera mCamera;
+
   /* Temporary */
   CameraProperties mCameraProperties;
+  PlanetProperties mPlanetProperties;
 
   GBuffer mGBuffer;
   SkyRenderer mSkyRenderer;
+  PlanetRenderer mPlanetRenderer;
+
   Resolution mPipelineViewport;
+
   VulkanContext &mGraphicsContext;
+  const InputTracker &mInputTracker;
 };
 
 }

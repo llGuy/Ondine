@@ -54,7 +54,8 @@ class PlanetRenderer {
 public:
   void init(
     VulkanContext &graphicsContext,
-    const RenderStage &renderStage);
+    const RenderStage &renderStage,
+    const PlanetProperties *properties = nullptr);
 
   void tick(
     const Tick &tick,

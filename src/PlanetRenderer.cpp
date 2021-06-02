@@ -9,7 +9,8 @@ namespace Yona {
 
 void PlanetRenderer::init(
   VulkanContext &graphicsContext,
-  const RenderStage &renderStage) {
+  const RenderStage &renderStage,
+  const PlanetProperties *properties) {
   { // Create pipeline
     File precomputeDummyVsh = gFileSystem->createFile(
       (MountPoint)ApplicationMountPoints::Application,
@@ -57,6 +58,13 @@ void PlanetRenderer::init(
       graphicsContext.descriptorPool(),
       graphicsContext.descriptorLayouts(),
       makeArray<VulkanBuffer, AllocationType::Linear>(mPlanetPropertiesBuffer));
+  }
+
+  if (properties) {
+    mPlanetPropertiesBuffer.fillWithStaging(
+      graphicsContext.device(),
+      graphicsContext.commandPool(),
+      {(uint8_t *)properties, sizeof(PlanetProperties)});
   }
 }
 

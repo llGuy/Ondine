@@ -18,24 +18,38 @@ InputTracker::InputTracker()
   
 }
 
-void InputTracker::handleKeyboardEvent(EventKeyboard *ev, const Tick &tick) {
+void InputTracker::tick(const Tick &tick) {
+  for (int i = 0; i < mPressedKeyCount; ++i) {
+    int idx = mPressedKeys[i];
+    mKeyboardButtons[idx].didInstant = false;
+  }
+
+  for (int i = 0; i < mReleasedKeyCount; ++i) {
+    int idx = mPressedKeys[i];
+    mKeyboardButtons[idx].didRelease = false;
+  }
+
+  mPressedKeyCount = 0;
+  mReleasedKeyCount = 0;
+  mCursor.didCursorMove = false;
+}
+
+void InputTracker::handleKeyboardEvent(EventKeyboard *ev) {
   switch (ev->keyboardEventType) {
   case KeyboardEventType::Press: {
     auto &pressedKey = key(ev->press.button);
-    pressedKey.downAmount += tick.dt;
-    pressedKey.isDown = 1;
-    pressedKey.didInstant = 1;
-    pressedKey.didRelease = 1;
+    pressedKey.isDown = true;
+    pressedKey.didInstant = true;
+    pressedKey.didRelease = false;
 
     mPressedKeys[mPressedKeyCount++] = (int)ev->press.button;
   } break;
 
   case KeyboardEventType::Release: {
     auto &pressedKey = key(ev->press.button);
-    pressedKey.downAmount += tick.dt;
-    pressedKey.isDown = 1;
-    pressedKey.didInstant = 1;
-    pressedKey.didRelease = 1;
+    pressedKey.isDown = false;
+    pressedKey.didInstant = false;
+    pressedKey.didRelease = true;
 
     mReleasedKeys[mReleasedKeyCount++] = (int)ev->press.button;
   } break;
@@ -46,36 +60,48 @@ void InputTracker::handleKeyboardEvent(EventKeyboard *ev, const Tick &tick) {
   }
 }
 
-void InputTracker::handleMouseEvent(EventMouse *ev, const Tick &tick) {
+void InputTracker::handleMouseEvent(EventMouse *ev) {
   switch (ev->mouseEventType) {
   case MouseEventType::Press: {
-    auto &pressedKey = key(ev->press.button);
-    pressedKey.downAmount += tick.dt;
-    pressedKey.isDown = 1;
-    pressedKey.didInstant = 1;
-    pressedKey.didRelease = 1;
+    auto &pressedMB = mouseButton(ev->press.button);
+    pressedMB.isDown = true;
+    pressedMB.didInstant = true;
+    pressedMB.didRelease = false;
 
-    mPressedKeys[mPressedKeyCount++] = (int)ev->press.button;
+    mPressedMouseButtons[mPressedMouseButtonCount++] = (int)ev->press.button;
   } break;
 
   case MouseEventType::Release: {
-    auto &pressedKey = key(ev->press.button);
-    pressedKey.downAmount += tick.dt;
-    pressedKey.isDown = 1;
-    pressedKey.didInstant = 1;
-    pressedKey.didRelease = 1;
+    auto &pressedKey = mouseButton(ev->press.button);
+    pressedKey.isDown = false;
+    pressedKey.didInstant = false;
+    pressedKey.didRelease = true;
 
-    mReleasedKeys[mReleasedKeyCount++] = (int)ev->press.button;
+    mReleasedMouseButtons[mReleasedMouseButtonCount++] = (int)ev->press.button;
   } break;
 
   case MouseEventType::Move: {
-    
+    mCursor.didCursorMove = true;
+    mCursor.previousPos = mCursor.cursorPos;
+    mCursor.cursorPos = glm::ivec2((int)ev->move.x, (int)ev->move.y);
   } break;
 
   case MouseEventType::Scroll: {
     
   } break;
   }
+}
+
+const ButtonState &InputTracker::key(KeyboardButton button) const {
+  return mKeyboardButtons[(int)button];
+}
+
+const ButtonState &InputTracker::mouseButton(MouseButton button) const {
+  return mMouseButtons[(int)button];
+}
+
+const Cursor &InputTracker::cursor() const {
+  return mCursor;
 }
 
 ButtonState &InputTracker::key(KeyboardButton button) {
