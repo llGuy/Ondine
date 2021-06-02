@@ -17,6 +17,7 @@ struct CameraProperties {
   glm::mat4 viewProjection;
   alignas(16) glm::vec3 wPosition;
   alignas(16) glm::vec3 wViewDirection;
+  alignas(16) glm::vec3 wUp;
   float fov;
   float aspectRatio;
   float near;
@@ -27,7 +28,10 @@ class Camera {
 public:
   Camera() = default;
 
-  void init(VulkanContext &graphicsContext);
+  void init(
+    VulkanContext &graphicsContext,
+    const CameraProperties *properties = nullptr);
+
   void updateData(
     const VulkanCommandBuffer commandBuffer,
     const CameraProperties &properties);

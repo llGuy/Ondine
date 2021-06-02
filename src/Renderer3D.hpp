@@ -26,6 +26,10 @@ public:
   const RenderStage &mainRenderStage() const;
 
 private:
+  // Temporary
+  void tickCamera(const Tick &tick, VulkanFrame &frame);
+
+private:
   Camera mCamera;
 
   /* Temporary */

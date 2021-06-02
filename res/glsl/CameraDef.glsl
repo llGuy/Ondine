@@ -9,6 +9,7 @@ struct CameraProperties {
   mat4 viewProjection;
   vec3 wPosition;
   vec3 wViewDirection;
+  vec3 wUp;
   float fov;
   float aspectRatio;
   float near;

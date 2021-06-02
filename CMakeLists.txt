@@ -4,7 +4,7 @@ project(Ondine)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSTB_IMAGE_IMPLEMENTATION -D_MBCS -DCIMGUI_DEFINE_ENUMS_AND_STRUCTS -DCURL_STATICLIB")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSTB_IMAGE_IMPLEMENTATION -D_MBCS -DGLM_ENABLE_EXPERIMENTAL")
 
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.hpp" "dep/imgui/lib/*.cpp")
 
@@ -69,7 +69,7 @@ if (WIN32)
 else (WIN32)
 
   target_link_libraries(Ondine PUBLIC "pthread" "stdc++fs" "glfw")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat-security")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 endif()
 

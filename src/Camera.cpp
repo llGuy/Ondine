@@ -3,7 +3,9 @@
 
 namespace Ondine {
 
-void Camera::init(VulkanContext &graphicsContext) {
+void Camera::init(
+  VulkanContext &graphicsContext,
+  const CameraProperties *properties) {
   mCameraBuffer.init(
     graphicsContext.device(),
     sizeof(CameraProperties),
@@ -14,6 +16,13 @@ void Camera::init(VulkanContext &graphicsContext) {
     graphicsContext.descriptorPool(),
     graphicsContext.descriptorLayouts(),
     makeArray<VulkanBuffer, AllocationType::Linear>(mCameraBuffer));
+
+  if (properties) {
+    mCameraBuffer.fillWithStaging(
+      graphicsContext.device(),
+      graphicsContext.commandPool(),
+      {(uint8_t *)properties, sizeof(CameraProperties)});
+  }
 }
 
 void Camera::updateData(

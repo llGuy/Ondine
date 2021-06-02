@@ -8,13 +8,13 @@ namespace Ondine {
 
 int entry(int argc, char **argv) {
   /* Make sure to also write FL allocator at some point */
-  gLinearAllocator = Ondine::flAlloc<Ondine::LinearAllocator>(megabytes(10));
+  gLinearAllocator = flAlloc<LinearAllocator>(megabytes(10));
   gLinearAllocator->init();
-  gFileSystem = Ondine::flAlloc<Ondine::FileSystem>();
+  gFileSystem = flAlloc<FileSystem>();
 
-  Ondine::Application *client = Ondine::flAlloc<Ondine::Client>(argc, argv);
+  Application *client = flAlloc<Client>(argc, argv);
   client->run();
-  Ondine::flFree(client);
+  flFree(client);
 
   return 0;
 }

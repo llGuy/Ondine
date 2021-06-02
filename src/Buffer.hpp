@@ -21,8 +21,8 @@ enum class AllocationType {
 template <typename T, AllocationType A = AllocationType::Freelist>
 struct Array {
   T *data;
-  size_t size;
   size_t capacity;
+  size_t size;
 
   Array() = default;
 
@@ -92,6 +92,10 @@ Array<T, A> makeArray(Args &&...args) {
     (addElement(arr, std::forward<Args>(args)), (char)0)...
   };
 
+  /* In case args is empty */
+  (void)dummy;
+  (void)addElement;
+
   return arr;
 }
 
@@ -108,6 +112,10 @@ Array<T, A> makeArrayPred(Pred pred, Args &&...args) {
     (char)0,
     (addElement(arr, std::forward<decltype(args)>(args)), (char)0)...
   };
+
+  /* In case args is empty */
+  (void)dummy;
+  (void)addElement;
 
   return arr;
 }

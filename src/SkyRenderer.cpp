@@ -1,5 +1,6 @@
-#include "Application.hpp"
+#include <math.h>
 #include "FileSystem.hpp"
+#include "Application.hpp"
 #include "SkyRenderer.hpp"
 #include "VulkanContext.hpp"
 #include "VulkanTexture.hpp"

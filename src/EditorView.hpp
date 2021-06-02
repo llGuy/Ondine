@@ -38,12 +38,12 @@ private:
 private:
   ImGuiID mDock;
   bool mIsDockLayoutInitialised;
+  Resolution mViewportResolution;
   OnEventProc mOnEvent;
   VulkanRenderPass mRenderPass;
   VulkanFramebuffer mFramebuffer;
   VulkanTexture mTarget;
   VulkanUniform mTargetUniform;
-  Resolution mViewportResolution;
   VulkanPipeline mRenderViewport;
 };
 

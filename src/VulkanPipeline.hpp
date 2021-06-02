@@ -107,9 +107,9 @@ private:
   VkPipelineDynamicStateCreateInfo mDynamicState;
   Array<VkDynamicState, AllocationType::Linear> mDynamicStates;
   VkPipelineDepthStencilStateCreateInfo mDepthStencil;
+  Array<VulkanPipelineDescriptorLayout, AllocationType::Linear> mLayouts;
   Array<VkPipelineShaderStageCreateInfo, AllocationType::Linear> mShaderStages;
   size_t mPushConstantSize;
-  Array<VulkanPipelineDescriptorLayout, AllocationType::Linear> mLayouts;
   VulkanShaderTarget mTarget;
   VkGraphicsPipelineCreateInfo mCreateInfo;
   VkPipelineLayout mPipelineLayout;
