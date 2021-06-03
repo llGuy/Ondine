@@ -26,6 +26,8 @@ public:
     VulkanFrame &frame,
     const CameraProperties &camera);
 
+  const VulkanUniform &uniform() const;
+
 private:
   void initSkyProperties(VulkanContext &graphicsContext);
   void initTemporaryPrecomputeTextures(VulkanContext &graphicsContext);
@@ -195,6 +197,9 @@ private:
 
   VulkanTexture mDeltaScatteringDensityTexture;
   VulkanUniform mDeltaScatteringDensityUniform;
+
+  /* Uniform that gets passed to rendering operations which need the sky */
+  VulkanUniform mRenderingUniform;
 
   /* For now, contain the demo shader */
   VulkanPipeline mDemo;

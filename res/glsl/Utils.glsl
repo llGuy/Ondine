@@ -14,4 +14,12 @@ float calculateFragDepth(
   // return (((1.0 - 0.0) * ndcDepth) + 0.0 + 1.0) / 2.0;
 }
 
+vec3 getVPositionFromDepth(
+  vec2 ndc, float depth,
+  in mat4 inverseProjection) {
+  vec4 temp = inverseProjection * vec4(ndc, depth, 1.0);
+  vec3 vPos = temp.xyz / temp.w;
+  return vPos;
+}
+
 #endif

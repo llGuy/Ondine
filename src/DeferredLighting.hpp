@@ -8,6 +8,7 @@ namespace Ondine {
 
 class GBuffer;
 class Camera;
+class SkyRenderer;
 class PlanetRenderer;
 
 class DeferredLighting : public RenderStage {
@@ -16,7 +17,8 @@ public:
 
   void render(
     VulkanFrame &frame, const GBuffer &gbuffer,
-    const Camera &camera, const PlanetRenderer &planet);
+    const Camera &camera, const PlanetRenderer &planet,
+    const SkyRenderer &sky);
 
   void resize(VulkanContext &vulkanContext, Resolution newResolution);
 

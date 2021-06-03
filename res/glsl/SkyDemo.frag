@@ -77,9 +77,9 @@ layout(set = 0, binding = 0) uniform PlanetUniform {
 } uSky;
 
 layout (set = 1, binding = 0) uniform sampler2D transmittance_texture;
-layout (set = 2, binding = 0) uniform sampler3D scattering_texture;
-layout (set = 3, binding = 0) uniform sampler3D single_mie_scattering_texture;
-layout (set = 4, binding = 0) uniform sampler2D irradiance_texture;
+layout (set = 1, binding = 1) uniform sampler3D scattering_texture;
+layout (set = 1, binding = 2) uniform sampler3D single_mie_scattering_texture;
+layout (set = 1, binding = 3) uniform sampler2D irradiance_texture;
 
 RadianceSpectrum GetSolarRadiance() {
   return uSky.sky.solarIrradiance /
@@ -125,6 +125,7 @@ layout (push_constant) uniform PushConstant {
 layout(location = 0) in vec3 view_ray;
 
 layout(location = 0) out vec4 color;
+layout(location = 1) out vec4 outNormal;
 
 /*
   <p>It uses the following constants, as well as the following atmosphere
@@ -461,4 +462,6 @@ void main() {
   color.rgb = 
     pow(vec3(1.0) - exp(-radiance / white_point * exposure), vec3(1.0 / 2.2));
   color.a = 1.0;
+
+  outNormal = vec4(0);
 }

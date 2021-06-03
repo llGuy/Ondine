@@ -106,14 +106,13 @@ void Renderer3D::tick(const Tick &tick, VulkanFrame &frame) {
   tickCamera(tick, frame);
      
   mGBuffer.beginRender(frame);
-  {
-    // Renders the demo
-    // mSkyRenderer.tick(tick, frame, mCameraProperties);
+  { // Render 3D scene
     mPlanetRenderer.tick(tick, frame, mCamera);
   }
   mGBuffer.endRender(frame);
 
-  mDeferredLighting.render(frame, mGBuffer, mCamera, mPlanetRenderer);
+  mDeferredLighting.render(
+    frame, mGBuffer, mCamera, mPlanetRenderer, mSkyRenderer);
 }
 
 void Renderer3D::resize(Resolution newResolution) {

@@ -64,8 +64,9 @@ void ViewStack::distributeInput(
     switch (res) {
     case FocusedView::Next: {
       /* No action required */
-      assert(mFocusedView > 0);
-      --mFocusedView;
+      if (mFocusedView > 0) {
+        --mFocusedView;
+      }
     } break;
 
     case FocusedView::Current: {
@@ -74,8 +75,9 @@ void ViewStack::distributeInput(
     } break;
 
     case FocusedView::Previous: {
-      assert(mFocusedView < mViews.size - 1);
-      ++mFocusedView;
+      if (mFocusedView < mViews.size - 1) {
+        ++mFocusedView;
+      }
     } break;
     }
   }

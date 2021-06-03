@@ -47,7 +47,9 @@ void DeferredLighting::init(VulkanContext &graphicsContext) {
       VulkanPipelineDescriptorLayout{
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3},
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      VulkanPipelineDescriptorLayout{
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4});
 
     mLightingPipeline.init(
       graphicsContext.device(),
@@ -71,7 +73,8 @@ void DeferredLighting::render(
   VulkanFrame &frame,
   const GBuffer &gbuffer,
   const Camera &camera,
-  const PlanetRenderer &planet) {
+  const PlanetRenderer &planet,
+  const SkyRenderer &sky) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.beginRenderPass(
@@ -81,7 +84,7 @@ void DeferredLighting::render(
 
   commandBuffer.bindPipeline(mLightingPipeline);
   commandBuffer.bindUniforms(
-    gbuffer.uniform(), camera.uniform(), planet.uniform());
+    gbuffer.uniform(), camera.uniform(), planet.uniform(), sky.uniform());
 
   commandBuffer.setViewport();
   commandBuffer.setScissor();

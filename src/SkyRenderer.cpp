@@ -34,12 +34,7 @@ void SkyRenderer::tick(
 
   mSunZenithAngleRadians += tick.dt * 0.01f;
 
-  commandBuffer.bindUniforms(
-    mSkyPropertiesUniform,
-    mPrecomputedTransmittanceUniform,
-    mPrecomputedScatteringUniform,
-    mDeltaMieScatteringUniform,
-    mPrecomputedIrradianceUniform);
+  commandBuffer.bindUniforms(mSkyPropertiesUniform, mRenderingUniform);
 
   float cos_z = cos(mViewZenithAngleRadians);
   float sin_z = sin(mViewZenithAngleRadians);
@@ -218,6 +213,14 @@ void SkyRenderer::preparePrecompute(VulkanContext &graphicsContext) {
   prepareDirectIrradiancePrecompute(quadVsh, graphicsContext);
   prepareScatteringDensityPrecompute(quadVsh, quadGsh, graphicsContext);
   prepareMultipleScatteringPrecompute(quadVsh, quadGsh, graphicsContext);
+
+  mRenderingUniform.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorPool(),
+    graphicsContext.descriptorLayouts(),
+    makeArray<VulkanTexture, AllocationType::Linear>(
+      mPrecomputedTransmittance, mPrecomputedScattering,
+      mDeltaMieScatteringTexture, mPrecomputedIrradiance));
 }
 
 void SkyRenderer::prepareTransmittancePrecompute(
@@ -942,22 +945,6 @@ void SkyRenderer::precomputeMultipleScattering(
   }
 
   commandBuffer.endRenderPass();
-
-  /*
-  commandBuffer.transitionImageLayout(
-    mDeltaMultipleScatteringTexture,
-    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-
-  commandBuffer.transitionImageLayout(
-    mPrecomputedScattering,
-    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-  */
 }
 
 void SkyRenderer::make3DTextureAndUniform(
@@ -1024,18 +1011,20 @@ void SkyRenderer::initDemoPipeline(
     VulkanShader(
       graphicsContext.device(), fsh, VulkanShaderType::Fragment));
 
-  VulkanPipelineDescriptorLayout textureUL =
-    {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
-
   pipelineConfig.configurePipelineLayout(
     sizeof(DemoPushConstant),
     VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-    textureUL, textureUL, textureUL, textureUL);
+    VulkanPipelineDescriptorLayout{
+      VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4});
 
   mDemo.init(
     graphicsContext.device(),
     graphicsContext.descriptorLayouts(),
     pipelineConfig);
+}
+
+const VulkanUniform &SkyRenderer::uniform() const {
+  return mRenderingUniform;
 }
 
 }
