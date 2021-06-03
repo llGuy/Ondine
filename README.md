@@ -4,6 +4,10 @@ Experimentation on a new game idea based on [Ravel's Ondine](https://www.youtube
 
 ---
 
+[Ocean](/res/repo/Ocean.jpeg?raw=true "Ocean")
+
+---
+
 *» Écoute ! – Écoute ! – C’est moi, c’est Ondine qui frôle de*
 
 *ces gouttes d’eau les losanges sonores de ta fenêtre illuminée*
