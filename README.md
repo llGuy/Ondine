@@ -4,7 +4,7 @@ Experimentation on a new game idea based on [Ravel's Ondine](https://www.youtube
 
 ---
 
-[Ocean](/res/repo/Ocean.jpeg?raw=true "Ocean")
+![Ocean](/res/repo/Ocean.jpeg?raw=true "Ocean")
 
 ---
 
