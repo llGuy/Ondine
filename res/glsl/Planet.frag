@@ -37,7 +37,6 @@ void main() {
 
     outAlbedo = vec4(uPlanet.planet.groundAlbedo, 1.0);
     outNormal = vec4(normal, 1.0);
-    outAlbedo = outNormal;
 
     // Set fragment depth
     gl_FragDepth = calculateFragDepth(

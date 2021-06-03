@@ -9,6 +9,7 @@
 #include "SkyRenderer.hpp"
 #include "RenderStage.hpp"
 #include "VulkanContext.hpp"
+#include "DeferredLighting.hpp"
 
 namespace Ondine {
 
@@ -43,6 +44,7 @@ private:
   GBuffer mGBuffer;
   SkyRenderer mSkyRenderer;
   PlanetRenderer mPlanetRenderer;
+  DeferredLighting mDeferredLighting;
 
   Resolution mPipelineViewport;
 

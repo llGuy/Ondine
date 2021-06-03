@@ -67,6 +67,8 @@ public:
     const VulkanCommandBuffer &commandBuffer,
     const PlanetProperties &properties);
 
+  const VulkanUniform &uniform() const;
+
 private:
   VulkanPipeline mPipeline;
   VulkanBuffer mPlanetPropertiesBuffer;

@@ -69,7 +69,7 @@ const VulkanFramebuffer &GBuffer::framebuffer() const {
 }
 
 const VulkanUniform &GBuffer::uniform() const {
-  return mAlbedoUniform;
+  return mGBufferUniform;
 }
 
 VkExtent2D GBuffer::extent() const {
@@ -99,6 +99,15 @@ void GBuffer::initTargets(VulkanContext &graphicsContext) {
       graphicsContext.descriptorLayouts(),
       makeArray<VulkanTexture, AllocationType::Linear>(
         mGBufferTextures[Albedo]));
+
+    mGBufferUniform.init(
+      graphicsContext.device(),
+      graphicsContext.descriptorPool(),
+      graphicsContext.descriptorLayouts(),
+      makeArray<VulkanTexture, AllocationType::Linear>(
+        mGBufferTextures[Albedo],
+        mGBufferTextures[Normal],
+        mGBufferTextures[Depth]));
   }
 
   { // Create framebuffer
@@ -115,11 +124,15 @@ void GBuffer::initTargets(VulkanContext &graphicsContext) {
 void GBuffer::destroyTargets(VulkanContext &graphicsContext) {
   mAlbedoUniform.destroy(
     graphicsContext.device(), graphicsContext.descriptorPool());
+
+  mGBufferUniform.destroy(
+    graphicsContext.device(), graphicsContext.descriptorPool());
+
   mGBufferFBO.destroy(graphicsContext.device());
+
   for (int i = 0; i < Count; ++i) {
     mGBufferTextures[i].destroy(graphicsContext.device());
   }
-
 }
 
 }

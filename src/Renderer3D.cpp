@@ -13,6 +13,7 @@ Renderer3D::Renderer3D(VulkanContext &graphicsContext)
 
 void Renderer3D::init() {
   mGBuffer.init(mGraphicsContext);
+  mDeferredLighting.init(mGraphicsContext);
   mSkyRenderer.init(mGraphicsContext, mGBuffer);
 
   // Idle with all precomputation stuff
@@ -111,6 +112,8 @@ void Renderer3D::tick(const Tick &tick, VulkanFrame &frame) {
     mPlanetRenderer.tick(tick, frame, mCamera);
   }
   mGBuffer.endRender(frame);
+
+  mDeferredLighting.render(frame, mGBuffer, mCamera, mPlanetRenderer);
 }
 
 void Renderer3D::resize(Resolution newResolution) {
@@ -191,7 +194,7 @@ void Renderer3D::trackInput(
 }
 
 const RenderStage &Renderer3D::mainRenderStage() const {
-  return mGBuffer;
+  return mDeferredLighting;
 }
 
 void Renderer3D::tickCamera(const Tick &tick, VulkanFrame &frame) {

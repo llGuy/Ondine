@@ -20,7 +20,7 @@ VkDescriptorSetLayout VulkanDescriptorSetLayoutCategory::getDescriptorSetLayout(
     for (int i = 0; i < count; ++i) {
       bindings[i].binding = i;
       bindings[i].descriptorType = mType;
-      bindings[i].descriptorCount = count;
+      bindings[i].descriptorCount = 1;
       bindings[i].stageFlags = VK_SHADER_STAGE_ALL;
     }
 

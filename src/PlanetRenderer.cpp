@@ -77,10 +77,7 @@ void PlanetRenderer::tick(
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.bindPipeline(mPipeline);
-
-  commandBuffer.bindUniforms(
-    camera.uniform(),
-    mPlanetPropertiesUniform);
+  commandBuffer.bindUniforms(camera.uniform(), mPlanetPropertiesUniform);
 
   commandBuffer.setViewport();
   commandBuffer.setScissor();
@@ -93,6 +90,10 @@ void PlanetRenderer::updateData(
   const PlanetProperties &properties) {
   commandBuffer.updateBuffer(
     mPlanetPropertiesBuffer, 0, sizeof(properties), &properties);
+}
+
+const VulkanUniform &PlanetRenderer::uniform() const {
+  return mPlanetPropertiesUniform;
 }
 
 }
