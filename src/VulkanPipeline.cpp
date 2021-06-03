@@ -41,6 +41,14 @@ void VulkanPipelineConfig::enableBlendingSame(
   // Color write mask is already set
 }
 
+void VulkanPipelineConfig::enableDepthTesting() {
+  mDepthStencil.depthTestEnable = VK_TRUE;
+  mDepthStencil.depthWriteEnable = VK_TRUE;
+  mDepthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+  mDepthStencil.minDepthBounds = 0.0f;
+  mDepthStencil.maxDepthBounds = 1.0f;
+}
+
 void VulkanPipelineConfig::setDefaultValues() {
   /* Blend states */
   const auto &renderPass = mTarget.renderPass;

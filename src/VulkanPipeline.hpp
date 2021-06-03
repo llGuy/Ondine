@@ -70,6 +70,8 @@ public:
     uint32_t attachmentIndex,
     VkBlendOp op, VkBlendFactor src, VkBlendFactor dst);
 
+  void enableDepthTesting();
+
   // void enableBlendingSeparate();
 
   template <typename ...T>

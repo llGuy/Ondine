@@ -41,6 +41,8 @@ void PlanetRenderer::init(
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
+    pipelineConfig.enableDepthTesting();
+
     mPipeline.init(
       graphicsContext.device(),
       graphicsContext.descriptorLayouts(),

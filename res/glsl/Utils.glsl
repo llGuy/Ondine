@@ -9,8 +9,9 @@ float calculateFragDepth(
   // Clip space
   vec4 cPosition = viewProjectionMatrix * vec4(wPosition, 1.0);
   float ndcDepth = cPosition.z / cPosition.w;
+  return ndcDepth;
 
-  return (((far - near) * ndcDepth) + near + far) / 2.0;
+  // return (((1.0 - 0.0) * ndcDepth) + 0.0 + 1.0) / 2.0;
 }
 
 #endif

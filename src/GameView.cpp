@@ -77,7 +77,6 @@ FocusedView GameView::trackInput(
   if (tracker.key(KeyboardButton::Escape).didInstant) {
     return FocusedView::Previous;
   }
-
   else {
     return FocusedView::Current;
   }
