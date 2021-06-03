@@ -6,9 +6,11 @@ namespace Ondine {
 
 GameView::GameView(
   const RenderStage &gameRenderStage,
-  DelegateResize &delegateResize3D)
+  DelegateResize &delegateResize3D,
+  DelegateTrackInput &delegateTrackInput)
   : mGameRenderStage(gameRenderStage),
-    mDelegateResize3D(delegateResize3D) {
+    mDelegateResize3D(delegateResize3D),
+    mDelegateTrackInput(delegateTrackInput) {
   
 }
 
@@ -61,11 +63,24 @@ void GameView::processInputEvent(Event *ev) {
 }
 
 void GameView::render(ViewRenderParams &params) {
-
+  /* Doesn't actually render anything */
 }
 
 const VulkanUniform &GameView::getOutput() const {
   return mGameRenderStage.uniform();
+}
+
+FocusedView GameView::trackInput(
+  const Tick &tick, const InputTracker &tracker) {
+  mDelegateTrackInput.trackInput(tick, tracker);
+
+  if (tracker.key(KeyboardButton::Escape).didInstant) {
+    return FocusedView::Previous;
+  }
+
+  else {
+    return FocusedView::Current;
+  }
 }
 
 }

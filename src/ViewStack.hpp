@@ -8,11 +8,16 @@ namespace Ondine {
 
 class ViewStack {
 public:
-  ViewStack(VulkanContext &graphicsContext);
+  ViewStack(
+    VulkanContext &graphicsContext);
 
   void init();
 
   void processEvents(EventQueue &queue, const Tick &tick);
+  void distributeInput(
+    const Tick &tick,
+    const InputTracker &inputTracker);
+
   /* Gets called inside the swapchain render pass */
   void render(
     const VulkanFrame &frame, const Tick &tick);
@@ -29,6 +34,8 @@ private:
   Array<View *> mViews;
   VulkanPipeline mFinalRender;
   VulkanContext &mGraphicsContext;
+  /* Determines until which view to forward input to */
+  int mFocusedView;
 };
 
 }

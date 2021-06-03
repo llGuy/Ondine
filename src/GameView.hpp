@@ -11,11 +11,15 @@ class GameView : public View {
 public:
   GameView(
     const RenderStage &gameRenderStage,
-    DelegateResize &delegateResize3D);
+    DelegateResize &delegateResize3D,
+    DelegateTrackInput &delegateTrackInput);
   ~GameView() override;
 
   void processEvents(ViewProcessEventsParams &) override;
   void render(ViewRenderParams &) override;
+
+  FocusedView trackInput(
+    const Tick &tick, const InputTracker &tracker) override;
 
   const VulkanUniform &getOutput() const override;
 
@@ -27,6 +31,7 @@ private:
   const RenderStage &mGameRenderStage;
   // Allows to call Renderer3D::resize
   DelegateResize &mDelegateResize3D;
+  DelegateTrackInput &mDelegateTrackInput;
 };
 
 }

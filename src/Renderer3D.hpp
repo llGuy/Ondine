@@ -12,16 +12,20 @@
 
 namespace Ondine {
 
-class Renderer3D : public DelegateResize {
+class Renderer3D :
+  public DelegateResize,
+  public DelegateTrackInput {
 public:
   Renderer3D(
-    VulkanContext &graphicsContext,
-    const InputTracker &inputTracker);
+    VulkanContext &graphicsContext);
 
   void init();
   void tick(const Tick &tick, VulkanFrame &frame);
 
   void resize(Resolution newResolution) override;
+  void trackInput(
+    const Tick &tick,
+    const InputTracker &inputTracker) override;
 
   const RenderStage &mainRenderStage() const;
 
@@ -43,7 +47,6 @@ private:
   Resolution mPipelineViewport;
 
   VulkanContext &mGraphicsContext;
-  const InputTracker &mInputTracker;
 };
 
 }

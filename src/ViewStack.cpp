@@ -6,8 +6,10 @@
 
 namespace Ondine {
 
-ViewStack::ViewStack(VulkanContext &graphicsContext)
-  : mGraphicsContext(graphicsContext) {
+ViewStack::ViewStack(
+  VulkanContext &graphicsContext)
+  : mGraphicsContext(graphicsContext),
+    mFocusedView(0) {
   
 }
 
@@ -53,6 +55,32 @@ void ViewStack::processEvents(EventQueue &queue, const Tick &tick) {
   }
 }
 
+void ViewStack::distributeInput(
+  const Tick &tick, const InputTracker &inputTracker) {
+  for (int i = mViews.size - 1; i >= mFocusedView; --i) {
+    View *view = mViews[i];
+    FocusedView res = view->trackInput(tick, inputTracker);
+
+    switch (res) {
+    case FocusedView::Next: {
+      /* No action required */
+      assert(mFocusedView > 0);
+      --mFocusedView;
+    } break;
+
+    case FocusedView::Current: {
+      /* Break out of the loop */
+      mFocusedView = i;
+    } break;
+
+    case FocusedView::Previous: {
+      assert(mFocusedView < mViews.size - 1);
+      ++mFocusedView;
+    } break;
+    }
+  }
+}
+
 void ViewStack::render(
   const VulkanFrame &frame, const Tick &tick) {
   VulkanUniform previousOutput = {};
@@ -70,6 +98,7 @@ void ViewStack::render(
 }
 
 void ViewStack::push(View *view) {
+  mFocusedView = mViews.size;
   mViews[mViews.size++] = view;
 }
 

@@ -25,14 +25,28 @@ struct ViewRenderParams {
   const Tick &tick;
 };
 
+enum class FocusedView {
+  Previous,
+  Current,
+  Next,
+  NoChange
+};
+
 class View {
 public:
   View() = default;
   virtual ~View() {};
 
+  /* Used for processing events like viewport resize, etc... */
   virtual void processEvents(ViewProcessEventsParams &) = 0;
+
   virtual void render(ViewRenderParams &) = 0;
 
+  /* Tracking input will return which view to focus in the next frame */
+  virtual FocusedView trackInput(
+    const Tick &tick, const InputTracker &tracker) = 0;
+
+  /* Each view will yield an output image as a result of rendering */
   virtual const VulkanUniform &getOutput() const = 0;
 };
 

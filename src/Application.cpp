@@ -10,7 +10,7 @@ namespace Ondine {
 
 Application::Application(int argc, char **argv)
   : mWindow(WindowMode::Windowed, "Ondine"),
-    mRenderer3D(mGraphicsContext, mInputTracker),
+    mRenderer3D(mGraphicsContext),
     mViewStack(mGraphicsContext) {
   /* Initialise graphics context, etc... */
   setMaxFramerate(60.0f);
@@ -40,7 +40,7 @@ void Application::run() {
   mViewStack.init();
 
   mViewStack.push(
-    new GameView(mRenderer3D.mainRenderStage(), mRenderer3D));
+    new GameView(mRenderer3D.mainRenderStage(), mRenderer3D, mRenderer3D));
   mViewStack.push(
     new EditorView(surfaceInfo, mGraphicsContext, RECV_EVENT_PROC(recvEvent)));
 
@@ -54,6 +54,7 @@ void Application::run() {
     Tick currentTick = { mDt };
 
     mInputTracker.tick(currentTick);
+
     mWindow.pollInput();
 
     /* 
@@ -75,6 +76,7 @@ void Application::run() {
     });
 
     mViewStack.processEvents(mEventQueue, currentTick);
+    mViewStack.distributeInput(currentTick, mInputTracker);
     mEventQueue.clearEvents();
 
     /* Clears global linear allocator */

@@ -6,11 +6,8 @@
 
 namespace Ondine {
 
-Renderer3D::Renderer3D(
-  VulkanContext &graphicsContext,
-  const InputTracker &inputTracker)
-  : mGraphicsContext(graphicsContext),
-    mInputTracker(inputTracker) {
+Renderer3D::Renderer3D(VulkanContext &graphicsContext)
+  : mGraphicsContext(graphicsContext) {
   
 }
 
@@ -126,32 +123,43 @@ void Renderer3D::resize(Resolution newResolution) {
   mGBuffer.resize(mGraphicsContext, newResolution);
 }
 
-const RenderStage &Renderer3D::mainRenderStage() const {
-  return mGBuffer;
-}
-
-void Renderer3D::tickCamera(const Tick &tick, VulkanFrame &frame) {
+void Renderer3D::trackInput(
+  const Tick &tick,
+  const InputTracker &inputTracker) {
   auto right = glm::cross(
     mCameraProperties.wViewDirection, mCameraProperties.wUp);
 
-  if (mInputTracker.key(KeyboardButton::W).isDown) {
-    mCameraProperties.wPosition +=
-      mCameraProperties.wViewDirection * tick.dt * 10.0f;
-  }
-  if (mInputTracker.key(KeyboardButton::A).isDown) {
-    mCameraProperties.wPosition -=
-      right * tick.dt * 10.0f;
-  }
-  if (mInputTracker.key(KeyboardButton::S).isDown) {
-    mCameraProperties.wPosition -=
-      mCameraProperties.wViewDirection * tick.dt * 10.0f;
-  }
-  if (mInputTracker.key(KeyboardButton::D).isDown) {
-    mCameraProperties.wPosition +=
-      right * tick.dt * 10.0f;
+  float speedMultiplier = 10.0f;
+  if (inputTracker.key(KeyboardButton::R).isDown) {
+    speedMultiplier *= 100.0f;
   }
 
-  const auto &cursor = mInputTracker.cursor();
+  if (inputTracker.key(KeyboardButton::W).isDown) {
+    mCameraProperties.wPosition +=
+      mCameraProperties.wViewDirection * tick.dt * speedMultiplier;
+  }
+  if (inputTracker.key(KeyboardButton::A).isDown) {
+    mCameraProperties.wPosition -=
+      right * tick.dt * speedMultiplier;
+  }
+  if (inputTracker.key(KeyboardButton::S).isDown) {
+    mCameraProperties.wPosition -=
+      mCameraProperties.wViewDirection * tick.dt * speedMultiplier;
+  }
+  if (inputTracker.key(KeyboardButton::D).isDown) {
+    mCameraProperties.wPosition +=
+      right * tick.dt * speedMultiplier;
+  }
+  if (inputTracker.key(KeyboardButton::Space).isDown) {
+    mCameraProperties.wPosition +=
+      mCameraProperties.wUp * tick.dt * speedMultiplier;
+  }
+  if (inputTracker.key(KeyboardButton::LeftShift).isDown) {
+    mCameraProperties.wPosition -=
+      mCameraProperties.wUp * tick.dt * speedMultiplier;
+  }
+
+  const auto &cursor = inputTracker.cursor();
   if (cursor.didCursorMove) {
     static constexpr float SENSITIVITY = 15.0f;
 
@@ -168,8 +176,6 @@ void Renderer3D::tickCamera(const Tick &tick, VulkanFrame &frame) {
     res = glm::normalize(res);
                 
     mCameraProperties.wViewDirection = res;
-
-    LOG_INFOV("Now looking at: %s\n", glm::to_string(res).c_str());
   }
 
   mCameraProperties.view = glm::lookAt(
@@ -182,7 +188,13 @@ void Renderer3D::tickCamera(const Tick &tick, VulkanFrame &frame) {
 
   mCameraProperties.viewProjection =
     mCameraProperties.projection * mCameraProperties.view;
+}
 
+const RenderStage &Renderer3D::mainRenderStage() const {
+  return mGBuffer;
+}
+
+void Renderer3D::tickCamera(const Tick &tick, VulkanFrame &frame) {
   mCamera.updateData(frame.primaryCommandBuffer, mCameraProperties);
 }
 

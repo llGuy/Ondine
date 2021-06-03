@@ -11,9 +11,11 @@ public:
   virtual void resize(Resolution newResolution) = 0;
 };
 
-class DelegateRecvEvent {
+class DelegateTrackInput {
 public:
-  virtual void recvEvent(Event *ev) = 0;
+  virtual void trackInput(
+    const Tick &tick,
+    const InputTracker &inputTracker) = 0;
 };
 
 }

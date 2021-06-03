@@ -18,7 +18,17 @@ EditorView::EditorView(
   OnEventProc onEventProc)
   : mIsDockLayoutInitialised(false),
     mViewportResolution{0, 0},
+    mFocusedWindow(EditorWindow::None),
     mOnEvent(onEventProc) {
+  windowName(EditorWindow::Assets) = "Assets";
+  windowName(EditorWindow::Viewport) = "Viewport";
+  windowName(EditorWindow::Console) = "Console";
+  windowName(EditorWindow::GameState) = "Game State";
+  windowName(EditorWindow::General) = "General";
+  windowName(EditorWindow::None) = "None";
+  mChangedFocusToViewport = false;
+  mChangedFocusToEditor = false;
+
   { // Create render pass
     VulkanRenderPassConfig config(1, 1);
     config.addAttachment(
@@ -102,11 +112,11 @@ void EditorView::render(ViewRenderParams &params) {
       ImGuiID game = ImGui::DockBuilderSplitNode(
         general, ImGuiDir_Down, 0.5f, NULL, &general);
 
-      ImGui::DockBuilderDockWindow("Assets", assets);
-      ImGui::DockBuilderDockWindow("Viewport", viewport);
-      ImGui::DockBuilderDockWindow("Console", console);
-      ImGui::DockBuilderDockWindow("Game State", game);
-      ImGui::DockBuilderDockWindow("General", general);
+      ImGui::DockBuilderDockWindow(windowName(EditorWindow::Assets), assets);
+      ImGui::DockBuilderDockWindow(windowName(EditorWindow::Viewport), viewport);
+      ImGui::DockBuilderDockWindow(windowName(EditorWindow::Console), console);
+      ImGui::DockBuilderDockWindow(windowName(EditorWindow::GameState), game);
+      ImGui::DockBuilderDockWindow(windowName(EditorWindow::General), general);
     }
 
     tickMenuBar();
@@ -118,9 +128,15 @@ void EditorView::render(ViewRenderParams &params) {
     ImGui::End();
   }
 
+  EditorWindow prevFocusedWindow = mFocusedWindow;
+
   if (ImGui::Begin(
-    "Assets", nullptr,
+    windowName(EditorWindow::Assets), nullptr,
     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+
+    if (ImGui::IsWindowFocused()) {
+      mFocusedWindow = EditorWindow::Assets;
+    }
     
     ImGui::End();
   }
@@ -129,7 +145,7 @@ void EditorView::render(ViewRenderParams &params) {
   ImVec2 viewportPos = {};
   ImVec2 viewportSize = {};
   if ((renderViewport = ImGui::Begin(
-    "Viewport", nullptr,
+    windowName(EditorWindow::Viewport), nullptr,
     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration))) {
     viewportPos = ImGui::GetWindowPos();
     viewportSize = ImGui::GetWindowSize();
@@ -151,26 +167,45 @@ void EditorView::render(ViewRenderParams &params) {
       mOnEvent(resizeEvent);
       // renderViewport = false;
     }
+
+    if (ImGui::IsWindowFocused()) {
+      mFocusedWindow = EditorWindow::Viewport;
+    }
   
     ImGui::End();
   }
 
   if (ImGui::Begin(
-    "Console", nullptr,
+    windowName(EditorWindow::Console), nullptr,
     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+
+    if (ImGui::IsWindowFocused()) {
+      mFocusedWindow = EditorWindow::Console;
+    }
+
     ImGui::End();
   }
 
   if (ImGui::Begin(
-    "Game State", nullptr,
+    windowName(EditorWindow::GameState), nullptr,
     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+
+    if (ImGui::IsWindowFocused()) {
+      mFocusedWindow = EditorWindow::GameState;
+    }
+
     ImGui::End();
   }
 
   if (ImGui::Begin(
-        "General", nullptr,
-        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+    windowName(EditorWindow::General), nullptr,
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
     ImGui::Text("Framerate: %.1f", ImGui::GetIO().Framerate);
+
+    if (ImGui::IsWindowFocused()) {
+      mFocusedWindow = EditorWindow::General;
+    }
+
     ImGui::End();
   }
 
@@ -191,6 +226,15 @@ void EditorView::render(ViewRenderParams &params) {
   }
 
   commandBuffer.endRenderPass();
+
+  if (mFocusedWindow != prevFocusedWindow) {
+    if (mFocusedWindow == EditorWindow::Viewport) {
+      mChangedFocusToViewport = true;
+    }
+    else {
+      mChangedFocusToEditor = true;
+    }
+  }
 }
 
 const VulkanUniform &EditorView::getOutput() const {
@@ -377,6 +421,25 @@ void EditorView::processInputEvent(Event *ev, ViewProcessEventsParams &params) {
 
   default:;
   }
+}
+
+FocusedView EditorView::trackInput(
+  const Tick &tick, const InputTracker &tracker) {
+  if (mChangedFocusToViewport) {
+    mChangedFocusToViewport = false;
+    return FocusedView::Next;
+  }
+  else if (mChangedFocusToEditor) {
+    mChangedFocusToEditor = false;
+    return FocusedView::Current;
+  }
+  else {
+    return FocusedView::NoChange;
+  }
+}
+
+const char *&EditorView::windowName(EditorWindow window) {
+  return mWindowNames[(int)window];
 }
 
 }
