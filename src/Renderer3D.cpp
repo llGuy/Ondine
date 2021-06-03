@@ -2,6 +2,7 @@
 #include "Renderer3D.hpp"
 #include "VulkanRenderPass.hpp"
 #include <glm/gtx/transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 namespace Ondine {
 
@@ -59,6 +60,7 @@ void Renderer3D::init() {
       glm::vec3(0.000650f, 0.001881f, 0.000085f);
     mPlanetProperties.groundAlbedo = glm::vec3(0.100000f, 0.100000f, 0.100000f);
     mPlanetProperties.muSunMin = -0.207912f;
+    mPlanetProperties.wPlanetCenter = glm::vec3(0.0f, -6360.0f, 0.0f);
 
     mPlanetRenderer.init(mGraphicsContext, mGBuffer, &mPlanetProperties);
   }
@@ -76,8 +78,9 @@ void Renderer3D::init() {
       mCameraProperties.near,
       mCameraProperties.far);
 
-    mCameraProperties.wPosition = glm::vec3(0.0f, 1.0f, 0.0f);
-    mCameraProperties.wViewDirection = glm::vec3(0.0f, 0.0f, -1.0f);
+    mCameraProperties.wPosition = glm::vec3(0.0f, 10.0f, 0.0f);
+    mCameraProperties.wViewDirection =
+      glm::normalize(glm::vec3(0.0f, 0.0f, -1.0f));
     mCameraProperties.wUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
     mCameraProperties.view = glm::lookAt(
@@ -107,7 +110,8 @@ void Renderer3D::tick(const Tick &tick, VulkanFrame &frame) {
   mGBuffer.beginRender(frame);
   {
     // Renders the demo
-    mSkyRenderer.tick(tick, frame, mCameraProperties);
+    // mSkyRenderer.tick(tick, frame, mCameraProperties);
+    mPlanetRenderer.tick(tick, frame, mCamera);
   }
   mGBuffer.endRender(frame);
 }
@@ -164,7 +168,20 @@ void Renderer3D::tickCamera(const Tick &tick, VulkanFrame &frame) {
     res = glm::normalize(res);
                 
     mCameraProperties.wViewDirection = res;
+
+    LOG_INFOV("Now looking at: %s\n", glm::to_string(res).c_str());
   }
+
+  mCameraProperties.view = glm::lookAt(
+    mCameraProperties.wPosition,
+    mCameraProperties.wPosition + mCameraProperties.wViewDirection,
+    mCameraProperties.wUp);
+
+  mCameraProperties.inverseView = glm::inverse(
+    mCameraProperties.view);
+
+  mCameraProperties.viewProjection =
+    mCameraProperties.projection * mCameraProperties.view;
 
   mCamera.updateData(frame.primaryCommandBuffer, mCameraProperties);
 }
