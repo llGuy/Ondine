@@ -73,4 +73,10 @@ struct EventClose : Event {
   EVENT_DEF(EventClose, Input, Close);
 };
 
+struct EventCursorDisplayChange : Event {
+  EVENT_DEF(EventCursorDisplayChange, Input, CursorDisplayChange);
+
+  bool show;
+};
+
 }

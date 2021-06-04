@@ -169,4 +169,11 @@ void DeferredLighting::destroyTargets(VulkanContext &graphicsContext) {
   mLightingTexture.destroy(graphicsContext.device());
 }
 
+void DeferredLighting::updateData(
+  const VulkanCommandBuffer &commandBuffer,
+  const LightingProperties &properties) {
+  commandBuffer.updateBuffer(
+    mLightingPropertiesBuffer, 0, sizeof(properties), &properties);
+}
+
 }

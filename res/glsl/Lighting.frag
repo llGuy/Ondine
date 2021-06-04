@@ -34,23 +34,52 @@ layout (set = 4, binding = 3) uniform sampler2D uIrradianceTexture;
 
 void main() {
   /* Get all the inputs */
-  vec3 wNormal = texture(uNormal, inUVs).xyz;
+  vec4 wNormal = texture(uNormal, inUVs);
   float depth = texture(uDepth, inUVs).r;
-  vec3 wPosition = texture(uPosition, inUVs).xyz;
-  vec3 albedo = texture(uAlbedo, inUVs).rgb;
+  vec4 wPosition = texture(uPosition, inUVs);
+  vec4 albedo = texture(uAlbedo, inUVs).rgba;
   vec3 viewRay = normalize(inViewRay);
 
+  /* Light contribution from the surface */
+  float pointAlpha = 0.0;
+  vec3 pointRadiance = vec3(0.0);
+  if (wPosition.a == 1.0) {
+    vec3 skyIrradiance;
+
+    /* Radiance that the surface will reflect */
+    vec3 sunIrradiance = getSunAndSkyIrradiance(
+      uSky.sky, uTransmittanceTexture, uIrradianceTexture,
+      wPosition.xyz - uSky.sky.wPlanetCenter,
+      wNormal.xyz, uLighting.lighting.sunDirection, skyIrradiance);
+
+    /* How much is scattered towards us */
+    vec3 transmittance;
+    vec3 inScatter = getSkyRadianceToPoint(
+      uSky.sky, uTransmittanceTexture,
+      uScatteringTexture, uSingleMieScatteringTexture,
+      uCamera.camera.wPosition - uSky.sky.wPlanetCenter,
+      wPosition.xyz - uSky.sky.wPlanetCenter, 0.0,
+      uLighting.lighting.sunDirection,
+      transmittance);
+
+    pointRadiance = pointRadiance * transmittance + inScatter;
+    pointAlpha = 1.0;
+  }
+
+  /* Light contribution from sky */
   vec3 transmittance;
   vec3 radiance = getSkyRadiance(
     uSky.sky, uTransmittanceTexture,
     uScatteringTexture, uSingleMieScatteringTexture,
-    uCamera.camera.wPosition - uSky.sky.wPlanetCenter, viewRay, 0.0,
-    uLighting.lighting.sunDirection, transmittance);
+    (uCamera.camera.wPosition.xyz - uSky.sky.wPlanetCenter),
+    viewRay, 0.0, uLighting.lighting.sunDirection, transmittance);
 
   if (dot(viewRay, uLighting.lighting.sunDirection) >
       uLighting.lighting.sunSize.y) {
     radiance = radiance + transmittance * getSolarRadiance(uSky.sky);
   }
+
+  radiance = mix(radiance, pointRadiance, pointAlpha);
 
   outColor.rgb = pow(
     vec3(1.0) -

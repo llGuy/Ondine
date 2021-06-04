@@ -30,7 +30,7 @@ public:
     const Camera &camera, const PlanetRenderer &planet,
     const SkyRenderer &sky);
 
-  void updateLightingProperties(
+  void updateData(
     const VulkanCommandBuffer &commandBuffer,
     const LightingProperties &properties);
 

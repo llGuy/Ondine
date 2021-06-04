@@ -12,7 +12,8 @@ public:
   GameView(
     const RenderStage &gameRenderStage,
     DelegateResize &delegateResize3D,
-    DelegateTrackInput &delegateTrackInput);
+    DelegateTrackInput &delegateTrackInput,
+    OnEventProc proc);
   ~GameView() override;
 
   void processEvents(ViewProcessEventsParams &) override;
@@ -32,6 +33,7 @@ private:
   // Allows to call Renderer3D::resize
   DelegateResize &mDelegateResize3D;
   DelegateTrackInput &mDelegateTrackInput;
+  OnEventProc mOnEvent;
 };
 
 }

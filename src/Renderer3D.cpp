@@ -67,7 +67,7 @@ void Renderer3D::init() {
     mCameraProperties.aspectRatio =
       (float)mPipelineViewport.width / (float)mPipelineViewport.height;
     mCameraProperties.near = 1.0f;
-    mCameraProperties.far = 10000.0f;
+    mCameraProperties.far = 10000000.0f;
 
     mCameraProperties.projection = glm::perspective(
       mCameraProperties.fov,
@@ -99,10 +99,10 @@ void Renderer3D::init() {
 
   { // Set lighting properties
     mLightingProperties.sunDirection =
-      glm::normalize(glm::vec3(1.0f, 0.02f, -1.0f));
+      glm::normalize(glm::vec3(0.000001f, 0.2f, -1.00001f));
     mLightingProperties.sunSize = glm::vec3(
       0.0046750340586467079f, 0.99998907220740285f, 0.0f);
-    mLightingProperties.exposure = 10.0f;
+    mLightingProperties.exposure = 12.5f;
     mLightingProperties.white = glm::vec3(1.0f);
   }
 
@@ -113,12 +113,12 @@ void Renderer3D::tick(const Tick &tick, VulkanFrame &frame) {
   mCameraProperties.aspectRatio =
     (float)mPipelineViewport.width / (float)mPipelineViewport.height;
 
-  tickCamera(tick, frame);
+  mCamera.updateData(frame.primaryCommandBuffer, mCameraProperties);
+  mDeferredLighting.updateData(frame.primaryCommandBuffer, mLightingProperties);
      
   mGBuffer.beginRender(frame);
   { // Render 3D scene
     mPlanetRenderer.tick(tick, frame, mCamera);
-    // mSkyRenderer.tick(tick, frame, mCameraProperties);
   }
   mGBuffer.endRender(frame);
 
@@ -187,8 +187,17 @@ void Renderer3D::trackInput(
     res = glm::mat3(glm::rotate(yAngle, rotateY)) * res;
 
     res = glm::normalize(res);
-                
+
     mCameraProperties.wViewDirection = res;
+  }
+
+  if (cursor.didScroll) {
+    glm::mat3 rotation = glm::mat3(
+      glm::rotate(
+        glm::radians(10.0f * cursor.scroll.y) * tick.dt,
+        glm::vec3(1.0f, 0.0f, 0.0f)));
+    mLightingProperties.sunDirection = rotation *
+      mLightingProperties.sunDirection;
   }
 
   mCameraProperties.view = glm::lookAt(
@@ -205,10 +214,6 @@ void Renderer3D::trackInput(
 
 const RenderStage &Renderer3D::mainRenderStage() const {
   return mDeferredLighting;
-}
-
-void Renderer3D::tickCamera(const Tick &tick, VulkanFrame &frame) {
-  mCamera.updateData(frame.primaryCommandBuffer, mCameraProperties);
 }
 
 }

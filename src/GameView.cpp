@@ -7,10 +7,12 @@ namespace Ondine {
 GameView::GameView(
   const RenderStage &gameRenderStage,
   DelegateResize &delegateResize3D,
-  DelegateTrackInput &delegateTrackInput)
+  DelegateTrackInput &delegateTrackInput,
+  OnEventProc proc)
   : mGameRenderStage(gameRenderStage),
     mDelegateResize3D(delegateResize3D),
-    mDelegateTrackInput(delegateTrackInput) {
+    mDelegateTrackInput(delegateTrackInput),
+    mOnEvent(proc) {
   
 }
 
@@ -75,6 +77,10 @@ FocusedView GameView::trackInput(
   mDelegateTrackInput.trackInput(tick, tracker);
 
   if (tracker.key(KeyboardButton::Escape).didInstant) {
+    auto *cursorChange = lnEmplaceAlloc<EventCursorDisplayChange>();
+    cursorChange->show = true;
+    mOnEvent(cursorChange);
+
     return FocusedView::Previous;
   }
   else {

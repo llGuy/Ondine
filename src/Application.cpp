@@ -33,16 +33,20 @@ void Application::run() {
   mGraphicsContext.initInstance();
 
   Window::initWindowAPI();
-  auto surfaceInfo = mWindow.init(RECV_EVENT_PROC(recvEvent));
+  auto evProc = RECV_EVENT_PROC(recvEvent);
+  auto surfaceInfo = mWindow.init(evProc);
 
   mGraphicsContext.initContext(surfaceInfo);
   mRenderer3D.init();
   mViewStack.init();
 
   mViewStack.push(
-    new GameView(mRenderer3D.mainRenderStage(), mRenderer3D, mRenderer3D));
+    new GameView(
+      mRenderer3D.mainRenderStage(), mRenderer3D, mRenderer3D, evProc));
+
   mViewStack.push(
-    new EditorView(surfaceInfo, mGraphicsContext, RECV_EVENT_PROC(recvEvent)));
+    new EditorView(
+      surfaceInfo, mGraphicsContext, evProc));
 
   /* User-defined function which will be overriden */
   start();
@@ -75,9 +79,10 @@ void Application::run() {
       }
     });
 
+    mEventQueue.clearEvents();
+
     mViewStack.processEvents(mEventQueue, currentTick);
     mViewStack.distributeInput(currentTick, mInputTracker);
-    mEventQueue.clearEvents();
 
     /* Clears global linear allocator */
     lnClear();
@@ -154,6 +159,13 @@ void Application::processInputEvent(Event *ev) {
   case EventType::Mouse: {
     auto *event = (EventMouse *)ev;
     mInputTracker.handleMouseEvent(event);
+
+    event->isHandled = true;
+  } break;
+
+  case EventType::CursorDisplayChange: {
+    auto *event = (EventCursorDisplayChange *)ev;
+    mWindow.changeCursorDisplay(event->show);
 
     event->isHandled = true;
   } break;

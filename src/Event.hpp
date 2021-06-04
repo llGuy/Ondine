@@ -18,6 +18,7 @@ enum class EventType {
   Resize,
   Close,
   ViewportResize,
+  CursorDisplayChange,
   Invalid
 };
 

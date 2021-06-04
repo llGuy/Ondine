@@ -1,4 +1,5 @@
 #include "IO.hpp"
+#include "Log.hpp"
 #include "IOEvent.hpp"
 
 namespace Ondine {
@@ -32,6 +33,7 @@ void InputTracker::tick(const Tick &tick) {
   mPressedKeyCount = 0;
   mReleasedKeyCount = 0;
   mCursor.didCursorMove = false;
+  mCursor.didScroll = false;
 }
 
 void InputTracker::handleKeyboardEvent(EventKeyboard *ev) {
@@ -87,7 +89,8 @@ void InputTracker::handleMouseEvent(EventMouse *ev) {
   } break;
 
   case MouseEventType::Scroll: {
-    
+    mCursor.didScroll = true;
+    mCursor.scroll = glm::vec2(ev->scroll.x, ev->scroll.y);
   } break;
   }
 }

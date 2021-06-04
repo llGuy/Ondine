@@ -30,6 +30,7 @@ struct DensityProfile {
   alignas(16) DensityLayer layers[2];
 };
 
+// Length variables are in km
 struct PlanetProperties {
   alignas(16) glm::vec3 solarIrradiance;
   alignas(4) float solarAngularRadius;

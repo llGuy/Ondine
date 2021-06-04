@@ -427,10 +427,20 @@ FocusedView EditorView::trackInput(
   const Tick &tick, const InputTracker &tracker) {
   if (mChangedFocusToViewport) {
     mChangedFocusToViewport = false;
+
+    auto *cursorChange = lnEmplaceAlloc<EventCursorDisplayChange>();
+    cursorChange->show = false;
+    mOnEvent(cursorChange);
+
     return FocusedView::Next;
   }
   else if (mChangedFocusToEditor) {
     mChangedFocusToEditor = false;
+
+    auto *cursorChange = lnEmplaceAlloc<EventCursorDisplayChange>();
+    cursorChange->show = true;
+    mOnEvent(cursorChange);
+
     return FocusedView::Current;
   }
   else {

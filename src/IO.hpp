@@ -40,9 +40,11 @@ struct ButtonState {
 };
 
 struct Cursor {
-  bool didCursorMove;
+  uint8_t didCursorMove : 4;
+  uint8_t didScroll : 4;
   glm::ivec2 cursorPos;
   glm::ivec2 previousPos;
+  glm::vec2 scroll;
 };
 
 struct EventMouse;

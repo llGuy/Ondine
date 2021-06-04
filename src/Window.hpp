@@ -37,6 +37,8 @@ public:
   void pollInput();
   void toggleFullscreen();
 
+  void changeCursorDisplay(bool show);
+
   static void initWindowAPI();
 
 private:
