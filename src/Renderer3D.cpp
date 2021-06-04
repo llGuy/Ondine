@@ -99,7 +99,7 @@ void Renderer3D::init() {
 
   { // Set lighting properties
     mLightingProperties.sunDirection =
-      glm::normalize(glm::vec3(1.0f, 1.0f, -1.0f));
+      glm::normalize(glm::vec3(1.0f, 0.02f, -1.0f));
     mLightingProperties.sunSize = glm::vec3(
       0.0046750340586467079f, 0.99998907220740285f, 0.0f);
     mLightingProperties.exposure = 10.0f;

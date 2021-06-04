@@ -10,6 +10,7 @@ public:
   enum {
     Albedo,
     Normal,
+    Position,
     Depth,
     Count
   };

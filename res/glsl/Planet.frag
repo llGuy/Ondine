@@ -8,6 +8,7 @@ layout (location = 0) in vec3 inViewRay;
 
 layout (location = 0) out vec4 outAlbedo;
 layout (location = 1) out vec4 outNormal;
+layout (location = 2) out vec4 outPosition;
 
 layout (set = 0, binding = 0) uniform CameraUniform {
   CameraProperties camera;
@@ -37,6 +38,7 @@ void main() {
 
     outAlbedo = vec4(uPlanet.planet.groundAlbedo, 1.0);
     outNormal = vec4(normal, 1.0);
+    outPosition = vec4(point, 1.0);
 
     // Set fragment depth
     gl_FragDepth = calculateFragDepth(

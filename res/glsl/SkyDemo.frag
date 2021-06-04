@@ -126,6 +126,7 @@ layout(location = 0) in vec3 view_ray;
 
 layout(location = 0) out vec4 color;
 layout(location = 1) out vec4 outNormal;
+layout(location = 2) out vec4 outPosition;
 
 /*
   <p>It uses the following constants, as well as the following atmosphere
@@ -469,6 +470,5 @@ void main() {
   color.a = 1.0;
 
   outNormal = vec4(0);
-
-  color.rgb = view_direction;
+  outPosition = vec4(0);
 }

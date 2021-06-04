@@ -12,10 +12,11 @@ void GBuffer::init(VulkanContext &graphicsContext) {
 
   mGBufferFormats[0] = VK_FORMAT_R8G8B8A8_UNORM;
   mGBufferFormats[1] = VK_FORMAT_R16G16B16A16_SFLOAT;
-  mGBufferFormats[2] = ctxProperties.depthFormat;
+  mGBufferFormats[2] = VK_FORMAT_R32G32B32A32_SFLOAT;
+  mGBufferFormats[3] = ctxProperties.depthFormat;
 
   { // Create render pass
-    VulkanRenderPassConfig renderPassConfig(3, 1);
+    VulkanRenderPassConfig renderPassConfig(4, 1);
 
     renderPassConfig.addAttachment(
       LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::ClearThenStore,
@@ -29,11 +30,16 @@ void GBuffer::init(VulkanContext &graphicsContext) {
 
     renderPassConfig.addAttachment(
       LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::ClearThenStore,
+      OutputUsage::FragmentShaderRead, AttachmentType::Color,
+      mGBufferFormats[Position]);
+
+    renderPassConfig.addAttachment(
+      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::ClearThenStore,
       OutputUsage::FragmentShaderRead, AttachmentType::Depth,
       mGBufferFormats[Depth]);
 
     renderPassConfig.addSubpass(
-      makeArray<uint32_t, AllocationType::Linear>(0U, 1U),
+      makeArray<uint32_t, AllocationType::Linear>(0U, 1U, 2U),
       makeArray<uint32_t, AllocationType::Linear>(),
       true);
 
@@ -88,6 +94,11 @@ void GBuffer::initTargets(VulkanContext &graphicsContext) {
       TextureContents::Color, mGBufferFormats[Normal], VK_FILTER_LINEAR,
       {mGBufferExtent.width, mGBufferExtent.height, 1}, 1, 1);
 
+    mGBufferTextures[Position].init(
+      graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
+      TextureContents::Color, mGBufferFormats[Position], VK_FILTER_LINEAR,
+      {mGBufferExtent.width, mGBufferExtent.height, 1}, 1, 1);
+
     mGBufferTextures[Depth].init(
       graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
       TextureContents::Depth, mGBufferFormats[Depth], VK_FILTER_LINEAR,
@@ -107,14 +118,16 @@ void GBuffer::initTargets(VulkanContext &graphicsContext) {
       makeArray<VulkanTexture, AllocationType::Linear>(
         mGBufferTextures[Albedo],
         mGBufferTextures[Normal],
+        mGBufferTextures[Position],
         mGBufferTextures[Depth]));
   }
 
   { // Create framebuffer
-    VulkanFramebufferConfig fboConfig(1, mGBufferRenderPass);
+    VulkanFramebufferConfig fboConfig(4, mGBufferRenderPass);
 
     fboConfig.addAttachment(mGBufferTextures[Albedo]);
     fboConfig.addAttachment(mGBufferTextures[Normal]);
+    fboConfig.addAttachment(mGBufferTextures[Position]);
     fboConfig.addAttachment(mGBufferTextures[Depth]);
 
     mGBufferFBO.init(graphicsContext.device(), fboConfig);

@@ -47,7 +47,7 @@ void DeferredLighting::init(
     pipelineConfig.configurePipelineLayout(
       0,
       VulkanPipelineDescriptorLayout{
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3},
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
