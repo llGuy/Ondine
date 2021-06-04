@@ -6,6 +6,14 @@
 
 namespace Ondine {
 
+struct LightingProperties {
+  // Vector going out towards the sun
+  alignas(16) glm::vec3 sunDirection;
+  alignas(16) glm::vec3 sunSize;
+  alignas(16) glm::vec3 white;
+  alignas(4) float exposure;
+};
+
 class GBuffer;
 class Camera;
 class SkyRenderer;
@@ -13,12 +21,18 @@ class PlanetRenderer;
 
 class DeferredLighting : public RenderStage {
 public:
-  void init(VulkanContext &graphicsContext);
+  void init(
+    VulkanContext &graphicsContext,
+    const LightingProperties *properties = nullptr);
 
   void render(
     VulkanFrame &frame, const GBuffer &gbuffer,
     const Camera &camera, const PlanetRenderer &planet,
     const SkyRenderer &sky);
+
+  void updateLightingProperties(
+    const VulkanCommandBuffer &commandBuffer,
+    const LightingProperties &properties);
 
   void resize(VulkanContext &vulkanContext, Resolution newResolution);
 
@@ -32,7 +46,10 @@ private:
   void destroyTargets(VulkanContext &graphicsContext);
 
 private:
-  VulkanUniform mLightingUniform;
+  VulkanUniform mLightingOutputUniform;
+  VulkanUniform mLightingPropertiesUniform;
+
+  VulkanBuffer mLightingPropertiesBuffer;
 
   VulkanPipeline mLightingPipeline;
   VulkanRenderPass mLightingRenderPass;

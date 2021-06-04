@@ -37,9 +37,10 @@ private:
 private:
   Camera mCamera;
 
-  /* Temporary */
+  /* Temporary while we don't have a proper scene system */
   CameraProperties mCameraProperties;
   PlanetProperties mPlanetProperties;
+  LightingProperties mLightingProperties;
 
   GBuffer mGBuffer;
   SkyRenderer mSkyRenderer;

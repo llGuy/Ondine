@@ -336,6 +336,8 @@ void main() {
   float shadow_out;
   GetSphereShadowInOut(view_direction, sun_direction, shadow_in, shadow_out);
 
+  shadow_in = shadow_out = 0.0;
+
   // Hack to fade out light shafts when the Sun is very close to the horizon.
   float lightshaft_fadein_hack = smoothstep(
     0.02, 0.04, dot(normalize(camera - earth_center), sun_direction));
@@ -359,6 +361,8 @@ void main() {
   // Compute the radiance reflected by the sphere, if the ray intersects it.
   float sphere_alpha = 0.0;
   vec3 sphere_radiance = vec3(0.0);
+
+  #if 0
   if (distance_to_intersection > 0.0) {
     // Compute the distance between the view ray and the sphere, and the
     // corresponding (tangent of the) subtended angle. Finally, use this to
@@ -396,6 +400,7 @@ void main() {
                                             point - earth_center, shadow_length, sun_direction, transmittance);
     sphere_radiance = sphere_radiance * transmittance + in_scatter;
   }
+  #endif
 
   /*
     <p>In the following we repeat the same steps as above, but for the planet sphere
@@ -464,4 +469,6 @@ void main() {
   color.a = 1.0;
 
   outNormal = vec4(0);
+
+  color.rgb = view_direction;
 }

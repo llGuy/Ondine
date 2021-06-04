@@ -4,7 +4,9 @@
 
 namespace Ondine {
 
-void DeferredLighting::init(VulkanContext &graphicsContext) {
+void DeferredLighting::init(
+  VulkanContext &graphicsContext,
+  const LightingProperties *properties) {
   { // Create render pass
     VulkanRenderPassConfig renderPassConfig(1, 1);
 
@@ -24,7 +26,7 @@ void DeferredLighting::init(VulkanContext &graphicsContext) {
   { // Create pipeline
     File lightingVert = gFileSystem->createFile(
       (MountPoint)ApplicationMountPoints::Application,
-      "res/spv/TexturedQuad.vert.spv",
+      "res/spv/Lighting.vert.spv",
       FileOpenType::Binary | FileOpenType::In);
 
     File lightingFrag = gFileSystem->createFile(
@@ -48,6 +50,7 @@ void DeferredLighting::init(VulkanContext &graphicsContext) {
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3},
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       VulkanPipelineDescriptorLayout{
         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4});
 
@@ -67,6 +70,26 @@ void DeferredLighting::init(VulkanContext &graphicsContext) {
 
     initTargets(graphicsContext);
   }
+
+  { // Create lighting properties uniform buffer
+    mLightingPropertiesBuffer.init(
+      graphicsContext.device(),
+      sizeof(LightingProperties),
+      (int)VulkanBufferFlag::UniformBuffer);
+
+    mLightingPropertiesUniform.init(
+      graphicsContext.device(),
+      graphicsContext.descriptorPool(),
+      graphicsContext.descriptorLayouts(),
+      makeArray<VulkanBuffer, AllocationType::Linear>(mLightingPropertiesBuffer));
+
+    if (properties) {
+      mLightingPropertiesBuffer.fillWithStaging(
+        graphicsContext.device(),
+        graphicsContext.commandPool(),
+        {(uint8_t *)properties, sizeof(LightingProperties)});
+    }
+  }
 }
 
 void DeferredLighting::render(
@@ -84,7 +107,11 @@ void DeferredLighting::render(
 
   commandBuffer.bindPipeline(mLightingPipeline);
   commandBuffer.bindUniforms(
-    gbuffer.uniform(), camera.uniform(), planet.uniform(), sky.uniform());
+    gbuffer.uniform(),
+    camera.uniform(),
+    planet.uniform(),
+    mLightingPropertiesUniform,
+    sky.uniform());
 
   commandBuffer.setViewport();
   commandBuffer.setScissor();
@@ -111,7 +138,7 @@ const VulkanFramebuffer &DeferredLighting::framebuffer() const {
 }
 
 const VulkanUniform &DeferredLighting::uniform() const {
-  return mLightingUniform;
+  return mLightingOutputUniform;
 }
 
 VkExtent2D DeferredLighting::extent() const {
@@ -124,7 +151,7 @@ void DeferredLighting::initTargets(VulkanContext &graphicsContext) {
     TextureContents::Color, VK_FORMAT_R8G8B8A8_UNORM, VK_FILTER_LINEAR,
     {mLightingExtent.width, mLightingExtent.height, 1}, 1, 1);
 
-  mLightingUniform.init(
+  mLightingOutputUniform.init(
     graphicsContext.device(),
     graphicsContext.descriptorPool(),
     graphicsContext.descriptorLayouts(),
@@ -136,7 +163,7 @@ void DeferredLighting::initTargets(VulkanContext &graphicsContext) {
 }
 
 void DeferredLighting::destroyTargets(VulkanContext &graphicsContext) {
-  mLightingUniform.destroy(
+  mLightingOutputUniform.destroy(
     graphicsContext.device(), graphicsContext.descriptorPool());
   mLightingFBO.destroy(graphicsContext.device());
   mLightingTexture.destroy(graphicsContext.device());

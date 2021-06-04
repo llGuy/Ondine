@@ -13,7 +13,6 @@ Renderer3D::Renderer3D(VulkanContext &graphicsContext)
 
 void Renderer3D::init() {
   mGBuffer.init(mGraphicsContext);
-  mDeferredLighting.init(mGraphicsContext);
   mSkyRenderer.init(mGraphicsContext, mGBuffer);
 
   // Idle with all precomputation stuff
@@ -94,9 +93,20 @@ void Renderer3D::init() {
 
     mCameraProperties.viewProjection =
       mCameraProperties.projection * mCameraProperties.view;
-
-    mCamera.init(mGraphicsContext, &mCameraProperties);
   }
+
+  mCamera.init(mGraphicsContext, &mCameraProperties);
+
+  { // Set lighting properties
+    mLightingProperties.sunDirection =
+      glm::normalize(glm::vec3(1.0f, 1.0f, -1.0f));
+    mLightingProperties.sunSize = glm::vec3(
+      0.0046750340586467079f, 0.99998907220740285f, 0.0f);
+    mLightingProperties.exposure = 10.0f;
+    mLightingProperties.white = glm::vec3(1.0f);
+  }
+
+  mDeferredLighting.init(mGraphicsContext, &mLightingProperties);
 }
 
 void Renderer3D::tick(const Tick &tick, VulkanFrame &frame) {
@@ -108,6 +118,7 @@ void Renderer3D::tick(const Tick &tick, VulkanFrame &frame) {
   mGBuffer.beginRender(frame);
   { // Render 3D scene
     mPlanetRenderer.tick(tick, frame, mCamera);
+    // mSkyRenderer.tick(tick, frame, mCameraProperties);
   }
   mGBuffer.endRender(frame);
 

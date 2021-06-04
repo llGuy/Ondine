@@ -60,13 +60,13 @@ void PlanetRenderer::init(
       graphicsContext.descriptorPool(),
       graphicsContext.descriptorLayouts(),
       makeArray<VulkanBuffer, AllocationType::Linear>(mPlanetPropertiesBuffer));
-  }
 
-  if (properties) {
-    mPlanetPropertiesBuffer.fillWithStaging(
-      graphicsContext.device(),
-      graphicsContext.commandPool(),
-      {(uint8_t *)properties, sizeof(PlanetProperties)});
+    if (properties) {
+      mPlanetPropertiesBuffer.fillWithStaging(
+        graphicsContext.device(),
+        graphicsContext.commandPool(),
+        {(uint8_t *)properties, sizeof(PlanetProperties)});
+    }
   }
 }
 
