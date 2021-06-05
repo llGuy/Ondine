@@ -101,7 +101,7 @@ void GBuffer::initTargets(VulkanContext &graphicsContext) {
 
     mGBufferTextures[Depth].init(
       graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
-      TextureContents::Depth, mGBufferFormats[Depth], VK_FILTER_LINEAR,
+      TextureContents::Depth, mGBufferFormats[Depth], VK_FILTER_NEAREST,
       {mGBufferExtent.width, mGBufferExtent.height, 1}, 1, 1);
 
     mAlbedoUniform.init(

@@ -195,7 +195,7 @@ void Renderer3D::trackInput(
   if (cursor.didScroll) {
     glm::mat3 rotation = glm::mat3(
       glm::rotate(
-        glm::radians(10.0f * cursor.scroll.y) * tick.dt,
+        glm::radians(30.0f * cursor.scroll.y) * tick.dt,
         glm::vec3(1.0f, 0.0f, 0.0f)));
     mLightingProperties.sunDirection = rotation *
       mLightingProperties.sunDirection;
