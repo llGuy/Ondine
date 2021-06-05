@@ -1,3 +1,6 @@
 [submodule "dep/openal-soft"]
 path = dep/openal-soft
 url = git://kcat/openal-soft
+[submodule "dep/assimp"]
+	path = dep/assimp
+	url = https://github.com/assimp/assimp.git
