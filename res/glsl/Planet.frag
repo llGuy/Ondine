@@ -21,20 +21,22 @@ layout (set = 1, binding = 0) uniform PlanetUniform {
 void main() {
   vec3 viewDirection = normalize(inViewRay);
 
-  vec3 p = uCamera.camera.wPosition - uPlanet.planet.wPlanetCenter;
+  vec3 planetCenterMeters = uPlanet.planet.wPlanetCenter * 1000.0;
+
+  vec3 p = (uCamera.camera.wPosition - planetCenterMeters);
   float pDotV = dot(p, viewDirection);
   float pDotP = dot(p, p);
 
   float rayPlanetCenterDist2 = pDotP - pDotV * pDotV;
 
   float distToIntersection = -pDotV - sqrt(
-    uPlanet.planet.wPlanetCenter.y * uPlanet.planet.wPlanetCenter.y -
+    planetCenterMeters.y * planetCenterMeters.y -
     rayPlanetCenterDist2);
 
   // Ray is in front of us
   if (distToIntersection > 0.0) {
     vec3 point = uCamera.camera.wPosition + viewDirection * distToIntersection;
-    vec3 normal = normalize(point - uPlanet.planet.wPlanetCenter);
+    vec3 normal = normalize(point - planetCenterMeters);
 
     outAlbedo = vec4(uPlanet.planet.groundAlbedo, 1.0);
     outNormal = vec4(normal, 1.0);
