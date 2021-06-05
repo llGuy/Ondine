@@ -102,7 +102,7 @@ void Renderer3D::init() {
       glm::normalize(glm::vec3(0.000001f, 0.2f, -1.00001f));
     mLightingProperties.sunSize = glm::vec3(
       0.0046750340586467079f, 0.99998907220740285f, 0.0f);
-    mLightingProperties.exposure = 12.5f;
+    mLightingProperties.exposure = 20.0f;
     mLightingProperties.white = glm::vec3(1.0f);
   }
 
@@ -134,6 +134,7 @@ void Renderer3D::resize(Resolution newResolution) {
   };
 
   mGBuffer.resize(mGraphicsContext, newResolution);
+  mDeferredLighting.resize(mGraphicsContext, newResolution);
 }
 
 void Renderer3D::trackInput(

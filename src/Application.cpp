@@ -79,9 +79,9 @@ void Application::run() {
       }
     });
 
+    mViewStack.processEvents(mEventQueue, currentTick);
     mEventQueue.clearEvents();
 
-    mViewStack.processEvents(mEventQueue, currentTick);
     mViewStack.distributeInput(currentTick, mInputTracker);
 
     /* Clears global linear allocator */

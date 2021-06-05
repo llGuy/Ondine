@@ -49,7 +49,7 @@ void main() {
     /* Radiance that the surface will reflect */
     vec3 sunIrradiance = getSunAndSkyIrradiance(
       uSky.sky, uTransmittanceTexture, uIrradianceTexture,
-      wPosition.xyz - uSky.sky.wPlanetCenter,
+      wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter,
       wNormal.xyz, uLighting.lighting.sunDirection, skyIrradiance);
 
     /* How much is scattered towards us */
@@ -57,8 +57,8 @@ void main() {
     vec3 inScatter = getSkyRadianceToPoint(
       uSky.sky, uTransmittanceTexture,
       uScatteringTexture, uSingleMieScatteringTexture,
-      uCamera.camera.wPosition - uSky.sky.wPlanetCenter,
-      wPosition.xyz - uSky.sky.wPlanetCenter, 0.0,
+      uCamera.camera.wPosition / 1000.0 - uSky.sky.wPlanetCenter,
+      wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter, 0.0,
       uLighting.lighting.sunDirection,
       transmittance);
 
@@ -71,7 +71,7 @@ void main() {
   vec3 radiance = getSkyRadiance(
     uSky.sky, uTransmittanceTexture,
     uScatteringTexture, uSingleMieScatteringTexture,
-    (uCamera.camera.wPosition.xyz - uSky.sky.wPlanetCenter),
+    (uCamera.camera.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter),
     viewRay, 0.0, uLighting.lighting.sunDirection, transmittance);
 
   if (dot(viewRay, uLighting.lighting.sunDirection) >
