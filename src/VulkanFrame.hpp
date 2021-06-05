@@ -1,9 +1,9 @@
 #pragma once
 
 #include <stdint.h>
-#include "IO.hpp"
+#include "Utils.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class VulkanContext;
 class VulkanCommandBuffer;

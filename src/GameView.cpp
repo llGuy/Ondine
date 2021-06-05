@@ -2,13 +2,13 @@
 #include "IOEvent.hpp"
 #include "GraphicsEvent.hpp"
 
-namespace Ondine {
+namespace Ondine::View {
 
 GameView::GameView(
-  const RenderStage &gameRenderStage,
+  const Graphics::RenderStage &gameRenderStage,
   DelegateResize &delegateResize3D,
   DelegateTrackInput &delegateTrackInput,
-  OnEventProc proc)
+  Core::OnEventProc proc)
   : mGameRenderStage(gameRenderStage),
     mDelegateResize3D(delegateResize3D),
     mDelegateTrackInput(delegateTrackInput),
@@ -21,13 +21,13 @@ GameView::~GameView() {
 }
 
 void GameView::processEvents(ViewProcessEventsParams &params) {
-  params.queue.process([this](Event *ev) {
+  params.queue.process([this](Core::Event *ev) {
     switch (ev->category) {
-    case EventCategory::Graphics: {
+    case Core::EventCategory::Graphics: {
       processGraphicsEvent(ev);
     } break;
 
-    case EventCategory::Input: {
+    case Core::EventCategory::Input: {
       processInputEvent(ev);
     } break;
 
@@ -36,12 +36,12 @@ void GameView::processEvents(ViewProcessEventsParams &params) {
   });
 }
 
-void GameView::processGraphicsEvent(Event *ev) {
+void GameView::processGraphicsEvent(Core::Event *ev) {
   // Forward events to game state and game renderer
   // Tell the game to tick
   switch (ev->type) {
-  case EventType::ViewportResize: {
-    auto *resizeEvent = (EventViewportResize *)ev;
+  case Core::EventType::ViewportResize: {
+    auto *resizeEvent = (Core::EventViewportResize *)ev;
     mDelegateResize3D.resize(resizeEvent->newResolution);
     resizeEvent->isHandled = true;
   } break;
@@ -50,12 +50,12 @@ void GameView::processGraphicsEvent(Event *ev) {
   }
 }
 
-void GameView::processInputEvent(Event *ev) {
+void GameView::processInputEvent(Core::Event *ev) {
   // Forward events to game state and game renderer
   // Tell the game to tick
   switch (ev->type) {
-  case EventType::Resize: {
-    auto *resizeEvent = (EventResize *)ev;
+  case Core::EventType::Resize: {
+    auto *resizeEvent = (Core::EventResize *)ev;
     mDelegateResize3D.resize(resizeEvent->newResolution);
     resizeEvent->isHandled = true;
   } break;
@@ -68,16 +68,16 @@ void GameView::render(ViewRenderParams &params) {
   /* Doesn't actually render anything */
 }
 
-const VulkanUniform &GameView::getOutput() const {
+const Graphics::VulkanUniform &GameView::getOutput() const {
   return mGameRenderStage.uniform();
 }
 
 FocusedView GameView::trackInput(
-  const Tick &tick, const InputTracker &tracker) {
+  const Core::Tick &tick, const Core::InputTracker &tracker) {
   mDelegateTrackInput.trackInput(tick, tracker);
 
-  if (tracker.key(KeyboardButton::Escape).didInstant) {
-    auto *cursorChange = lnEmplaceAlloc<EventCursorDisplayChange>();
+  if (tracker.key(Core::KeyboardButton::Escape).didInstant) {
+    auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
     cursorChange->show = true;
     mOnEvent(cursorChange);
 

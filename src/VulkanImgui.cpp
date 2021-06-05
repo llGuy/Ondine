@@ -11,7 +11,7 @@
 #include "VulkanRenderPass.hpp"
 #include "VulkanCommandPool.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 void VulkanImgui::init(
   const VulkanInstance &instance,
@@ -19,7 +19,7 @@ void VulkanImgui::init(
   const VulkanSwapchain &swapchain,
   const VulkanDescriptorPool &descriptorPool,
   const VulkanCommandPool &commandPool,
-  const WindowContextInfo &surfaceInfo,
+  const Core::WindowContextInfo &surfaceInfo,
   const VulkanRenderPass &renderPass) {
   GLFWwindow *window = (GLFWwindow *)surfaceInfo.handle;
   ImGui_ImplGlfw_InitForVulkan(window, true);

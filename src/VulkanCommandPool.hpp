@@ -5,7 +5,7 @@
 #include "Buffer.hpp"
 #include "VulkanCommandBuffer.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class VulkanDevice;
 

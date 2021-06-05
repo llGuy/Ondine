@@ -10,7 +10,7 @@
 #include <shellscalingapi.h>
 #endif
 
-namespace Ondine {
+namespace Ondine::Core {
 
 #ifdef _WIN32
 static void ignoreDPIScaling() {

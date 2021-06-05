@@ -3,7 +3,7 @@
 #include <filesystem>
 #include "FileSystem.hpp"
 
-namespace Ondine {
+namespace Ondine::Core {
 
 FileSystem *gFileSystem = nullptr;
 

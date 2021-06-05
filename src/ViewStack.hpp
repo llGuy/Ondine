@@ -4,25 +4,25 @@
 #include "Buffer.hpp"
 #include "VulkanPipeline.hpp"
 
-namespace Ondine {
+namespace Ondine::View {
 
 class ViewStack {
 public:
   ViewStack(
-    VulkanContext &graphicsContext);
+    Graphics::VulkanContext &graphicsContext);
 
   void init();
 
-  void processEvents(EventQueue &queue, const Tick &tick);
+  void processEvents(Core::EventQueue &queue, const Core::Tick &tick);
   void distributeInput(
-    const Tick &tick,
-    const InputTracker &inputTracker);
+    const Core::Tick &tick,
+    const Core::InputTracker &inputTracker);
 
   /* Gets called inside the swapchain render pass */
   void render(
-    const VulkanFrame &frame, const Tick &tick);
+    const Graphics::VulkanFrame &frame, const Core::Tick &tick);
 
-  void presentOutput(const VulkanFrame &frame);
+  void presentOutput(const Graphics::VulkanFrame &frame);
 
   void push(View *view);
   View *pop();
@@ -32,8 +32,8 @@ private:
 
   // Usually, at index 0, you would have the game world view
   Array<View *> mViews;
-  VulkanPipeline mFinalRender;
-  VulkanContext &mGraphicsContext;
+  Graphics::VulkanPipeline mFinalRender;
+  Graphics::VulkanContext &mGraphicsContext;
   /* Determines until which view to forward input to */
   int mFocusedView;
 };

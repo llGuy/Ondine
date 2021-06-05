@@ -8,11 +8,11 @@ namespace Ondine {
 
 int entry(int argc, char **argv) {
   /* Make sure to also write FL allocator at some point */
-  gLinearAllocator = flAlloc<LinearAllocator>(megabytes(10));
-  gLinearAllocator->init();
-  gFileSystem = flAlloc<FileSystem>();
+  Core::gLinearAllocator = flAlloc<Core::LinearAllocator>(megabytes(10));
+  Core::gLinearAllocator->init();
+  Core::gFileSystem = flAlloc<Core::FileSystem>();
 
-  Application *client = flAlloc<Client>(argc, argv);
+  Core::Application *client = flAlloc<Core::Client>(argc, argv);
   client->run();
   flFree(client);
 

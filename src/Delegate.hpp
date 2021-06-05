@@ -1,10 +1,10 @@
 #pragma once
 
 #include "IO.hpp"
+#include "Tick.hpp"
+#include "Utils.hpp"
 
 namespace Ondine {
-
-class VulkanContext;
 
 class DelegateResize {
 public:
@@ -14,8 +14,8 @@ public:
 class DelegateTrackInput {
 public:
   virtual void trackInput(
-    const Tick &tick,
-    const InputTracker &inputTracker) = 0;
+    const Core::Tick &tick,
+    const Core::InputTracker &inputTracker) = 0;
 };
 
 }

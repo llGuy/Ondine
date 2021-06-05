@@ -5,7 +5,7 @@
 #include "VulkanBuffer.hpp"
 #include "VulkanUniform.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class VulkanContext;
 

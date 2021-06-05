@@ -10,12 +10,12 @@
 #include "GraphicsEvent.hpp"
 #include "VulkanContext.hpp"
 
-namespace Ondine {
+namespace Ondine::View {
 
 EditorView::EditorView(
-  const WindowContextInfo &contextInfo,
-  VulkanContext &graphicsContext,
-  OnEventProc onEventProc)
+  const Core::WindowContextInfo &contextInfo,
+  Graphics::VulkanContext &graphicsContext,
+  Core::OnEventProc onEventProc)
   : mIsDockLayoutInitialised(false),
     mViewportResolution{0, 0},
     mFocusedWindow(EditorWindow::None),
@@ -30,10 +30,11 @@ EditorView::EditorView(
   mChangedFocusToEditor = false;
 
   { // Create render pass
-    VulkanRenderPassConfig config(1, 1);
+    Graphics::VulkanRenderPassConfig config(1, 1);
     config.addAttachment(
-      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
-      OutputUsage::FragmentShaderRead, AttachmentType::Color,
+      Graphics::LoadAndStoreOp::ClearThenStore,
+      Graphics::LoadAndStoreOp::DontCareThenDontCare,
+      Graphics::OutputUsage::FragmentShaderRead, Graphics::AttachmentType::Color,
       VK_FORMAT_R8G8B8A8_UNORM);
     config.addSubpass(
       makeArray<uint32_t, AllocationType::Linear>(0U),
@@ -52,9 +53,9 @@ EditorView::~EditorView() {
 }
 
 void EditorView::processEvents(ViewProcessEventsParams &params) {
-  params.queue.process([this, &params](Event *ev) {
+  params.queue.process([this, &params](Core::Event *ev) {
     switch (ev->category) {
-    case EventCategory::Input: {
+    case Core::EventCategory::Input: {
       processInputEvent(ev, params);
     } break;
 
@@ -162,7 +163,7 @@ void EditorView::render(ViewRenderParams &params) {
       mViewportResolution.width = (uint32_t)viewportSize.x;
       mViewportResolution.height = (uint32_t)viewportSize.y;
 
-      auto *resizeEvent = lnEmplaceAlloc<EventViewportResize>();
+      auto *resizeEvent = lnEmplaceAlloc<Core::EventViewportResize>();
       resizeEvent->newResolution = mViewportResolution;
       mOnEvent(resizeEvent);
       // renderViewport = false;
@@ -237,7 +238,7 @@ void EditorView::render(ViewRenderParams &params) {
   }
 }
 
-const VulkanUniform &EditorView::getOutput() const {
+const Graphics::VulkanUniform &EditorView::getOutput() const {
   return mTargetUniform;
 }
 
@@ -268,58 +269,61 @@ void EditorView::tickMenuBar() {
   }
 }
 
-void EditorView::initRenderTarget(VulkanContext &graphicsContext) {
+void EditorView::initRenderTarget(Graphics::VulkanContext &graphicsContext) {
   auto properties = graphicsContext.getProperties();
   { // Create target texture + uniform
     mTarget.init(
-      graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
-      TextureContents::Color, VK_FORMAT_R8G8B8A8_UNORM, VK_FILTER_LINEAR,
+      graphicsContext.device(),
+      Graphics::TextureType::T2D | Graphics::TextureType::Attachment,
+      Graphics::TextureContents::Color,
+      VK_FORMAT_R8G8B8A8_UNORM, VK_FILTER_LINEAR,
       {properties.swapchainExtent.width, properties.swapchainExtent.height, 1},
       1, 1);
     mTargetUniform.init(
       graphicsContext.device(), graphicsContext.descriptorPool(),
       graphicsContext.descriptorLayouts(),
-      makeArray<VulkanTexture, AllocationType::Linear>(mTarget));
+      makeArray<Graphics::VulkanTexture, AllocationType::Linear>(mTarget));
   }
 
   { // Create framebuffer
-    VulkanFramebufferConfig config(1, mRenderPass);
+    Graphics::VulkanFramebufferConfig config(1, mRenderPass);
     config.addAttachment(mTarget);
 
     mFramebuffer.init(graphicsContext.device(), config);
   }
 }
 
-void EditorView::destroyRenderTarget(VulkanContext &graphicsContext) {
+void EditorView::destroyRenderTarget(Graphics::VulkanContext &graphicsContext) {
   mFramebuffer.destroy(graphicsContext.device());
   mTarget.destroy(graphicsContext.device());
 }
 
-void EditorView::initViewportRendering(VulkanContext &graphicsContext) {
-  File vshFile = gFileSystem->createFile(
-    (MountPoint)ApplicationMountPoints::Application,
+void EditorView::initViewportRendering(
+  Graphics::VulkanContext &graphicsContext) {
+  Core::File vshFile = Core::gFileSystem->createFile(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
     "res/spv/TexturedQuad.vert.spv",
-    FileOpenType::Binary | FileOpenType::In);
+    Core::FileOpenType::Binary | Core::FileOpenType::In);
 
   Buffer vsh = vshFile.readBinary();
 
-  File fshFile = gFileSystem->createFile(
-    (MountPoint)ApplicationMountPoints::Application,
+  Core::File fshFile = Core::gFileSystem->createFile(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
     "res/spv/TexturedQuad.frag.spv",
-    FileOpenType::Binary | FileOpenType::In);
+    Core::FileOpenType::Binary | Core::FileOpenType::In);
 
   Buffer fsh = fshFile.readBinary();
 
-  VulkanPipelineConfig pipelineConfig(
+  Graphics::VulkanPipelineConfig pipelineConfig(
     {mRenderPass, 0},
-    VulkanShader(
-      graphicsContext.device(), vsh, VulkanShaderType::Vertex),
-    VulkanShader(
-      graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+    Graphics::VulkanShader(
+      graphicsContext.device(), vsh, Graphics::VulkanShaderType::Vertex),
+    Graphics::VulkanShader(
+      graphicsContext.device(), fsh, Graphics::VulkanShaderType::Fragment));
 
   pipelineConfig.configurePipelineLayout(
     0,
-    VulkanPipelineDescriptorLayout{
+    Graphics::VulkanPipelineDescriptorLayout{
       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
 
   mRenderViewport.init(
@@ -329,8 +333,8 @@ void EditorView::initViewportRendering(VulkanContext &graphicsContext) {
 }
 
 void EditorView::initImguiContext(
-  const WindowContextInfo &contextInfo,
-  VulkanContext &graphicsContext) {
+  const Core::WindowContextInfo &contextInfo,
+  Graphics::VulkanContext &graphicsContext) {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO &io = ImGui::GetIO(); (void)io;
@@ -404,10 +408,10 @@ void EditorView::initImguiContext(
   graphicsContext.initImgui(contextInfo, mRenderPass);
 }
 
-void EditorView::processInputEvent(Event *ev, ViewProcessEventsParams &params) {
+void EditorView::processInputEvent(Core::Event *ev, ViewProcessEventsParams &params) {
   switch (ev->type) {
-  case EventType::Resize: {
-    auto *resizeEvent = (EventResize *)ev;
+  case Core::EventType::Resize: {
+    auto *resizeEvent = (Core::EventResize *)ev;
     
     destroyRenderTarget(params.graphicsContext);
     initRenderTarget(params.graphicsContext);
@@ -424,11 +428,11 @@ void EditorView::processInputEvent(Event *ev, ViewProcessEventsParams &params) {
 }
 
 FocusedView EditorView::trackInput(
-  const Tick &tick, const InputTracker &tracker) {
+  const Core::Tick &tick, const Core::InputTracker &tracker) {
   if (mChangedFocusToViewport) {
     mChangedFocusToViewport = false;
 
-    auto *cursorChange = lnEmplaceAlloc<EventCursorDisplayChange>();
+    auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
     cursorChange->show = false;
     mOnEvent(cursorChange);
 
@@ -437,7 +441,7 @@ FocusedView EditorView::trackInput(
   else if (mChangedFocusToEditor) {
     mChangedFocusToEditor = false;
 
-    auto *cursorChange = lnEmplaceAlloc<EventCursorDisplayChange>();
+    auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
     cursorChange->show = true;
     mOnEvent(cursorChange);
 

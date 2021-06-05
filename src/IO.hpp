@@ -5,7 +5,7 @@
 #include "Event.hpp"
 #include <glm/glm.hpp>
 
-namespace Ondine {
+namespace Ondine::Core {
 
 enum class MouseButton {
   Left,
@@ -24,11 +24,6 @@ enum class KeyboardButton {
   Space, LeftShift, LeftControl, Enter, Backspace,
   Escape, F1, F2, F3, F4, F5, F9, F11,
   Unhandled
-};
-
-struct Resolution {
-  uint32_t width;
-  uint32_t height;
 };
 
 struct ButtonState {

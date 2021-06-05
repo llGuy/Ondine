@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-namespace Ondine {
+namespace Ondine::Core {
 
 enum class EventCategory {
   Input,

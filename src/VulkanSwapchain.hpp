@@ -6,7 +6,7 @@
 #include "VulkanDevice.hpp"
 #include "VulkanFramebuffer.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class VulkanSemaphore;
 

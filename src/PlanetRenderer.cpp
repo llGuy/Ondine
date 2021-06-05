@@ -5,24 +5,24 @@
 #include "VulkanFrame.hpp"
 #include "PlanetRenderer.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 void PlanetRenderer::init(
   VulkanContext &graphicsContext,
   const RenderStage &renderStage,
   const PlanetProperties *properties) {
   { // Create pipeline
-    File precomputeDummyVsh = gFileSystem->createFile(
-      (MountPoint)ApplicationMountPoints::Application,
+    Core::File precomputeDummyVsh = Core::gFileSystem->createFile(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
       "res/spv/Planet.vert.spv",
-      FileOpenType::Binary | FileOpenType::In);
+      Core::FileOpenType::Binary | Core::FileOpenType::In);
 
     Buffer precomputeVsh = precomputeDummyVsh.readBinary();
 
-    File precomputeDummy = gFileSystem->createFile(
-      (MountPoint)ApplicationMountPoints::Application,
+    Core::File precomputeDummy = Core::gFileSystem->createFile(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
       "res/spv/Planet.frag.spv",
-      FileOpenType::Binary | FileOpenType::In);
+      Core::FileOpenType::Binary | Core::FileOpenType::In);
 
     Buffer fsh = precomputeDummy.readBinary();
 
@@ -71,7 +71,7 @@ void PlanetRenderer::init(
 }
 
 void PlanetRenderer::tick(
-  const Tick &tick,
+  const Core::Tick &tick,
   VulkanFrame &frame,
   const Camera &camera) {
   auto &commandBuffer = frame.primaryCommandBuffer;

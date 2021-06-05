@@ -28,6 +28,16 @@
   printf("\n***STOPPING SESSION***\n");         \
   exit(-1)
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
+namespace Ondine {
+
+struct Resolution {
+  uint32_t width;
+  uint32_t height;
+};
+
 inline uint32_t popCount(
     uint32_t bits) {
 #ifndef __GNUC__
@@ -37,5 +47,4 @@ inline uint32_t popCount(
 #endif
 }
 
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+}

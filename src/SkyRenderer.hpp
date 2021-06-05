@@ -11,7 +11,7 @@
 #include "VulkanRenderPass.hpp"
 #include "VulkanFramebuffer.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class VulkanContext;
 
@@ -22,7 +22,7 @@ public:
     const RenderStage &renderStage);
 
   void tick(
-    const Tick &tick,
+    const Core::Tick &tick,
     VulkanFrame &frame,
     const CameraProperties &camera);
 

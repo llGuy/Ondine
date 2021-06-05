@@ -4,7 +4,7 @@
 #include "VulkanSurface.hpp"
 #include "VulkanSwapchain.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 void VulkanSwapchain::init(
   const VulkanDevice &device,

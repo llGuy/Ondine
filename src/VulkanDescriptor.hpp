@@ -6,7 +6,7 @@
 #include <vulkan/vulkan.h>
 #include "VulkanDevice.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 struct VulkanDescriptorTypeInfo {
   size_t size;

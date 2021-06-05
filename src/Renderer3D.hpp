@@ -2,6 +2,7 @@
 
 #include "IO.hpp"
 #include "Event.hpp"
+#include "Utils.hpp"
 #include "Window.hpp"
 #include "Camera.hpp"
 #include "GBuffer.hpp"
@@ -11,7 +12,7 @@
 #include "VulkanContext.hpp"
 #include "DeferredLighting.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class Renderer3D :
   public DelegateResize,
@@ -21,12 +22,12 @@ public:
     VulkanContext &graphicsContext);
 
   void init();
-  void tick(const Tick &tick, VulkanFrame &frame);
+  void tick(const Core::Tick &tick, Graphics::VulkanFrame &frame);
 
   void resize(Resolution newResolution) override;
   void trackInput(
-    const Tick &tick,
-    const InputTracker &inputTracker) override;
+    const Core::Tick &tick,
+    const Core::InputTracker &inputTracker) override;
 
   const RenderStage &mainRenderStage() const;
 

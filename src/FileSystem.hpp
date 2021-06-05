@@ -5,7 +5,7 @@
 
 #include "File.hpp"
 
-namespace Ondine {
+namespace Ondine::Core {
 
 constexpr uint32_t MAX_MOUNT_POINTS = 16;
 

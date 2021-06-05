@@ -1,6 +1,6 @@
 #include "VulkanDescriptor.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 VulkanDescriptorSetLayoutCategory::VulkanDescriptorSetLayoutCategory()
   : mLayouts{} {

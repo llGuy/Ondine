@@ -4,7 +4,7 @@
 #include "VulkanContext.hpp"
 #include "VulkanRenderPass.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 struct LightingProperties {
   // Vector going out towards the sun

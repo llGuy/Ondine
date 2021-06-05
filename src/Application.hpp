@@ -9,7 +9,7 @@
 #include "FileSystem.hpp"
 #include "VulkanContext.hpp"
 
-namespace Ondine {
+namespace Ondine::Core {
 
 enum class ApplicationMountPoints : uint8_t {
   Application,
@@ -40,9 +40,9 @@ private:
   bool mIsRunning;
   EventQueue mEventQueue;
   Window mWindow;
-  VulkanContext mGraphicsContext;
-  Renderer3D mRenderer3D;
-  ViewStack mViewStack;
+  Graphics::VulkanContext mGraphicsContext;
+  Graphics::Renderer3D mRenderer3D;
+  View::ViewStack mViewStack;
   InputTracker mInputTracker;
 
   float mDt;

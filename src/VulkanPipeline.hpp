@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.h>
 #include "Buffer.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class VulkanDevice;
 class VulkanRenderPass;

@@ -11,7 +11,7 @@
 #include "VulkanDescriptor.hpp"
 #include "VulkanCommandPool.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 struct WindowContextInfo;
 
@@ -26,9 +26,9 @@ public:
   VulkanContext();
 
   void initInstance();
-  void initContext(const WindowContextInfo &surfaceInfo);
+  void initContext(const Core::WindowContextInfo &surfaceInfo);
   void initImgui(
-    const WindowContextInfo &surfaceInfo,
+    const Core::WindowContextInfo &surfaceInfo,
     const VulkanRenderPass &renderPass);
 
   /* Acquires the next swapchain image */

@@ -1,6 +1,6 @@
 #include "Client.hpp"
 
-namespace Ondine {
+namespace Ondine::Core {
 
 Client::Client(int argc, char **argv)
   : Application(argc, argv) {

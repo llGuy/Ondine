@@ -4,7 +4,7 @@
 #include "Buffer.hpp"
 #include "VulkanSync.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class VulkanCommandBuffer;
 class VulkanSwapchain;

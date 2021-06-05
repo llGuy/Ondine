@@ -5,7 +5,7 @@
 #include "Utils.hpp"
 #include <vulkan/vulkan.h>
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class VulkanDevice;
 

@@ -4,7 +4,7 @@
 #include "VulkanSync.hpp"
 #include "VulkanDevice.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 VkAccessFlags findAccessFlagsForStage(VkPipelineStageFlags stage) {
   switch (stage) {

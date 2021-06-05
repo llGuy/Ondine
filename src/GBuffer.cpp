@@ -1,6 +1,6 @@
 #include "GBuffer.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 void GBuffer::init(VulkanContext &graphicsContext) {
   auto ctxProperties = graphicsContext.getProperties();

@@ -5,7 +5,7 @@
 #include "VulkanContext.hpp"
 #include "VulkanUniform.hpp"
 
-namespace Ondine {
+namespace Ondine::View {
 
 /* 
    These structures are here so that when changing params, don't need to
@@ -13,16 +13,16 @@ namespace Ondine {
 */
 
 struct ViewProcessEventsParams {
-  EventQueue &queue;
-  const Tick &tick;
-  VulkanContext &graphicsContext;
+  Core::EventQueue &queue;
+  const Core::Tick &tick;
+  Graphics::VulkanContext &graphicsContext;
 };
 
 struct ViewRenderParams {
-  VulkanContext &graphicsContext;
-  const VulkanUniform &previousOutput;
-  const VulkanFrame &frame;
-  const Tick &tick;
+  Graphics::VulkanContext &graphicsContext;
+  const Graphics::VulkanUniform &previousOutput;
+  const Graphics::VulkanFrame &frame;
+  const Core::Tick &tick;
 };
 
 enum class FocusedView {
@@ -44,10 +44,10 @@ public:
 
   /* Tracking input will return which view to focus in the next frame */
   virtual FocusedView trackInput(
-    const Tick &tick, const InputTracker &tracker) = 0;
+    const Core::Tick &tick, const Core::InputTracker &tracker) = 0;
 
   /* Each view will yield an output image as a result of rendering */
-  virtual const VulkanUniform &getOutput() const = 0;
+  virtual const Graphics::VulkanUniform &getOutput() const = 0;
 };
 
 }

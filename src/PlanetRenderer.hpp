@@ -1,14 +1,14 @@
 #pragma once
 
 #include "IO.hpp"
+#include "Tick.hpp"
 #include <glm/glm.hpp>
 #include "VulkanBuffer.hpp"
 #include "VulkanUniform.hpp"
 #include "VulkanPipeline.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
-struct Tick;
 struct VulkanFrame;
 
 class Camera;
@@ -60,7 +60,7 @@ public:
     const PlanetProperties *properties = nullptr);
 
   void tick(
-    const Tick &tick,
+    const Core::Tick &tick,
     VulkanFrame &frame,
     const Camera &camera);
 

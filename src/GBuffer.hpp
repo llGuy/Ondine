@@ -3,7 +3,7 @@
 #include "RenderStage.hpp"
 #include "VulkanContext.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class GBuffer : public RenderStage {
 public:

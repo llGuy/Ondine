@@ -5,7 +5,7 @@
 #include "VulkanRenderPass.hpp"
 #include "VulkanFramebuffer.hpp"
 
-namespace Ondine {
+namespace Ondine::View {
 
 class VulkanContext;
 class WindowContextInfo;
@@ -23,9 +23,9 @@ enum class EditorWindow {
 class EditorView : public View {
 public:
   EditorView(
-    const WindowContextInfo &contextInfo,
-    VulkanContext &graphicsContext,
-    OnEventProc proc);
+    const Core::WindowContextInfo &contextInfo,
+    Graphics::VulkanContext &graphicsContext,
+    Core::OnEventProc proc);
 
   ~EditorView() override;
 
@@ -33,20 +33,21 @@ public:
   void render(ViewRenderParams &) override;
 
   FocusedView trackInput(
-    const Tick &tick, const InputTracker &tracker) override;
+    const Core::Tick &tick, const Core::InputTracker &tracker) override;
 
-  const VulkanUniform &getOutput() const override;
+  const Graphics::VulkanUniform &getOutput() const override;
 
 private:
-  void initRenderTarget(VulkanContext &graphicsContext);
-  void destroyRenderTarget(VulkanContext &graphicsContext);
-  void initViewportRendering(VulkanContext &graphicsContext);
+  void initRenderTarget(Graphics::VulkanContext &graphicsContext);
+  void destroyRenderTarget(Graphics::VulkanContext &graphicsContext);
+  void initViewportRendering(Graphics::VulkanContext &graphicsContext);
   void initImguiContext(
-    const WindowContextInfo &contextInfo, VulkanContext &graphicsContext);
+    const Core::WindowContextInfo &contextInfo,
+    Graphics::VulkanContext &graphicsContext);
   void tickMenuBar();
 
-  void processInputEvent(Event *ev, ViewProcessEventsParams &params);
-  void processDeferredEvents(VulkanContext &graphicsContext);
+  void processInputEvent(Core::Event *ev, ViewProcessEventsParams &params);
+  void processDeferredEvents(Graphics::VulkanContext &graphicsContext);
 
   const char *&windowName(EditorWindow window);
 
@@ -54,12 +55,12 @@ private:
   ImGuiID mDock;
   bool mIsDockLayoutInitialised;
   Resolution mViewportResolution;
-  OnEventProc mOnEvent;
-  VulkanRenderPass mRenderPass;
-  VulkanFramebuffer mFramebuffer;
-  VulkanTexture mTarget;
-  VulkanUniform mTargetUniform;
-  VulkanPipeline mRenderViewport;
+  Core::OnEventProc mOnEvent;
+  Graphics::VulkanRenderPass mRenderPass;
+  Graphics::VulkanFramebuffer mFramebuffer;
+  Graphics::VulkanTexture mTarget;
+  Graphics::VulkanUniform mTargetUniform;
+  Graphics::VulkanPipeline mRenderViewport;
 
   EditorWindow mFocusedWindow;
   uint8_t mChangedFocusToViewport : 4;

@@ -6,8 +6,9 @@
 #include <glm/glm.hpp>
 #include "Event.hpp"
 #include "Time.hpp"
+#include "Utils.hpp"
 
-namespace Ondine {
+namespace Ondine::Core {
 
 enum class WindowMode {
   Fullscreen,

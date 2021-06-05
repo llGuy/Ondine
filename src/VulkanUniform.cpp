@@ -1,6 +1,6 @@
 #include "VulkanUniform.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 void VulkanUniform::init(
   const VulkanDevice &device,

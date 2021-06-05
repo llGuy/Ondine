@@ -2,7 +2,7 @@
 #include "Application.hpp"
 #include "DeferredLighting.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 void DeferredLighting::init(
   VulkanContext &graphicsContext,
@@ -24,15 +24,15 @@ void DeferredLighting::init(
   }
 
   { // Create pipeline
-    File lightingVert = gFileSystem->createFile(
-      (MountPoint)ApplicationMountPoints::Application,
+    Core::File lightingVert = Core::gFileSystem->createFile(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
       "res/spv/Lighting.vert.spv",
-      FileOpenType::Binary | FileOpenType::In);
+      Core::FileOpenType::Binary | Core::FileOpenType::In);
 
-    File lightingFrag = gFileSystem->createFile(
-      (MountPoint)ApplicationMountPoints::Application,
+    Core::File lightingFrag = Core::gFileSystem->createFile(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
       "res/spv/Lighting.frag.spv",
-      FileOpenType::Binary | FileOpenType::In);
+      Core::FileOpenType::Binary | Core::FileOpenType::In);
 
     Buffer vsh = lightingVert.readBinary();
     Buffer fsh = lightingFrag.readBinary();

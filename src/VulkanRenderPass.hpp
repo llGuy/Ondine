@@ -6,7 +6,7 @@
 #include "VulkanDevice.hpp"
 #include "VulkanTexture.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 enum class LoadAndStoreOp {
   LoadThenStore        = 0 | (0 << 2),

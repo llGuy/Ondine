@@ -3,7 +3,7 @@
 #include "Vulkan.hpp"
 #include "VulkanFramebuffer.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 VulkanFramebufferConfig::VulkanFramebufferConfig(
   size_t attachmentCount,

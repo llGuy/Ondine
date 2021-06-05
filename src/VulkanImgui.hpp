@@ -1,11 +1,11 @@
 #pragma once
 
+#include "Window.hpp"
 #include <vulkan/vulkan.h>
 #include "VulkanRenderPass.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
-struct WindowContextInfo;
 class VulkanSwapchain;
 class VulkanDevice;
 class VulkanInstance;
@@ -21,7 +21,7 @@ public:
     const VulkanSwapchain &swapchain,
     const VulkanDescriptorPool &descriptorPool,
     const VulkanCommandPool &commandPool,
-    const WindowContextInfo &surfaceInfo,
+    const Core::WindowContextInfo &surfaceInfo,
     const VulkanRenderPass &renderPass);
 
   void beginRender() const;

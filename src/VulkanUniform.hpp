@@ -5,7 +5,7 @@
 #include "VulkanTexture.hpp"
 #include "VulkanDescriptor.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 /* 
    We call descriptor sets uniforms.

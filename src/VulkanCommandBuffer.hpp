@@ -5,7 +5,7 @@
 #include "VulkanUniform.hpp"
 #include "VulkanPipeline.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class VulkanRenderPass;
 class VulkanFramebuffer;

@@ -5,7 +5,7 @@
 #include "VulkanSwapchain.hpp"
 #include "VulkanCommandBuffer.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 void VulkanQueue::idle() const {
   vkQueueWaitIdle(mQueue);

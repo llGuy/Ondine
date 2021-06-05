@@ -4,7 +4,7 @@
 #include "Utils.hpp"
 #include "Event.hpp"
 
-namespace Ondine {
+namespace Ondine::Core {
 
 EventQueue::EventQueue()
   : mProcessingCounter(0),

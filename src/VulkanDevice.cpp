@@ -6,7 +6,7 @@
 #include "VulkanSurface.hpp"
 #include "VulkanInstance.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 void VulkanDevice::init(
   DeviceType requestedType,

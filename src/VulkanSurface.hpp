@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.h>
 #include "Window.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class VulkanSurface {
 public:
@@ -11,7 +11,7 @@ public:
 
   void init(
     const class VulkanInstance &instance,
-    const WindowContextInfo &info);
+    const Core::WindowContextInfo &info);
 
 private:
   VkSurfaceKHR mSurface;

@@ -6,7 +6,7 @@
 #include "VulkanFramebuffer.hpp"
 #include "VulkanCommandBuffer.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 void VulkanCommandBuffer::init(
   VkCommandBuffer handle,

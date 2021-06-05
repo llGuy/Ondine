@@ -8,7 +8,7 @@ constexpr bool ENABLE_VALIDATION = false;
 
 constexpr uint32_t FRAMES_IN_FLIGHT = 2;
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 VulkanContext::VulkanContext()
   : mInstance(ENABLE_VALIDATION),
@@ -23,7 +23,7 @@ void VulkanContext::initInstance() {
   mInstance.init();
 }
 
-void VulkanContext::initContext(const WindowContextInfo &surfaceInfo) {
+void VulkanContext::initContext(const Core::WindowContextInfo &surfaceInfo) {
   // Surface
   mSurface.init(mInstance, surfaceInfo);
 
@@ -95,7 +95,7 @@ void VulkanContext::initContext(const WindowContextInfo &surfaceInfo) {
 }
 
 void VulkanContext::initImgui(
-  const WindowContextInfo &surfaceInfo,
+  const Core::WindowContextInfo &surfaceInfo,
   const VulkanRenderPass &renderPass) {
   mImgui.init(
     mInstance, mDevice, mSwapchain, mDescriptorPool,

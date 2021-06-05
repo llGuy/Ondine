@@ -1,7 +1,7 @@
 #include "Camera.hpp"
 #include "VulkanContext.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 void Camera::init(
   VulkanContext &graphicsContext,

@@ -7,7 +7,7 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-namespace Ondine {
+namespace Ondine::Core {
 
 enum class FileOpenType : uint32_t {
   Text = 0,

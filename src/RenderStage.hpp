@@ -5,7 +5,7 @@
 #include "VulkanFramebuffer.hpp"
 #include "VulkanRenderPass.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 /* 
    Doesn't declare any state because the render stage may want

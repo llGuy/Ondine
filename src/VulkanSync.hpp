@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 VkAccessFlags findAccessFlagsForStage(VkPipelineStageFlags stage);
 VkAccessFlags findAccessFlagsForImageLayout(VkImageLayout layout);

@@ -5,7 +5,7 @@
 #include "VulkanContext.hpp"
 #include "VulkanTexture.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 void SkyRenderer::init(
   VulkanContext &graphicsContext,
@@ -25,7 +25,7 @@ void SkyRenderer::init(
 }
 
 void SkyRenderer::tick(
-  const Tick &tick,
+  const Core::Tick &tick,
   VulkanFrame &frame,
   const CameraProperties &camera) {
   auto &commandBuffer = frame.primaryCommandBuffer;
@@ -193,15 +193,15 @@ void SkyRenderer::initTemporaryPrecomputeTextures(
 }
 
 void SkyRenderer::preparePrecompute(VulkanContext &graphicsContext) {
-  File precomputeVshFile = gFileSystem->createFile(
-    (MountPoint)ApplicationMountPoints::Application,
+  Core::File precomputeVshFile = Core::gFileSystem->createFile(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
     "res/spv/SkyPrecompute.vert.spv",
-    FileOpenType::Binary | FileOpenType::In);
+    Core::FileOpenType::Binary | Core::FileOpenType::In);
 
-  File precomputeGshFile = gFileSystem->createFile(
-    (MountPoint)ApplicationMountPoints::Application,
+  Core::File precomputeGshFile = Core::gFileSystem->createFile(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
     "res/spv/SkyPrecompute.geom.spv",
-    FileOpenType::Binary | FileOpenType::In);
+    Core::FileOpenType::Binary | Core::FileOpenType::In);
 
   Buffer quadVsh = precomputeVshFile.readBinary();
   Buffer quadGsh = precomputeGshFile.readBinary();
@@ -244,10 +244,10 @@ void SkyRenderer::prepareTransmittancePrecompute(
   }
 
   { // Create pipeline
-    File precomputeTransmittance = gFileSystem->createFile(
-      (MountPoint)ApplicationMountPoints::Application,
+    Core::File precomputeTransmittance = Core::gFileSystem->createFile(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
       "res/spv/SkyTransmittance.frag.spv",
-      FileOpenType::Binary | FileOpenType::In);
+      Core::FileOpenType::Binary | Core::FileOpenType::In);
 
     Buffer fsh = precomputeTransmittance.readBinary();
 
@@ -313,10 +313,10 @@ void SkyRenderer::prepareSingleScatteringPrecompute(
   }
   
   { // Create pipeline
-    File precomputeSingleScattering = gFileSystem->createFile(
-      (MountPoint)ApplicationMountPoints::Application,
+    Core::File precomputeSingleScattering = Core::gFileSystem->createFile(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
       "res/spv/SkySingleScattering.frag.spv",
-      FileOpenType::Binary | FileOpenType::In);
+      Core::FileOpenType::Binary | Core::FileOpenType::In);
 
     Buffer fsh = precomputeSingleScattering.readBinary();
 
@@ -388,10 +388,10 @@ void SkyRenderer::prepareDirectIrradiancePrecompute(
   }
 
   { // Create pipeline (direct irradiance)
-    File precomputeDirectIrradiance = gFileSystem->createFile(
-      (MountPoint)ApplicationMountPoints::Application,
+    Core::File precomputeDirectIrradiance = Core::gFileSystem->createFile(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
       "res/spv/SkyDirectIrradiance.frag.spv",
-      FileOpenType::Binary | FileOpenType::In);
+      Core::FileOpenType::Binary | Core::FileOpenType::In);
 
     Buffer fsh = precomputeDirectIrradiance.readBinary();
 
@@ -415,10 +415,10 @@ void SkyRenderer::prepareDirectIrradiancePrecompute(
   }
 
   { // Create pipeline (indirect irradiance)
-    File precomputeIndirectIrradiance = gFileSystem->createFile(
-      (MountPoint)ApplicationMountPoints::Application,
+    Core::File precomputeIndirectIrradiance = Core::gFileSystem->createFile(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
       "res/spv/SkyIndirectIrradiance.frag.spv",
-      FileOpenType::Binary | FileOpenType::In);
+      Core::FileOpenType::Binary | Core::FileOpenType::In);
 
     Buffer fsh = precomputeIndirectIrradiance.readBinary();
 
@@ -468,10 +468,10 @@ void SkyRenderer::prepareScatteringDensityPrecompute(
   const Buffer &precomputeVsh,
   const Buffer &precomputeGsh,
   VulkanContext &graphicsContext) {
-  File precomputeScatteringDensity = gFileSystem->createFile(
-    (MountPoint)ApplicationMountPoints::Application,
+  Core::File precomputeScatteringDensity = Core::gFileSystem->createFile(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
     "res/spv/SkyScatteringDensity.frag.spv",
-    FileOpenType::Binary | FileOpenType::In);
+    Core::FileOpenType::Binary | Core::FileOpenType::In);
 
   Buffer fsh = precomputeScatteringDensity.readBinary();
 
@@ -545,10 +545,10 @@ void SkyRenderer::prepareMultipleScatteringPrecompute(
   const Buffer &precomputeVsh,
   const Buffer &precomputeGsh,
   VulkanContext &graphicsContext) {
-  File precomputeMultipleScattering = gFileSystem->createFile(
-    (MountPoint)ApplicationMountPoints::Application,
+  Core::File precomputeMultipleScattering = Core::gFileSystem->createFile(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
     "res/spv/SkyMultipleScattering.frag.spv",
-    FileOpenType::Binary | FileOpenType::In);
+    Core::FileOpenType::Binary | Core::FileOpenType::In);
 
   Buffer fsh = precomputeMultipleScattering.readBinary();
 
@@ -990,17 +990,17 @@ void SkyRenderer::make2DTextureAndUniform(
 void SkyRenderer::initDemoPipeline(
   VulkanContext &graphicsContext,
   const RenderStage &renderStage) {
-  File precomputeDummyVsh = gFileSystem->createFile(
-    (MountPoint)ApplicationMountPoints::Application,
+  Core::File precomputeDummyVsh = Core::gFileSystem->createFile(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
     "res/spv/SkyDemo.vert.spv",
-    FileOpenType::Binary | FileOpenType::In);
+    Core::FileOpenType::Binary | Core::FileOpenType::In);
 
   Buffer precomputeVsh = precomputeDummyVsh.readBinary();
 
-  File precomputeDummy = gFileSystem->createFile(
-    (MountPoint)ApplicationMountPoints::Application,
+  Core::File precomputeDummy = Core::gFileSystem->createFile(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
     "res/spv/SkyDemo.frag.spv",
-    FileOpenType::Binary | FileOpenType::In);
+    Core::FileOpenType::Binary | Core::FileOpenType::In);
 
   Buffer fsh = precomputeDummy.readBinary();
 

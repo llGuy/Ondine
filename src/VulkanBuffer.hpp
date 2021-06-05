@@ -4,7 +4,7 @@
 #include "Buffer.hpp"
 #include <vulkan/vulkan.h>
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class VulkanDevice;
 class VulkanCommandPool;

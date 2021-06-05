@@ -6,7 +6,7 @@
 #include "FileSystem.hpp"
 #include "EditorView.hpp"
 
-namespace Ondine {
+namespace Ondine::Core {
 
 Application::Application(int argc, char **argv)
   : mWindow(WindowMode::Windowed, "Ondine"),
@@ -41,11 +41,11 @@ void Application::run() {
   mViewStack.init();
 
   mViewStack.push(
-    new GameView(
+    new View::GameView(
       mRenderer3D.mainRenderStage(), mRenderer3D, mRenderer3D, evProc));
 
   mViewStack.push(
-    new EditorView(
+    new View::EditorView(
       surfaceInfo, mGraphicsContext, evProc));
 
   /* User-defined function which will be overriden */
@@ -54,7 +54,7 @@ void Application::run() {
   mDt = 0.0f;
 
   while (mIsRunning) {
-    Time::TimeStamp frameStart = Time::getCurrentTime();
+    TimeStamp frameStart = getCurrentTime();
     Tick currentTick = { mDt };
 
     mInputTracker.tick(currentTick);
@@ -90,7 +90,7 @@ void Application::run() {
     // Defined in client
     tick();
 
-    VulkanFrame frame = mGraphicsContext.beginFrame();
+    Graphics::VulkanFrame frame = mGraphicsContext.beginFrame();
     if (!frame.skipped) { // All rendering here
       mRenderer3D.tick(currentTick, frame);
       mViewStack.render(frame, currentTick);
@@ -105,11 +105,11 @@ void Application::run() {
       mGraphicsContext.endFrame(frame);
     }
 
-    Time::TimeStamp frameEnd = Time::getCurrentTime();
-    mDt = Time::getTimeDifference(frameEnd, frameStart);
+    TimeStamp frameEnd = getCurrentTime();
+    mDt = getTimeDifference(frameEnd, frameStart);
 
     if (mDt < mMinFrametime) {
-      Time::sleepSeconds(mMinFrametime - mDt);
+      sleepSeconds(mMinFrametime - mDt);
       mDt = mMinFrametime;
     }
   }

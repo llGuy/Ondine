@@ -2,7 +2,7 @@
 #include "Log.hpp"
 #include "IOEvent.hpp"
 
-namespace Ondine {
+namespace Ondine::Core {
 
 InputTracker::InputTracker()
   : mKeyboardButtons{},

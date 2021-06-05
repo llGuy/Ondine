@@ -4,7 +4,7 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 Renderer3D::Renderer3D(VulkanContext &graphicsContext)
   : mGraphicsContext(graphicsContext) {
@@ -109,7 +109,7 @@ void Renderer3D::init() {
   mDeferredLighting.init(mGraphicsContext, &mLightingProperties);
 }
 
-void Renderer3D::tick(const Tick &tick, VulkanFrame &frame) {
+void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
   mCameraProperties.aspectRatio =
     (float)mPipelineViewport.width / (float)mPipelineViewport.height;
 
@@ -138,37 +138,37 @@ void Renderer3D::resize(Resolution newResolution) {
 }
 
 void Renderer3D::trackInput(
-  const Tick &tick,
-  const InputTracker &inputTracker) {
+  const Core::Tick &tick,
+  const Core::InputTracker &inputTracker) {
   auto right = glm::cross(
     mCameraProperties.wViewDirection, mCameraProperties.wUp);
 
   float speedMultiplier = 10.0f;
-  if (inputTracker.key(KeyboardButton::R).isDown) {
+  if (inputTracker.key(Core::KeyboardButton::R).isDown) {
     speedMultiplier *= 100.0f;
   }
 
-  if (inputTracker.key(KeyboardButton::W).isDown) {
+  if (inputTracker.key(Core::KeyboardButton::W).isDown) {
     mCameraProperties.wPosition +=
       mCameraProperties.wViewDirection * tick.dt * speedMultiplier;
   }
-  if (inputTracker.key(KeyboardButton::A).isDown) {
+  if (inputTracker.key(Core::KeyboardButton::A).isDown) {
     mCameraProperties.wPosition -=
       right * tick.dt * speedMultiplier;
   }
-  if (inputTracker.key(KeyboardButton::S).isDown) {
+  if (inputTracker.key(Core::KeyboardButton::S).isDown) {
     mCameraProperties.wPosition -=
       mCameraProperties.wViewDirection * tick.dt * speedMultiplier;
   }
-  if (inputTracker.key(KeyboardButton::D).isDown) {
+  if (inputTracker.key(Core::KeyboardButton::D).isDown) {
     mCameraProperties.wPosition +=
       right * tick.dt * speedMultiplier;
   }
-  if (inputTracker.key(KeyboardButton::Space).isDown) {
+  if (inputTracker.key(Core::KeyboardButton::Space).isDown) {
     mCameraProperties.wPosition +=
       mCameraProperties.wUp * tick.dt * speedMultiplier;
   }
-  if (inputTracker.key(KeyboardButton::LeftShift).isDown) {
+  if (inputTracker.key(Core::KeyboardButton::LeftShift).isDown) {
     mCameraProperties.wPosition -=
       mCameraProperties.wUp * tick.dt * speedMultiplier;
   }

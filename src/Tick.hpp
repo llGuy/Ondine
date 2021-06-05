@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Ondine {
+namespace Ondine::Core {
 
 struct Tick {
   float dt;

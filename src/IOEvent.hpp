@@ -1,9 +1,10 @@
 #pragma once
 
 #include "IO.hpp"
+#include "Utils.hpp"
 #include "Event.hpp"
 
-namespace Ondine {
+namespace Ondine::Core {
 
 enum class MouseEventType {
   Press,

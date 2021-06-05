@@ -16,8 +16,6 @@ find_package(Vulkan)
 find_package(OpenAL)
 add_subdirectory("${CMAKE_SOURCE_DIR}/dep/assimp")
 
-message("${ASSIMP_LIBRARIES}")
-
 add_executable(Ondine "${SOURCES}")
 
 # OpenAL
@@ -76,5 +74,7 @@ else (WIN32)
 
 endif()
 
+target_link_libraries(Ondine PUBLIC "assimp")
+target_include_directories(Ondine PUBLIC "${CMAKE_SOURCE_DIR}/dep/assimp/include")
 
 target_compile_definitions(Ondine PUBLIC YONA_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")

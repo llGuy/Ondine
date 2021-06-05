@@ -4,7 +4,7 @@
 #include "VulkanDescriptor.hpp"
 #include "VulkanRenderPass.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 VulkanShader::VulkanShader(
   const VulkanDevice &device,

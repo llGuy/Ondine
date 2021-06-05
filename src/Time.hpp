@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-namespace Ondine::Time {
+namespace Ondine::Core {
 
 using TimeStamp = std::chrono::high_resolution_clock::time_point;
 

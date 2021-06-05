@@ -5,7 +5,7 @@
 #include "VulkanTexture.hpp"
 #include "VulkanRenderPass.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 class VulkanFramebufferConfig {
 public:

@@ -4,7 +4,7 @@
 #include "Vulkan.hpp"
 #include "VulkanInstance.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 VulkanInstance::VulkanInstance(bool enableValidation)
   : mIsValidationEnabled(enableValidation) {

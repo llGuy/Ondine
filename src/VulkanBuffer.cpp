@@ -4,7 +4,7 @@
 #include "VulkanCommandPool.hpp"
 #include "VulkanCommandBuffer.hpp"
 
-namespace Ondine {
+namespace Ondine::Graphics {
 
 void VulkanBuffer::init(
   const VulkanDevice &device,
