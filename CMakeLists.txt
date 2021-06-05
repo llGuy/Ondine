@@ -4,7 +4,7 @@ project(Ondine)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSTB_IMAGE_IMPLEMENTATION -D_MBCS -DGLM_ENABLE_EXPERIMENTAL")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_MBCS -DGLM_ENABLE_EXPERIMENTAL")
 
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.hpp" "dep/imgui/lib/*.cpp")
 
@@ -14,6 +14,9 @@ include_directories("${CMAKE_SOURCE_DIR}/dep/imgui/include")
 
 find_package(Vulkan)
 find_package(OpenAL)
+add_subdirectory("${CMAKE_SOURCE_DIR}/dep/assimp")
+
+message("${ASSIMP_LIBRARIES}")
 
 add_executable(Ondine "${SOURCES}")
 
