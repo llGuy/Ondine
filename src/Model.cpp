@@ -25,6 +25,14 @@ void ModelConfig::configureIndices(
   mIndices = data;
 }
 
+void ModelConfig::configureVertexInput(VulkanPipelineConfig &config) {
+  config.configureVertexInput(mAttributeCount, mAttributeCount);
+  for (int i = 0; i < mAttributeCount; ++i) {
+    config.setBinding(i, mAttributes[i].attribSize, VK_VERTEX_INPUT_RATE_VERTEX);
+    config.setBindingAttribute(i, i, mAttributes[i].format, 0);
+  }
+}
+
 void Model::init(const ModelConfig &def, VulkanContext &context) {
   mIndexBuffer.init(
     context.device(), def.mIndices.size,

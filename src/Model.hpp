@@ -13,11 +13,14 @@ struct Attribute {
 
 class ModelConfig {
 public:
+  ModelConfig() = default;
   ModelConfig(uint32_t vertexCount);
 
   void pushAttribute(const Attribute &attribute, const Buffer &data);
   void configureIndices(
     uint32_t indexCount, VkIndexType type, const Buffer &data);
+
+  void configureVertexInput(VulkanPipelineConfig &config);
 
 private:
   static constexpr uint32_t MAX_ATTRIBUTE_COUNT = 10;

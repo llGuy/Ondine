@@ -59,7 +59,6 @@ public:
       mTarget(target),
       mCreateInfo{} {
     mShaderStages.zero();
-
     setDefaultValues();
 
     setShaderStages(
@@ -72,8 +71,6 @@ public:
 
   void enableDepthTesting();
 
-  // void enableBlendingSeparate();
-
   template <typename ...T>
   void configurePipelineLayout(
     size_t pushConstantSize,
@@ -83,6 +80,14 @@ public:
       makeArray<VulkanPipelineDescriptorLayout, AllocationType::Linear>(
         layouts...);
   }
+
+  void configureVertexInput(uint32_t attribCount, uint32_t bindingCount);
+
+  void setBinding(
+    uint32_t binding, uint32_t stride, VkVertexInputRate inputRate);
+
+  void setBindingAttribute(
+    uint32_t location, uint32_t binding, VkFormat format, uint32_t offset);
 
 private:
   void setDefaultValues();
@@ -97,6 +102,8 @@ private:
 private:
   VkPipelineInputAssemblyStateCreateInfo mInputAssembly;
   VkPipelineVertexInputStateCreateInfo mVertexInput;
+  Array<VkVertexInputAttributeDescription, AllocationType::Linear> mAttributes;
+  Array<VkVertexInputBindingDescription, AllocationType::Linear> mBindings;
   VkViewport mViewport;
   VkRect2D mRect;
   VkPipelineViewportStateCreateInfo mViewportInfo;

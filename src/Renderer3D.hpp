@@ -9,6 +9,7 @@
 #include "Delegate.hpp"
 #include "SkyRenderer.hpp"
 #include "RenderStage.hpp"
+#include "ModelManager.hpp"
 #include "VulkanContext.hpp"
 #include "DeferredLighting.hpp"
 
@@ -38,11 +39,19 @@ private:
   CameraProperties mCameraProperties;
   PlanetProperties mPlanetProperties;
   LightingProperties mLightingProperties;
+  StaticModelHandle mTestModel;
+  VulkanPipeline mTestPipeline;
+
+  struct {
+    glm::mat4 modelMatrix;
+  } testPushConstant;
 
   GBuffer mGBuffer;
   SkyRenderer mSkyRenderer;
   PlanetRenderer mPlanetRenderer;
   DeferredLighting mDeferredLighting;
+
+  ModelManager mModelManager;
 
   Resolution mPipelineViewport;
 

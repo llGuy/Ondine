@@ -49,6 +49,34 @@ void VulkanPipelineConfig::enableDepthTesting() {
   mDepthStencil.maxDepthBounds = 1.0f;
 }
 
+void VulkanPipelineConfig::configureVertexInput(
+  uint32_t attribCount, uint32_t bindingCount) {
+  mAttributes.init(attribCount);
+  mBindings.init(bindingCount);
+
+  mVertexInput.pVertexBindingDescriptions = mBindings.data;
+  mVertexInput.vertexBindingDescriptionCount = bindingCount;
+  mVertexInput.pVertexAttributeDescriptions = mAttributes.data;
+  mVertexInput.vertexAttributeDescriptionCount = attribCount;
+}
+
+void VulkanPipelineConfig::setBinding(
+  uint32_t bindingIdx, uint32_t stride, VkVertexInputRate inputRate) {
+  auto &binding = mBindings[bindingIdx];
+  binding.binding = bindingIdx;
+  binding.stride = stride;
+  binding.inputRate = inputRate;
+}
+
+void VulkanPipelineConfig::setBindingAttribute(
+  uint32_t location, uint32_t binding, VkFormat format, uint32_t offset) {
+  auto &attribute = mAttributes[location];
+  attribute.location = location;
+  attribute.binding = binding;
+  attribute.format = format;
+  attribute.offset = offset;
+}
+
 void VulkanPipelineConfig::setDefaultValues() {
   /* Blend states */
   const auto &renderPass = mTarget.renderPass;

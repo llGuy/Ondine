@@ -1,3 +1,4 @@
+#include <new>
 #include "FileSystem.hpp"
 #include "Application.hpp"
 #include "ModelManager.hpp"
@@ -13,7 +14,8 @@ void ModelManager::init() {
 }
 
 StaticModelHandle ModelManager::loadStaticModel(
-  const char *path, VulkanContext &graphicsContext) {
+  const char *path, VulkanContext &graphicsContext,
+  ModelConfig &modelConfig) {
   Core::File modelFile = Core::gFileSystem->createFile(
     (Core::MountPoint)Core::ApplicationMountPoints::Application,
     path, Core::FileOpenType::Binary | Core::FileOpenType::In);
@@ -26,7 +28,7 @@ StaticModelHandle ModelManager::loadStaticModel(
   /* We assume just one mesh for now */
   aiMesh *mesh = scene->mMeshes[0];
 
-  ModelConfig modelConfig(mesh->mNumVertices);
+  new(&modelConfig) ModelConfig(mesh->mNumVertices);
 
   modelConfig.pushAttribute(
     {sizeof(glm::vec3), VK_FORMAT_R32G32B32_SFLOAT},

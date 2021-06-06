@@ -52,6 +52,15 @@ void main() {
       wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter,
       wNormal.xyz, uLighting.lighting.sunDirection, skyIrradiance);
 
+    // TODO
+    /*
+    pointRadiance = albedo * (1.0 / PI) * (
+      sunIrradiance * getSunVisibility(
+        wPosition.xyz / 1000.0, uLighting.lighting.sunDirection) +
+      skyIrradiance * getSkyVisibility(
+        wPosition.xyz / 1000.0));
+        */
+
     /* How much is scattered towards us */
     vec3 transmittance;
     vec3 inScatter = getSkyRadianceToPoint(

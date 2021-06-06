@@ -12,7 +12,9 @@ class ModelManager {
 public:
   void init();
 
-  StaticModelHandle loadStaticModel(const char *path, VulkanContext &context);
+  StaticModelHandle loadStaticModel(
+    const char *path, VulkanContext &context,
+    ModelConfig &config);
   Model &getStaticModel(StaticModelHandle modelHandle);
 
 private:
