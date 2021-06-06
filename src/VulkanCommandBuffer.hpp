@@ -40,6 +40,12 @@ public:
 
   void bindPipeline(const VulkanPipeline &pipeline);
   void pushConstants(size_t size, void *ptr);
+  void bindVertexBuffers(
+    uint32_t firstBinding, uint32_t bindingCount,
+    const VulkanBuffer *buffers, VkDeviceSize *offsets = nullptr) const;
+  void bindIndexBuffer(
+    VkDeviceSize offset, VkIndexType indexType,
+    const VulkanBuffer &buffer) const;
 
   template <typename ...T>
   void bindUniforms(const T &...uniforms) const {
@@ -66,6 +72,10 @@ public:
     size_t vertexCount, size_t instanceCount,
     size_t firstVertex, size_t firstInstance) const;
 
+  void drawIndexed(
+    uint32_t indexCount, uint32_t instanceCount,
+    uint32_t firstIndex, uint32_t vertexOffset, uint32_t firstInstance) const;
+
   void copyBuffer(
     const VulkanBuffer &dst, size_t dstOffset,
     const VulkanBuffer &src, size_t srcOffset,
@@ -83,6 +93,11 @@ public:
 private:
   void init(VkCommandBuffer handle, VkCommandBufferLevel level);
 
+  /* Avoids the need for creating a copy */
+  void bindVertexBuffers(
+    uint32_t firstBinding, uint32_t bindingCount,
+    const VkBuffer *buffers, VkDeviceSize *offsets) const;
+
 private:
   static constexpr uint32_t MAX_VIEWPORT_COUNT = 5;
 
@@ -97,6 +112,7 @@ private:
   friend class VulkanCommandPool;
   friend class VulkanQueue;
   friend class VulkanImgui;
+  friend class Model;
 };
 
 }

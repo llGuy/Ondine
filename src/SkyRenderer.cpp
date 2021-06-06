@@ -20,8 +20,6 @@ void SkyRenderer::init(
   mSunZenithAngleRadians = 1.300000;
   mSunAzimuthAngleRadians = 3.000000;
   mExposure = 10.000000;
-
-  initDemoPipeline(graphicsContext, renderStage);
 }
 
 void SkyRenderer::tick(

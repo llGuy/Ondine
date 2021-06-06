@@ -26,22 +26,48 @@ void ModelConfig::configureIndices(
 }
 
 void Model::init(const ModelConfig &def, VulkanContext &context) {
-  if (def.mIndices.size) {
-    mIndexBuffer.init(
-      context.device(), def.mIndices.size,
-      (VulkanBufferFlagBits)VulkanBufferFlag::IndexBuffer);
+  mIndexBuffer.init(
+    context.device(), def.mIndices.size,
+    (VulkanBufferFlagBits)VulkanBufferFlag::IndexBuffer);
 
-    mIsUsingIndexBuffer = true;
-  }
-  else {
-    mIsUsingIndexBuffer = false;
-  }
+  mIndexBuffer.fillWithStaging(
+    context.device(), context.commandPool(),
+    def.mIndices);
 
   // For now, store each attribute in a separate vertex buffer
   for (int i = 0; i < def.mAttributeCount; ++i) {
-    VulkanBuffer &buf = mVertexBuffers[mVertexBufferCount++];
+    auto &attribute = def.mAttributes[i];
+    auto &buf = mVertexBuffers[mVertexBufferCount++];
 
+    buf.init(
+      context.device(), attribute.data.size,
+      (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer);
+
+    buf.fillWithStaging(
+      context.device(), context.commandPool(),
+      attribute.data);
+
+    mVertexBuffersRaw[i] = buf.mBuffer;
   }
+
+  mVertexBufferCount = def.mAttributeCount;
+  mIndexType = def.mIndexType;
+  mIndexCount = def.mIndexCount;
+}
+
+void Model::bindVertexBuffers(const VulkanCommandBuffer &commandBuffer) {
+  VkDeviceSize *offsets = STACK_ALLOC(VkDeviceSize, mVertexBufferCount);
+
+  commandBuffer.bindVertexBuffers(
+    0, mVertexBufferCount, mVertexBuffersRaw, offsets);
+}
+
+void Model::bindIndexBuffer(const VulkanCommandBuffer &commandBuffer) {
+  commandBuffer.bindIndexBuffer(0, mIndexType, mIndexBuffer);
+}
+
+void Model::submitForRender(const VulkanCommandBuffer &commandBuffer) {
+  commandBuffer.drawIndexed(mIndexCount, 1, 0, 0, 0);
 }
 
 }

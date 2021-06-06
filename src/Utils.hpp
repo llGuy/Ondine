@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
 
 #define STACK_ALLOC(type, n) (type *)alloca(sizeof(type) * (n))
 #define BIT(n) (1 << n)
@@ -45,6 +46,10 @@ inline uint32_t popCount(
 #else
     return __builtin_popcount(bits);
 #endif
+}
+
+inline void zeroMemory(void *ptr, uint32_t size) {
+  memset(ptr, 0, size);
 }
 
 }

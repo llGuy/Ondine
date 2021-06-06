@@ -53,6 +53,7 @@ private:
 
   friend class VulkanCommandBuffer;
   friend class VulkanUniform;
+  friend class Model;
 };
 
 }

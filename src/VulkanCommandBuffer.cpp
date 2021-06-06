@@ -1,5 +1,6 @@
 #include "Log.hpp"
 #include <assert.h>
+#include "Utils.hpp"
 #include "VulkanBuffer.hpp"
 #include "VulkanPipeline.hpp"
 #include "VulkanRenderPass.hpp"
@@ -199,6 +200,38 @@ void VulkanCommandBuffer::pushConstants(size_t size, void *ptr) {
     VK_SHADER_STAGE_ALL, 0, size, ptr);
 }
 
+void VulkanCommandBuffer::bindVertexBuffers(
+  uint32_t firstBinding, uint32_t bindingCount,
+  const VulkanBuffer *buffers, VkDeviceSize *offsets) const {
+  VkBuffer *buffersRaw = STACK_ALLOC(VkBuffer, bindingCount);
+  for (int i = 0; i < bindingCount; ++i) {
+    buffersRaw[i] = buffers[i].mBuffer;
+  }
+
+  if (!offsets) {
+    offsets = STACK_ALLOC(VkDeviceSize, bindingCount);
+    zeroMemory(offsets, sizeof(VkDeviceSize) * bindingCount);
+  }
+  
+  vkCmdBindVertexBuffers(
+    mCommandBuffer, firstBinding, bindingCount,
+    buffersRaw, offsets);
+}
+
+void VulkanCommandBuffer::bindVertexBuffers(
+  uint32_t firstBinding, uint32_t bindingCount,
+  const VkBuffer *buffers, VkDeviceSize *offsets) const {
+  vkCmdBindVertexBuffers(
+    mCommandBuffer, firstBinding, bindingCount,
+    buffers, offsets);
+}
+
+void VulkanCommandBuffer::bindIndexBuffer(
+  VkDeviceSize offset, VkIndexType indexType,
+  const VulkanBuffer &buffer) const {
+  vkCmdBindIndexBuffer(mCommandBuffer, buffer.mBuffer, offset, indexType);
+}
+
 void VulkanCommandBuffer::draw(
   size_t vertexCount, size_t instanceCount,
   size_t firstVertex, size_t firstInstance) const {
@@ -206,6 +239,18 @@ void VulkanCommandBuffer::draw(
     mCommandBuffer,
     vertexCount, instanceCount,
     firstVertex, firstInstance);
+}
+
+void VulkanCommandBuffer::drawIndexed(
+  uint32_t indexCount, uint32_t instanceCount,
+  uint32_t firstIndex, uint32_t vertexOffset, uint32_t firstInstance) const {
+  vkCmdDrawIndexed(
+    mCommandBuffer,
+    indexCount,
+    instanceCount,
+    firstIndex,
+    vertexOffset,
+    firstInstance);
 }
 
 void VulkanCommandBuffer::transitionImageLayout(

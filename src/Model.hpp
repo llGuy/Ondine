@@ -44,14 +44,20 @@ class Model {
 public:
   void init(const ModelConfig &config, VulkanContext &context);
 
+  void bindVertexBuffers(const VulkanCommandBuffer &commandBuffer);
+  void bindIndexBuffer(const VulkanCommandBuffer &commandBuffer);
+  void submitForRender(const VulkanCommandBuffer &commandBuffer);
+
 private:
   static constexpr uint32_t MAX_VERTEX_BUFFER_COUNT = 10;
 
   uint32_t mVertexBufferCount;
   VulkanBuffer mVertexBuffers[MAX_VERTEX_BUFFER_COUNT];
+  VkBuffer mVertexBuffersRaw[MAX_VERTEX_BUFFER_COUNT];
 
   VulkanBuffer mIndexBuffer;
-  bool mIsUsingIndexBuffer;
+  VkIndexType mIndexType;
+  uint32_t mIndexCount;
 };
 
 }
