@@ -115,7 +115,7 @@ void Renderer3D::init() {
   { // Create test model
     ModelConfig modelConfig;
     mTestModel = mModelManager.loadStaticModel(
-      "res/model/Cube.fbx", mGraphicsContext, modelConfig);
+      "res/model/Monkey.fbx", mGraphicsContext, modelConfig);
 
     Core::File vshFile = Core::gFileSystem->createFile(
       (Core::MountPoint)Core::ApplicationMountPoints::Application,
@@ -167,9 +167,9 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
     commandBuffer.bindUniforms(mCamera.uniform());
 
     testPushConstant.modelMatrix =
-      glm::translate(glm::vec3(0.0f, 20.0f / 1000.0f, 0.0f)) *
+      glm::translate(glm::vec3(0.0f, 80.0f / 1000.0f, 0.0f)) *
       glm::rotate(glm::radians(-90.0f), glm::vec3(1.0, 0.0f, 0.0f)) *
-      glm::scale(glm::vec3(5000.0f));
+      glm::scale(glm::vec3(50.0f));
     commandBuffer.pushConstants(sizeof(testPushConstant), &testPushConstant);
 
     auto &model = mModelManager.getStaticModel(mTestModel);
@@ -207,7 +207,7 @@ void Renderer3D::trackInput(
 
   float speedMultiplier = 100.0f;
   if (inputTracker.key(Core::KeyboardButton::R).isDown) {
-    speedMultiplier *= 1000.0f;
+    speedMultiplier *= 10.0f;
   }
 
   if (inputTracker.key(Core::KeyboardButton::W).isDown) {
