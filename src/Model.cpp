@@ -4,7 +4,12 @@
 namespace Ondine::Graphics {
 
 ModelConfig::ModelConfig(uint32_t vertexCount)
-  : mVertexCount(vertexCount) {
+  : mVertexCount(vertexCount),
+    mAttributeCount(0),
+    mAttributes{},
+    mIndexCount(0),
+    mIndexType(VkIndexType(0)),
+    mIndices{} {
   
 }
 
@@ -65,6 +70,7 @@ void Model::init(const ModelConfig &def, VulkanContext &context) {
 
 void Model::bindVertexBuffers(const VulkanCommandBuffer &commandBuffer) {
   VkDeviceSize *offsets = STACK_ALLOC(VkDeviceSize, mVertexBufferCount);
+  memset(offsets, 0, sizeof(VkDeviceSize) * mVertexBufferCount);
 
   commandBuffer.bindVertexBuffers(
     0, mVertexBufferCount, mVertexBuffersRaw, offsets);

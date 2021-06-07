@@ -13,5 +13,7 @@ layout (location = 2) out vec4 outPosition;
 void main() {
   outAlbedo = vec4(1.0);
   outNormal = vec4(normalize(inFS.wNormal.xyz), 1.0);
+  // Stuff is stored in Km
   outPosition = inFS.wPosition;
+  outPosition.a = 1.0;
 }

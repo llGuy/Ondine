@@ -40,6 +40,8 @@ void main() {
   vec4 albedo = texture(uAlbedo, inUVs).rgba;
   vec3 viewRay = normalize(inViewRay);
 
+  // outColor = wNormal;
+
   /* Light contribution from the surface */
   float pointAlpha = 0.0;
   vec3 pointRadiance = vec3(0.0);
@@ -49,17 +51,17 @@ void main() {
     /* Radiance that the surface will reflect */
     vec3 sunIrradiance = getSunAndSkyIrradiance(
       uSky.sky, uTransmittanceTexture, uIrradianceTexture,
-      wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter,
+      wPosition.xyz - uSky.sky.wPlanetCenter,
       wNormal.xyz, uLighting.lighting.sunDirection, skyIrradiance);
 
     // TODO
     /*
-    pointRadiance = albedo * (1.0 / PI) * (
+      pointRadiance = albedo * (1.0 / PI) * (
       sunIrradiance * getSunVisibility(
-        wPosition.xyz / 1000.0, uLighting.lighting.sunDirection) +
+      wPosition.xyz, uLighting.lighting.sunDirection) +
       skyIrradiance * getSkyVisibility(
-        wPosition.xyz / 1000.0));
-        */
+      wPosition.xyz));
+    */
 
     /* How much is scattered towards us */
     vec3 transmittance;
@@ -67,9 +69,11 @@ void main() {
       uSky.sky, uTransmittanceTexture,
       uScatteringTexture, uSingleMieScatteringTexture,
       uCamera.camera.wPosition / 1000.0 - uSky.sky.wPlanetCenter,
-      wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter, 0.0,
+      wPosition.xyz - uSky.sky.wPlanetCenter, 0.0,
       uLighting.lighting.sunDirection,
       transmittance);
+
+    viewRay = normalize(wPosition.xyz - uCamera.camera.wPosition.xyz / 1000.0);
 
     pointRadiance = pointRadiance * transmittance + inScatter;
     pointAlpha = 1.0;
@@ -92,7 +96,7 @@ void main() {
 
   outColor.rgb = pow(
     vec3(1.0) -
-      exp(-radiance / uLighting.lighting.white * uLighting.lighting.exposure),
+    exp(-radiance / uLighting.lighting.white * uLighting.lighting.exposure),
     vec3(1.0 / 2.2));
   outColor.a = 1.0;
 }

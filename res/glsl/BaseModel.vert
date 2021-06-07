@@ -20,7 +20,7 @@ layout (set = 0, binding = 0) uniform CameraUniform {
 } uCamera;
 
 void main() {
-  outVS.wPosition = uPushConstant.modelMatrix * vec4(inPosition, 1.0);
+  outVS.wPosition = uPushConstant.modelMatrix * vec4(inPosition / 1000.0, 1.0);
   outVS.wNormal = uPushConstant.modelMatrix * vec4(inNormal, 0.0);
 
   gl_Position =
