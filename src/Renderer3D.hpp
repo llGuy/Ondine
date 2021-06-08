@@ -11,6 +11,7 @@
 #include "RenderStage.hpp"
 #include "ModelManager.hpp"
 #include "VulkanContext.hpp"
+#include "SceneSubmitter.hpp"
 #include "DeferredLighting.hpp"
 
 namespace Ondine::Graphics {
@@ -39,12 +40,6 @@ private:
   CameraProperties mCameraProperties;
   PlanetProperties mPlanetProperties;
   LightingProperties mLightingProperties;
-  StaticModelHandle mTestModel;
-  VulkanPipeline mTestPipeline;
-
-  struct {
-    glm::mat4 modelMatrix;
-  } testPushConstant;
 
   GBuffer mGBuffer;
   SkyRenderer mSkyRenderer;
@@ -52,6 +47,7 @@ private:
   DeferredLighting mDeferredLighting;
 
   ModelManager mModelManager;
+  SceneSubmitter mSceneSubmitter;
 
   Resolution mPipelineViewport;
 
