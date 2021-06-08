@@ -59,7 +59,7 @@ void Renderer3D::init() {
       DensityLayer { 0.000000f, 0.000000f, 0.000000f, -0.066667f, 2.666667f };
     mPlanetProperties.absorptionExtinctionCoef =
       glm::vec3(0.000650f, 0.001881f, 0.000085f);
-    mPlanetProperties.groundAlbedo = glm::vec3(0.100000f, 0.100000f, 0.100000f);
+    mPlanetProperties.groundAlbedo = glm::vec3(0.05f, 0.05f, 0.05f);
     mPlanetProperties.muSunMin = -0.207912f;
     mPlanetProperties.wPlanetCenter = glm::vec3(0.0f, -6360.0f, 0.0f);
 
@@ -70,7 +70,7 @@ void Renderer3D::init() {
     mCameraProperties.fov = glm::radians(50.0f);
     mCameraProperties.aspectRatio =
       (float)mPipelineViewport.width / (float)mPipelineViewport.height;
-    mCameraProperties.near = 0.001f;
+    mCameraProperties.near = 0.1f;
     mCameraProperties.far = 10000.0f;
 
     mCameraProperties.projection = glm::perspective(
@@ -115,7 +115,7 @@ void Renderer3D::init() {
   { // Create test model
     ModelConfig modelConfig;
     mTestModel = mModelManager.loadStaticModel(
-      "res/model/Monkey.fbx", mGraphicsContext, modelConfig);
+      "res/model/Taurus.fbx", mGraphicsContext, modelConfig);
 
     Core::File vshFile = Core::gFileSystem->createFile(
       (Core::MountPoint)Core::ApplicationMountPoints::Application,
@@ -158,7 +158,7 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
      
   mGBuffer.beginRender(frame);
   { // Render 3D scene
-    mPlanetRenderer.tick(tick, frame, mCamera);
+    // mPlanetRenderer.tick(tick, frame, mCamera);
 
     // Render test model
 #if 1
@@ -167,9 +167,9 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
     commandBuffer.bindUniforms(mCamera.uniform());
 
     testPushConstant.modelMatrix =
-      glm::translate(glm::vec3(0.0f, 80.0f / 1000.0f, 0.0f)) *
-      glm::rotate(glm::radians(-90.0f), glm::vec3(1.0, 0.0f, 0.0f)) *
-      glm::scale(glm::vec3(50.0f));
+      glm::translate(glm::vec3(0.0f, 10.0f, 0.0f)) *
+      glm::rotate(glm::radians(0.0f), glm::vec3(1.0, 0.0f, 0.0f)) *
+      glm::scale(glm::vec3(10.0f));
     commandBuffer.pushConstants(sizeof(testPushConstant), &testPushConstant);
 
     auto &model = mModelManager.getStaticModel(mTestModel);
@@ -197,6 +197,18 @@ void Renderer3D::resize(Resolution newResolution) {
 
   mGBuffer.resize(mGraphicsContext, newResolution);
   mDeferredLighting.resize(mGraphicsContext, newResolution);
+
+  mCameraProperties.aspectRatio =
+    (float)mPipelineViewport.width / (float)mPipelineViewport.height;
+
+  mCameraProperties.projection = glm::perspective(
+    mCameraProperties.fov,
+    mCameraProperties.aspectRatio,
+    mCameraProperties.near,
+    mCameraProperties.far);
+
+  mCameraProperties.inverseProjection = glm::inverse(
+    mCameraProperties.projection);
 }
 
 void Renderer3D::trackInput(
@@ -264,8 +276,8 @@ void Renderer3D::trackInput(
   }
 
   mCameraProperties.view = glm::lookAt(
-    mCameraProperties.wPosition / 1000.0f,
-    mCameraProperties.wPosition / 1000.0f + mCameraProperties.wViewDirection,
+    mCameraProperties.wPosition,
+    mCameraProperties.wPosition + mCameraProperties.wViewDirection,
     mCameraProperties.wUp);
 
   mCameraProperties.inverseView = glm::inverse(
