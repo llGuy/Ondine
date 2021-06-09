@@ -63,9 +63,9 @@ void SceneSubmitter::submit(
   commandBuffer.bindUniforms(camera.uniform(), planet.uniform());
 
   mTestPushConstant.modelMatrix =
-    glm::translate(glm::vec3(0.0f, 20.0f, 0.0f)) *
+    glm::translate(glm::vec3(0.0f, 200.0f, 0.0f)) *
     glm::rotate(glm::radians(30.0f), glm::vec3(1.0, 0.0f, 0.0f)) *
-    glm::scale(glm::vec3(20.0f));
+    glm::scale(glm::vec3(5.0f));
   commandBuffer.pushConstants(sizeof(mTestPushConstant), &mTestPushConstant);
 
   auto &model = mModelManager.getStaticModel(mTestModel);
@@ -74,6 +74,14 @@ void SceneSubmitter::submit(
 
   commandBuffer.setViewport();
   commandBuffer.setScissor();
+
+  model.submitForRender(commandBuffer);
+
+  mTestPushConstant.modelMatrix =
+    glm::translate(glm::vec3(0.0f, 10.0f, 0.0f)) *
+    glm::rotate(glm::radians(30.0f), glm::vec3(1.0, 0.0f, 0.0f)) *
+    glm::scale(glm::vec3(5.0f));
+  commandBuffer.pushConstants(sizeof(mTestPushConstant), &mTestPushConstant);
 
   model.submitForRender(commandBuffer);
 }

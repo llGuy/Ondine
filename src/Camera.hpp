@@ -22,6 +22,7 @@ struct CameraProperties {
   float aspectRatio;
   float near;
   float far;
+
   float clipUnderPlanet;
   float clippingRadius;
 };
