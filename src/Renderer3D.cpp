@@ -15,18 +15,20 @@ Renderer3D::Renderer3D(VulkanContext &graphicsContext)
 }
 
 void Renderer3D::init() {
-  mModelManager.init();
-
-  mGBuffer.init(mGraphicsContext);
-  mSkyRenderer.init(mGraphicsContext, mGBuffer);
-
-  // Idle with all precomputation stuff
-  mGraphicsContext.device().graphicsQueue().idle();
-
   auto properties = mGraphicsContext.getProperties();
   mPipelineViewport = {
     properties.swapchainExtent.width, properties.swapchainExtent.height
   };
+
+  mModelManager.init();
+
+  mGBuffer.init(
+    mGraphicsContext, {mPipelineViewport.width, mPipelineViewport.height});
+
+  mSkyRenderer.init(mGraphicsContext, mGBuffer);
+
+  // Idle with all precomputation stuff
+  mGraphicsContext.device().graphicsQueue().idle();
 
   { // Set planet properties
     /* Temporary - the world needs to define this */
@@ -62,7 +64,8 @@ void Renderer3D::init() {
       glm::vec3(0.000650f, 0.001881f, 0.000085f);
     mPlanetProperties.groundAlbedo = glm::vec3(0.05f, 0.05f, 0.05f);
     mPlanetProperties.muSunMin = -0.207912f;
-    mPlanetProperties.wPlanetCenter = glm::vec3(0.0f, -6360.0f, 0.0f);
+    mPlanetProperties.wPlanetCenter =
+      glm::vec3(0.0f, -mPlanetProperties.bottomRadius, 0.0f);
 
     mPlanetRenderer.init(mGraphicsContext, mGBuffer, &mPlanetProperties);
   }
@@ -98,6 +101,10 @@ void Renderer3D::init() {
 
     mCameraProperties.viewProjection =
       mCameraProperties.projection * mCameraProperties.view;
+
+    mCameraProperties.clipUnderPlanet = 1.0f;
+    mCameraProperties.clippingRadius =
+      mPlanetProperties.bottomRadius;
   }
 
   mCamera.init(mGraphicsContext, &mCameraProperties);
@@ -108,7 +115,7 @@ void Renderer3D::init() {
     mLightingProperties.sunSize = glm::vec3(
       0.0046750340586467079f, 0.99998907220740285f, 0.0f);
     mLightingProperties.exposure = 20.0f;
-    mLightingProperties.white = glm::vec3(1.0f);
+    mLightingProperties.white = glm::vec3(2.0f);
   }
 
   mDeferredLighting.init(mGraphicsContext, &mLightingProperties);
@@ -124,7 +131,8 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
      
   mGBuffer.beginRender(frame);
   { // Render 3D scene
-    mSceneSubmitter.submit(mCamera, frame);
+    mSceneSubmitter.submit(mCamera, mPlanetRenderer, frame);
+    // mSkyRenderer.tick(tick, frame, mCameraProperties);
   }
   mGBuffer.endRender(frame);
 
@@ -161,7 +169,7 @@ void Renderer3D::trackInput(
   auto right = glm::cross(
     mCameraProperties.wViewDirection, mCameraProperties.wUp);
 
-  float speedMultiplier = 100.0f;
+  float speedMultiplier = 80.0f;
   if (inputTracker.key(Core::KeyboardButton::R).isDown) {
     speedMultiplier *= 10.0f;
   }

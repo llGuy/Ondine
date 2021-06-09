@@ -14,7 +14,9 @@ void SkyRenderer::init(
   preparePrecompute(graphicsContext);
   precompute(graphicsContext);
 
-  mViewDistanceMeters = 9000.000000;
+  // initDemoPipeline(graphicsContext, renderStage);
+
+  mViewDistanceMeters = 300.000000;
   mViewZenithAngleRadians = 1.470000;
   mViewAzimuthAngleRadians = 0.000000;
   mSunZenithAngleRadians = 1.300000;

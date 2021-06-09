@@ -38,7 +38,10 @@ void SceneSubmitter::init(
 
     pipelineConfig.enableDepthTesting();
     pipelineConfig.configurePipelineLayout(
-      sizeof(testPushConstant),
+      sizeof(mTestPushConstant),
+      // Camera UBO
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      // Planet UBO
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
     modelConfig.configureVertexInput(pipelineConfig);
@@ -52,17 +55,18 @@ void SceneSubmitter::init(
 
 void SceneSubmitter::submit(
   const Camera &camera,
+  const PlanetRenderer &planet,
   VulkanFrame &frame) {
   // Render test model
   auto &commandBuffer = frame.primaryCommandBuffer;
   commandBuffer.bindPipeline(mTestPipeline);
-  commandBuffer.bindUniforms(camera.uniform());
+  commandBuffer.bindUniforms(camera.uniform(), planet.uniform());
 
-  testPushConstant.modelMatrix =
-    glm::translate(glm::vec3(0.0f, 10.0f, 0.0f)) *
-    glm::rotate(glm::radians(0.0f), glm::vec3(1.0, 0.0f, 0.0f)) *
-    glm::scale(glm::vec3(10.0f));
-  commandBuffer.pushConstants(sizeof(testPushConstant), &testPushConstant);
+  mTestPushConstant.modelMatrix =
+    glm::translate(glm::vec3(0.0f, 20.0f, 0.0f)) *
+    glm::rotate(glm::radians(30.0f), glm::vec3(1.0, 0.0f, 0.0f)) *
+    glm::scale(glm::vec3(20.0f));
+  commandBuffer.pushConstants(sizeof(mTestPushConstant), &mTestPushConstant);
 
   auto &model = mModelManager.getStaticModel(mTestModel);
   model.bindIndexBuffer(commandBuffer);

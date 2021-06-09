@@ -14,6 +14,14 @@ struct CameraProperties {
   float aspectRatio;
   float near;
   float far;
+
+  /* 
+     For ocean planar reflections
+     1.0 = everything under the planet gets discarded,
+     -1.0 = everything above the planet gets discarded
+  */
+  float clipUnderPlanet;
+  float clippingRadius;
 };
 
 #endif

@@ -124,7 +124,7 @@ layout (push_constant) uniform PushConstant {
 
 layout(location = 0) in vec3 view_ray;
 
-layout(location = 0) out vec4 color;
+layout(location = 0) out vec4 outAlbedo;
 layout(location = 1) out vec4 outNormal;
 layout(location = 2) out vec4 outPosition;
 
@@ -363,7 +363,6 @@ void main() {
   float sphere_alpha = 0.0;
   vec3 sphere_radiance = vec3(0.0);
 
-  #if 0
   if (distance_to_intersection > 0.0) {
     // Compute the distance between the view ray and the sphere, and the
     // corresponding (tangent of the) subtended angle. Finally, use this to
@@ -401,7 +400,6 @@ void main() {
                                             point - earth_center, shadow_length, sun_direction, transmittance);
     sphere_radiance = sphere_radiance * transmittance + in_scatter;
   }
-  #endif
 
   /*
     <p>In the following we repeat the same steps as above, but for the planet sphere
@@ -465,9 +463,9 @@ void main() {
   }
   radiance = mix(radiance, ground_radiance, ground_alpha);
   radiance = mix(radiance, sphere_radiance, sphere_alpha);
-  color.rgb = 
+  outAlbedo.rgb = 
     pow(vec3(1.0) - exp(-radiance / white_point * exposure), vec3(1.0 / 2.2));
-  color.a = 1.0;
+  outAlbedo.a = 1.0;
 
   outNormal = vec4(0);
   outPosition = vec4(0);

@@ -15,7 +15,7 @@ public:
     Count
   };
 
-  void init(VulkanContext &graphicsContext);
+  void init(VulkanContext &graphicsContext, const VkExtent2D &extent);
 
   void beginRender(VulkanFrame &frame);
   void endRender(VulkanFrame &frame);
@@ -37,7 +37,9 @@ private:
   /* Contains depth buffer, normal buffer, albedo */
   VulkanUniform mGBufferUniform;
 
-  VulkanRenderPass mGBufferRenderPass;
+  /* All GBuffers will use this render pass */
+  static VulkanRenderPass *sGBufferRenderPass;
+
   VulkanFramebuffer mGBufferFBO;
   VulkanTexture mGBufferTextures[Count];
   VkFormat mGBufferFormats[Count];

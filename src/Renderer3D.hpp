@@ -27,6 +27,7 @@ public:
   void tick(const Core::Tick &tick, Graphics::VulkanFrame &frame);
 
   void resize(Resolution newResolution) override;
+
   void trackInput(
     const Core::Tick &tick,
     const Core::InputTracker &inputTracker) override;

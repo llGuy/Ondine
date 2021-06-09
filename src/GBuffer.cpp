@@ -2,7 +2,10 @@
 
 namespace Ondine::Graphics {
 
-void GBuffer::init(VulkanContext &graphicsContext) {
+VulkanRenderPass *GBuffer::sGBufferRenderPass = nullptr;
+
+void GBuffer::init(
+  VulkanContext &graphicsContext, const VkExtent2D &extent) {
   auto ctxProperties = graphicsContext.getProperties();
 
   mGBufferExtent = {
@@ -15,7 +18,9 @@ void GBuffer::init(VulkanContext &graphicsContext) {
   mGBufferFormats[2] = VK_FORMAT_R32G32B32A32_SFLOAT;
   mGBufferFormats[3] = ctxProperties.depthFormat;
 
-  { // Create render pass
+  if (!sGBufferRenderPass) { // Create render pass
+    sGBufferRenderPass = flAlloc<VulkanRenderPass>();
+
     VulkanRenderPassConfig renderPassConfig(4, 1);
 
     renderPassConfig.addAttachment(
@@ -43,7 +48,7 @@ void GBuffer::init(VulkanContext &graphicsContext) {
       makeArray<uint32_t, AllocationType::Linear>(),
       true);
 
-    mGBufferRenderPass.init(graphicsContext.device(), renderPassConfig);
+    sGBufferRenderPass->init(graphicsContext.device(), renderPassConfig);
   }
 
   initTargets(graphicsContext);
@@ -51,7 +56,7 @@ void GBuffer::init(VulkanContext &graphicsContext) {
 
 void GBuffer::beginRender(VulkanFrame &frame) {
   frame.primaryCommandBuffer.beginRenderPass(
-    mGBufferRenderPass,
+    *sGBufferRenderPass,
     mGBufferFBO,
     {}, mGBufferExtent);
 }
@@ -67,7 +72,7 @@ void GBuffer::resize(VulkanContext &vulkanContext, Resolution newResolution) {
 }
 
 const VulkanRenderPass &GBuffer::renderPass() const {
-  return mGBufferRenderPass;
+  return *sGBufferRenderPass;
 }
 
 const VulkanFramebuffer &GBuffer::framebuffer() const {
@@ -123,7 +128,7 @@ void GBuffer::initTargets(VulkanContext &graphicsContext) {
   }
 
   { // Create framebuffer
-    VulkanFramebufferConfig fboConfig(4, mGBufferRenderPass);
+    VulkanFramebufferConfig fboConfig(4, *sGBufferRenderPass);
 
     fboConfig.addAttachment(mGBufferTextures[Albedo]);
     fboConfig.addAttachment(mGBufferTextures[Normal]);
