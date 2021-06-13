@@ -1,11 +1,13 @@
 #include "FileSystem.hpp"
 #include "Application.hpp"
+#include "WaterRenderer.hpp"
 #include "DeferredLighting.hpp"
 
 namespace Ondine::Graphics {
 
 void DeferredLighting::init(
   VulkanContext &graphicsContext,
+  VkExtent2D initialExtent,
   const LightingProperties *properties) {
   { // Create render pass
     VulkanRenderPassConfig renderPassConfig(1, 1);
@@ -23,18 +25,18 @@ void DeferredLighting::init(
     mLightingRenderPass.init(graphicsContext.device(), renderPassConfig);
   }
 
-  { // Create pipeline
-    Core::File lightingVert = Core::gFileSystem->createFile(
-      (Core::MountPoint)Core::ApplicationMountPoints::Application,
-      "res/spv/Lighting.vert.spv",
-      Core::FileOpenType::Binary | Core::FileOpenType::In);
+  Core::File lightingVert = Core::gFileSystem->createFile(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
+    "res/spv/Lighting.vert.spv",
+    Core::FileOpenType::Binary | Core::FileOpenType::In);
+  Buffer vsh = lightingVert.readBinary();
 
+  { // Create pipeline
     Core::File lightingFrag = Core::gFileSystem->createFile(
       (Core::MountPoint)Core::ApplicationMountPoints::Application,
       "res/spv/Lighting.frag.spv",
       Core::FileOpenType::Binary | Core::FileOpenType::In);
 
-    Buffer vsh = lightingVert.readBinary();
     Buffer fsh = lightingFrag.readBinary();
 
     VulkanPipelineConfig pipelineConfig(
@@ -60,12 +62,44 @@ void DeferredLighting::init(
       pipelineConfig);
   }
 
-  { // Create attachments and framebuffer
-    auto ctxProperties = graphicsContext.getProperties();
+  { // Create pipeline which renders reflections
+     // Create pipeline
+    Core::File lightingFrag = Core::gFileSystem->createFile(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
+      "res/spv/LightingRefl.frag.spv",
+      Core::FileOpenType::Binary | Core::FileOpenType::In);
 
+    Buffer fsh = lightingFrag.readBinary();
+
+    VulkanPipelineConfig pipelineConfig(
+      {mLightingRenderPass, 0},
+      VulkanShader(
+        graphicsContext.device(), vsh, VulkanShaderType::Vertex),
+      VulkanShader(
+        graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+
+    pipelineConfig.configurePipelineLayout(
+      0,
+      VulkanPipelineDescriptorLayout{
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      VulkanPipelineDescriptorLayout{
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
+      VulkanPipelineDescriptorLayout{
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
+
+    mLightingReflPipeline.init(
+      graphicsContext.device(),
+      graphicsContext.descriptorLayouts(),
+      pipelineConfig);
+  }
+
+  { // Create attachments and framebuffer
     mLightingExtent = {
-      ctxProperties.swapchainExtent.width,
-      ctxProperties.swapchainExtent.height,
+      initialExtent.width,
+      initialExtent.height,
     };
 
     initTargets(graphicsContext);
@@ -112,6 +146,35 @@ void DeferredLighting::render(
     planet.uniform(),
     mLightingPropertiesUniform,
     sky.uniform());
+
+  commandBuffer.setViewport();
+  commandBuffer.setScissor();
+
+  commandBuffer.draw(4, 1, 0, 0);
+
+  commandBuffer.endRenderPass();
+}
+
+void DeferredLighting::render(
+  VulkanFrame &frame, const GBuffer &gbuffer,
+  const Camera &camera, const PlanetRenderer &planet,
+  const WaterRenderer &water,
+  const SkyRenderer &sky) {
+  auto &commandBuffer = frame.primaryCommandBuffer;
+
+  commandBuffer.beginRenderPass(
+    mLightingRenderPass,
+    mLightingFBO,
+    {}, mLightingExtent);
+
+  commandBuffer.bindPipeline(mLightingReflPipeline);
+  commandBuffer.bindUniforms(
+    gbuffer.uniform(),
+    camera.uniform(),
+    planet.uniform(),
+    mLightingPropertiesUniform,
+    sky.uniform(),
+    water.uniform());
 
   commandBuffer.setViewport();
   commandBuffer.setScissor();

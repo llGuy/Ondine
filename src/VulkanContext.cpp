@@ -32,7 +32,7 @@ void VulkanContext::initContext(const Core::WindowContextInfo &surfaceInfo) {
   requiredFeatures.count = 1;
   requiredFeatures.features.geometryShader = VK_TRUE;
   requiredFeatures.features.independentBlend = VK_TRUE;
-  mDevice.init(DeviceType::DiscreteGPU, mInstance, mSurface, requiredFeatures);
+  mDevice.init(DeviceType::Any, mInstance, mSurface, requiredFeatures);
 
   // Swapchain
   mSwapchain.init(mDevice, mSurface, surfaceInfo.resolution);

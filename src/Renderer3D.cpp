@@ -118,8 +118,16 @@ void Renderer3D::init() {
     mLightingProperties.white = glm::vec3(2.0f);
   }
 
-  mDeferredLighting.init(mGraphicsContext, &mLightingProperties);
+  mDeferredLighting.init(
+    mGraphicsContext,
+    {mPipelineViewport.width, mPipelineViewport.height},
+    &mLightingProperties);
+
   mSceneSubmitter.init(mGBuffer, mGraphicsContext);
+
+  mWaterRenderer.init(
+    mGraphicsContext, mCameraProperties,
+    mPlanetProperties, &mLightingProperties);
 }
 
 void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
@@ -128,16 +136,21 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
 
   mCamera.updateData(frame.primaryCommandBuffer, mCameraProperties);
   mDeferredLighting.updateData(frame.primaryCommandBuffer, mLightingProperties);
+
+  mWaterRenderer.updateCameraInfo(mCameraProperties, mPlanetProperties);
+  mWaterRenderer.updateCameraUBO(frame.primaryCommandBuffer);
+  mWaterRenderer.tick(frame, mPlanetRenderer, mSkyRenderer, mSceneSubmitter);
      
   mGBuffer.beginRender(frame);
   { // Render 3D scene
+    // mPlanetRenderer.tick(tick, frame, mCamera);
     mSceneSubmitter.submit(mCamera, mPlanetRenderer, frame);
     // mSkyRenderer.tick(tick, frame, mCameraProperties);
   }
   mGBuffer.endRender(frame);
 
   mDeferredLighting.render(
-    frame, mGBuffer, mCamera, mPlanetRenderer, mSkyRenderer);
+    frame, mGBuffer, mCamera, mPlanetRenderer, mWaterRenderer, mSkyRenderer);
 }
 
 void Renderer3D::resize(Resolution newResolution) {
@@ -161,6 +174,8 @@ void Renderer3D::resize(Resolution newResolution) {
 
   mCameraProperties.inverseProjection = glm::inverse(
     mCameraProperties.projection);
+
+  mWaterRenderer.resize(mGraphicsContext, newResolution);
 }
 
 void Renderer3D::trackInput(

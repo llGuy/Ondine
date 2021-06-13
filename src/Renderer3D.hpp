@@ -10,6 +10,7 @@
 #include "SkyRenderer.hpp"
 #include "RenderStage.hpp"
 #include "ModelManager.hpp"
+#include "WaterRenderer.hpp"
 #include "VulkanContext.hpp"
 #include "SceneSubmitter.hpp"
 #include "DeferredLighting.hpp"
@@ -45,6 +46,7 @@ private:
   GBuffer mGBuffer;
   SkyRenderer mSkyRenderer;
   PlanetRenderer mPlanetRenderer;
+  WaterRenderer mWaterRenderer;
   DeferredLighting mDeferredLighting;
 
   ModelManager mModelManager;

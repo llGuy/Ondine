@@ -1,10 +1,11 @@
 #include "Log.hpp"
-#include "Application.hpp"
 #include "Memory.hpp"
 #include "IOEvent.hpp"
 #include "GameView.hpp"
 #include "FileSystem.hpp"
 #include "EditorView.hpp"
+#include "DebugEvent.hpp"
+#include "Application.hpp"
 
 namespace Ondine::Core {
 
@@ -73,6 +74,10 @@ void Application::run() {
 
       case EventCategory::Graphics: {
         processGraphicsEvent(ev);
+      } break;
+
+      case EventCategory::Debug: {
+        processDebugEvent(ev);
       } break;
 
       default:; /* Only handle the above */
@@ -176,6 +181,24 @@ void Application::processInputEvent(Event *ev) {
 
 void Application::processGraphicsEvent(Event *ev) {
   switch (ev->type) {
+  default:;
+  }
+}
+
+void Application::processDebugEvent(Event *ev) {
+  switch (ev->type) {
+  case EventType::Breakpoint: {
+    auto *event = (EventBreakpoint *)ev;
+    
+#if _WIN32
+    __debugbreak();
+#else
+    asm("int $3");
+#endif
+
+    event->isHandled = true;
+  } break;
+
   default:;
   }
 }

@@ -5,6 +5,7 @@
 #include "Window.hpp"
 #include "Memory.hpp"
 #include "IOEvent.hpp"
+#include "DebugEvent.hpp"
 
 #ifdef _WIN32
 #include <shellscalingapi.h>
@@ -260,6 +261,12 @@ void Window::keyCallback(int key, int scancode, int action, int mods) const {
   case GLFW_RELEASE: {
     kbEvent->keyboardEventType = KeyboardEventType::Release;
     kbEvent->release.button = button;
+
+    // For debugging
+    if (button == KeyboardButton::F9) {
+      auto *dbEvent = lnEmplaceAlloc<EventBreakpoint>();
+      mEventCallback(dbEvent);
+    }
   } break;
   }
 

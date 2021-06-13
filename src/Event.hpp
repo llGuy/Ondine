@@ -9,7 +9,8 @@ namespace Ondine::Core {
 enum class EventCategory {
   Input,
   Graphics,
-  Gameplay
+  Gameplay,
+  Debug
 };
 
 enum class EventType {
@@ -19,6 +20,7 @@ enum class EventType {
   Close,
   ViewportResize,
   CursorDisplayChange,
+  Breakpoint,
   Invalid
 };
 

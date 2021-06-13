@@ -7,13 +7,8 @@ namespace Ondine::Graphics {
 
 class GBuffer : public RenderStage {
 public:
-  enum {
-    Albedo,
-    Normal,
-    Position,
-    Depth,
-    Count
-  };
+  GBuffer() = default;
+  ~GBuffer() override = default;
 
   void init(VulkanContext &graphicsContext, const VkExtent2D &extent);
 
@@ -32,6 +27,14 @@ private:
   void destroyTargets(VulkanContext &graphicsContext);
 
 private:
+  enum {
+    Albedo,
+    Normal,
+    Position,
+    Depth,
+    Count
+  };
+
   VulkanUniform mAlbedoUniform;
 
   /* Contains depth buffer, normal buffer, albedo */

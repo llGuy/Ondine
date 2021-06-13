@@ -14,20 +14,33 @@ struct LightingProperties {
   alignas(4) float exposure;
 };
 
-class GBuffer;
 class Camera;
+class GBuffer;
 class SkyRenderer;
+class WaterRenderer;
 class PlanetRenderer;
 
 class DeferredLighting : public RenderStage {
 public:
+  DeferredLighting() = default;
+  ~DeferredLighting() override = default;
+
   void init(
     VulkanContext &graphicsContext,
+    VkExtent2D initialExtent,
     const LightingProperties *properties = nullptr);
 
+  // Doesn't render planar reflections at a certain planet radius
   void render(
     VulkanFrame &frame, const GBuffer &gbuffer,
     const Camera &camera, const PlanetRenderer &planet,
+    const SkyRenderer &sky);
+
+  // Renders planet reflections at a certain planet radius
+  void render(
+    VulkanFrame &frame, const GBuffer &gbuffer,
+    const Camera &camera, const PlanetRenderer &planet,
+    const WaterRenderer &water,
     const SkyRenderer &sky);
 
   void updateData(
@@ -51,6 +64,7 @@ private:
 
   VulkanBuffer mLightingPropertiesBuffer;
 
+  VulkanPipeline mLightingReflPipeline;
   VulkanPipeline mLightingPipeline;
   VulkanRenderPass mLightingRenderPass;
   VulkanFramebuffer mLightingFBO;

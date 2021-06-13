@@ -13,6 +13,7 @@ namespace Ondine::Graphics {
 */
 class RenderStage {
 public:
+  virtual ~RenderStage() {};
   virtual const VulkanRenderPass &renderPass() const = 0;
   virtual const VulkanFramebuffer &framebuffer() const = 0;
   virtual const VulkanUniform &uniform() const = 0;
