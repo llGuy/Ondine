@@ -136,7 +136,8 @@ void main() {
       pointRadiance = vec3(0.0);
 
       oceanAlpha = 1.0;
-    oceanRadiance = texture(uReflectionTexture, inUVs).rgb * 0.8;
+      oceanRadiance = texture(
+        uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y)).rgb * 0.8;
     }
     else {
       vec4 radiance = getPointRadiance(gbuffer);
@@ -146,7 +147,8 @@ void main() {
   }
   else if (oceanIntersection.didIntersect) {
     oceanAlpha = 1.0;
-    oceanRadiance = texture(uReflectionTexture, inUVs).rgb * 0.8;
+    oceanRadiance = texture(
+      uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y)).rgb * 0.8;
   }
 
   /* Light contribution from sky */

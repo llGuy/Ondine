@@ -1,5 +1,6 @@
 #include "WaterRenderer.hpp"
 #include <glm/gtx/transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 namespace Ondine::Graphics {
 
@@ -69,20 +70,19 @@ glm::vec3 WaterRenderer::reflectCameraPosition(
   const CameraProperties &sceneCamera,
   const PlanetProperties &planetProperties) {
   // Get distance between camera and planet
-  auto diff = sceneCamera.wPosition - planetProperties.wPlanetCenter;
+  auto diff = sceneCamera.wPosition / 1000.0f - planetProperties.wPlanetCenter;
   float diffDist = glm::length(diff);
-  float groundToCam = diffDist - planetProperties.bottomRadius;
+  float groundToCam = diffDist - planetProperties.bottomRadius - 0.1f;
+  glm::vec3 toCenter = -glm::normalize(diff);
 
-  return planetProperties.wPlanetCenter +
-    (sceneCamera.wPosition - planetProperties.wPlanetCenter) *
-    (diffDist - 2.0f * (diffDist - planetProperties.bottomRadius)) / diffDist;
+  return sceneCamera.wPosition / 1000.0f + toCenter * 2.0f * groundToCam;
 }
 
 glm::vec3 WaterRenderer::reflectCameraDirection(
   const CameraProperties &sceneCamera,
   const PlanetProperties &planetProperties) {
-  glm::vec3 normal =
-    glm::normalize(sceneCamera.wPosition - planetProperties.wPlanetCenter);
+  glm::vec3 normal = glm::normalize(
+      sceneCamera.wPosition / 1000.0f - planetProperties.wPlanetCenter);
 
   glm::vec3 right = glm::normalize(
     glm::cross(sceneCamera.wViewDirection, normal));
@@ -109,11 +109,27 @@ void WaterRenderer::updateCameraInfo(
     mCameraProperties.far);
 
   mCameraProperties.wPosition = reflectCameraPosition(
-    camera, planet);
+    camera, planet) * 1000.0f;
   mCameraProperties.wViewDirection = reflectCameraDirection(
     camera, planet);
-  mCameraProperties.wUp = glm::normalize(
-    planet.wPlanetCenter - camera.wPosition);
+  // mCameraProperties.wUp = glm::normalize(
+  // planet.wPlanetCenter - camera.wPosition / 1000.0f);
+  mCameraProperties.wUp = - camera.wUp;
+
+  LOG_INFOV(
+    "%s -> %s\n",
+    glm::to_string(camera.wViewDirection).c_str(),
+    glm::to_string(mCameraProperties.wViewDirection).c_str());
+
+  LOG_INFOV(
+    "%s -> %s\n",
+    glm::to_string(camera.wPosition).c_str(),
+    glm::to_string(mCameraProperties.wPosition).c_str());
+
+  LOG_INFOV(
+    "%s -> %s\n\n",
+    glm::to_string(camera.wUp).c_str(),
+    glm::to_string(mCameraProperties.wUp).c_str());
 
   mCameraProperties.view = glm::lookAt(
     mCameraProperties.wPosition,
@@ -131,7 +147,7 @@ void WaterRenderer::updateCameraInfo(
 
   mCameraProperties.clipUnderPlanet = 1.0f;
   mCameraProperties.clippingRadius =
-    planet.bottomRadius;
+    planet.bottomRadius + 0.1f;
 }
 
 void WaterRenderer::updateCameraUBO(const VulkanCommandBuffer &commandBuffer) {

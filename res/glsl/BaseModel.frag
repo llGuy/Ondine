@@ -23,7 +23,7 @@ layout (set = 1, binding = 0) uniform PlanetUniform {
 
 void main() {
   // Get distance from center of planet
-  vec3 diff = inFS.wPosition.xyz - uPlanet.planet.wPlanetCenter;
+  vec3 diff = inFS.wPosition.xyz / 1000.0 - uPlanet.planet.wPlanetCenter;
   float radius2 = dot(diff, diff);
   float radius2Diff =
     radius2 - uCamera.camera.clippingRadius * uCamera.camera.clippingRadius;
@@ -32,7 +32,7 @@ void main() {
     discard;
   }
   else {
-    outAlbedo = vec4(1.0);
+    outAlbedo = vec4(1.0, 9.0, 8.0, 0.0);
     outNormal = vec4(normalize(inFS.wNormal.xyz), 1.0);
     outPosition = inFS.wPosition;
     outPosition.a = 1.0;

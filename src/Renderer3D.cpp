@@ -83,7 +83,7 @@ void Renderer3D::init() {
       mCameraProperties.near,
       mCameraProperties.far);
 
-    mCameraProperties.wPosition = glm::vec3(0.0f, 10.0f, 0.0f);
+    mCameraProperties.wPosition = glm::vec3(0.0f, 500.0f, 0.0f);
     mCameraProperties.wViewDirection =
       glm::normalize(glm::vec3(0.0f, 0.0f, -1.0f));
     mCameraProperties.wUp = glm::vec3(0.0f, 1.0f, 0.0f);
