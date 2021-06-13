@@ -184,7 +184,7 @@ void Renderer3D::trackInput(
   auto right = glm::cross(
     mCameraProperties.wViewDirection, mCameraProperties.wUp);
 
-  float speedMultiplier = 80.0f;
+  float speedMultiplier = 30.0f;
   if (inputTracker.key(Core::KeyboardButton::R).isDown) {
     speedMultiplier *= 10.0f;
   }

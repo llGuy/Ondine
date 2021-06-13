@@ -116,21 +116,6 @@ void WaterRenderer::updateCameraInfo(
   // planet.wPlanetCenter - camera.wPosition / 1000.0f);
   mCameraProperties.wUp = - camera.wUp;
 
-  LOG_INFOV(
-    "%s -> %s\n",
-    glm::to_string(camera.wViewDirection).c_str(),
-    glm::to_string(mCameraProperties.wViewDirection).c_str());
-
-  LOG_INFOV(
-    "%s -> %s\n",
-    glm::to_string(camera.wPosition).c_str(),
-    glm::to_string(mCameraProperties.wPosition).c_str());
-
-  LOG_INFOV(
-    "%s -> %s\n\n",
-    glm::to_string(camera.wUp).c_str(),
-    glm::to_string(mCameraProperties.wUp).c_str());
-
   mCameraProperties.view = glm::lookAt(
     mCameraProperties.wPosition,
     mCameraProperties.wPosition + mCameraProperties.wViewDirection,

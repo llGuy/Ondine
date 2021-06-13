@@ -121,6 +121,12 @@ void main() {
   RayIntersection oceanIntersection = raySphereIntersection(
     viewRay, uSky.sky.wPlanetCenter, uSky.sky.bottomRadius + 0.1);
 
+  GBufferData oceanGBuffer = GBufferData(
+    vec4(oceanIntersection.wNormal, 1.0),
+    0.0,
+    vec4(oceanIntersection.wIntersectionPoint, 1.0),
+    vec4(0.0));
+
   float oceanAlpha = 0.0;
   vec3 oceanRadiance = vec3(0.0);
 
@@ -136,8 +142,11 @@ void main() {
       pointRadiance = vec3(0.0);
 
       oceanAlpha = 1.0;
-      oceanRadiance = texture(
-        uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y)).rgb * 0.8;
+      oceanGBuffer.albedo = texture(
+        uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y)) *
+        vec4(0.9, 0.9, 1.1, 1.0);
+
+      oceanRadiance = getPointRadiance(oceanGBuffer).rgb;
     }
     else {
       vec4 radiance = getPointRadiance(gbuffer);
@@ -147,8 +156,12 @@ void main() {
   }
   else if (oceanIntersection.didIntersect) {
     oceanAlpha = 1.0;
-    oceanRadiance = texture(
-      uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y)).rgb * 0.8;
+
+    oceanGBuffer.albedo = texture(
+      uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y)) *
+      vec4(0.9, 0.9, 1.1, 1.0);
+
+    oceanRadiance = getPointRadiance(oceanGBuffer).rgb;
   }
 
   /* Light contribution from sky */
