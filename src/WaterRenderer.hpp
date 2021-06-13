@@ -30,6 +30,9 @@ public:
     const PlanetProperties &planet);
 
   void updateCameraUBO(const VulkanCommandBuffer &commandBuffer);
+  void updateLightingUBO(
+    const LightingProperties &properties,
+    const VulkanCommandBuffer &commandBuffer);
 
   // Resolution of the game viewport
   void resize(VulkanContext &vulkanContext, Resolution newResolution);

@@ -139,6 +139,12 @@ void WaterRenderer::updateCameraUBO(const VulkanCommandBuffer &commandBuffer) {
   mReflectionCamera.updateData(commandBuffer, mCameraProperties);
 }
 
+void WaterRenderer::updateLightingUBO(
+  const LightingProperties &properties,
+  const VulkanCommandBuffer &commandBuffer) {
+  mLighting.updateData(commandBuffer, properties);
+}
+
 const VulkanRenderPass &WaterRenderer::renderPass() const {
   return mGBuffer.renderPass();
 }

@@ -139,6 +139,8 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
 
   mWaterRenderer.updateCameraInfo(mCameraProperties, mPlanetProperties);
   mWaterRenderer.updateCameraUBO(frame.primaryCommandBuffer);
+  mWaterRenderer.updateLightingUBO(
+    mLightingProperties, frame.primaryCommandBuffer);
   mWaterRenderer.tick(frame, mPlanetRenderer, mSkyRenderer, mSceneSubmitter);
      
   mGBuffer.beginRender(frame);
