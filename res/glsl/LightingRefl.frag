@@ -104,6 +104,13 @@ RayIntersection raySphereIntersection(
   return intersection;
 }
 
+const float OCEAN_HEIGHT = 0.1;
+
+vec4 getOceanColor() {
+  return texture(
+    uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y));
+}
+
 void main() {
   /* Get all the inputs */
   GBufferData gbuffer = GBufferData(
@@ -119,7 +126,7 @@ void main() {
   vec3 pointRadiance = vec3(0.0);
 
   RayIntersection oceanIntersection = raySphereIntersection(
-    viewRay, uSky.sky.wPlanetCenter, uSky.sky.bottomRadius + 0.1);
+    viewRay, uSky.sky.wPlanetCenter, uSky.sky.bottomRadius + OCEAN_HEIGHT);
 
   GBufferData oceanGBuffer = GBufferData(
     vec4(oceanIntersection.wNormal, 1.0),
@@ -134,17 +141,17 @@ void main() {
     // Check if this point is further away than the ocean
     vec4 vPosition = uCamera.camera.view * vec4(
       gbuffer.wPosition.xyz / 1000.0, 1.0);
-    vec4 vOceanPosition = uCamera.camera.view *
-      vec4(oceanIntersection.wIntersectionPoint, 1.0);
+    vec4 vOceanPosition = uCamera.camera.view * vec4(
+      oceanIntersection.wIntersectionPoint, 1.0);
 
     if (vPosition.z < vOceanPosition.z && oceanIntersection.didIntersect) {
+      oceanGBuffer.wPosition *= 1000.0;
+
       pointAlpha = 0.0;
       pointRadiance = vec3(0.0);
 
       oceanAlpha = 1.0;
-      oceanGBuffer.albedo = texture(
-        uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y)) *
-        vec4(0.9, 0.9, 1.1, 1.0);
+      oceanGBuffer.albedo = getOceanColor();
 
       oceanRadiance = getPointRadiance(oceanGBuffer).rgb;
     }
@@ -155,11 +162,11 @@ void main() {
     }
   }
   else if (oceanIntersection.didIntersect) {
+    oceanGBuffer.wPosition *= 1000.0;
+
     oceanAlpha = 1.0;
 
-    oceanGBuffer.albedo = texture(
-      uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y)) *
-      vec4(0.9, 0.9, 1.1, 1.0);
+    oceanGBuffer.albedo = getOceanColor();
 
     oceanRadiance = getPointRadiance(oceanGBuffer).rgb;
   }

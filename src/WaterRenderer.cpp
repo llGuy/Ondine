@@ -72,7 +72,7 @@ glm::vec3 WaterRenderer::reflectCameraPosition(
   // Get distance between camera and planet
   auto diff = sceneCamera.wPosition / 1000.0f - planetProperties.wPlanetCenter;
   float diffDist = glm::length(diff);
-  float groundToCam = diffDist - planetProperties.bottomRadius - 0.1f;
+  float groundToCam = diffDist - planetProperties.bottomRadius - OCEAN_HEIGHT;
   glm::vec3 toCenter = -glm::normalize(diff);
 
   return sceneCamera.wPosition / 1000.0f + toCenter * 2.0f * groundToCam;
@@ -132,7 +132,7 @@ void WaterRenderer::updateCameraInfo(
 
   mCameraProperties.clipUnderPlanet = 1.0f;
   mCameraProperties.clippingRadius =
-    planet.bottomRadius + 0.1f;
+    planet.bottomRadius + OCEAN_HEIGHT;
 }
 
 void WaterRenderer::updateCameraUBO(const VulkanCommandBuffer &commandBuffer) {

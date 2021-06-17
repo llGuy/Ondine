@@ -53,6 +53,7 @@ private:
 
 private:
   static constexpr float VIEWPORT_SCALE = 0.3f;
+  static constexpr float OCEAN_HEIGHT = 0.1f;
 
   GBuffer mGBuffer;
   // We use a deferred lighting stage to light the reflected image
