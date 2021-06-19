@@ -99,6 +99,23 @@ RayIntersection raySphereIntersection(
     intersection.wIntersectionPoint = camPosKm + viewRay * distToIntersection;
     intersection.wNormal = normalize(
       intersection.wIntersectionPoint - planetCenterKm);
+
+    vec3 intersectionM = intersection.wIntersectionPoint * 100.0;
+
+    // Depends on depth of the water on screen
+    float displacementFactor = 1.0 - smoothstep(
+      0.0, 1.0, distToIntersection / 0.5);
+
+    // Adjust normal for waves
+    intersection.wNormal.x += 0.1 * sin(
+      intersectionM.x * PI / 0.1) *
+      displacementFactor;
+
+    intersection.wNormal.z += 0.1 * sin(
+      intersectionM.x * PI / 0.1) *
+      displacementFactor;
+
+    intersection.wNormal = normalize(intersection.wNormal);
   }
 
   return intersection;

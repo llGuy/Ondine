@@ -12,6 +12,8 @@ struct LightingProperties {
   alignas(16) glm::vec3 sunSize;
   alignas(16) glm::vec3 white;
   alignas(4) float exposure;
+  alignas(4) float time;
+  alignas(4) float dt;
 };
 
 class Camera;
