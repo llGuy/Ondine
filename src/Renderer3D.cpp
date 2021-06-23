@@ -83,9 +83,9 @@ void Renderer3D::init() {
       mCameraProperties.near,
       mCameraProperties.far);
 
-    mCameraProperties.wPosition = glm::vec3(0.0f, 500.0f, 0.0f);
+    mCameraProperties.wPosition = glm::vec3(-50.0f, 90.0f, 180.0f);
     mCameraProperties.wViewDirection =
-      glm::normalize(glm::vec3(0.0f, 0.0f, -1.0f));
+      glm::normalize(glm::vec3(0.3f, -0.1f, -1.0f));
     mCameraProperties.wUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
     mCameraProperties.view = glm::lookAt(
@@ -111,7 +111,7 @@ void Renderer3D::init() {
 
   { // Set lighting properties
     mLightingProperties.sunDirection =
-      glm::normalize(glm::vec3(0.000001f, 0.2f, -1.00001f));
+      glm::normalize(glm::vec3(0.000001f, 0.01f, -1.00001f));
     mLightingProperties.sunSize = glm::vec3(
       0.0046750340586467079f, 0.99998907220740285f, 0.0f);
     mLightingProperties.exposure = 20.0f;
