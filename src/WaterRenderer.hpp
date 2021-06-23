@@ -1,8 +1,9 @@
 #pragma once
 
+#include "Scene.hpp"
 #include "GBuffer.hpp"
 #include "RenderStage.hpp"
-#include "SceneSubmitter.hpp"
+#include "Scene.hpp"
 #include "DeferredLighting.hpp"
 
 namespace Ondine::Graphics {
@@ -23,7 +24,7 @@ public:
     VulkanFrame &frame,
     const PlanetRenderer &planet,
     const SkyRenderer &sky,
-    SceneSubmitter &sceneSubmitter);
+    Scene &sceneSubmitter);
 
   void updateCameraInfo(
     const CameraProperties &camera,
@@ -53,7 +54,7 @@ private:
 
 private:
   static constexpr float VIEWPORT_SCALE = 0.3f;
-  static constexpr float OCEAN_HEIGHT = 0.1f;
+  static constexpr float OCEAN_HEIGHT = 0.05f;
 
   GBuffer mGBuffer;
   // We use a deferred lighting stage to light the reflected image

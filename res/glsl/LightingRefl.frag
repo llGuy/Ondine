@@ -100,32 +100,21 @@ RayIntersection raySphereIntersection(
     intersection.wNormal = normalize(
       intersection.wIntersectionPoint - planetCenterKm);
 
-    vec3 intersectionM = intersection.wIntersectionPoint * 100.0;
+    vec3 intersectionM = intersection.wIntersectionPoint;
 
     // Depends on depth of the water on screen
     float displacementFactor = 1.0 - smoothstep(
       0.0, 1.0, distToIntersection / 0.5);
-
-    // Adjust normal for waves
-    intersection.wNormal.x += 0.1 * sin(
-      intersectionM.x * PI / 0.1) *
-      displacementFactor;
-
-    intersection.wNormal.z += 0.1 * sin(
-      intersectionM.x * PI / 0.1) *
-      displacementFactor;
-
-    intersection.wNormal = normalize(intersection.wNormal);
   }
 
   return intersection;
 }
 
-const float OCEAN_HEIGHT = 0.1;
+const float OCEAN_HEIGHT = 0.05;
 
 vec4 getOceanColor() {
   return texture(
-    uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y));
+    uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y)) * 0.2;
 }
 
 void main() {

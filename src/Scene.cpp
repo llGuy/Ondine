@@ -1,16 +1,17 @@
 #include "FileSystem.hpp"
 #include "Application.hpp"
-#include "SceneSubmitter.hpp"
+#include "Scene.hpp"
 #include <glm/gtx/transform.hpp>
 
 namespace Ondine::Graphics {
 
-SceneSubmitter::SceneSubmitter(ModelManager &modelManager)
-  : mModelManager(modelManager) {
+Scene::Scene(ModelManager &modelManager)
+  : mModelManager(modelManager),
+    mSceneObjects(MAX_SCENE_OBJECTS_COUNT) {
   
 }
 
-void SceneSubmitter::init(
+void Scene::init(
   const GBuffer &gbuffer,
   VulkanContext &graphicsContext) {
   { // Create test model
@@ -53,7 +54,7 @@ void SceneSubmitter::init(
   }
 }
 
-void SceneSubmitter::submit(
+void Scene::submit(
   const Camera &camera,
   const PlanetRenderer &planet,
   VulkanFrame &frame) {
@@ -62,12 +63,7 @@ void SceneSubmitter::submit(
   commandBuffer.bindPipeline(mTestPipeline);
   commandBuffer.bindUniforms(camera.uniform(), planet.uniform());
 
-  mTestPushConstant.modelMatrix =
-    glm::translate(glm::vec3(0.0f, 150.0f, 0.0f)) *
-    glm::rotate(glm::radians(30.0f), glm::vec3(1.0, 0.0f, 0.0f)) *
-    glm::scale(glm::vec3(5.0f));
-  commandBuffer.pushConstants(sizeof(mTestPushConstant), &mTestPushConstant);
-
+  // For now just render one model
   auto &model = mModelManager.getStaticModel(mTestModel);
   model.bindIndexBuffer(commandBuffer);
   model.bindVertexBuffers(commandBuffer);
@@ -75,15 +71,30 @@ void SceneSubmitter::submit(
   commandBuffer.setViewport();
   commandBuffer.setScissor();
 
-  model.submitForRender(commandBuffer);
+  for (int i = 0; i < mSceneObjects.size(); ++i) {
+    auto &sceneObj = mSceneObjects[i];
+    if (sceneObj.isInitialised) {
+      commandBuffer.pushConstants(sizeof(glm::mat4), &sceneObj.transform);
+      model.submitForRender(commandBuffer);
+    }
+  }
+}
 
-  mTestPushConstant.modelMatrix =
-    glm::translate(glm::vec3(30.0f, 120.0f, 0.0f)) *
-    glm::rotate(glm::radians(30.0f), glm::vec3(1.0, 0.0f, 0.0f)) *
-    glm::scale(glm::vec3(5.0f));
-  commandBuffer.pushConstants(sizeof(mTestPushConstant), &mTestPushConstant);
+SceneObjectHandle Scene::createSceneObject() {
+  auto handle = (SceneObjectHandle)mSceneObjects.add();
+  mSceneObjects[handle].isInitialised = true;
+  return handle;
+}
 
-  model.submitForRender(commandBuffer);
+void Scene::destroySceneObject(SceneObjectHandle handle) {
+  assert(handle != SCENE_OBJECT_HANDLE_INVALID);
+  mSceneObjects[handle].isInitialised = false;
+  mSceneObjects.remove(handle);
+}
+
+SceneObject &Scene::getSceneObject(SceneObjectHandle handle) {
+  assert(handle != SCENE_OBJECT_HANDLE_INVALID);
+  return mSceneObjects[handle];
 }
 
 }

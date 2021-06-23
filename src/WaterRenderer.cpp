@@ -33,7 +33,7 @@ void WaterRenderer::tick(
   VulkanFrame &frame,
   const PlanetRenderer &planet,
   const SkyRenderer &sky,
-  SceneSubmitter &sceneSubmitter) {
+  Scene &sceneSubmitter) {
   mGBuffer.beginRender(frame);
   { // Render 3D scene
     sceneSubmitter.submit(mReflectionCamera, planet, frame);

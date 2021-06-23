@@ -54,9 +54,11 @@ void Application::run() {
   mIsRunning = true;
   mDt = 0.0f;
 
+  float accumulatedTime = 0.0f;
+
   while (mIsRunning) {
     TimeStamp frameStart = getCurrentTime();
-    Tick currentTick = { mDt };
+    Tick currentTick = { mDt, accumulatedTime };
 
     mInputTracker.tick(currentTick);
 
@@ -117,6 +119,8 @@ void Application::run() {
       sleepSeconds(mMinFrametime - mDt);
       mDt = mMinFrametime;
     }
+
+    accumulatedTime += mDt;
   }
 
   /* Shutdown */

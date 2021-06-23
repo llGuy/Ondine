@@ -6,6 +6,8 @@ struct LightingProperties {
   vec3 sunSize;
   vec3 white;
   float exposure;
+  float time;
+  float dt;
 };
 
 #endif

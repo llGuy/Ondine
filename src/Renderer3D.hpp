@@ -4,6 +4,7 @@
 #include "Event.hpp"
 #include "Utils.hpp"
 #include "Window.hpp"
+#include "Scene.hpp"
 #include "Camera.hpp"
 #include "GBuffer.hpp"
 #include "Delegate.hpp"
@@ -12,7 +13,6 @@
 #include "ModelManager.hpp"
 #include "WaterRenderer.hpp"
 #include "VulkanContext.hpp"
-#include "SceneSubmitter.hpp"
 #include "DeferredLighting.hpp"
 
 namespace Ondine::Graphics {
@@ -50,7 +50,7 @@ private:
   DeferredLighting mDeferredLighting;
 
   ModelManager mModelManager;
-  SceneSubmitter mSceneSubmitter;
+  Scene mScene;
 
   Resolution mPipelineViewport;
 

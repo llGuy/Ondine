@@ -10,7 +10,7 @@ namespace Ondine::Graphics {
 
 Renderer3D::Renderer3D(VulkanContext &graphicsContext)
   : mGraphicsContext(graphicsContext),
-    mSceneSubmitter(mModelManager) {
+    mScene(mModelManager) {
   
 }
 
@@ -34,9 +34,9 @@ void Renderer3D::init() {
     /* Temporary - the world needs to define this */
     mPlanetProperties.solarIrradiance = glm::vec3(1.474f, 1.8504f, 1.91198f);
     // Angular radius of the Sun (radians)
-    mPlanetProperties.solarAngularRadius = 0.004675f;
-    mPlanetProperties.bottomRadius = 6360.0f;
-    mPlanetProperties.topRadius = 6420.0f;
+    mPlanetProperties.solarAngularRadius = 0.004695f;
+    mPlanetProperties.bottomRadius = 6360.0f / 6.0f;
+    mPlanetProperties.topRadius = 6420.0f / 6.0f;
 
     mPlanetProperties.rayleighDensity.layers[0] =
       DensityLayer { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
@@ -123,7 +123,26 @@ void Renderer3D::init() {
     {mPipelineViewport.width, mPipelineViewport.height},
     &mLightingProperties);
 
-  mSceneSubmitter.init(mGBuffer, mGraphicsContext);
+  mScene.init(mGBuffer, mGraphicsContext);
+  {
+    auto handle1 = mScene.createSceneObject(); 
+    auto &sceneObj1 = mScene.getSceneObject(handle1);
+    sceneObj1.position = glm::vec3(0.0f, 80.0f, 0.0f);
+    sceneObj1.scale = glm::vec3(5.0f);
+    sceneObj1.rotation = glm::angleAxis(
+      glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    sceneObj1.constructTransform();
+    printf("%d\n", sceneObj1.isInitialised);
+
+    auto handle2 = mScene.createSceneObject(); 
+    auto &sceneObj2 = mScene.getSceneObject(handle2);
+    sceneObj2.position = glm::vec3(30.0f, 100.0f, 0.0f);
+    sceneObj2.scale = glm::vec3(5.0f);
+    sceneObj2.rotation = glm::angleAxis(
+      glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    sceneObj2.constructTransform();
+    printf("%d\n", sceneObj2.isInitialised);
+  }
 
   mWaterRenderer.init(
     mGraphicsContext, mCameraProperties,
@@ -134,6 +153,9 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
   mCameraProperties.aspectRatio =
     (float)mPipelineViewport.width / (float)mPipelineViewport.height;
 
+  mLightingProperties.dt = tick.dt;
+  mLightingProperties.time = tick.accumulatedTime;
+
   mCamera.updateData(frame.primaryCommandBuffer, mCameraProperties);
   mDeferredLighting.updateData(frame.primaryCommandBuffer, mLightingProperties);
 
@@ -141,12 +163,12 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
   mWaterRenderer.updateCameraUBO(frame.primaryCommandBuffer);
   mWaterRenderer.updateLightingUBO(
     mLightingProperties, frame.primaryCommandBuffer);
-  mWaterRenderer.tick(frame, mPlanetRenderer, mSkyRenderer, mSceneSubmitter);
+  mWaterRenderer.tick(frame, mPlanetRenderer, mSkyRenderer, mScene);
      
   mGBuffer.beginRender(frame);
   { // Render 3D scene
     // mPlanetRenderer.tick(tick, frame, mCamera);
-    mSceneSubmitter.submit(mCamera, mPlanetRenderer, frame);
+    mScene.submit(mCamera, mPlanetRenderer, frame);
     // mSkyRenderer.tick(tick, frame, mCameraProperties);
   }
   mGBuffer.endRender(frame);
