@@ -124,6 +124,7 @@ void Application::run() {
   }
 
   /* Shutdown */
+  mRenderer3D.shutdown();
 }
 
 void Application::recvEvent(Event *ev, void *obj) {

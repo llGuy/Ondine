@@ -93,7 +93,8 @@ private:
     VkMemoryRequirements &memoryRequirements) const;
 
   VkDeviceMemory allocateImageMemory(
-    VkImage image, VkMemoryPropertyFlags properties) const;
+    VkImage image, VkMemoryPropertyFlags properties,
+    size_t *size = nullptr) const;
 
   VkDeviceMemory allocateBufferMemory(
     VkBuffer buffer, VkMemoryPropertyFlags properties) const;

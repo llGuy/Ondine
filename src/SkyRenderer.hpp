@@ -21,6 +21,8 @@ public:
     VulkanContext &graphicsContext,
     const RenderStage &renderStage);
 
+  void shutdown(VulkanContext &graphicsContext);
+
   void tick(
     const Core::Tick &tick,
     VulkanFrame &frame,
@@ -30,6 +32,7 @@ public:
 
 private:
   void initSkyProperties(VulkanContext &graphicsContext);
+  void initFinalTextures(VulkanContext &graphicsContext);
   void initTemporaryPrecomputeTextures(VulkanContext &graphicsContext);
 
   void preparePrecompute(VulkanContext &graphicsContext);
@@ -92,6 +95,11 @@ private:
   void initDemoPipeline(
     VulkanContext &graphicsContext,
     const RenderStage &renderStage);
+
+  bool isPrecomputationNeeded() const;
+
+  void loadFromCache(VulkanContext &graphicsContext);
+  void saveToCache(VulkanContext &graphicsContext);
 
 private:
   static constexpr size_t NUM_SCATTERING_ORDERS = 4;
@@ -203,6 +211,9 @@ private:
 
   /* For now, contain the demo shader */
   VulkanPipeline mDemo;
+
+  /* Should we save precomputation textures to cache? */
+  bool mCache;
 
   float mViewDistanceMeters = 9000.000000;
   float mViewZenithAngleRadians = 1.470000;

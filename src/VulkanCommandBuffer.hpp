@@ -81,6 +81,17 @@ public:
     const VulkanBuffer &src, size_t srcOffset,
     size_t size) const;
 
+  // Transition image layout back to what it should be after calling this
+  void copyBufferToImage(
+    const VulkanTexture &dst,
+    uint32_t baseLayer, uint32_t layerCount, uint32_t mipLevel,
+    const VulkanBuffer &src, size_t srcOffset, uint32_t srcSize);
+
+  void copyImageToBuffer(
+    const VulkanBuffer &dst, size_t dstOffset, uint32_t dstSize,
+    const VulkanTexture &src,
+    uint32_t baseLayer, uint32_t layerCount, uint32_t mipLevel);
+
   void updateBuffer(
     const VulkanBuffer &buffer,
     size_t offset, size_t size, const void *data) const;

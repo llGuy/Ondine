@@ -269,4 +269,134 @@ void VulkanCommandBuffer::transitionImageLayout(
     1, &barrier);
 }
 
+void VulkanCommandBuffer::copyBufferToImage(
+  const VulkanTexture &dst,
+  uint32_t baseLayer, uint32_t layerCount, uint32_t mipLevel,
+  const VulkanBuffer &src, size_t srcOffset, uint32_t srcSize) {
+  transitionImageLayout(
+    dst, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+  auto bufferBarrier = src.makeBarrier(
+    src.mUsedAtLatest, VK_PIPELINE_STAGE_TRANSFER_BIT, srcOffset, srcSize);
+
+  vkCmdPipelineBarrier(
+    mCommandBuffer,
+    src.mUsedAtLatest,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    0,
+    0, NULL,
+    1, &bufferBarrier,
+    0, NULL);
+
+  VkImageAspectFlags aspect;
+  switch (dst.mContents) {
+  case TextureContents::Color: {
+    aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+  } break;
+
+  case TextureContents::Depth: {
+    aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+  } break;
+  }
+
+  VkBufferImageCopy region = {};
+  region.bufferOffset = srcOffset;
+  region.bufferRowLength = 0;
+  region.bufferImageHeight = 0;
+  region.imageExtent.width = dst.mExtent.width;
+  region.imageExtent.height = dst.mExtent.height;
+  region.imageExtent.depth = dst.mExtent.depth;
+  region.imageSubresource.aspectMask = aspect;
+  region.imageSubresource.mipLevel = mipLevel;
+  region.imageSubresource.baseArrayLayer = baseLayer;
+  region.imageSubresource.layerCount = layerCount;
+
+  vkCmdCopyBufferToImage(
+    mCommandBuffer,
+    src.mBuffer,
+    dst.mImage,
+    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    1, &region);
+
+  bufferBarrier = src.makeBarrier(
+    VK_PIPELINE_STAGE_TRANSFER_BIT, src.mUsedAtEarliest, srcOffset, srcSize);
+
+  vkCmdPipelineBarrier(
+    mCommandBuffer,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    src.mUsedAtEarliest,
+    0,
+    0, NULL,
+    1, &bufferBarrier,
+    0, NULL);
+
+  // Responsability of the programmer to transition the layout after calling
+}
+
+void VulkanCommandBuffer::copyImageToBuffer(
+  const VulkanBuffer &dst, size_t dstOffset, uint32_t dstSize,
+  const VulkanTexture &src,
+  uint32_t baseLayer, uint32_t layerCount, uint32_t mipLevel) {
+  transitionImageLayout(
+    src, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+  auto bufferBarrier = dst.makeBarrier(
+    dst.mUsedAtLatest, VK_PIPELINE_STAGE_TRANSFER_BIT, dstOffset, dstSize);
+
+  vkCmdPipelineBarrier(
+    mCommandBuffer,
+    dst.mUsedAtLatest,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    0,
+    0, NULL,
+    1, &bufferBarrier,
+    0, NULL);
+
+  VkImageAspectFlags aspect;
+  switch (src.mContents) {
+  case TextureContents::Color: {
+    aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+  } break;
+
+  case TextureContents::Depth: {
+    aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+  } break;
+  }
+
+  VkBufferImageCopy region = {};
+  region.bufferOffset = dstOffset;
+  region.bufferRowLength = 0;
+  region.bufferImageHeight = 0;
+  region.imageExtent.width = src.mExtent.width;
+  region.imageExtent.height = src.mExtent.height;
+  region.imageExtent.depth = src.mExtent.depth;
+  region.imageSubresource.aspectMask = aspect;
+  region.imageSubresource.mipLevel = mipLevel;
+  region.imageSubresource.baseArrayLayer = baseLayer;
+  region.imageSubresource.layerCount = layerCount;
+
+  vkCmdCopyImageToBuffer(
+    mCommandBuffer,
+    src.mImage,
+    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    dst.mBuffer,
+    1, &region);
+
+  bufferBarrier = dst.makeBarrier(
+    VK_PIPELINE_STAGE_TRANSFER_BIT, dst.mUsedAtEarliest, dstOffset, dstSize);
+
+  vkCmdPipelineBarrier(
+    mCommandBuffer,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    dst.mUsedAtEarliest,
+    0,
+    0, NULL,
+    1, &bufferBarrier,
+    0, NULL);
+
+  // Responsability of the programmer to transition the layout after calling
+}
+
 }

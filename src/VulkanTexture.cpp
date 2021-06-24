@@ -15,6 +15,7 @@ void VulkanTexture::init(
   mLayerCount = layerCount;
   mContents  = contents;
   mLevelCount = mipLevels;
+  mFormat = format;
 
   mViewLayerCount = mLayerCount;
 
@@ -25,6 +26,11 @@ void VulkanTexture::init(
 
   VkImageUsageFlags usage =
     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+
+  if (type & TextureType::TransferSource) {
+    type &= ~(TextureType::TransferSource);
+    usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+  }
 
   if (type & TextureType::Attachment) {
     type &= ~(TextureType::Attachment);
@@ -108,7 +114,7 @@ void VulkanTexture::init(
     vkCreateImage(device.mLogicalDevice, &imageInfo, NULL, &mImage));
 
   mMemory = device.allocateImageMemory(
-    mImage, memoryFlags);
+    mImage, memoryFlags, &mMemoryRequirement);
 
   VkImageViewCreateInfo imageViewInfo = {};
   imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -199,6 +205,10 @@ void VulkanTexture::destroy(const VulkanDevice &device) {
   mImageViewAttachment = VK_NULL_HANDLE;
   mSampler = VK_NULL_HANDLE;
   mMemory = VK_NULL_HANDLE;
+}
+
+size_t VulkanTexture::memoryRequirement() const {
+  return mMemoryRequirement;
 }
 
 }

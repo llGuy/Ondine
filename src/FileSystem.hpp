@@ -24,6 +24,14 @@ public:
     const std::string &path,
     FileOpenTypeBits type);
 
+  bool isPathValid(
+    MountPoint mountPoint,
+    const std::string &path);
+
+  void makeDirectory(
+    MountPoint mountPoint,
+    const std::string &path);
+
 private:
   std::string mMountPoints[MAX_MOUNT_POINTS];
 };

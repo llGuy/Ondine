@@ -2,11 +2,14 @@
 #include "Renderer3D.hpp"
 #include "FileSystem.hpp"
 #include "Application.hpp"
+#include "Application.hpp"
+#include "RendererCache.hpp"
 #include "VulkanRenderPass.hpp"
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
 namespace Ondine::Graphics {
+
 
 Renderer3D::Renderer3D(VulkanContext &graphicsContext)
   : mGraphicsContext(graphicsContext),
@@ -132,7 +135,6 @@ void Renderer3D::init() {
     sceneObj1.rotation = glm::angleAxis(
       glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     sceneObj1.constructTransform();
-    printf("%d\n", sceneObj1.isInitialised);
 
     auto handle2 = mScene.createSceneObject(); 
     auto &sceneObj2 = mScene.getSceneObject(handle2);
@@ -141,12 +143,23 @@ void Renderer3D::init() {
     sceneObj2.rotation = glm::angleAxis(
       glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     sceneObj2.constructTransform();
-    printf("%d\n", sceneObj2.isInitialised);
   }
 
   mWaterRenderer.init(
     mGraphicsContext, mCameraProperties,
     mPlanetProperties, &mLightingProperties);
+}
+
+void Renderer3D::shutdown() {
+  if (!Core::gFileSystem->isPathValid(
+        (Core::MountPoint)Core::ApplicationMountPoints::Application,
+        DRAW_CACHE_DIRECTORY)) {
+    Core::gFileSystem->makeDirectory(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
+      DRAW_CACHE_DIRECTORY);
+  }
+
+  mSkyRenderer.shutdown(mGraphicsContext);
 }
 
 void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {

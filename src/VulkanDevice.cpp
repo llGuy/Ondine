@@ -390,7 +390,7 @@ uint32_t VulkanDevice::findMemoryType(
 }
 
 VkDeviceMemory VulkanDevice::allocateImageMemory(
-  VkImage image, VkMemoryPropertyFlags properties) const {
+  VkImage image, VkMemoryPropertyFlags properties, size_t *size) const {
   VkMemoryRequirements requirements = {};
   vkGetImageMemoryRequirements(mLogicalDevice, image, &requirements);
 
@@ -403,6 +403,9 @@ VkDeviceMemory VulkanDevice::allocateImageMemory(
   vkAllocateMemory(mLogicalDevice, &allocInfo, nullptr, &memory);
 
   vkBindImageMemory(mLogicalDevice, image, memory, 0);
+
+  if (size)
+    *size = requirements.size;
 
   return memory;
 }

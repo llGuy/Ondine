@@ -22,4 +22,16 @@ File FileSystem::createFile(
   return File(mMountPoints[mountPoint] + path, type);
 }
 
+bool FileSystem::isPathValid(
+  MountPoint mountPoint,
+  const std::string &path) {
+  return std::filesystem::exists(mMountPoints[mountPoint] + path);
+}
+
+void FileSystem::makeDirectory(
+  MountPoint mountPoint,
+  const std::string &path) {
+  std::filesystem::create_directory(mMountPoints[mountPoint] + path);
+}
+
 }

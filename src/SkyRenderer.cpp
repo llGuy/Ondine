@@ -3,6 +3,7 @@
 #include "Application.hpp"
 #include "SkyRenderer.hpp"
 #include "VulkanContext.hpp"
+#include "RendererCache.hpp"
 #include "VulkanTexture.hpp"
 
 namespace Ondine::Graphics {
@@ -10,11 +11,25 @@ namespace Ondine::Graphics {
 void SkyRenderer::init(
   VulkanContext &graphicsContext,
   const RenderStage &renderStage) {
-  initSkyProperties(graphicsContext);
-  preparePrecompute(graphicsContext);
-  precompute(graphicsContext);
+  mCache = false;
 
-  // initDemoPipeline(graphicsContext, renderStage);
+  initSkyProperties(graphicsContext);
+
+  initFinalTextures(graphicsContext);
+
+  if (isPrecomputationNeeded()) {
+    LOG_INFO("Didn't find cached sky precomputations\n");
+    LOG_INFO("Precomputing sky textures\n");
+
+    preparePrecompute(graphicsContext);
+    precompute(graphicsContext);
+  }
+  else {
+    LOG_INFO("Found cached sky precomputations\n");
+    LOG_INFO("Loading precomputations from disk\n");
+
+    loadFromCache(graphicsContext);
+  }
 
   mViewDistanceMeters = 300.000000;
   mViewZenithAngleRadians = 1.470000;
@@ -22,6 +37,22 @@ void SkyRenderer::init(
   mSunZenithAngleRadians = 1.300000;
   mSunAzimuthAngleRadians = 3.000000;
   mExposure = 10.000000;
+}
+
+void SkyRenderer::shutdown(VulkanContext &graphicsContext) {
+  if (!Core::gFileSystem->isPathValid(
+        (Core::MountPoint)Core::ApplicationMountPoints::Application,
+        SKY_CACHE_DIRECTORY)) {
+    Core::gFileSystem->makeDirectory(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
+      SKY_CACHE_DIRECTORY);
+  }
+
+  if (mCache) {
+    LOG_INFO("Did sky precomputations during session - saving into cache\n");
+
+    saveToCache(graphicsContext);
+  }
 }
 
 void SkyRenderer::tick(
@@ -167,6 +198,43 @@ void SkyRenderer::initSkyProperties(VulkanContext &graphicsContext) {
     makeArray<VulkanBuffer, AllocationType::Linear>(mSkyPropertiesBuffer));
 }
 
+void SkyRenderer::initFinalTextures(VulkanContext &graphicsContext) {
+  make2DTextureAndUniform(
+    {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT, 1},
+    mPrecomputedTransmittance, mPrecomputedTransmittanceUniform,
+    graphicsContext);
+
+  VkExtent3D extent3D = {
+    SCATTERING_TEXTURE_WIDTH,
+    SCATTERING_TEXTURE_HEIGHT,
+    SCATTERING_TEXTURE_DEPTH
+  };
+
+  make3DTextureAndUniform(
+    extent3D, mDeltaMieScatteringTexture,
+    mDeltaMieScatteringUniform, graphicsContext, true);
+
+  VkExtent3D extent = {
+    IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT, 1
+  };
+
+  make2DTextureAndUniform(
+    extent, mPrecomputedIrradiance, mPrecomputedIrradianceUniform,
+    graphicsContext);
+
+  make3DTextureAndUniform(
+    extent3D, mPrecomputedScattering, mPrecomputedScatteringUniform,
+    graphicsContext, false);
+
+  mRenderingUniform.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorPool(),
+    graphicsContext.descriptorLayouts(),
+    makeArray<VulkanTexture, AllocationType::Linear>(
+      mPrecomputedTransmittance, mPrecomputedScattering,
+      mDeltaMieScatteringTexture, mPrecomputedIrradiance));
+}
+
 void SkyRenderer::initTemporaryPrecomputeTextures(
   VulkanContext &graphicsContext) {
   VkExtent3D extent3D = {
@@ -178,10 +246,6 @@ void SkyRenderer::initTemporaryPrecomputeTextures(
   make3DTextureAndUniform(
     extent3D, mDeltaRayleighScatteringTexture,
     mDeltaRayleighScatteringUniform, graphicsContext, true);
-
-  make3DTextureAndUniform(
-    extent3D, mDeltaMieScatteringTexture,
-    mDeltaMieScatteringUniform, graphicsContext, true);
   
   make3DTextureAndUniform(
     extent3D, mDeltaScatteringDensityTexture,
@@ -213,14 +277,6 @@ void SkyRenderer::preparePrecompute(VulkanContext &graphicsContext) {
   prepareDirectIrradiancePrecompute(quadVsh, graphicsContext);
   prepareScatteringDensityPrecompute(quadVsh, quadGsh, graphicsContext);
   prepareMultipleScatteringPrecompute(quadVsh, quadGsh, graphicsContext);
-
-  mRenderingUniform.init(
-    graphicsContext.device(),
-    graphicsContext.descriptorPool(),
-    graphicsContext.descriptorLayouts(),
-    makeArray<VulkanTexture, AllocationType::Linear>(
-      mPrecomputedTransmittance, mPrecomputedScattering,
-      mDeltaMieScatteringTexture, mPrecomputedIrradiance));
 }
 
 void SkyRenderer::prepareTransmittancePrecompute(
@@ -268,11 +324,6 @@ void SkyRenderer::prepareTransmittancePrecompute(
   }
 
   { // Create attachments and framebuffer
-    make2DTextureAndUniform(
-      {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT, 1},
-      mPrecomputedTransmittance, mPrecomputedTransmittanceUniform,
-      graphicsContext);
-
     VulkanFramebufferConfig fboConfig(1, mPrecomputeTransmittanceRenderPass);
     fboConfig.addAttachment(mPrecomputedTransmittance);
 
@@ -343,16 +394,6 @@ void SkyRenderer::prepareSingleScatteringPrecompute(
   }
 
   { // Create attachments and framebuffer
-    VkExtent3D extent = {
-      SCATTERING_TEXTURE_WIDTH,
-      SCATTERING_TEXTURE_HEIGHT,
-      SCATTERING_TEXTURE_DEPTH
-    };
-
-    make3DTextureAndUniform(
-      extent, mPrecomputedScattering, mPrecomputedScatteringUniform,
-      graphicsContext, false);
-
     VulkanFramebufferConfig fboConfig(3, mPrecomputeSingleScatteringRenderPass);
     fboConfig.addAttachment(mDeltaRayleighScatteringTexture);
     fboConfig.addAttachment(mDeltaMieScatteringTexture);
@@ -448,14 +489,6 @@ void SkyRenderer::prepareDirectIrradiancePrecompute(
   }
 
   { // Create attachments and framebuffer
-    VkExtent3D extent = {
-      IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT, 1
-    };
-
-    make2DTextureAndUniform(
-      extent, mPrecomputedIrradiance, mPrecomputedIrradianceUniform,
-      graphicsContext);
-
     VulkanFramebufferConfig fboConfig(2, mPrecomputeDirectIrradianceRenderPass);
     fboConfig.addAttachment(mDeltaIrradianceTexture);
     fboConfig.addAttachment(mPrecomputedIrradiance);
@@ -746,6 +779,8 @@ void SkyRenderer::precompute(VulkanContext &graphicsContext) {
       commandBuffer, wait, signal,
       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VulkanFence());
   }
+
+  mCache = true;
 }
 
 void SkyRenderer::precomputeTransmittance(
@@ -953,7 +988,8 @@ void SkyRenderer::make3DTextureAndUniform(
   VulkanUniform &uniform,
   VulkanContext &graphicsContext,
   bool isTemporary) {
-  TextureTypeBits textureType = TextureType::T3D | TextureType::Attachment;
+  TextureTypeBits textureType =
+    TextureType::T3D | TextureType::Attachment | TextureType::TransferSource;
   if (isTemporary) {
     // textureType |= TextureType::StoreInRam;
   }
@@ -976,7 +1012,8 @@ void SkyRenderer::make2DTextureAndUniform(
   VulkanUniform &uniform,
   VulkanContext &graphicsContext) {
   texture.init(
-    graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
+    graphicsContext.device(),
+    TextureType::T2D | TextureType::Attachment | TextureType::TransferSource,
     TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT32, VK_FILTER_LINEAR,
     extent, 1, 1);
 
@@ -1025,6 +1062,168 @@ void SkyRenderer::initDemoPipeline(
 
 const VulkanUniform &SkyRenderer::uniform() const {
   return mRenderingUniform;
+}
+
+bool SkyRenderer::isPrecomputationNeeded() const {
+  const char *const names[] = {
+    SKY_TRANSMITTANCE_CACHE_FILENAME,
+    SKY_SCATTERING_CACHE_FILENAME,
+    SKY_MIE_SCATTERING_CACHE_FILENAME,
+    SKY_IRRADIANCE_CACHE_FILENAME,
+  };
+
+  if (!Core::gFileSystem->isPathValid(
+        (Core::MountPoint)(Core::ApplicationMountPoints::Application),
+        SKY_CACHE_DIRECTORY)) {
+    return true;
+  }
+
+  for (int i = 0; i < 4; ++i) {
+    if (!Core::gFileSystem->isPathValid(
+          (Core::MountPoint)(Core::ApplicationMountPoints::Application),
+          std::string(SKY_CACHE_DIRECTORY) + names[i])) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void SkyRenderer::loadFromCache(VulkanContext &graphicsContext) {
+  const char *const names[4] = {
+    SKY_TRANSMITTANCE_CACHE_FILENAME,
+    SKY_SCATTERING_CACHE_FILENAME,
+    SKY_MIE_SCATTERING_CACHE_FILENAME,
+    SKY_IRRADIANCE_CACHE_FILENAME,
+  };
+
+  VulkanTexture *textures[4] = {
+    &mPrecomputedTransmittance,
+    &mPrecomputedScattering,
+    &mDeltaMieScatteringTexture,
+    &mPrecomputedIrradiance
+  };
+
+  VulkanCommandBuffer cmdbufs[4] = {};
+  VulkanBuffer staging[4] = {};
+
+  auto &commandPool = graphicsContext.commandPool();
+
+  for (int i = 0; i < 4; ++i) {
+    Core::File file = Core::gFileSystem->createFile(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
+      std::string(SKY_CACHE_DIRECTORY) + names[i],
+      Core::FileOpenType::Binary | Core::FileOpenType::In);
+
+    Buffer bin = file.readBinary();
+
+    VulkanBuffer &buffer = staging[i];
+    buffer.init(
+      graphicsContext.device(), bin.size,
+      VulkanBufferFlag::Mappable | VulkanBufferFlag::TransferSource);
+
+    memcpy(
+      buffer.map(graphicsContext.device(), bin.size, 0),
+      bin.data,
+      bin.size);
+
+    buffer.unmap(graphicsContext.device());
+
+    // Copy to image
+    VulkanCommandBuffer &commandBuffer = cmdbufs[i];
+    commandBuffer = commandPool.makeCommandBuffer(
+      graphicsContext.device(), VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+    commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
+    commandBuffer.copyBufferToImage(
+      *textures[i],
+      0, 1, 0,
+      buffer, 0, bin.size);
+    commandBuffer.transitionImageLayout(
+      *textures[i],
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      VK_PIPELINE_STAGE_TRANSFER_BIT,
+      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+    commandBuffer.end();
+
+    graphicsContext.device().graphicsQueue().submitCommandBuffer(
+      commandBuffer,
+      makeArray<VulkanSemaphore, AllocationType::Linear>(),
+      makeArray<VulkanSemaphore, AllocationType::Linear>(),
+      0, VulkanFence());
+  }
+
+  graphicsContext.device().idle();
+
+  for (int i = 0; i < 4; ++i) {
+    commandPool.freeCommandBuffer(graphicsContext.device(), cmdbufs[i]);
+    staging[i].destroy(graphicsContext.device());
+  }
+}
+
+void SkyRenderer::saveToCache(VulkanContext &graphicsContext) {
+  const char *const names[4] = {
+    SKY_TRANSMITTANCE_CACHE_FILENAME,
+    SKY_SCATTERING_CACHE_FILENAME,
+    SKY_MIE_SCATTERING_CACHE_FILENAME,
+    SKY_IRRADIANCE_CACHE_FILENAME,
+  };
+
+  VulkanTexture *textures[4] = {
+    &mPrecomputedTransmittance,
+    &mPrecomputedScattering,
+    &mDeltaMieScatteringTexture,
+    &mPrecomputedIrradiance
+  };
+
+  VulkanCommandBuffer cmdbufs[4] = {};
+  VulkanBuffer staging[4] = {};
+
+  auto &commandPool = graphicsContext.commandPool();
+
+  for (int i = 0; i < 4; ++i) {
+    Core::File file = Core::gFileSystem->createFile(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
+      std::string(SKY_CACHE_DIRECTORY) + names[i],
+      Core::FileOpenType::Binary | Core::FileOpenType::Out);
+
+    size_t size = textures[i]->memoryRequirement();
+
+    VulkanBuffer &buffer = staging[i];
+    buffer.init(
+      graphicsContext.device(), size,
+      (VulkanBufferFlagBits)VulkanBufferFlag::Mappable);
+
+    // Copy to image
+    VulkanCommandBuffer &commandBuffer = cmdbufs[i];
+    commandBuffer = commandPool.makeCommandBuffer(
+      graphicsContext.device(), VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+    commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
+    commandBuffer.copyImageToBuffer(
+      buffer, 0, size,
+      *textures[i],
+      0, 1, 0);
+    commandBuffer.end();
+
+    graphicsContext.device().graphicsQueue().submitCommandBuffer(
+      commandBuffer,
+      makeArray<VulkanSemaphore, AllocationType::Linear>(),
+      makeArray<VulkanSemaphore, AllocationType::Linear>(),
+      0, VulkanFence());
+
+    void *data = buffer.map(graphicsContext.device(), size, 0);
+    file.write(data, size);
+    buffer.unmap(graphicsContext.device());
+  }
+
+  graphicsContext.device().idle();
+
+  for (int i = 0; i < 4; ++i) {
+    commandPool.freeCommandBuffer(graphicsContext.device(), cmdbufs[i]);
+    staging[i].destroy(graphicsContext.device());
+  }
 }
 
 }

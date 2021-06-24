@@ -25,6 +25,8 @@ public:
     VulkanContext &graphicsContext);
 
   void init();
+  void shutdown();
+
   void tick(const Core::Tick &tick, Graphics::VulkanFrame &frame);
 
   void resize(Resolution newResolution) override;

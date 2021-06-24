@@ -15,7 +15,8 @@ enum TextureType {
   T3D = BIT(2),
   Attachment = BIT(3),
   Input = BIT(4),
-  StoreInRam = BIT(5)
+  StoreInRam = BIT(5),
+  TransferSource = BIT(6)
 };
 
 using TextureTypeBits = uint32_t;
@@ -43,12 +44,16 @@ public:
 
   void destroy(const VulkanDevice &device);
 
+  size_t memoryRequirement() const;
+
 private:
   VkImage mImage;
   VkDeviceMemory mMemory;
   VkImageView mImageViewSample;
   VkImageView mImageViewAttachment;
   VkSampler mSampler;
+  VkFormat mFormat;
+  size_t mMemoryRequirement;
   VkExtent3D mExtent;
   uint32_t mLayerCount;
   uint32_t mLevelCount;
