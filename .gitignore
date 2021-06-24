@@ -48,3 +48,5 @@ testing
 
 compile_commands.json
 .clangd
+
+res/draw_cache
