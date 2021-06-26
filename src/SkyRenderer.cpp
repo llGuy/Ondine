@@ -1106,6 +1106,42 @@ void SkyRenderer::loadFromCache(VulkanContext &graphicsContext) {
 
   VulkanCommandBuffer cmdbufs[4] = {};
   VulkanBuffer staging[4] = {};
+  VulkanTexture linearTextures[4] = {};
+
+  VkExtent3D scatteringExtent = {
+    SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH
+  };
+  VkExtent3D irradianceExtent = {
+    IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT, 1
+  };
+
+  linearTextures[0].init(
+    graphicsContext.device(),
+    TextureType::T2D | TextureType::LinearTiling | TextureType::TransferSource,
+    TextureContents::Color,
+    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
+    {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT, 1}, 1, 1);
+
+  linearTextures[1].init(
+    graphicsContext.device(),
+    TextureType::T3D | TextureType::LinearTiling | TextureType::TransferSource,
+    TextureContents::Color,
+    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
+    scatteringExtent, 1, 1);
+
+  linearTextures[2].init(
+    graphicsContext.device(),
+    TextureType::T3D | TextureType::LinearTiling | TextureType::TransferSource,
+    TextureContents::Color,
+    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
+    scatteringExtent, 1, 1);
+
+  linearTextures[3].init(
+    graphicsContext.device(),
+    TextureType::T2D | TextureType::LinearTiling | TextureType::TransferSource,
+    TextureContents::Color,
+    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
+    irradianceExtent, 1, 1);
 
   auto &commandPool = graphicsContext.commandPool();
 
@@ -1135,16 +1171,25 @@ void SkyRenderer::loadFromCache(VulkanContext &graphicsContext) {
       graphicsContext.device(), VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
     commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
+
     commandBuffer.copyBufferToImage(
-      *textures[i],
+      linearTextures[i],
       0, 1, 0,
       buffer, 0, bin.size);
+
+    commandBuffer.blitImage(
+      *textures[i], VK_IMAGE_LAYOUT_UNDEFINED,
+      linearTextures[i], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, 1,
+      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+      VK_PIPELINE_STAGE_TRANSFER_BIT);
+
     commandBuffer.transitionImageLayout(
       *textures[i],
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
       VK_PIPELINE_STAGE_TRANSFER_BIT,
       VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
     commandBuffer.end();
 
     graphicsContext.device().graphicsQueue().submitCommandBuffer(
@@ -1159,6 +1204,7 @@ void SkyRenderer::loadFromCache(VulkanContext &graphicsContext) {
   for (int i = 0; i < 4; ++i) {
     commandPool.freeCommandBuffer(graphicsContext.device(), cmdbufs[i]);
     staging[i].destroy(graphicsContext.device());
+    linearTextures[i].destroy(graphicsContext.device());
   }
 }
 
@@ -1179,6 +1225,42 @@ void SkyRenderer::saveToCache(VulkanContext &graphicsContext) {
 
   VulkanCommandBuffer cmdbufs[4] = {};
   VulkanBuffer staging[4] = {};
+  VulkanTexture linearTextures[4] = {};
+
+  VkExtent3D scatteringExtent = {
+    SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH
+  };
+  VkExtent3D irradianceExtent = {
+    IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT, 1
+  };
+
+  linearTextures[0].init(
+    graphicsContext.device(),
+    TextureType::T2D | TextureType::LinearTiling | TextureType::TransferSource,
+    TextureContents::Color,
+    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
+    {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT, 1}, 1, 1);
+
+  linearTextures[1].init(
+    graphicsContext.device(),
+    TextureType::T3D | TextureType::LinearTiling | TextureType::TransferSource,
+    TextureContents::Color,
+    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
+    scatteringExtent, 1, 1);
+
+  linearTextures[2].init(
+    graphicsContext.device(),
+    TextureType::T3D | TextureType::LinearTiling | TextureType::TransferSource,
+    TextureContents::Color,
+    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
+    scatteringExtent, 1, 1);
+
+  linearTextures[3].init(
+    graphicsContext.device(),
+    TextureType::T2D | TextureType::LinearTiling | TextureType::TransferSource,
+    TextureContents::Color,
+    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
+    irradianceExtent, 1, 1);
 
   auto &commandPool = graphicsContext.commandPool();
 
@@ -1188,23 +1270,36 @@ void SkyRenderer::saveToCache(VulkanContext &graphicsContext) {
       std::string(SKY_CACHE_DIRECTORY) + names[i],
       Core::FileOpenType::Binary | Core::FileOpenType::Out);
 
-    size_t size = textures[i]->memoryRequirement();
+    size_t size = linearTextures[i].memoryRequirement();
 
     VulkanBuffer &buffer = staging[i];
     buffer.init(
       graphicsContext.device(), size,
       (VulkanBufferFlagBits)VulkanBufferFlag::Mappable);
 
-    // Copy to image
+    // Copy to buffer
     VulkanCommandBuffer &commandBuffer = cmdbufs[i];
     commandBuffer = commandPool.makeCommandBuffer(
       graphicsContext.device(), VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
     commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
+
+    commandBuffer.transitionImageLayout(
+      linearTextures[i], VK_IMAGE_LAYOUT_UNDEFINED,
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+    commandBuffer.blitImage(
+      linearTextures[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      *textures[i], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, 1,
+      VK_PIPELINE_STAGE_TRANSFER_BIT,
+      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+    
     commandBuffer.copyImageToBuffer(
       buffer, 0, size,
-      *textures[i],
+      linearTextures[i],
       0, 1, 0);
+
     commandBuffer.end();
 
     graphicsContext.device().graphicsQueue().submitCommandBuffer(
@@ -1213,12 +1308,12 @@ void SkyRenderer::saveToCache(VulkanContext &graphicsContext) {
       makeArray<VulkanSemaphore, AllocationType::Linear>(),
       0, VulkanFence());
 
+    graphicsContext.device().idle();
+
     void *data = buffer.map(graphicsContext.device(), size, 0);
     file.write(data, size);
     buffer.unmap(graphicsContext.device());
   }
-
-  graphicsContext.device().idle();
 
   for (int i = 0; i < 4; ++i) {
     commandPool.freeCommandBuffer(graphicsContext.device(), cmdbufs[i]);

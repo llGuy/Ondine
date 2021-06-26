@@ -92,6 +92,13 @@ public:
     const VulkanTexture &src,
     uint32_t baseLayer, uint32_t layerCount, uint32_t mipLevel);
 
+  void blitImage(
+    const VulkanTexture &dst, VkImageLayout dstLayout,
+    const VulkanTexture &src, VkImageLayout srcLayout,
+    uint32_t baseLayer, uint32_t layerCount,
+    VkPipelineStageFlags lastUsedDst,
+    VkPipelineStageFlags lastUsedSrc);
+
   void updateBuffer(
     const VulkanBuffer &buffer,
     size_t offset, size_t size, const void *data) const;

@@ -23,6 +23,12 @@ void VulkanTexture::init(
   VkImageCreateFlags imageFlags = 0;
   VkImageViewType viewTypeSample, viewTypeAttachment;
   VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+  VkImageTiling tilingMode = VK_IMAGE_TILING_OPTIMAL;
+
+  if (type & (TextureType::LinearTiling)) {
+    type &= ~(TextureType::LinearTiling);
+    tilingMode = VK_IMAGE_TILING_LINEAR;
+  }
 
   VkImageUsageFlags usage =
     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -84,14 +90,13 @@ void VulkanTexture::init(
   } break;
   }
 
-  VkImageAspectFlags aspect;
   switch (contents) {
   case TextureContents::Color: {
-    aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+    mAspect = VK_IMAGE_ASPECT_COLOR_BIT;
   } break;
 
   case TextureContents::Depth: {
-    aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+    mAspect = VK_IMAGE_ASPECT_DEPTH_BIT;
   } break;
   }
 
@@ -104,7 +109,7 @@ void VulkanTexture::init(
   imageInfo.imageType = imageType;
   imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageInfo.mipLevels = mipLevels;
-  imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+  imageInfo.tiling = tilingMode;
   imageInfo.usage = usage;
   imageInfo.extent = extent;
   imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -121,7 +126,7 @@ void VulkanTexture::init(
   imageViewInfo.image = mImage;
   imageViewInfo.viewType = viewTypeSample;
   imageViewInfo.format = format;
-  imageViewInfo.subresourceRange.aspectMask = aspect;
+  imageViewInfo.subresourceRange.aspectMask = mAspect;
   imageViewInfo.subresourceRange.baseMipLevel = 0;
   imageViewInfo.subresourceRange.levelCount = mipLevels;
   imageViewInfo.subresourceRange.baseArrayLayer = 0;

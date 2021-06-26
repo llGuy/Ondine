@@ -29,6 +29,9 @@ VkAccessFlags findAccessFlagsForStage(VkPipelineStageFlags stage) {
   case VK_PIPELINE_STAGE_TRANSFER_BIT:
     return VK_ACCESS_TRANSFER_WRITE_BIT | VK_ACCESS_TRANSFER_READ_BIT;
 
+  case VK_PIPELINE_STAGE_ALL_COMMANDS_BIT:
+    return VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+
   default: {
     LOG_ERROR("Didn't handle stage for finding access flags!\n");
     PANIC_AND_EXIT();

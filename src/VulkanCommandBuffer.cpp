@@ -399,4 +399,48 @@ void VulkanCommandBuffer::copyImageToBuffer(
   // Responsability of the programmer to transition the layout after calling
 }
 
+// For now, only support images with the same amount of layers
+void VulkanCommandBuffer::blitImage(
+  const VulkanTexture &dst, VkImageLayout dstLayout,
+  const VulkanTexture &src, VkImageLayout srcLayout,
+  uint32_t baseLayer, uint32_t layerCount,
+  VkPipelineStageFlags lastUsedDst,
+  VkPipelineStageFlags lastUsedSrc) {
+  transitionImageLayout(
+    src, srcLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    lastUsedSrc, VK_PIPELINE_STAGE_TRANSFER_BIT);
+  transitionImageLayout(
+    dst, dstLayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    lastUsedDst, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+  VkImageBlit region = {};
+  region.srcSubresource.aspectMask = src.mAspect;
+  region.srcSubresource.mipLevel = 0;
+  region.srcSubresource.baseArrayLayer = baseLayer;
+  region.srcSubresource.layerCount = layerCount;
+  region.srcOffsets[0] = {};
+  region.srcOffsets[1] = VkOffset3D {
+    (int32_t)src.mExtent.width,
+    (int32_t)src.mExtent.height,
+    (int32_t)src.mExtent.depth
+  };
+
+  region.dstSubresource.aspectMask = dst.mAspect;
+  region.dstSubresource.mipLevel = 0;
+  region.dstSubresource.baseArrayLayer = baseLayer;
+  region.dstSubresource.layerCount = layerCount;
+  region.dstOffsets[0] = {};
+  region.dstOffsets[1] = VkOffset3D {
+    (int32_t)dst.mExtent.width,
+    (int32_t)dst.mExtent.height,
+    (int32_t)dst.mExtent.depth
+  };
+
+  vkCmdBlitImage(
+    mCommandBuffer,
+    src.mImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    dst.mImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    1, &region, VK_FILTER_NEAREST);
+}
+
 }

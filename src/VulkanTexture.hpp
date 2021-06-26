@@ -16,7 +16,8 @@ enum TextureType {
   Attachment = BIT(3),
   Input = BIT(4),
   StoreInRam = BIT(5),
-  TransferSource = BIT(6)
+  TransferSource = BIT(6),
+  LinearTiling = BIT(7)
 };
 
 using TextureTypeBits = uint32_t;
@@ -60,6 +61,7 @@ private:
   uint32_t mViewLayerCount;
   TextureTypeBits mType;
   TextureContents mContents;
+  VkImageAspectFlags mAspect;
 
   friend class VulkanSwapchain;
   friend class VulkanFramebufferConfig;
