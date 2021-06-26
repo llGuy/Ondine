@@ -22,4 +22,15 @@ vec3 getVPositionFromDepth(
   return vPos;
 }
 
+float getPerceivedBrightness(vec3 color) {
+  return (0.21 * color.r) + (0.72 * color.g) + (0.07 * color.b);
+}
+
+const int TOON_SHADING_INTENSITY_LEVEL_COUNT = 5;
+
+float toonShadingIncidentIntensity(float incidentIntensity) {
+  incidentIntensity *= float(TOON_SHADING_INTENSITY_LEVEL_COUNT);
+  return floor(incidentIntensity) / float(TOON_SHADING_INTENSITY_LEVEL_COUNT);
+}
+
 #endif

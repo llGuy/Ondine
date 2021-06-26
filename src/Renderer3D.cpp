@@ -148,6 +148,10 @@ void Renderer3D::init() {
   mWaterRenderer.init(
     mGraphicsContext, mCameraProperties,
     mPlanetProperties, &mLightingProperties);
+
+  mPixelater.init(
+    mGraphicsContext,
+    {mPipelineViewport.width, mPipelineViewport.height});
 }
 
 void Renderer3D::shutdown() {
@@ -188,6 +192,8 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
 
   mDeferredLighting.render(
     frame, mGBuffer, mCamera, mPlanetRenderer, mWaterRenderer, mSkyRenderer);
+
+  mPixelater.render(frame, mDeferredLighting);
 }
 
 void Renderer3D::resize(Resolution newResolution) {
@@ -213,6 +219,8 @@ void Renderer3D::resize(Resolution newResolution) {
     mCameraProperties.projection);
 
   mWaterRenderer.resize(mGraphicsContext, newResolution);
+
+  mPixelater.resize(mGraphicsContext, newResolution);
 }
 
 void Renderer3D::trackInput(
@@ -292,7 +300,7 @@ void Renderer3D::trackInput(
 }
 
 const RenderStage &Renderer3D::mainRenderStage() const {
-  return mDeferredLighting;
+  return mPixelater;
 }
 
 }

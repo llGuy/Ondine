@@ -68,6 +68,33 @@ vec4 getPointRadiance(in GBufferData gbuffer) {
   return vec4(pointRadiance, 1.0);
 }
 
+vec4 getPointRadianceToon(in GBufferData gbuffer) {
+  vec3 skyIrradiance;
+
+  /* Radiance that the surface will reflect */
+  vec3 sunIrradiance = getSunAndSkyIrradianceToon(
+    uSky.sky, uTransmittanceTexture, uIrradianceTexture,
+    gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter,
+    gbuffer.wNormal.xyz, uLighting.lighting.sunDirection, skyIrradiance);
+
+  vec3 pointRadiance = gbuffer.albedo.rgb * (1.0 / PI) *
+    (sunIrradiance + skyIrradiance);
+
+  /* How much is scattered towards us */
+  vec3 transmittance;
+  vec3 inScatter = getSkyRadianceToPoint(
+    uSky.sky, uTransmittanceTexture,
+    uScatteringTexture, uSingleMieScatteringTexture,
+    uCamera.camera.wPosition / 1000.0 - uSky.sky.wPlanetCenter,
+    gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter, 0.0,
+    uLighting.lighting.sunDirection,
+    transmittance);
+
+  pointRadiance = pointRadiance * transmittance + inScatter;
+
+  return vec4(pointRadiance, 1.0);
+}
+
 struct RayIntersection {
   bool didIntersect;
   vec3 wIntersectionPoint;
@@ -151,6 +178,7 @@ void main() {
       oceanIntersection.wIntersectionPoint, 1.0);
 
     if (vPosition.z < vOceanPosition.z && oceanIntersection.didIntersect) {
+      // This is the ocean
       oceanGBuffer.wPosition *= 1000.0;
 
       pointAlpha = 0.0;
@@ -162,7 +190,8 @@ void main() {
       oceanRadiance = getPointRadiance(oceanGBuffer).rgb;
     }
     else {
-      vec4 radiance = getPointRadiance(gbuffer);
+      // This is a rendered object
+      vec4 radiance = getPointRadianceToon(gbuffer);
       pointRadiance = radiance.rgb;
       pointAlpha = radiance.a;
     }

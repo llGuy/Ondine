@@ -8,6 +8,7 @@
 #include "Camera.hpp"
 #include "GBuffer.hpp"
 #include "Delegate.hpp"
+#include "Pixelater.hpp"
 #include "SkyRenderer.hpp"
 #include "RenderStage.hpp"
 #include "ModelManager.hpp"
@@ -50,6 +51,7 @@ private:
   PlanetRenderer mPlanetRenderer;
   WaterRenderer mWaterRenderer;
   DeferredLighting mDeferredLighting;
+  Pixelater mPixelater;
 
   ModelManager mModelManager;
   Scene mScene;

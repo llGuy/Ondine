@@ -1,6 +1,7 @@
 #ifndef SKY_UTILS_GLSL
 #define SKY_UTILS_GLSL
 
+#include "Utils.glsl"
 #include "PlanetDef.glsl"
 
 /* Some utility functions */
@@ -1043,9 +1044,31 @@ vec3 getSunAndSkyIrradiance(
   skyIrradiance = getIrradiance(sky, irradianceTexture, r, muSun) *
     (1.0 + dot(normal, point) / r) * 0.5;
 
+  float incidentIntensity = max(dot(normal, sunDirection), 0.0);
+
   return sky.solarIrradiance *
     getTransmittanceToSun(sky, transmittanceTexture, r, muSun) *
     max(dot(normal, sunDirection), 0.0);
+}
+
+vec3 getSunAndSkyIrradianceToon(
+  in PlanetProperties sky,
+  in sampler2D transmittanceTexture,
+  in sampler2D irradianceTexture,
+  vec3 point, vec3 normal, vec3 sunDirection,
+  out vec3 skyIrradiance) {
+  float r = length(point);
+  float muSun = dot(point, sunDirection) / r;
+
+  skyIrradiance = getIrradiance(sky, irradianceTexture, r, muSun) *
+    (1.0 + dot(normal, point) / r) * 0.5;
+
+  float incidentIntensity = max(dot(normal, sunDirection), 0.0);
+  float toonIntensity = toonShadingIncidentIntensity(incidentIntensity);
+
+  return sky.solarIrradiance *
+    getTransmittanceToSun(sky, transmittanceTexture, r, muSun) *
+    toonIntensity;
 }
 
 #endif

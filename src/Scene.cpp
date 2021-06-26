@@ -39,7 +39,7 @@ void Scene::init(
 
     pipelineConfig.enableDepthTesting();
     pipelineConfig.configurePipelineLayout(
-      sizeof(mTestPushConstant),
+      sizeof(glm::mat4),
       // Camera UBO
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       // Planet UBO

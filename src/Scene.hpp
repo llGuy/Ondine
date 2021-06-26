@@ -38,10 +38,6 @@ private:
   StaticModelHandle mTestModel;
   VulkanPipeline mTestPipeline;
 
-  struct {
-    glm::mat4 modelMatrix;
-  } mTestPushConstant;
-
   ModelManager &mModelManager;
 };
 
