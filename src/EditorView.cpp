@@ -15,12 +15,14 @@ namespace Ondine::View {
 EditorView::EditorView(
   const Core::WindowContextInfo &contextInfo,
   Graphics::VulkanContext &graphicsContext,
+  Graphics::Renderer3D &renderer3D,
   Core::OnEventProc onEventProc)
   : mIsDockLayoutInitialised(false),
     mViewportResolution{0, 0},
     mFocusedWindow(EditorWindow::None),
+    mRenderer3D(renderer3D),
     mOnEvent(onEventProc) {
-  windowName(EditorWindow::Assets) = "Assets";
+  windowName(EditorWindow::Graphics) = "Graphics";
   windowName(EditorWindow::Viewport) = "Viewport";
   windowName(EditorWindow::Console) = "Console";
   windowName(EditorWindow::GameState) = "Game State";
@@ -113,7 +115,7 @@ void EditorView::render(ViewRenderParams &params) {
       ImGuiID game = ImGui::DockBuilderSplitNode(
         general, ImGuiDir_Down, 0.5f, NULL, &general);
 
-      ImGui::DockBuilderDockWindow(windowName(EditorWindow::Assets), assets);
+      ImGui::DockBuilderDockWindow(windowName(EditorWindow::Graphics), assets);
       ImGui::DockBuilderDockWindow(windowName(EditorWindow::Viewport), viewport);
       ImGui::DockBuilderDockWindow(windowName(EditorWindow::Console), console);
       ImGui::DockBuilderDockWindow(windowName(EditorWindow::GameState), game);
@@ -131,16 +133,7 @@ void EditorView::render(ViewRenderParams &params) {
 
   EditorWindow prevFocusedWindow = mFocusedWindow;
 
-  if (ImGui::Begin(
-    windowName(EditorWindow::Assets), nullptr,
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
-
-    if (ImGui::IsWindowFocused()) {
-      mFocusedWindow = EditorWindow::Assets;
-    }
-    
-    ImGui::End();
-  }
+  renderGraphicsWindow();
 
   bool renderViewport = false;
   ImVec2 viewportPos = {};
@@ -245,7 +238,7 @@ const Graphics::VulkanUniform &EditorView::getOutput() const {
 void EditorView::tickMenuBar() {
   if (ImGui::BeginMenuBar()) {
     if (ImGui::BeginMenu("Windows")) {
-      if (ImGui::MenuItem("Assets")) {
+      if (ImGui::MenuItem("Graphics")) {
       }
       if (ImGui::MenuItem("Viewport")) {
       }
@@ -454,6 +447,35 @@ FocusedView EditorView::trackInput(
 
 const char *&EditorView::windowName(EditorWindow window) {
   return mWindowNames[(int)window];
+}
+
+void EditorView::renderGraphicsWindow() {
+  if (ImGui::Begin(
+    windowName(EditorWindow::Graphics), nullptr,
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+
+    if (ImGui::IsWindowFocused()) {
+      mFocusedWindow = EditorWindow::Graphics;
+    }
+
+    // Pixelation
+    ImGui::Separator();
+
+    ImGui::SliderFloat(
+      "Pixelation Strength",
+      &mRenderer3D.mPixelater.pixelationStrength,
+      1.0f, 5.0f);
+
+    ImGui::Separator();
+
+    ImGui::SliderFloat(
+      "Exposure",
+      &mRenderer3D.mLightingProperties.exposure,
+      1.0f, 50.0f);
+    ImGui::Separator();
+    
+    ImGui::End();
+  }
 }
 
 }

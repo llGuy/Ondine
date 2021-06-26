@@ -9,6 +9,7 @@
 #include "GBuffer.hpp"
 #include "Delegate.hpp"
 #include "Pixelater.hpp"
+#include "EditorView.hpp"
 #include "SkyRenderer.hpp"
 #include "RenderStage.hpp"
 #include "ModelManager.hpp"
@@ -59,6 +60,9 @@ private:
   Resolution mPipelineViewport;
 
   VulkanContext &mGraphicsContext;
+
+  // Only relevant in DEV builds
+  friend class View::EditorView;
 };
 
 }

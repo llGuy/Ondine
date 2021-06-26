@@ -2,16 +2,20 @@
 
 #include <imgui.h>
 #include "View.hpp"
+#include "Renderer3D.hpp"
 #include "VulkanRenderPass.hpp"
 #include "VulkanFramebuffer.hpp"
 
+namespace Ondine::Graphics {
+
+class Renderer3D;
+
+}
+
 namespace Ondine::View {
 
-class VulkanContext;
-class WindowContextInfo;
-
 enum class EditorWindow {
-  Assets,
+  Graphics,
   Viewport,
   Console,
   GameState,
@@ -25,6 +29,7 @@ public:
   EditorView(
     const Core::WindowContextInfo &contextInfo,
     Graphics::VulkanContext &graphicsContext,
+    Graphics::Renderer3D &renderer3D,
     Core::OnEventProc proc);
 
   ~EditorView() override;
@@ -51,6 +56,8 @@ private:
 
   const char *&windowName(EditorWindow window);
 
+  void renderGraphicsWindow();
+
 private:
   ImGuiID mDock;
   bool mIsDockLayoutInitialised;
@@ -61,6 +68,7 @@ private:
   Graphics::VulkanTexture mTarget;
   Graphics::VulkanUniform mTargetUniform;
   Graphics::VulkanPipeline mRenderViewport;
+  Graphics::Renderer3D &mRenderer3D;
 
   EditorWindow mFocusedWindow;
   uint8_t mChangedFocusToViewport : 4;

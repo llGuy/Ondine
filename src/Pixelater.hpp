@@ -1,7 +1,14 @@
 #pragma once
 
+#include "Delegate.hpp"
 #include "RenderStage.hpp"
 #include "VulkanContext.hpp"
+
+namespace Ondine::View {
+
+class EditorView;
+
+}
 
 namespace Ondine::Graphics {
 
@@ -44,6 +51,9 @@ private:
   VulkanFramebuffer mFBO;
   VulkanTexture mTexture;
   VkExtent2D mExtent;
+
+  // Will only be relevant in DEV builds
+  friend class View::EditorView;
 };
 
 }

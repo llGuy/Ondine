@@ -11,6 +11,12 @@
 #include "VulkanRenderPass.hpp"
 #include "VulkanFramebuffer.hpp"
 
+namespace Ondine::View {
+
+class EditorView;
+
+}
+
 namespace Ondine::Graphics {
 
 class VulkanContext;
@@ -221,6 +227,8 @@ private:
   float mSunZenithAngleRadians = 1.300000;
   float mSunAzimuthAngleRadians = 3.000000;
   float mExposure = 10.000000;
+
+  friend class View::EditorView;
 };
 
 }

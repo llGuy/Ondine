@@ -47,7 +47,7 @@ void Application::run() {
 
   mViewStack.push(
     new View::EditorView(
-      surfaceInfo, mGraphicsContext, evProc));
+      surfaceInfo, mGraphicsContext, mRenderer3D, evProc));
 
   /* User-defined function which will be overriden */
   start();
