@@ -119,6 +119,8 @@ void Renderer3D::init() {
       0.0046750340586467079f, 0.99998907220740285f, 0.0f);
     mLightingProperties.exposure = 20.0f;
     mLightingProperties.white = glm::vec3(2.0f);
+    mLightingProperties.waterSurfaceColor =
+      glm::vec3(8.0f, 54.0f, 76.0f) / 255.0f;
   }
 
   mDeferredLighting.init(

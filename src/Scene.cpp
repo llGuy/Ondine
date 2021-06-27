@@ -17,7 +17,7 @@ void Scene::init(
   { // Create test model
     ModelConfig modelConfig;
     mTestModel = mModelManager.loadStaticModel(
-      "res/model/Taurus.fbx", graphicsContext, modelConfig);
+      "res/model/UVSphere.fbx", graphicsContext, modelConfig);
 
     Core::File vshFile = Core::gFileSystem->createFile(
       (Core::MountPoint)Core::ApplicationMountPoints::Application,

@@ -473,6 +473,11 @@ void EditorView::renderGraphicsWindow() {
       &mRenderer3D.mLightingProperties.exposure,
       1.0f, 50.0f);
     ImGui::Separator();
+
+    ImGui::ColorEdit3(
+      "Water Surface Color",
+      &mRenderer3D.mLightingProperties.waterSurfaceColor.r);
+    ImGui::Separator();
     
     ImGui::End();
   }

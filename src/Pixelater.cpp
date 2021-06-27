@@ -7,7 +7,7 @@ namespace Ondine::Graphics {
 void Pixelater::init(
   VulkanContext &graphicsContext,
   const VkExtent2D &initialExtent) {
-  pixelationStrength = 3.0f;
+  pixelationStrength = 1.0f;
 
   { // Create render pass
     VulkanRenderPassConfig renderPassConfig(1, 1);

@@ -2,6 +2,7 @@
 
 #include "Sky.glsl"
 #include "Utils.glsl"
+#include "Lighting.glsl"
 #include "CameraDef.glsl"
 #include "LightingDef.glsl"
 
@@ -34,12 +35,60 @@ layout (set = 4, binding = 3) uniform sampler2D uIrradianceTexture;
 
 layout (set = 5, binding = 0) uniform sampler2D uReflectionTexture;
 
-struct GBufferData {
-  vec4 wNormal;
-  float depth;
-  vec4 wPosition;
-  vec4 albedo;
-};
+vec4 getPointRadianceBRDF(in GBufferData gbuffer) {
+  vec3 skyIrradiance, sunIrradiance, pointRadiance;
+
+
+  { // Calculate sun and sky irradiance which will contribute to the final BRDF
+    vec3 point = gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter;
+    vec3 normal = gbuffer.wNormal.xyz;
+    vec3 sunDirection = uLighting.lighting.sunDirection;
+
+    float r = length(point);
+    float muSun = dot(point, sunDirection) / r;
+
+    skyIrradiance = getIrradiance(uSky.sky, uIrradianceTexture, r, muSun) *
+      (1.0 + dot(normal, point) / r) * 0.5;
+
+    float incidentIntensity = max(dot(normal, sunDirection), 0.0);
+    float toonIntensity = toonShadingIncidentIntensity(incidentIntensity);
+
+    vec3 accumulatedRadiance = vec3(0.0);
+
+    float metal = 0.1;
+
+    accumulatedRadiance += directionalRadianceBRDF(
+      gbuffer,
+      mix(vec3(0.04), gbuffer.albedo.rgb, metal),
+      0.0,
+      metal,
+      uCamera.camera.wViewDirection,
+      uSky.sky.solarIrradiance * getTransmittanceToSun(
+        uSky.sky, uTransmittanceTexture, r, muSun),
+      uLighting.lighting.sunDirection);
+
+    pointRadiance = accumulatedRadiance;
+  }
+
+  // vec3 pointRadiance = gbuffer.albedo.rgb * (1.0 / PI) *
+  //   (sunIrradiance + skyIrradiance);
+
+
+
+  /* How much is scattered towards us */
+  vec3 transmittance;
+  vec3 inScatter = getSkyRadianceToPoint(
+    uSky.sky, uTransmittanceTexture,
+    uScatteringTexture, uSingleMieScatteringTexture,
+    uCamera.camera.wPosition / 1000.0 - uSky.sky.wPlanetCenter,
+    gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter, 0.0,
+    uLighting.lighting.sunDirection,
+    transmittance);
+
+  pointRadiance = pointRadiance * transmittance + inScatter;
+
+  return vec4(pointRadiance, 1.0);
+}
 
 vec4 getPointRadiance(in GBufferData gbuffer) {
   vec3 skyIrradiance;
@@ -141,7 +190,8 @@ const float OCEAN_HEIGHT = 0.05;
 
 vec4 getOceanColor() {
   return texture(
-    uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y)) * 0.2;
+    uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y)) *
+    vec4(uLighting.lighting.waterSurfaceColor, 1.0);
 }
 
 void main() {
@@ -191,7 +241,7 @@ void main() {
     }
     else {
       // This is a rendered object
-      vec4 radiance = getPointRadianceToon(gbuffer);
+      vec4 radiance = getPointRadianceBRDF(gbuffer);
       pointRadiance = radiance.rgb;
       pointAlpha = radiance.a;
     }
