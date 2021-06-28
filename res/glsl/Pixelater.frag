@@ -11,10 +11,10 @@ layout (push_constant) uniform PushConstant {
   float height;
 } uPushConstant;
 
-#define ENABLE_PIXELATION false
+#define ENABLE_PIXELATION
 
 void main() {
-#if ENABLE_PIXELATION
+#ifdef ENABLE_PIXELATION
   float dx = uPushConstant.pixelationStrength * (1.0 / uPushConstant.width);
   float dy = uPushConstant.pixelationStrength * (1.0 / uPushConstant.height);
   vec2 uvs = vec2(dx * floor(inUVs.x / dx), dy * floor(inUVs.y / dy));

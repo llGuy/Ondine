@@ -23,14 +23,13 @@ DEFINE_BIT_OPS_FOR_ENUM_CLASS(
   FileOpenType, FileOpenTypeBits, std::ios_base::openmode);
 
 class File {
-private:
+public:
+  File() = default;
+  ~File() = default;
+
   /* This is the actual full path to the file */
   File(const std::string &path, FileOpenTypeBits type);
-
-  friend class FileSystem;
-
-public:
-  ~File() = default;
+  File(const File &other);
 
   /* Returns the number of bytes read */
   Buffer readBinary();

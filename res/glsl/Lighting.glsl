@@ -31,7 +31,6 @@ struct GBufferData {
   vec4 albedo;
 };
 
-// Later on, add shadow factor (all in world space)
 vec3 directionalRadianceBRDF(
   in GBufferData gbuffer,
   in vec3 baseReflectivity,
@@ -40,11 +39,13 @@ vec3 directionalRadianceBRDF(
   in vec3 viewDirection,
   in vec3 incomingRadiance,
   in vec3 lightDirection) {
-  vec3 halfway = normalize(lightDirection + viewDirection);
+  vec3 viewDir = -viewDirection;
 
-  float ndotv = max(dot(gbuffer.wNormal.xyz, viewDirection), 0.000001f);
+  vec3 halfway = normalize(lightDirection + viewDir);
+
+  float ndotv = max(dot(gbuffer.wNormal.xyz, viewDir), 0.000001f);
   float ndotl = max(dot(gbuffer.wNormal.xyz, lightDirection), 0.000001f);
-  float hdotv = max(dot(halfway, viewDirection), 0.000001f);
+  float hdotv = max(dot(halfway, viewDir), 0.000001f);
   float ndoth = max(dot(gbuffer.wNormal.xyz, halfway), 0.000001f);
 
   float distributionTerm = distributionGGX(ndoth, roughness);
@@ -59,6 +60,42 @@ vec3 directionalRadianceBRDF(
   kd *= 1.0f - metalness;
 
   return (kd * gbuffer.albedo.rgb / PI + specular) * incomingRadiance * ndotl;
+}
+
+// Later on, add shadow factor (all in world space)
+vec3 directionalRadianceBRDFToon(
+  in GBufferData gbuffer,
+  in vec3 baseReflectivity,
+  in float roughness,
+  in float metalness,
+  in vec3 viewDirection,
+  in vec3 incomingRadiance,
+  in vec3 lightDirection) {
+  vec3 viewDir = -viewDirection;
+
+  vec3 halfway = normalize(lightDirection + viewDir);
+
+  float ndotv = max(dot(gbuffer.wNormal.xyz, viewDir), 0.000001f);
+  float ndotl = max(dot(gbuffer.wNormal.xyz, lightDirection), 0.000001f);
+  float hdotv = max(dot(halfway, viewDir), 0.000001f);
+  float ndoth = max(dot(gbuffer.wNormal.xyz, halfway), 0.000001f);
+
+  float distributionTerm = distributionGGX(ndoth, roughness);
+  float smithTerm = smithGGX(ndotv, ndotl, roughness);
+  vec3 fresnelTerm = fresnel(hdotv, baseReflectivity);
+
+  vec3 specular = smithTerm * distributionTerm * fresnelTerm;
+  specular /= 4.0 * ndotv * ndotl;
+
+  vec3 kd = vec3(1.0) - fresnelTerm;
+
+  kd *= 1.0f - metalness;
+
+  float incidentIntensity = ndotl;
+  float toonIntensity = toonShadingIncidentIntensity(incidentIntensity);
+
+  return (kd * gbuffer.albedo.rgb / PI + specular) *
+    incomingRadiance * toonIntensity;
 }
 
 #endif

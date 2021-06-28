@@ -7,7 +7,7 @@ namespace Ondine::Graphics {
 void Pixelater::init(
   VulkanContext &graphicsContext,
   const VkExtent2D &initialExtent) {
-  pixelationStrength = 1.0f;
+  pixelationStrength = 3.0f;
 
   { // Create render pass
     VulkanRenderPassConfig renderPassConfig(1, 1);
@@ -25,36 +25,7 @@ void Pixelater::init(
     mRenderPass.init(graphicsContext.device(), renderPassConfig);
   }
 
-  { // Create shader
-    Core::File vshFile = Core::gFileSystem->createFile(
-      (Core::MountPoint)Core::ApplicationMountPoints::Application,
-      "res/spv/TexturedQuad.vert.spv",
-      Core::FileOpenType::Binary | Core::FileOpenType::In);
-    Buffer vsh = vshFile.readBinary();
-
-    Core::File fshFile = Core::gFileSystem->createFile(
-      (Core::MountPoint)Core::ApplicationMountPoints::Application,
-      "res/spv/Pixelater.frag.spv",
-      Core::FileOpenType::Binary | Core::FileOpenType::In);
-    Buffer fsh = fshFile.readBinary();
-
-    VulkanPipelineConfig pipelineConfig(
-      {mRenderPass, 0},
-      VulkanShader(
-        graphicsContext.device(), vsh, VulkanShaderType::Vertex),
-      VulkanShader(
-        graphicsContext.device(), fsh, VulkanShaderType::Fragment));
-
-    pipelineConfig.configurePipelineLayout(
-      sizeof(Pixelater::PushConstant),
-      VulkanPipelineDescriptorLayout{
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
-
-    mPipeline.init(
-      graphicsContext.device(),
-      graphicsContext.descriptorLayouts(),
-      pipelineConfig);
-  }
+  initPipeline(graphicsContext);
 
   { // Create target
     mExtent = {
@@ -133,6 +104,37 @@ void Pixelater::destroyTargets(VulkanContext &graphicsContext) {
     graphicsContext.device(), graphicsContext.descriptorPool());
   mFBO.destroy(graphicsContext.device());
   mTexture.destroy(graphicsContext.device());
+}
+
+void Pixelater::initPipeline(VulkanContext &graphicsContext) {
+  Core::File vshFile = Core::gFileSystem->createFile(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
+    "res/spv/TexturedQuad.vert.spv",
+    Core::FileOpenType::Binary | Core::FileOpenType::In);
+  Buffer vsh = vshFile.readBinary();
+
+  Core::File fshFile = Core::gFileSystem->createFile(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
+    "res/spv/Pixelater.frag.spv",
+    Core::FileOpenType::Binary | Core::FileOpenType::In);
+  Buffer fsh = fshFile.readBinary();
+
+  VulkanPipelineConfig pipelineConfig(
+    {mRenderPass, 0},
+    VulkanShader(
+      graphicsContext.device(), vsh, VulkanShaderType::Vertex),
+    VulkanShader(
+      graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+
+  pipelineConfig.configurePipelineLayout(
+    sizeof(Pixelater::PushConstant),
+    VulkanPipelineDescriptorLayout{
+      VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
+
+  mPipeline.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorLayouts(),
+    pipelineConfig);
 }
 
 }

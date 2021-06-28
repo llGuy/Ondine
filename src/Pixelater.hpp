@@ -36,6 +36,7 @@ public:
 private:
   // For resizing
   void initTargets(VulkanContext &graphicsContext);
+  void initPipeline(VulkanContext &graphicsContext);
   void destroyTargets(VulkanContext &graphicsContext);
 
 private:

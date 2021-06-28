@@ -3,6 +3,7 @@
 #include "IO.hpp"
 #include "Tick.hpp"
 #include "Utils.hpp"
+#include "FileSystem.hpp"
 
 namespace Ondine {
 
@@ -16,6 +17,12 @@ public:
   virtual void trackInput(
     const Core::Tick &tick,
     const Core::InputTracker &inputTracker) = 0;
+};
+
+/* For tracking whether file has changed (reload resources for instance...) */
+class DelegateTrackFile {
+public:
+  virtual void trackFile(Core::TrackFileID id, Core::File &file) = 0;
 };
 
 }

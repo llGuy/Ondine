@@ -37,8 +37,6 @@ layout (set = 5, binding = 0) uniform sampler2D uReflectionTexture;
 
 vec4 getPointRadianceBRDF(in GBufferData gbuffer) {
   vec3 skyIrradiance, sunIrradiance, pointRadiance;
-
-
   { // Calculate sun and sky irradiance which will contribute to the final BRDF
     vec3 point = gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter;
     vec3 normal = gbuffer.wNormal.xyz;
@@ -55,25 +53,22 @@ vec4 getPointRadianceBRDF(in GBufferData gbuffer) {
 
     vec3 accumulatedRadiance = vec3(0.0);
 
-    float metal = 0.1;
+    float metal = 0.0;
+    float roughness = 0.8;
 
     accumulatedRadiance += directionalRadianceBRDF(
       gbuffer,
       mix(vec3(0.04), gbuffer.albedo.rgb, metal),
-      0.0,
+      roughness,
       metal,
       uCamera.camera.wViewDirection,
       uSky.sky.solarIrradiance * getTransmittanceToSun(
         uSky.sky, uTransmittanceTexture, r, muSun),
       uLighting.lighting.sunDirection);
 
-    pointRadiance = accumulatedRadiance;
+    pointRadiance = accumulatedRadiance +
+      gbuffer.albedo.rgb * (1.0 / PI) * skyIrradiance;
   }
-
-  // vec3 pointRadiance = gbuffer.albedo.rgb * (1.0 / PI) *
-  //   (sunIrradiance + skyIrradiance);
-
-
 
   /* How much is scattered towards us */
   vec3 transmittance;
