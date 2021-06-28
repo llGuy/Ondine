@@ -2,6 +2,7 @@
 #include "Memory.hpp"
 #include "IOEvent.hpp"
 #include "GameView.hpp"
+#include "FileEvent.hpp"
 #include "FileSystem.hpp"
 #include "EditorView.hpp"
 #include "DebugEvent.hpp"
@@ -49,6 +50,11 @@ void Application::run() {
     new View::EditorView(
       surfaceInfo, mGraphicsContext, mRenderer3D, evProc));
 
+  /* Testing path tracking */
+  gFileSystem->trackPath(
+    "res/glsl/Pixelater.frag",
+    (MountPoint)ApplicationMountPoints::Application);
+
   /* User-defined function which will be overriden */
   start();
   mIsRunning = true;
@@ -63,6 +69,7 @@ void Application::run() {
     mInputTracker.tick(currentTick);
 
     mWindow.pollInput();
+    gFileSystem->trackFiles(evProc);
 
     /* 
        Go through the core events (window resize, etc...), then offload 
@@ -80,6 +87,10 @@ void Application::run() {
 
       case EventCategory::Debug: {
         processDebugEvent(ev);
+      } break;
+
+      case EventCategory::File: {
+        processFileEvent(ev);
       } break;
 
       default:; /* Only handle the above */
@@ -200,6 +211,20 @@ void Application::processDebugEvent(Event *ev) {
 #else
     asm("int $3");
 #endif
+
+    event->isHandled = true;
+  } break;
+
+  default:;
+  }
+}
+
+void Application::processFileEvent(Event *ev) {
+  switch (ev->type) {
+  case EventType::PathChanged: {
+    auto *event = (EventPathChanged *)ev;
+
+    /* Get renderer to update changed resources */
 
     event->isHandled = true;
   } break;

@@ -10,7 +10,8 @@ enum class EventCategory {
   Input,
   Graphics,
   Gameplay,
-  Debug
+  Debug,
+  File
 };
 
 enum class EventType {
@@ -21,6 +22,7 @@ enum class EventType {
   ViewportResize,
   CursorDisplayChange,
   Breakpoint,
+  PathChanged,
   Invalid
 };
 

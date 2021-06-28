@@ -3,16 +3,26 @@
 #include <string>
 #include <vector>
 #include <stdint.h>
+#include <filesystem>
 #include <unordered_map>
 
 #include "File.hpp"
+#include "Time.hpp"
+#include "Event.hpp"
 
 namespace Ondine::Core {
 
 constexpr uint32_t MAX_MOUNT_POINTS = 16;
 
 using MountPoint = uint8_t;
-using TrackFileID = int32_t;
+using TrackPathID = int32_t;
+using FileTime = std::filesystem::file_time_type;
+
+struct TrackedPath {
+  const std::string path;
+  MountPoint mountPoint;
+  FileTime lastTime;
+};
 
 /* 
    File system contains basic file / directory interaction but also
@@ -20,7 +30,7 @@ using TrackFileID = int32_t;
 */
 class FileSystem {
 public:
-  FileSystem() = default;
+  FileSystem();
 
   void addMountPoint(MountPoint id, const std::string &directory);
 
@@ -39,20 +49,20 @@ public:
     MountPoint mountPoint,
     const std::string &path);
 
-  File &getTrackedFile(
-    MountPoint mountPoint,
-    const std::string &path,
-    FileOpenTypeBits type);
+  TrackPathID trackPath(const std::string &path, MountPoint mountPoint);
 
-  TrackFileID getTrackID(const std::string &path);
+  void trackFiles(OnEventProc onEventProc);
 
-  void trackFiles();
+private:
+  FileTime calculateLastWriteTime(const TrackedPath &trackedPath);
 
 private:
   std::string mMountPoints[MAX_MOUNT_POINTS];
-
-  // Resource management
-  std::unordered_map<std::string, TrackFileID> mPathToTrackID;
+  std::unordered_map<std::string, TrackPathID> mPathToTrackID;
+  std::vector<TrackedPath> mTrackedPaths;
+  TimeStamp mPrevTrackTime;
+  // Seconds
+  const float mTrackInterval;
 };
 
 extern FileSystem *gFileSystem;

@@ -35,6 +35,7 @@ private:
   void processInputEvent(Event *ev);
   void processGraphicsEvent(Event *ev);
   void processDebugEvent(Event *ev);
+  void processFileEvent(Event *ev);
   void setMaxFramerate(float fps);
 
 private:
