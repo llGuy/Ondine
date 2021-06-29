@@ -32,7 +32,7 @@ void main() {
     discard;
   }
   else {
-    outAlbedo = vec4(1.0, 9.0, 8.0, 0.0);
+    outAlbedo = vec4(1.0, 1.0, 1.0, 0.0);
     outNormal = vec4(normalize(inFS.wNormal.xyz), 1.0);
     outPosition = inFS.wPosition;
     outPosition.a = 1.0;

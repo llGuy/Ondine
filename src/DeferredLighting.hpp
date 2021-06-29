@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Tick.hpp"
 #include "RenderStage.hpp"
 #include "VulkanContext.hpp"
 #include "TrackedResource.hpp"
@@ -10,12 +11,14 @@ namespace Ondine::Graphics {
 struct LightingProperties {
   // Vector going out towards the sun
   alignas(16) glm::vec3 sunDirection;
+  alignas(16) glm::vec3 moonDirection;
   alignas(16) glm::vec3 sunSize;
   alignas(16) glm::vec3 white;
   alignas(16) glm::vec3 waterSurfaceColor;
   alignas(4) float exposure;
   alignas(4) float time;
   alignas(4) float dt;
+  alignas(4) float moonStrength;
 };
 
 class Camera;

@@ -2,6 +2,7 @@
 
 #include "Sky.glsl"
 #include "Utils.glsl"
+#include "Lighting.glsl"
 #include "CameraDef.glsl"
 #include "LightingDef.glsl"
 
@@ -32,6 +33,72 @@ layout (set = 4, binding = 1) uniform sampler3D uScatteringTexture;
 layout (set = 4, binding = 2) uniform sampler3D uSingleMieScatteringTexture;
 layout (set = 4, binding = 3) uniform sampler2D uIrradianceTexture;
 
+vec4 getPointRadianceBRDF(
+  float roughness, float metal,
+  in GBufferData gbuffer) {
+  vec3 skyIrradiance, sunIrradiance, pointRadiance;
+  { // Calculate sun and sky irradiance which will contribute to the final BRDF
+    vec3 point = gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter;
+    vec3 normal = gbuffer.wNormal.xyz;
+    vec3 sunDirection = uLighting.lighting.sunDirection;
+    vec3 moonDirection = uLighting.lighting.moonDirection;
+
+    float r = length(point);
+    float muSun = dot(point, sunDirection) / r;
+    float muMoon = dot(point, moonDirection) / r;
+
+    skyIrradiance = getIrradiance(uSky.sky, uIrradianceTexture, r, muSun) *
+      (1.0 + dot(normal, point) / r) * 0.5;
+
+    vec3 moonIrradiance = getIrradiance(uSky.sky, uIrradianceTexture, r, muMoon) *
+      (1.0 + dot(normal, point) / r) * 0.5;
+
+    float incidentIntensity = max(dot(normal, sunDirection), 0.0);
+    float toonIntensity = toonShadingIncidentIntensity(incidentIntensity);
+
+    vec3 accumulatedRadiance = vec3(0.0);
+
+    accumulatedRadiance += directionalRadianceBRDF(
+      gbuffer,
+      mix(vec3(0.04), gbuffer.albedo.rgb, metal),
+      roughness,
+      metal,
+      normalize(gbuffer.wPosition.xyz - uCamera.camera.wPosition),
+      uSky.sky.solarIrradiance * getTransmittanceToSun(
+        uSky.sky, uTransmittanceTexture, r, muSun),
+      uLighting.lighting.sunDirection);
+
+    accumulatedRadiance += directionalRadianceBRDF(
+      gbuffer,
+      mix(vec3(0.04), gbuffer.albedo.rgb, metal),
+      roughness,
+      metal,
+      normalize(gbuffer.wPosition.xyz - uCamera.camera.wPosition),
+      uSky.sky.solarIrradiance * getTransmittanceToSun(
+        uSky.sky, uTransmittanceTexture, r, muMoon),
+      uLighting.lighting.moonDirection) * uLighting.lighting.moonStrength;
+
+    pointRadiance = accumulatedRadiance +
+      gbuffer.albedo.rgb * (1.0 / PI) * skyIrradiance +
+      gbuffer.albedo.rgb * (1.0 / PI) * moonIrradiance *
+      uLighting.lighting.moonStrength;
+  }
+
+  /* How much is scattered towards us */
+  vec3 transmittance;
+  vec3 inScatter = getSkyRadianceToPoint(
+    uSky.sky, uTransmittanceTexture,
+    uScatteringTexture, uSingleMieScatteringTexture,
+    uCamera.camera.wPosition / 1000.0 - uSky.sky.wPlanetCenter,
+    gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter, 0.0,
+    uLighting.lighting.sunDirection,
+    transmittance);
+
+  pointRadiance = pointRadiance * transmittance + inScatter;
+
+  return vec4(pointRadiance, 1.0);
+}
+
 void main() {
   /* Get all the inputs */
   vec4 wNormal = texture(uNormal, inUVs);
@@ -40,6 +107,12 @@ void main() {
   vec4 albedo = texture(uAlbedo, inUVs).rgba;
   vec3 viewRay = normalize(inViewRay);
 
+  GBufferData gbuffer = GBufferData(
+    wNormal,
+    depth,
+    wPosition,
+    albedo);
+
   /* Light contribution from the surface */
   float pointAlpha = 0.0;
   vec3 pointRadiance = vec3(0.0);
@@ -47,9 +120,13 @@ void main() {
   vec3 radianceBaseColor = vec3(0.0);
 
   if (wPosition.a == 1.0) {
+    vec4 radiance = getPointRadianceBRDF(0.8, 0.0, gbuffer);
+    pointRadiance = radiance.rgb;
+    pointAlpha = radiance.a;
+
+    /*
     vec3 skyIrradiance;
 
-    /* Radiance that the surface will reflect */
     vec3 sunIrradiance = getSunAndSkyIrradiance(
       uSky.sky, uTransmittanceTexture, uIrradianceTexture,
       wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter,
@@ -57,7 +134,6 @@ void main() {
 
     pointRadiance = albedo.rgb * (1.0 / PI) * (sunIrradiance + skyIrradiance);
 
-    /* How much is scattered towards us */
     vec3 transmittance;
     vec3 inScatter = getSkyRadianceToPoint(
       uSky.sky, uTransmittanceTexture,
@@ -71,6 +147,7 @@ void main() {
 
     pointRadiance = pointRadiance * transmittance + inScatter;
     pointAlpha = 1.0;
+    */
   }
   else {
     radianceBaseColor = albedo.rgb;

@@ -33,7 +33,7 @@ void StarRenderer::init(
   { // Create "model" which will enable us to render these stars and pipeline
     // Each instance will juse be a point
     mPipelineModelConfig.pushAttribute(
-      {sizeof(Star), VK_FORMAT_R32G32B32_SFLOAT, VK_VERTEX_INPUT_RATE_VERTEX},
+      {sizeof(Star), VK_FORMAT_R32G32B32_SFLOAT},
       {(uint8_t *)mStars.data, mStars.size * sizeof(Star)});
 
     mStarsModel.init(mPipelineModelConfig, graphicsContext);
