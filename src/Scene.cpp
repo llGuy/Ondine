@@ -46,6 +46,7 @@ void Scene::init(
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
     modelConfig.configureVertexInput(pipelineConfig);
+    pipelineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
       
     mTestPipeline.init(
       graphicsContext.device(),

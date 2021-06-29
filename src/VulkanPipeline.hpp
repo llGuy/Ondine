@@ -89,6 +89,8 @@ public:
   void setBindingAttribute(
     uint32_t location, uint32_t binding, VkFormat format, uint32_t offset);
 
+  void setTopology(VkPrimitiveTopology topology);
+
 private:
   void setDefaultValues();
 

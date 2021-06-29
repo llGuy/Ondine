@@ -9,6 +9,7 @@ namespace Ondine::Graphics {
 struct Attribute {
   uint32_t size;
   VkFormat format;
+  VkVertexInputRate rate = VK_VERTEX_INPUT_RATE_VERTEX;
 };
 
 class ModelConfig {

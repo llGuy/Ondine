@@ -36,6 +36,7 @@ void Renderer3D::init() {
   { // Set planet properties
     /* Temporary - the world needs to define this */
     mPlanetProperties.solarIrradiance = glm::vec3(1.474f, 1.8504f, 1.91198f);
+
     // Angular radius of the Sun (radians)
     mPlanetProperties.solarAngularRadius = 0.004695f;
     mPlanetProperties.bottomRadius = 6360.0f / 6.0f;

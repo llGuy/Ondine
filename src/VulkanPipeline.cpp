@@ -175,6 +175,10 @@ void VulkanPipelineConfig::setDefaultValues() {
   mDepthStencil.depthWriteEnable = VK_FALSE;
 }
 
+void VulkanPipelineConfig::setTopology(VkPrimitiveTopology topology) {
+  mInputAssembly.topology = topology;
+}
+
 void VulkanPipelineConfig::setShaderStages(
   const Array<VulkanShader, AllocationType::Linear> &shaders) {
   for (int i = 0; i < shaders.size; ++i) {
