@@ -1,9 +1,10 @@
 #pragma once
 
 #include "Scene.hpp"
+#include "Scene.hpp"
 #include "GBuffer.hpp"
 #include "RenderStage.hpp"
-#include "Scene.hpp"
+#include "StarRenderer.hpp"
 #include "DeferredLighting.hpp"
 
 namespace Ondine::Graphics {
@@ -24,6 +25,7 @@ public:
     VulkanFrame &frame,
     const PlanetRenderer &planet,
     const SkyRenderer &sky,
+    const StarRenderer &stars,
     Scene &sceneSubmitter);
 
   void updateCameraInfo(

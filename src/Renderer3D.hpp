@@ -13,6 +13,7 @@
 #include "SkyRenderer.hpp"
 #include "RenderStage.hpp"
 #include "ModelManager.hpp"
+#include "StarRenderer.hpp"
 #include "WaterRenderer.hpp"
 #include "VulkanContext.hpp"
 #include "DeferredLighting.hpp"
@@ -50,6 +51,7 @@ private:
   LightingProperties mLightingProperties;
 
   GBuffer mGBuffer;
+  StarRenderer mStarRenderer;
   SkyRenderer mSkyRenderer;
   PlanetRenderer mPlanetRenderer;
   WaterRenderer mWaterRenderer;

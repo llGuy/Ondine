@@ -39,7 +39,7 @@ public:
   VkExtent2D popViewport();
 
   void bindPipeline(const VulkanPipeline &pipeline);
-  void pushConstants(size_t size, void *ptr);
+  void pushConstants(size_t size, const void *ptr);
   void bindVertexBuffers(
     uint32_t firstBinding, uint32_t bindingCount,
     const VulkanBuffer *buffers, VkDeviceSize *offsets = nullptr) const;

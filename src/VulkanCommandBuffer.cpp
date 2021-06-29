@@ -194,7 +194,7 @@ void VulkanCommandBuffer::bindPipeline(const VulkanPipeline &pipeline) {
   mCurrentPipelineLayout = pipeline.mPipelineLayout;
 }
 
-void VulkanCommandBuffer::pushConstants(size_t size, void *ptr) {
+void VulkanCommandBuffer::pushConstants(size_t size, const void *ptr) {
   vkCmdPushConstants(
     mCommandBuffer, mCurrentPipelineLayout,
     VK_SHADER_STAGE_ALL, 0, size, ptr);

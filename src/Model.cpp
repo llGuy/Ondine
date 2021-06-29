@@ -39,13 +39,17 @@ void ModelConfig::configureVertexInput(VulkanPipelineConfig &config) {
 }
 
 void Model::init(const ModelConfig &def, VulkanContext &context) {
-  mIndexBuffer.init(
-    context.device(), def.mIndices.size,
-    (VulkanBufferFlagBits)VulkanBufferFlag::IndexBuffer);
+  mVertexCount = def.mVertexCount;
 
-  mIndexBuffer.fillWithStaging(
-    context.device(), context.commandPool(),
-    def.mIndices);
+  if (def.mIndexCount > 0) {
+    mIndexBuffer.init(
+      context.device(), def.mIndices.size,
+      (VulkanBufferFlagBits)VulkanBufferFlag::IndexBuffer);
+
+    mIndexBuffer.fillWithStaging(
+      context.device(), context.commandPool(),
+      def.mIndices);
+  }
 
   // For now, store each attribute in a separate vertex buffer
   for (int i = 0; i < def.mAttributeCount; ++i) {
@@ -68,7 +72,7 @@ void Model::init(const ModelConfig &def, VulkanContext &context) {
   mIndexCount = def.mIndexCount;
 }
 
-void Model::bindVertexBuffers(const VulkanCommandBuffer &commandBuffer) {
+void Model::bindVertexBuffers(const VulkanCommandBuffer &commandBuffer) const {
   VkDeviceSize *offsets = STACK_ALLOC(VkDeviceSize, mVertexBufferCount);
   memset(offsets, 0, sizeof(VkDeviceSize) * mVertexBufferCount);
 
@@ -76,12 +80,20 @@ void Model::bindVertexBuffers(const VulkanCommandBuffer &commandBuffer) {
     0, mVertexBufferCount, mVertexBuffersRaw, offsets);
 }
 
-void Model::bindIndexBuffer(const VulkanCommandBuffer &commandBuffer) {
+void Model::bindIndexBuffer(const VulkanCommandBuffer &commandBuffer) const {
   commandBuffer.bindIndexBuffer(0, mIndexType, mIndexBuffer);
 }
 
-void Model::submitForRender(const VulkanCommandBuffer &commandBuffer) {
-  commandBuffer.drawIndexed(mIndexCount, 1, 0, 0, 0);
+void Model::submitForRenderIndexed(
+  const VulkanCommandBuffer &commandBuffer,
+  uint32_t instanceCount) {
+  commandBuffer.drawIndexed(mIndexCount, instanceCount, 0, 0, 0);
+}
+
+void Model::submitForRender(
+  const VulkanCommandBuffer &commandBuffer,
+  uint32_t instanceCount) const {
+  commandBuffer.draw(mVertexCount, instanceCount, 0, 0);
 }
 
 }

@@ -216,6 +216,8 @@ void main() {
   float oceanAlpha = 0.0;
   vec3 oceanRadiance = vec3(0.0);
 
+  vec3 radianceBaseColor = vec3(0.0);
+
   if (gbuffer.wPosition.a == 1.0) {
     // Check if this point is further away than the ocean
     vec4 vPosition = uCamera.camera.view * vec4(
@@ -251,6 +253,9 @@ void main() {
 
     oceanRadiance = getPointRadianceBRDF(oceanGBuffer).rgb;
   }
+  else {
+    radianceBaseColor = gbuffer.albedo.rgb;
+  }
 
   /* Light contribution from sky */
   vec3 transmittance;
@@ -259,7 +264,7 @@ void main() {
     uScatteringTexture, uSingleMieScatteringTexture,
     (uCamera.camera.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter),
     viewRay, 0.0, uLighting.lighting.sunDirection,
-    transmittance);
+    transmittance) + radianceBaseColor;
 
   if (dot(viewRay, uLighting.lighting.sunDirection) >
       uLighting.lighting.sunSize.y) {

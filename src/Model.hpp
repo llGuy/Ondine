@@ -48,9 +48,15 @@ class Model {
 public:
   void init(const ModelConfig &config, VulkanContext &context);
 
-  void bindVertexBuffers(const VulkanCommandBuffer &commandBuffer);
-  void bindIndexBuffer(const VulkanCommandBuffer &commandBuffer);
-  void submitForRender(const VulkanCommandBuffer &commandBuffer);
+  void bindVertexBuffers(const VulkanCommandBuffer &commandBuffer) const;
+  void bindIndexBuffer(const VulkanCommandBuffer &commandBuffer) const;
+  void submitForRenderIndexed(
+    const VulkanCommandBuffer &commandBuffer,
+    uint32_t instanceCount = 1);
+
+  void submitForRender(
+    const VulkanCommandBuffer &commandBuffer,
+    uint32_t instanceCount = 1) const;
 
 private:
   static constexpr uint32_t MAX_VERTEX_BUFFER_COUNT = 10;
@@ -62,6 +68,8 @@ private:
   VulkanBuffer mIndexBuffer;
   VkIndexType mIndexType;
   uint32_t mIndexCount;
+
+  uint32_t mVertexCount;
 };
 
 }

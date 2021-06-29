@@ -43,6 +43,9 @@ void main() {
   /* Light contribution from the surface */
   float pointAlpha = 0.0;
   vec3 pointRadiance = vec3(0.0);
+
+  vec3 radianceBaseColor = vec3(0.0);
+
   if (wPosition.a == 1.0) {
     vec3 skyIrradiance;
 
@@ -69,6 +72,9 @@ void main() {
     pointRadiance = pointRadiance * transmittance + inScatter;
     pointAlpha = 1.0;
   }
+  else {
+    radianceBaseColor = albedo.rgb;
+  }
 
   /* Light contribution from sky */
   vec3 transmittance;
@@ -83,7 +89,7 @@ void main() {
     radiance = radiance + transmittance * getSolarRadiance(uSky.sky);
   }
 
-  radiance = mix(radiance, pointRadiance, pointAlpha);
+  radiance = mix(radiance, pointRadiance, pointAlpha) + radianceBaseColor;
 
   vec3 one = vec3(1.0);
   vec3 expValue =

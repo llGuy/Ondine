@@ -30,6 +30,8 @@ void Renderer3D::init() {
 
   mSkyRenderer.init(mGraphicsContext, mGBuffer);
 
+  mStarRenderer.init(mGraphicsContext, mGBuffer, 1000);
+
   // Idle with all precomputation stuff
   mGraphicsContext.device().graphicsQueue().idle();
 
@@ -179,17 +181,22 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
   mCamera.updateData(frame.primaryCommandBuffer, mCameraProperties);
   mDeferredLighting.updateData(frame.primaryCommandBuffer, mLightingProperties);
 
+  mStarRenderer.tick(
+    mCameraProperties,
+    mLightingProperties,
+    mPlanetProperties, tick);
+
   mWaterRenderer.updateCameraInfo(mCameraProperties, mPlanetProperties);
   mWaterRenderer.updateCameraUBO(frame.primaryCommandBuffer);
   mWaterRenderer.updateLightingUBO(
     mLightingProperties, frame.primaryCommandBuffer);
-  mWaterRenderer.tick(frame, mPlanetRenderer, mSkyRenderer, mScene);
+  mWaterRenderer.tick(
+    frame, mPlanetRenderer, mSkyRenderer, mStarRenderer, mScene);
      
   mGBuffer.beginRender(frame);
   { // Render 3D scene
-    // mPlanetRenderer.tick(tick, frame, mCamera);
     mScene.submit(mCamera, mPlanetRenderer, frame);
-    // mSkyRenderer.tick(tick, frame, mCameraProperties);
+    mStarRenderer.render(mCamera, frame);
   }
   mGBuffer.endRender(frame);
 

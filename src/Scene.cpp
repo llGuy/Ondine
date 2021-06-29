@@ -76,7 +76,7 @@ void Scene::submit(
     auto &sceneObj = mSceneObjects[i];
     if (sceneObj.isInitialised) {
       commandBuffer.pushConstants(sizeof(glm::mat4), &sceneObj.transform);
-      model.submitForRender(commandBuffer);
+      model.submitForRenderIndexed(commandBuffer);
     }
   }
 }
