@@ -301,6 +301,20 @@ void Renderer3D::trackInput(
     mCameraProperties.projection * mCameraProperties.view;
 }
 
+void Renderer3D::trackPath(Core::TrackPathID id, const char *path) {
+  mGraphicsContext.device().idle();
+
+  ResourceTracker *trackers[] = {
+    &mPixelater,
+    &mDeferredLighting
+  };
+
+  // Add other file trackers after
+  for (int i = 0; i < sizeof(trackers) / sizeof(trackers[0]); ++i) {
+    trackers[i]->trackPath(mGraphicsContext, id, path);
+  }
+}
+
 const RenderStage &Renderer3D::mainRenderStage() const {
   return mPixelater;
 }

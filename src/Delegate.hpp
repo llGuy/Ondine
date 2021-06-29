@@ -19,10 +19,4 @@ public:
     const Core::InputTracker &inputTracker) = 0;
 };
 
-/* For tracking whether file has changed (reload resources for instance...) */
-class DelegateTrackFile {
-public:
-  virtual void trackFile(Core::TrackPathID id, const char *path) = 0;
-};
-
 }

@@ -50,11 +50,6 @@ void Application::run() {
     new View::EditorView(
       surfaceInfo, mGraphicsContext, mRenderer3D, evProc));
 
-  /* Testing path tracking */
-  gFileSystem->trackPath(
-    "res/glsl/Pixelater.frag",
-    (MountPoint)ApplicationMountPoints::Application);
-
   /* User-defined function which will be overriden */
   start();
   mIsRunning = true;
@@ -225,6 +220,7 @@ void Application::processFileEvent(Event *ev) {
     auto *event = (EventPathChanged *)ev;
 
     /* Get renderer to update changed resources */
+    mRenderer3D.trackPath(event->id, event->path);
 
     event->isHandled = true;
   } break;

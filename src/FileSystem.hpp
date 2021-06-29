@@ -49,7 +49,7 @@ public:
     MountPoint mountPoint,
     const std::string &path);
 
-  TrackPathID trackPath(const std::string &path, MountPoint mountPoint);
+  TrackPathID trackPath(MountPoint mountPoint, const std::string &path);
 
   void trackFiles(OnEventProc onEventProc);
 

@@ -5,6 +5,11 @@
 
 namespace Ondine::Graphics {
 
+const char *const DeferredLighting::LIGHTING_FRAG_SPV =
+  "res/spv/Lighting.frag.spv";
+const char *const DeferredLighting::LIGHTING_REFL_FRAG_SPV =
+  "res/spv/LightingRefl.frag.spv";
+
 void DeferredLighting::init(
   VulkanContext &graphicsContext,
   VkExtent2D initialExtent,
@@ -25,75 +30,97 @@ void DeferredLighting::init(
     mLightingRenderPass.init(graphicsContext.device(), renderPassConfig);
   }
 
-  Core::File lightingVert = Core::gFileSystem->createFile(
-    (Core::MountPoint)Core::ApplicationMountPoints::Application,
-    "res/spv/Lighting.vert.spv",
-    Core::FileOpenType::Binary | Core::FileOpenType::In);
-  Buffer vsh = lightingVert.readBinary();
+  { // Add tracked resources
+    addTrackedPath(LIGHTING_FRAG_SPV, &mLightingPipeline);
+    addTrackedPath(LIGHTING_REFL_FRAG_SPV, &mLightingReflPipeline);
+  }
 
   { // Create pipeline
-    Core::File lightingFrag = Core::gFileSystem->createFile(
-      (Core::MountPoint)Core::ApplicationMountPoints::Application,
-      "res/spv/Lighting.frag.spv",
-      Core::FileOpenType::Binary | Core::FileOpenType::In);
-
-    Buffer fsh = lightingFrag.readBinary();
-
-    VulkanPipelineConfig pipelineConfig(
-      {mLightingRenderPass, 0},
-      VulkanShader(
-        graphicsContext.device(), vsh, VulkanShaderType::Vertex),
-      VulkanShader(
-        graphicsContext.device(), fsh, VulkanShaderType::Fragment));
-
-    pipelineConfig.configurePipelineLayout(
-      0,
-      VulkanPipelineDescriptorLayout{
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
-      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-      VulkanPipelineDescriptorLayout{
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4});
-
     mLightingPipeline.init(
-      graphicsContext.device(),
-      graphicsContext.descriptorLayouts(),
-      pipelineConfig);
+      [](VulkanPipeline &res, DeferredLighting &owner,
+         VulkanContext &graphicsContext) {
+        Core::File lightingVert = Core::gFileSystem->createFile(
+          (Core::MountPoint)Core::ApplicationMountPoints::Application,
+          "res/spv/Lighting.vert.spv",
+          Core::FileOpenType::Binary | Core::FileOpenType::In);
+        Buffer vsh = lightingVert.readBinary();
+
+        Core::File lightingFrag = Core::gFileSystem->createFile(
+          (Core::MountPoint)Core::ApplicationMountPoints::Application,
+          LIGHTING_FRAG_SPV,
+          Core::FileOpenType::Binary | Core::FileOpenType::In);
+
+        Buffer fsh = lightingFrag.readBinary();
+
+        VulkanPipelineConfig pipelineConfig(
+          {owner.mLightingRenderPass, 0},
+          VulkanShader(
+            graphicsContext.device(), vsh, VulkanShaderType::Vertex),
+          VulkanShader(
+            graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+
+        pipelineConfig.configurePipelineLayout(
+          0,
+          VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
+          VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+          VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+          VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+          VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4});
+
+        res.init(
+          graphicsContext.device(),
+          graphicsContext.descriptorLayouts(),
+          pipelineConfig);
+      },
+      *this,
+      graphicsContext);
   }
 
   { // Create pipeline which renders reflections
-     // Create pipeline
-    Core::File lightingFrag = Core::gFileSystem->createFile(
-      (Core::MountPoint)Core::ApplicationMountPoints::Application,
-      "res/spv/LightingRefl.frag.spv",
-      Core::FileOpenType::Binary | Core::FileOpenType::In);
-
-    Buffer fsh = lightingFrag.readBinary();
-
-    VulkanPipelineConfig pipelineConfig(
-      {mLightingRenderPass, 0},
-      VulkanShader(
-        graphicsContext.device(), vsh, VulkanShaderType::Vertex),
-      VulkanShader(
-        graphicsContext.device(), fsh, VulkanShaderType::Fragment));
-
-    pipelineConfig.configurePipelineLayout(
-      0,
-      VulkanPipelineDescriptorLayout{
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
-      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-      VulkanPipelineDescriptorLayout{
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
-      VulkanPipelineDescriptorLayout{
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
-
     mLightingReflPipeline.init(
-      graphicsContext.device(),
-      graphicsContext.descriptorLayouts(),
-      pipelineConfig);
+      [](VulkanPipeline &res, DeferredLighting &owner,
+         VulkanContext &graphicsContext) {
+        Core::File lightingVert = Core::gFileSystem->createFile(
+          (Core::MountPoint)Core::ApplicationMountPoints::Application,
+          "res/spv/Lighting.vert.spv",
+          Core::FileOpenType::Binary | Core::FileOpenType::In);
+        Buffer vsh = lightingVert.readBinary();
+
+        Core::File lightingFrag = Core::gFileSystem->createFile(
+          (Core::MountPoint)Core::ApplicationMountPoints::Application,
+          LIGHTING_REFL_FRAG_SPV,
+          Core::FileOpenType::Binary | Core::FileOpenType::In);
+
+        Buffer fsh = lightingFrag.readBinary();
+
+        VulkanPipelineConfig pipelineConfig(
+          {owner.mLightingRenderPass, 0},
+          VulkanShader(
+            graphicsContext.device(), vsh, VulkanShaderType::Vertex),
+          VulkanShader(
+            graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+
+        pipelineConfig.configurePipelineLayout(
+          0,
+          VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
+          VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+          VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+          VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+          VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
+          VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
+
+        res.init(
+          graphicsContext.device(),
+          graphicsContext.descriptorLayouts(),
+          pipelineConfig);
+      },
+      *this,
+      graphicsContext);
   }
 
   { // Create attachments and framebuffer
@@ -139,7 +166,7 @@ void DeferredLighting::render(
     mLightingFBO,
     {}, mLightingExtent);
 
-  commandBuffer.bindPipeline(mLightingPipeline);
+  commandBuffer.bindPipeline(mLightingPipeline.res);
   commandBuffer.bindUniforms(
     gbuffer.uniform(),
     camera.uniform(),
@@ -167,7 +194,7 @@ void DeferredLighting::render(
     mLightingFBO,
     {}, mLightingExtent);
 
-  commandBuffer.bindPipeline(mLightingReflPipeline);
+  commandBuffer.bindPipeline(mLightingReflPipeline.res);
   commandBuffer.bindUniforms(
     gbuffer.uniform(),
     camera.uniform(),

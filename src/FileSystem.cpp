@@ -1,6 +1,7 @@
 #include <string>
 #include "Log.hpp"
 #include <assert.h>
+#include <system_error>
 #include "FileEvent.hpp"
 #include "FileSystem.hpp"
 
@@ -41,8 +42,8 @@ void FileSystem::makeDirectory(
 }
 
 TrackPathID FileSystem::trackPath(
-  const std::string &path,
-  MountPoint mountPoint) {
+  MountPoint mountPoint,
+  const std::string &path) {
   auto trackID = mPathToTrackID.find(path);
   if (trackID == mPathToTrackID.end()) {
     TrackPathID id = mTrackedPaths.size();
@@ -84,8 +85,15 @@ void FileSystem::trackFiles(OnEventProc onEventProc) {
 }
 
 FileTime FileSystem::calculateLastWriteTime(const TrackedPath &trackedPath) {
-  return std::filesystem::last_write_time(
-    mMountPoints[trackedPath.mountPoint] + trackedPath.path);
+  try {
+    auto newTime = std::filesystem::last_write_time(
+      mMountPoints[trackedPath.mountPoint] + trackedPath.path);
+
+    return newTime;
+  }
+  catch (std::filesystem::filesystem_error &error) {
+    return trackedPath.lastTime;
+  }
 }
 
 }

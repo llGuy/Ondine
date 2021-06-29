@@ -1,8 +1,11 @@
 #pragma once
 
 #include "Delegate.hpp"
+#include <unordered_map>
+#include "FileSystem.hpp"
 #include "RenderStage.hpp"
 #include "VulkanContext.hpp"
+#include "TrackedResource.hpp"
 
 namespace Ondine::View {
 
@@ -12,7 +15,9 @@ class EditorView;
 
 namespace Ondine::Graphics {
 
-class Pixelater : public RenderStage {
+class Pixelater :
+  public RenderStage,
+  public ResourceTracker {
 public:
   Pixelater() = default;
   ~Pixelater() override = default;
@@ -36,10 +41,11 @@ public:
 private:
   // For resizing
   void initTargets(VulkanContext &graphicsContext);
-  void initPipeline(VulkanContext &graphicsContext);
   void destroyTargets(VulkanContext &graphicsContext);
 
 private:
+  static const char *const PIXELATER_FRAG_SPV;
+
   struct PushConstant {
     float pixelationStrength;
     float width;
@@ -47,7 +53,13 @@ private:
   };
 
   VulkanUniform mOutput;
-  VulkanPipeline mPipeline;
+
+  // Needs to be updated when shaders get written to
+  TrackedResource<VulkanPipeline, Pixelater> mPipeline;
+
+  std::unordered_map<
+    Core::TrackPathID, TrackedResourceInterface *> mResourceRefs;
+
   VulkanRenderPass mRenderPass;
   VulkanFramebuffer mFBO;
   VulkanTexture mTexture;

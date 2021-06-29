@@ -37,6 +37,8 @@ public:
     const Core::Tick &tick,
     const Core::InputTracker &inputTracker) override;
 
+  void trackPath(Core::TrackPathID id, const char *path);
+
   const RenderStage &mainRenderStage() const;
 
 private:

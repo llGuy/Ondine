@@ -2,6 +2,7 @@
 
 #include "RenderStage.hpp"
 #include "VulkanContext.hpp"
+#include "TrackedResource.hpp"
 #include "VulkanRenderPass.hpp"
 
 namespace Ondine::Graphics {
@@ -23,7 +24,9 @@ class SkyRenderer;
 class WaterRenderer;
 class PlanetRenderer;
 
-class DeferredLighting : public RenderStage {
+class DeferredLighting :
+  public RenderStage,
+  public ResourceTracker {
 public:
   DeferredLighting() = default;
   ~DeferredLighting() override = default;
@@ -62,13 +65,17 @@ private:
   void destroyTargets(VulkanContext &graphicsContext);
 
 private:
+  static const char *const LIGHTING_FRAG_SPV;
+  static const char *const LIGHTING_REFL_FRAG_SPV;
+
   VulkanUniform mLightingOutputUniform;
   VulkanUniform mLightingPropertiesUniform;
 
   VulkanBuffer mLightingPropertiesBuffer;
 
-  VulkanPipeline mLightingReflPipeline;
-  VulkanPipeline mLightingPipeline;
+  TrackedResource<VulkanPipeline, DeferredLighting> mLightingReflPipeline;
+  TrackedResource<VulkanPipeline, DeferredLighting> mLightingPipeline;
+
   VulkanRenderPass mLightingRenderPass;
   VulkanFramebuffer mLightingFBO;
   VulkanTexture mLightingTexture;
