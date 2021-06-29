@@ -61,7 +61,8 @@ vec4 getPointRadianceBRDF(in GBufferData gbuffer) {
       mix(vec3(0.04), gbuffer.albedo.rgb, metal),
       roughness,
       metal,
-      uCamera.camera.wViewDirection,
+      // uCamera.camera.wViewDirection,
+      normalize(gbuffer.wPosition.xyz - uCamera.camera.wPosition),
       uSky.sky.solarIrradiance * getTransmittanceToSun(
         uSky.sky, uTransmittanceTexture, r, muSun),
       uLighting.lighting.sunDirection);
@@ -232,7 +233,7 @@ void main() {
       oceanAlpha = 1.0;
       oceanGBuffer.albedo = getOceanColor();
 
-      oceanRadiance = getPointRadiance(oceanGBuffer).rgb;
+      oceanRadiance = getPointRadianceBRDF(oceanGBuffer).rgb;
     }
     else {
       // This is a rendered object
@@ -248,7 +249,7 @@ void main() {
 
     oceanGBuffer.albedo = getOceanColor();
 
-    oceanRadiance = getPointRadiance(oceanGBuffer).rgb;
+    oceanRadiance = getPointRadianceBRDF(oceanGBuffer).rgb;
   }
 
   /* Light contribution from sky */
