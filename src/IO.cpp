@@ -30,8 +30,21 @@ void InputTracker::tick(const Tick &tick) {
     mKeyboardButtons[idx].didRelease = false;
   }
 
+  for (int i = 0; i < mPressedMouseButtonCount; ++i) {
+    int idx = mPressedMouseButtons[i];
+    mMouseButtons[idx].didInstant = false;
+  }
+
+  for (int i = 0; i < mReleasedMouseButtonCount; ++i) {
+    int idx = mReleasedMouseButtons[i];
+    mMouseButtons[idx].didRelease = false;
+  }
+
   mPressedKeyCount = 0;
   mReleasedKeyCount = 0;
+  mPressedMouseButtonCount = 0;
+  mReleasedMouseButtonCount = 0;
+
   mCursor.didCursorMove = false;
   mCursor.didScroll = false;
 }

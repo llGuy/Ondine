@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stddef.h>
 #include "IO.hpp"
+#include <stddef.h>
 #include "Utils.hpp"
 #include <vulkan/vulkan.h>
 
@@ -29,6 +29,8 @@ enum TextureContents {
   Depth
 };
 
+class VulkanCommandPool;
+
 class VulkanTexture {
 public:
   VulkanTexture() = default;
@@ -42,6 +44,11 @@ public:
   VkImageMemoryBarrier makeBarrier(
     VkImageLayout oldLayout,
     VkImageLayout newLayout) const;
+
+  void fillWithStaging(
+    const VulkanDevice &device,
+    const VulkanCommandPool &commandPool,
+    const Buffer &data);
 
   void destroy(const VulkanDevice &device);
 

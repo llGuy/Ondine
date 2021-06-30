@@ -2,6 +2,8 @@
 #include "VulkanSync.hpp"
 #include "VulkanDevice.hpp"
 #include "VulkanTexture.hpp"
+#include "VulkanCommandPool.hpp"
+#include "VulkanCommandBuffer.hpp"
 
 namespace Ondine::Graphics {
 
@@ -214,6 +216,42 @@ void VulkanTexture::destroy(const VulkanDevice &device) {
 
 size_t VulkanTexture::memoryRequirement() const {
   return mMemoryRequirement;
+}
+
+void VulkanTexture::fillWithStaging(
+  const VulkanDevice &device,
+  const VulkanCommandPool &commandPool,
+  const Buffer &data) {
+  VulkanBuffer stagingBuffer;
+
+  stagingBuffer.init(
+    device, data.size,
+    VulkanBufferFlag::Mappable | VulkanBufferFlag::TransferSource);
+
+  void *mappedMemory = stagingBuffer.map(device, data.size, 0);
+  memcpy(mappedMemory, data.data, data.size);
+  stagingBuffer.unmap(device);
+
+  VulkanCommandBuffer commandBuffer = commandPool.makeCommandBuffer(
+    device, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+  commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
+  commandBuffer.copyBufferToImage(
+    *this, 0, mLayerCount, 0,
+    stagingBuffer, 0, data.size);
+  commandBuffer.end();
+
+  device.mGraphicsQueue.submitCommandBuffer(
+    commandBuffer,
+    makeArray<VulkanSemaphore, AllocationType::Linear>(),
+    makeArray<VulkanSemaphore, AllocationType::Linear>(),
+    0, VulkanFence());
+
+  device.mGraphicsQueue.idle();
+
+  commandPool.freeCommandBuffer(device, commandBuffer);
+
+  stagingBuffer.destroy(device);
 }
 
 }

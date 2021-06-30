@@ -70,6 +70,8 @@ public:
   const VulkanQueue &graphicsQueue() const;
   const VulkanQueue &presentQueue() const;
 
+  DeviceType deviceType() const;
+
 private:
   bool verifyHardwareMeetsRequirements(
     DeviceType requestedType,
@@ -109,6 +111,7 @@ private:
   VkFormat mDepthFormat;
   VulkanQueue mGraphicsQueue;
   VulkanQueue mPresentQueue;
+  DeviceType mDeviceType;
 
   friend class VulkanContext;
   friend class VulkanSwapchain;

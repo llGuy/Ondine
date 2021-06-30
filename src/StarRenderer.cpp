@@ -102,7 +102,7 @@ void StarRenderer::tick(
   const PlanetProperties &planet,
   const Core::Tick &tick) {
   mPushConstant.transform = glm::rotate(
-    lighting.rotationAngle / 2.0f,
+    lighting.rotationAngle / 1.2f,
     glm::vec3(1.0f, 0.0f, 0.0f));
 
   float muSun = glm::dot(

@@ -17,8 +17,8 @@ void SkyRenderer::init(
 
   initFinalTextures(graphicsContext);
 
-  if (isPrecomputationNeeded()) {
-    LOG_INFO("Didn't find cached sky precomputations\n");
+  if (isPrecomputationNeeded(graphicsContext)) {
+    LOG_INFO("Didn't find cached sky precomputations or using GPU\n");
     LOG_INFO("Precomputing sky textures\n");
 
     preparePrecompute(graphicsContext);
@@ -51,7 +51,8 @@ void SkyRenderer::shutdown(VulkanContext &graphicsContext) {
   if (mCache) {
     LOG_INFO("Did sky precomputations during session - saving into cache\n");
 
-    saveToCache(graphicsContext);
+    if (graphicsContext.device().deviceType() != DeviceType::DiscreteGPU)
+      saveToCache(graphicsContext);
   }
 }
 
@@ -1064,7 +1065,7 @@ const VulkanUniform &SkyRenderer::uniform() const {
   return mRenderingUniform;
 }
 
-bool SkyRenderer::isPrecomputationNeeded() const {
+bool SkyRenderer::isPrecomputationNeeded(const VulkanContext &context) const {
   const char *const names[] = {
     SKY_TRANSMITTANCE_CACHE_FILENAME,
     SKY_SCATTERING_CACHE_FILENAME,
@@ -1086,7 +1087,7 @@ bool SkyRenderer::isPrecomputationNeeded() const {
     }
   }
 
-  return false;
+  return (context.device().deviceType() == DeviceType::DiscreteGPU);
 }
 
 void SkyRenderer::loadFromCache(VulkanContext &graphicsContext) {

@@ -313,8 +313,13 @@ bool VulkanDevice::verifyHardwareMeetsRequirements(
 
   case DeviceType::Any: {
     isDeviceTypeSatisfied = true;
+    if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+      requestedType = DeviceType::DiscreteGPU;
+    }
   } break;
   }
+
+  mDeviceType = requestedType;
 
   return isSwapchainSupported && isSwapchainUsable &&
     isDeviceTypeSatisfied &&
@@ -434,6 +439,10 @@ const VulkanQueue &VulkanDevice::graphicsQueue() const {
 
 const VulkanQueue &VulkanDevice::presentQueue() const {
   return mPresentQueue;
+}
+
+DeviceType VulkanDevice::deviceType() const {
+  return mDeviceType;
 }
 
 }

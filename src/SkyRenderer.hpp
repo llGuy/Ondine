@@ -102,7 +102,7 @@ private:
     VulkanContext &graphicsContext,
     const RenderStage &renderStage);
 
-  bool isPrecomputationNeeded() const;
+  bool isPrecomputationNeeded(const VulkanContext &context) const;
 
   void loadFromCache(VulkanContext &graphicsContext);
   void saveToCache(VulkanContext &graphicsContext);

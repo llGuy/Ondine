@@ -24,8 +24,8 @@ public:
   ~DynamicArray() {
     clear();
 
-    flFree(mData);
-    flFree(mRemoved);
+    flFreev(mData);
+    flFreev(mRemoved);
 
     mData = nullptr;
     mRemoved = nullptr;
