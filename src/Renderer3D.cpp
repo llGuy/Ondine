@@ -89,9 +89,9 @@ void Renderer3D::init() {
       mCameraProperties.near,
       mCameraProperties.far);
 
-    mCameraProperties.wPosition = glm::vec3(-50.0f, 90.0f, 180.0f);
+    mCameraProperties.wPosition = glm::vec3(100.0f, 90.0f, -180.0f);
     mCameraProperties.wViewDirection =
-      glm::normalize(glm::vec3(0.3f, -0.1f, -1.0f));
+      glm::normalize(glm::vec3(-0.3f, -0.1f, 1.0f));
     mCameraProperties.wUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
     mCameraProperties.view = glm::lookAt(
@@ -116,16 +116,18 @@ void Renderer3D::init() {
   mCamera.init(mGraphicsContext, &mCameraProperties);
 
   { // Set lighting properties
-    mLightingProperties.sunDirection =
+    mLightingProperties.data.sunDirection =
       glm::normalize(glm::vec3(0.000001f, 0.01f, -1.00001f));
-    mLightingProperties.moonDirection =
+    mLightingProperties.data.moonDirection =
       glm::normalize(glm::vec3(1.000001f, 1.6f, +1.00001f));
-    mLightingProperties.sunSize = glm::vec3(
+    mLightingProperties.data.sunSize = glm::vec3(
       0.0046750340586467079f, 0.99998907220740285f, 0.0f);
-    mLightingProperties.exposure = 20.0f;
-    mLightingProperties.white = glm::vec3(2.0f);
-    mLightingProperties.waterSurfaceColor =
+    mLightingProperties.data.exposure = 20.0f;
+    mLightingProperties.data.white = glm::vec3(2.0f);
+    mLightingProperties.data.waterSurfaceColor =
       glm::vec3(8.0f, 54.0f, 76.0f) / 255.0f;
+
+    mLightingProperties.rotationAngle = glm::radians(89.0f);
   }
 
   mDeferredLighting.init(
@@ -177,28 +179,7 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
   mCameraProperties.aspectRatio =
     (float)mPipelineViewport.width / (float)mPipelineViewport.height;
 
-  mLightingProperties.dt = tick.dt;
-  mLightingProperties.time = tick.accumulatedTime;
-
-  glm::mat3 rotation = glm::mat3(
-    glm::rotate(
-      glm::radians(-1.0f) * tick.dt * 0.1f,
-      glm::vec3(1.0f, 0.0f, 0.0f)));
-  mLightingProperties.sunDirection = rotation *
-    mLightingProperties.sunDirection;
-
-  float muSun = glm::dot(
-    glm::vec3(0.0f, 1.0f, 0.0f),
-    mLightingProperties.sunDirection);
-
-  const float FADE_START = 0.033f;
-  float fadeAmount = (muSun - mPlanetProperties.muSunMin) /
-    (FADE_START - mPlanetProperties.muSunMin);
-  fadeAmount = glm::clamp(fadeAmount, 0.0f, 1.0f);
-
-  mLightingProperties.moonStrength = 1.0f - fadeAmount;
-  mLightingProperties.moonStrength = glm::pow(
-    mLightingProperties.moonStrength, 1.0f) * 0.005f;
+  mLightingProperties.tick(tick, mPlanetProperties);
 
   mCamera.updateData(frame.primaryCommandBuffer, mCameraProperties);
   mDeferredLighting.updateData(frame.primaryCommandBuffer, mLightingProperties);
@@ -311,12 +292,15 @@ void Renderer3D::trackInput(
   }
 
   if (cursor.didScroll) {
+    mLightingProperties.rotationAngle +=
+      glm::radians(30.0f * cursor.scroll.y) * tick.dt;
+
     glm::mat3 rotation = glm::mat3(
       glm::rotate(
         glm::radians(30.0f * cursor.scroll.y) * tick.dt,
         glm::vec3(1.0f, 0.0f, 0.0f)));
-    mLightingProperties.sunDirection = rotation *
-      mLightingProperties.sunDirection;
+    mLightingProperties.data.sunDirection = rotation *
+      mLightingProperties.data.sunDirection;
   }
 
   mCameraProperties.view = glm::lookAt(

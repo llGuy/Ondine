@@ -5,6 +5,91 @@
 
 namespace Ondine::Graphics {
 
+void LightingProperties::fastForwardTo(FastForwardDst dst) {
+  switch (dst) {
+  case FastForwardDst::Sunset: {
+    dstAngle = glm::radians(87.0f);
+  } break;
+
+  case FastForwardDst::Midday: {
+    dstAngle = 0.0f;
+  } break;
+
+  case FastForwardDst::Midnight: {
+    dstAngle = glm::radians(180.0f);
+  } break;
+
+  case FastForwardDst::Sunrise: {
+    dstAngle = glm::radians(270.0f);
+  } break;
+
+  case FastForwardDst::BeautifulMoment: {
+    dstAngle = glm::radians(93.0f);
+  } break;
+  }
+
+  fastForwardTime = 0.0f;
+  isFastForwarding = true;
+
+  if (rotationAngle > dstAngle) {
+    rotationAngle -= glm::radians(360.0f);
+  }
+
+  diff = dstAngle - rotationAngle;
+  srcAngle = rotationAngle;
+}
+
+void LightingProperties::tick(
+  const Core::Tick &tick,
+  const PlanetProperties &planet) {
+  data.dt = tick.dt;
+  data.time = tick.accumulatedTime;
+
+  float rotationDiff = glm::radians(1.0f * tick.dt * 0.1f);
+
+  if (isFastForwarding) {
+    fastForwardTime += tick.dt;
+    float scaledTime = fastForwardTime * 0.1f;
+
+    rotationDiff = 
+      diff * (6.0f * scaledTime - 6.0f * scaledTime * scaledTime);
+
+    rotationAngle += rotationDiff * tick.dt;
+
+    if (rotationAngle > dstAngle - 0.0001f) {
+      isFastForwarding = false;
+    }
+  }
+  else {
+    rotationAngle += rotationDiff;
+  }
+
+  if (rotationAngle > glm::radians(360.0f)) {
+    rotationAngle -= glm::radians(360.0f);
+  }
+
+  glm::mat3 rotation = glm::mat3(
+    glm::rotate(
+      rotationAngle,
+      glm::vec3(1.0f, 0.0f, 0.0f)));
+  // data.sunDirection = rotation *
+  // data.sunDirection;
+  data.sunDirection = rotation * glm::vec3(0.0f, 1.0f, 0.0f);
+
+  float muSun = glm::dot(
+    glm::vec3(0.0f, 1.0f, 0.0f),
+    data.sunDirection);
+
+  const float FADE_START = 0.033f;
+  float fadeAmount = (muSun - planet.muSunMin) /
+    (FADE_START - planet.muSunMin);
+  fadeAmount = glm::clamp(fadeAmount, 0.0f, 1.0f);
+
+  data.moonStrength = 1.0f - fadeAmount;
+  data.moonStrength = glm::pow(
+    data.moonStrength, 1.0f) * 0.005f;
+}
+
 const char *const DeferredLighting::LIGHTING_FRAG_SPV =
   "res/spv/Lighting.frag.spv";
 const char *const DeferredLighting::LIGHTING_REFL_FRAG_SPV =
@@ -135,7 +220,7 @@ void DeferredLighting::init(
   { // Create lighting properties uniform buffer
     mLightingPropertiesBuffer.init(
       graphicsContext.device(),
-      sizeof(LightingProperties),
+      sizeof(LightingProperties::data),
       (int)VulkanBufferFlag::UniformBuffer);
 
     mLightingPropertiesUniform.init(
@@ -148,7 +233,7 @@ void DeferredLighting::init(
       mLightingPropertiesBuffer.fillWithStaging(
         graphicsContext.device(),
         graphicsContext.commandPool(),
-        {(uint8_t *)properties, sizeof(LightingProperties)});
+        {(uint8_t *)&properties->data, sizeof(LightingProperties::data)});
     }
   }
 }

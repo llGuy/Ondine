@@ -474,13 +474,46 @@ void EditorView::renderGraphicsWindow() {
 
     ImGui::SliderFloat(
       "Exposure",
-      &mRenderer3D.mLightingProperties.exposure,
+      &mRenderer3D.mLightingProperties.data.exposure,
       1.0f, 50.0f);
     ImGui::Separator();
 
     ImGui::ColorEdit3(
       "Water Surface Color",
-      &mRenderer3D.mLightingProperties.waterSurfaceColor.r);
+      &mRenderer3D.mLightingProperties.data.waterSurfaceColor.r);
+    ImGui::Separator();
+
+    if (ImGui::Button("Sunset")) {
+      mRenderer3D.mLightingProperties.fastForwardTo(
+        Graphics::LightingProperties::FastForwardDst::Sunset);
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Midday")) {
+      mRenderer3D.mLightingProperties.fastForwardTo(
+        Graphics::LightingProperties::FastForwardDst::Midday);
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Midnight")) {
+      mRenderer3D.mLightingProperties.fastForwardTo(
+        Graphics::LightingProperties::FastForwardDst::Midnight);
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Sunrise")) {
+      mRenderer3D.mLightingProperties.fastForwardTo(
+        Graphics::LightingProperties::FastForwardDst::Sunrise);
+    }
+
+    if (ImGui::Button("Beautiful Moment")) {
+      mRenderer3D.mLightingProperties.fastForwardTo(
+        Graphics::LightingProperties::FastForwardDst::BeautifulMoment);
+    }
+
     ImGui::Separator();
     
     ImGui::End();

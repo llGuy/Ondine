@@ -102,12 +102,12 @@ void StarRenderer::tick(
   const PlanetProperties &planet,
   const Core::Tick &tick) {
   mPushConstant.transform = glm::rotate(
-    glm::radians(-mCurrentRotation),
+    lighting.rotationAngle / 2.0f,
     glm::vec3(1.0f, 0.0f, 0.0f));
 
   float muSun = glm::dot(
     glm::vec3(0.0f, 1.0f, 0.0f),
-    lighting.sunDirection);
+    lighting.data.sunDirection);
 
   const float FADE_START = 0.033f;
   float fadeAmount = (muSun - planet.muSunMin) / (FADE_START - planet.muSunMin);

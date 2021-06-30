@@ -78,12 +78,12 @@ vec4 getPointRadianceBRDF(
       normalize(gbuffer.wPosition.xyz - uCamera.camera.wPosition),
       uSky.sky.solarIrradiance * getTransmittanceToSun(
         uSky.sky, uTransmittanceTexture, r, muMoon),
-      uLighting.lighting.moonDirection) * uLighting.lighting.moonStrength * 6.0;
+      uLighting.lighting.moonDirection) * uLighting.lighting.moonStrength * 8.0;
 
     pointRadiance = accumulatedRadiance +
       gbuffer.albedo.rgb * (1.0 / PI) * skyIrradiance +
       gbuffer.albedo.rgb * (1.0 / PI) * moonIrradiance *
-      uLighting.lighting.moonStrength * 6.0;
+      uLighting.lighting.moonStrength * 8.0;
   }
 
   /* How much is scattered towards us */
@@ -250,7 +250,7 @@ void main() {
       oceanAlpha = 1.0;
       oceanGBuffer.albedo = getOceanColor();
 
-      oceanRadiance = getPointRadianceBRDF(0.8, 0.0, oceanGBuffer).rgb;
+      oceanRadiance = getPointRadianceBRDF(0.6, 0.1, oceanGBuffer).rgb;
     }
     else {
       // This is a rendered object
@@ -266,7 +266,7 @@ void main() {
 
     oceanGBuffer.albedo = getOceanColor();
 
-    oceanRadiance = getPointRadianceBRDF(0.8, 0.0, oceanGBuffer).rgb;
+    oceanRadiance = getPointRadianceBRDF(0.6, 0.1, oceanGBuffer).rgb;
   }
   else {
     radianceBaseColor = gbuffer.albedo.rgb;

@@ -3,6 +3,7 @@
 #include "Tick.hpp"
 #include "RenderStage.hpp"
 #include "VulkanContext.hpp"
+#include "PlanetRenderer.hpp"
 #include "TrackedResource.hpp"
 #include "VulkanRenderPass.hpp"
 
@@ -10,15 +11,36 @@ namespace Ondine::Graphics {
 
 struct LightingProperties {
   // Vector going out towards the sun
-  alignas(16) glm::vec3 sunDirection;
-  alignas(16) glm::vec3 moonDirection;
-  alignas(16) glm::vec3 sunSize;
-  alignas(16) glm::vec3 white;
-  alignas(16) glm::vec3 waterSurfaceColor;
-  alignas(4) float exposure;
-  alignas(4) float time;
-  alignas(4) float dt;
-  alignas(4) float moonStrength;
+  struct {
+    alignas(16) glm::vec3 sunDirection;
+    alignas(16) glm::vec3 moonDirection;
+    alignas(16) glm::vec3 sunSize;
+    alignas(16) glm::vec3 white;
+    alignas(16) glm::vec3 waterSurfaceColor;
+    alignas(4) float exposure;
+    alignas(4) float time;
+    alignas(4) float dt;
+    alignas(4) float moonStrength;
+  } data;
+
+  float rotationAngle;
+  float srcAngle;
+  float dstAngle;
+  float diff;
+  bool isFastForwarding;
+  float fastForwardTime;
+
+  enum class FastForwardDst {
+    Sunset,
+    Midday,
+    Midnight,
+    Sunrise,
+    BeautifulMoment
+  };
+
+  void fastForwardTo(FastForwardDst dst);
+
+  void tick(const Core::Tick &tick, const PlanetProperties &planet);
 };
 
 class Camera;
