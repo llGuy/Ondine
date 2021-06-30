@@ -48,6 +48,10 @@ EditorView::EditorView(
   initRenderTarget(graphicsContext);
   initViewportRendering(graphicsContext);
   initImguiContext(contextInfo, graphicsContext);
+
+  auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
+  cursorChange->show = true;
+  mOnEvent(cursorChange);
 }
 
 EditorView::~EditorView() {

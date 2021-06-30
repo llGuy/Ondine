@@ -180,6 +180,13 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
   mLightingProperties.dt = tick.dt;
   mLightingProperties.time = tick.accumulatedTime;
 
+  glm::mat3 rotation = glm::mat3(
+    glm::rotate(
+      glm::radians(-1.0f) * tick.dt * 0.1f,
+      glm::vec3(1.0f, 0.0f, 0.0f)));
+  mLightingProperties.sunDirection = rotation *
+    mLightingProperties.sunDirection;
+
   float muSun = glm::dot(
     glm::vec3(0.0f, 1.0f, 0.0f),
     mLightingProperties.sunDirection);

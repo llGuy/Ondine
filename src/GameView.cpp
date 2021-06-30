@@ -13,7 +13,9 @@ GameView::GameView(
     mDelegateResize3D(delegateResize3D),
     mDelegateTrackInput(delegateTrackInput),
     mOnEvent(proc) {
-  
+  auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
+  cursorChange->show = false;
+  mOnEvent(cursorChange);
 }
 
 GameView::~GameView() {
