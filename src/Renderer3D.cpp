@@ -119,7 +119,7 @@ void Renderer3D::init() {
     mLightingProperties.sunDirection =
       glm::normalize(glm::vec3(0.000001f, 0.01f, -1.00001f));
     mLightingProperties.moonDirection =
-      glm::normalize(glm::vec3(1.000001f, 0.7f, +1.00001f));
+      glm::normalize(glm::vec3(1.000001f, 1.6f, +1.00001f));
     mLightingProperties.sunSize = glm::vec3(
       0.0046750340586467079f, 0.99998907220740285f, 0.0f);
     mLightingProperties.exposure = 20.0f;
@@ -191,7 +191,7 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
 
   mLightingProperties.moonStrength = 1.0f - fadeAmount;
   mLightingProperties.moonStrength = glm::pow(
-    mLightingProperties.moonStrength, 2.0f) * 0.005f;
+    mLightingProperties.moonStrength, 1.0f) * 0.005f;
 
   mCamera.updateData(frame.primaryCommandBuffer, mCameraProperties);
   mDeferredLighting.updateData(frame.primaryCommandBuffer, mLightingProperties);

@@ -9,7 +9,7 @@ namespace Ondine::Graphics {
 const char *const StarRenderer::STARS_VERT_SPV = "res/spv/Stars.vert.spv";
 const char *const StarRenderer::STARS_FRAG_SPV = "res/spv/Stars.frag.spv";
 
-constexpr uint32_t STAR_COUNT = 200;
+constexpr uint32_t STAR_COUNT = 300;
 
 StarRenderer::StarRenderer()
   : mPipelineModelConfig(STAR_COUNT) {
@@ -116,7 +116,7 @@ void StarRenderer::tick(
   mPushConstant.fade = 1.0f - fadeAmount;
   mPushConstant.fade = glm::pow(mPushConstant.fade, 2.0f);
 
-  mCurrentRotation += tick.dt;
+  mCurrentRotation += tick.dt * 0.2f;
 
   if (mCurrentRotation > 360.0f) {
     mCurrentRotation -= 360.0f;

@@ -76,12 +76,12 @@ vec4 getPointRadianceBRDF(
       normalize(gbuffer.wPosition.xyz - uCamera.camera.wPosition),
       uSky.sky.solarIrradiance * getTransmittanceToSun(
         uSky.sky, uTransmittanceTexture, r, muMoon),
-      uLighting.lighting.moonDirection) * uLighting.lighting.moonStrength;
+      uLighting.lighting.moonDirection) * uLighting.lighting.moonStrength * 5.0;
 
     pointRadiance = accumulatedRadiance +
       gbuffer.albedo.rgb * (1.0 / PI) * skyIrradiance +
       gbuffer.albedo.rgb * (1.0 / PI) * moonIrradiance *
-      uLighting.lighting.moonStrength;
+      uLighting.lighting.moonStrength * 5.0;
   }
 
   /* How much is scattered towards us */
@@ -93,6 +93,17 @@ vec4 getPointRadianceBRDF(
     gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter, 0.0,
     uLighting.lighting.sunDirection,
     transmittance);
+
+  pointRadiance = pointRadiance * transmittance + inScatter;
+
+  // Moon
+  inScatter = getSkyRadianceToPoint(
+    uSky.sky, uTransmittanceTexture,
+    uScatteringTexture, uSingleMieScatteringTexture,
+    uCamera.camera.wPosition / 1000.0 - uSky.sky.wPlanetCenter,
+    gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter, 0.0,
+    uLighting.lighting.moonDirection,
+    transmittance) * uLighting.lighting.moonStrength * 5.0;
 
   pointRadiance = pointRadiance * transmittance + inScatter;
 
@@ -164,6 +175,19 @@ void main() {
   if (dot(viewRay, uLighting.lighting.sunDirection) >
       uLighting.lighting.sunSize.y) {
     radiance = radiance + transmittance * getSolarRadiance(uSky.sky);
+  }
+
+  radiance += getSkyRadiance(
+    uSky.sky, uTransmittanceTexture,
+    uScatteringTexture, uSingleMieScatteringTexture,
+    (uCamera.camera.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter),
+    viewRay, 0.0, uLighting.lighting.moonDirection,
+    transmittance) * uLighting.lighting.moonStrength * 5.0;
+
+  // Moon always visible
+  if (dot(viewRay, uLighting.lighting.moonDirection) >
+      uLighting.lighting.sunSize.y * 0.9999) {
+    radiance = radiance + (transmittance * getSolarRadiance(uSky.sky));
   }
 
   radiance = mix(radiance, pointRadiance, pointAlpha) + radianceBaseColor;

@@ -13,7 +13,7 @@ void GBuffer::init(
     ctxProperties.swapchainExtent.height,
   };
 
-  mGBufferFormats[0] = VK_FORMAT_R8G8B8A8_UNORM;
+  mGBufferFormats[0] = VK_FORMAT_R16G16B16A16_SFLOAT;
   mGBufferFormats[1] = VK_FORMAT_R16G16B16A16_SFLOAT;
   mGBufferFormats[2] = VK_FORMAT_R32G32B32A32_SFLOAT;
   mGBufferFormats[3] = ctxProperties.depthFormat;
