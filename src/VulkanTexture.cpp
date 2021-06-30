@@ -1,3 +1,4 @@
+#include "Utils.hpp"
 #include "Vulkan.hpp"
 #include "VulkanSync.hpp"
 #include "VulkanDevice.hpp"
@@ -222,6 +223,8 @@ void VulkanTexture::fillWithStaging(
   const VulkanDevice &device,
   const VulkanCommandPool &commandPool,
   const Buffer &data) {
+  // ImagePixels pixels = ;
+
   VulkanBuffer stagingBuffer;
 
   stagingBuffer.init(

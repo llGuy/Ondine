@@ -93,6 +93,9 @@ private:
   static const char *const LIGHTING_FRAG_SPV;
   static const char *const LIGHTING_REFL_FRAG_SPV;
 
+  static VulkanTexture *sWaterNormalMapTexture;
+  static VulkanUniform *sWaterNormalMapUniform;
+
   VulkanUniform mLightingOutputUniform;
   VulkanUniform mLightingPropertiesUniform;
 

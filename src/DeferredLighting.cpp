@@ -99,6 +99,15 @@ void DeferredLighting::init(
   VulkanContext &graphicsContext,
   VkExtent2D initialExtent,
   const LightingProperties *properties) {
+  { // Load water normal map
+    if (!sWaterNormalMapTexture) {
+      sWaterNormalMapTexture = flAlloc<VulkanTexture>();
+      
+
+      sWaterNormalMapUniform = flAlloc<VulkanUniform>();
+    }
+  }
+
   { // Create render pass
     VulkanRenderPassConfig renderPassConfig(1, 1);
 
