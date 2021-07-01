@@ -33,4 +33,10 @@ float toonShadingIncidentIntensity(float incidentIntensity) {
   return floor(incidentIntensity) / float(TOON_SHADING_INTENSITY_LEVEL_COUNT);
 }
 
+vec3 readNormalFromMap(vec2 uvs, sampler2D normalMap) {
+  vec3 rgb = texture(normalMap, uvs).rgb;
+  vec3 normal = vec3(rgb.r * 2.0 - 1.0, rgb.b, rgb.g * 2.0 - 1.0);
+  return normalize(normal);
+}
+
 #endif

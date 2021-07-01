@@ -102,7 +102,7 @@ void StarRenderer::tick(
   const PlanetProperties &planet,
   const Core::Tick &tick) {
   mPushConstant.transform = glm::rotate(
-    lighting.rotationAngle / 1.2f,
+    lighting.rotationAngle * 1.1f,
     glm::vec3(1.0f, 0.0f, 0.0f));
 
   float muSun = glm::dot(
@@ -115,12 +115,6 @@ void StarRenderer::tick(
 
   mPushConstant.fade = 1.0f - fadeAmount;
   mPushConstant.fade = glm::pow(mPushConstant.fade, 2.0f);
-
-  mCurrentRotation += tick.dt * 0.2f;
-
-  if (mCurrentRotation > 360.0f) {
-    mCurrentRotation -= 360.0f;
-  }
 }
 
 void StarRenderer::generateStars() {

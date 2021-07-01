@@ -39,8 +39,8 @@ struct LightingProperties {
   };
 
   void fastForwardTo(FastForwardDst dst);
-
   void tick(const Core::Tick &tick, const PlanetProperties &planet);
+  void rotateBy(float radians);
 };
 
 class Camera;

@@ -72,8 +72,7 @@ void LightingProperties::tick(
     glm::rotate(
       rotationAngle,
       glm::vec3(1.0f, 0.0f, 0.0f)));
-  // data.sunDirection = rotation *
-  // data.sunDirection;
+
   data.sunDirection = rotation * glm::vec3(0.0f, 1.0f, 0.0f);
 
   float muSun = glm::dot(
@@ -90,10 +89,24 @@ void LightingProperties::tick(
     data.moonStrength, 1.0f) * 0.005f;
 }
 
+void LightingProperties::rotateBy(float radians) {
+  rotationAngle += radians;
+
+  glm::mat3 rotation = glm::mat3(
+    glm::rotate(
+      rotationAngle,
+      glm::vec3(1.0f, 0.0f, 0.0f)));
+
+  data.sunDirection = rotation * glm::vec3(0.0f, 1.0f, 0.0f);
+}
+
 const char *const DeferredLighting::LIGHTING_FRAG_SPV =
   "res/spv/Lighting.frag.spv";
 const char *const DeferredLighting::LIGHTING_REFL_FRAG_SPV =
   "res/spv/LightingRefl.frag.spv";
+
+VulkanTexture *DeferredLighting::sWaterNormalMapTexture = nullptr;
+VulkanUniform *DeferredLighting::sWaterNormalMapUniform = nullptr;
 
 void DeferredLighting::init(
   VulkanContext &graphicsContext,
@@ -102,9 +115,37 @@ void DeferredLighting::init(
   { // Load water normal map
     if (!sWaterNormalMapTexture) {
       sWaterNormalMapTexture = flAlloc<VulkanTexture>();
-      
 
+      Core::File imageFile = Core::gFileSystem->createFile(
+        (Core::MountPoint)Core::ApplicationMountPoints::Application,
+        "res/textures/WaterNormalMap.jpeg",
+        Core::FileOpenType::Binary | Core::FileOpenType::In);
+      Buffer unparsed = imageFile.readBinary();
+
+      ImagePixels parsed = getImagePixelsFromBuffer(unparsed);
+
+      sWaterNormalMapTexture->init(
+        graphicsContext.device(),
+        TextureType::T2D | TextureType::WrapSampling,
+        TextureContents::Color,
+        VK_FORMAT_R8G8B8A8_UNORM,
+        VK_FILTER_NEAREST,
+        {(uint32_t)parsed.width, (uint32_t)parsed.height, 1},
+        1, 1);
+
+      sWaterNormalMapTexture->fillWithStaging(
+        graphicsContext.device(),
+        graphicsContext.commandPool(),
+        {(uint8_t *)parsed.data, (uint32_t)(parsed.width * parsed.height * 4)});
+      
       sWaterNormalMapUniform = flAlloc<VulkanUniform>();
+
+      sWaterNormalMapUniform->init(
+        graphicsContext.device(),
+        graphicsContext.descriptorPool(),
+        graphicsContext.descriptorLayouts(),
+        makeArray<VulkanTexture, AllocationType::Linear>(
+          *sWaterNormalMapTexture));
     }
   }
 
@@ -206,6 +247,8 @@ void DeferredLighting::init(
           VulkanPipelineDescriptorLayout{
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
           VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
+          VulkanPipelineDescriptorLayout{
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
 
         res.init(
@@ -295,7 +338,8 @@ void DeferredLighting::render(
     planet.uniform(),
     mLightingPropertiesUniform,
     sky.uniform(),
-    water.uniform());
+    water.uniform(),
+    *sWaterNormalMapUniform);
 
   commandBuffer.setViewport();
   commandBuffer.setScissor();

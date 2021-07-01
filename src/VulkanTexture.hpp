@@ -9,6 +9,7 @@ namespace Ondine::Graphics {
 
 class VulkanDevice;
 
+// I am very lazy - need to add proper configuration of textures later
 enum TextureType {
   T2D = BIT(0),
   Cubemap = BIT(1),
@@ -17,7 +18,8 @@ enum TextureType {
   Input = BIT(4),
   StoreInRam = BIT(5),
   TransferSource = BIT(6),
-  LinearTiling = BIT(7)
+  LinearTiling = BIT(7),
+  WrapSampling = BIT(8)
 };
 
 using TextureTypeBits = uint32_t;

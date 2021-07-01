@@ -34,6 +34,7 @@ layout (set = 4, binding = 2) uniform sampler3D uSingleMieScatteringTexture;
 layout (set = 4, binding = 3) uniform sampler2D uIrradianceTexture;
 
 layout (set = 5, binding = 0) uniform sampler2D uReflectionTexture;
+layout (set = 6, binding = 0) uniform sampler2D uWaterNormalMapTexture;
 
 vec4 getPointRadianceBRDF(
   float roughness, float metal,
@@ -205,6 +206,16 @@ vec4 getOceanColor() {
     vec4(uLighting.lighting.waterSurfaceColor, 1.0);
 }
 
+vec3 getOceanNormal(in vec3 pointPosition) {
+  return vec3(0.0, 1.0, 0.0);
+
+  vec3 normal = readNormalFromMap(
+      vec2(pointPosition.x, pointPosition.z) * 0.1,
+      uWaterNormalMapTexture);
+
+  return normal;
+}
+
 void main() {
   /* Get all the inputs */
   GBufferData gbuffer = GBufferData(
@@ -249,6 +260,8 @@ void main() {
 
       oceanAlpha = 1.0;
       oceanGBuffer.albedo = getOceanColor();
+      oceanGBuffer.wNormal =
+        vec4(getOceanNormal(oceanGBuffer.wPosition.xyz), 1.0);
 
       oceanRadiance = getPointRadianceBRDF(0.6, 0.1, oceanGBuffer).rgb;
     }
@@ -265,6 +278,8 @@ void main() {
     oceanAlpha = 1.0;
 
     oceanGBuffer.albedo = getOceanColor();
+    oceanGBuffer.wNormal =
+      vec4(getOceanNormal(oceanGBuffer.wPosition.xyz), 1.0);
 
     oceanRadiance = getPointRadianceBRDF(0.6, 0.1, oceanGBuffer).rgb;
   }

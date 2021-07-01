@@ -27,6 +27,12 @@ void VulkanTexture::init(
   VkImageViewType viewTypeSample, viewTypeAttachment;
   VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
   VkImageTiling tilingMode = VK_IMAGE_TILING_OPTIMAL;
+  VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+
+  if (type & (TextureType::WrapSampling)) {
+    type &= ~(TextureType::WrapSampling);
+    addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  }
 
   if (type & (TextureType::LinearTiling)) {
     type &= ~(TextureType::LinearTiling);
@@ -156,9 +162,9 @@ void VulkanTexture::init(
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
   samplerInfo.magFilter = filter;
   samplerInfo.minFilter = filter;
-  samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-  samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-  samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+  samplerInfo.addressModeU = addressMode;
+  samplerInfo.addressModeV = addressMode;
+  samplerInfo.addressModeW = addressMode;
   samplerInfo.anisotropyEnable = VK_FALSE;
   samplerInfo.maxAnisotropy = 16;
   samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
@@ -242,6 +248,14 @@ void VulkanTexture::fillWithStaging(
   commandBuffer.copyBufferToImage(
     *this, 0, mLayerCount, 0,
     stagingBuffer, 0, data.size);
+
+  commandBuffer.transitionImageLayout(
+    *this,
+    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
   commandBuffer.end();
 
   device.mGraphicsQueue.submitCommandBuffer(

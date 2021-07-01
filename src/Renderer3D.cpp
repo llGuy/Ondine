@@ -292,15 +292,8 @@ void Renderer3D::trackInput(
   }
 
   if (cursor.didScroll) {
-    mLightingProperties.rotationAngle +=
-      glm::radians(30.0f * cursor.scroll.y) * tick.dt;
-
-    glm::mat3 rotation = glm::mat3(
-      glm::rotate(
-        glm::radians(30.0f * cursor.scroll.y) * tick.dt,
-        glm::vec3(1.0f, 0.0f, 0.0f)));
-    mLightingProperties.data.sunDirection = rotation *
-      mLightingProperties.data.sunDirection;
+    mLightingProperties.rotateBy(
+      glm::radians(30.0f * cursor.scroll.y * tick.dt));
   }
 
   mCameraProperties.view = glm::lookAt(
