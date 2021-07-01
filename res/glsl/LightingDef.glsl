@@ -11,6 +11,7 @@ struct LightingProperties {
   float time;
   float dt;
   float moonStrength;
+  float continuous;
 };
 
 #endif

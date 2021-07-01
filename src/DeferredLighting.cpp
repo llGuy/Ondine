@@ -44,6 +44,10 @@ void LightingProperties::tick(
   const PlanetProperties &planet) {
   data.dt = tick.dt;
   data.time = tick.accumulatedTime;
+  data.continuous += tick.dt * 0.1f;
+  if (data.continuous > 10.0f) {
+    data.continuous -= 10.0f;
+  }
 
   float rotationDiff = glm::radians(1.0f * tick.dt * 0.1f);
 
@@ -106,7 +110,8 @@ const char *const DeferredLighting::LIGHTING_REFL_FRAG_SPV =
   "res/spv/LightingRefl.frag.spv";
 
 VulkanTexture *DeferredLighting::sWaterNormalMapTexture = nullptr;
-VulkanUniform *DeferredLighting::sWaterNormalMapUniform = nullptr;
+VulkanTexture *DeferredLighting::sWaterDistortionTexture = nullptr;
+VulkanUniform *DeferredLighting::sWaterUniform = nullptr;
 
 void DeferredLighting::init(
   VulkanContext &graphicsContext,
@@ -118,7 +123,7 @@ void DeferredLighting::init(
 
       Core::File imageFile = Core::gFileSystem->createFile(
         (Core::MountPoint)Core::ApplicationMountPoints::Application,
-        "res/textures/WaterNormalMap.jpeg",
+        "res/textures/WaterNormalMap.png",
         Core::FileOpenType::Binary | Core::FileOpenType::In);
       Buffer unparsed = imageFile.readBinary();
 
@@ -129,7 +134,7 @@ void DeferredLighting::init(
         TextureType::T2D | TextureType::WrapSampling,
         TextureContents::Color,
         VK_FORMAT_R8G8B8A8_UNORM,
-        VK_FILTER_NEAREST,
+        VK_FILTER_LINEAR,
         {(uint32_t)parsed.width, (uint32_t)parsed.height, 1},
         1, 1);
 
@@ -137,15 +142,40 @@ void DeferredLighting::init(
         graphicsContext.device(),
         graphicsContext.commandPool(),
         {(uint8_t *)parsed.data, (uint32_t)(parsed.width * parsed.height * 4)});
-      
-      sWaterNormalMapUniform = flAlloc<VulkanUniform>();
 
-      sWaterNormalMapUniform->init(
+      sWaterDistortionTexture = flAlloc<VulkanTexture>();
+
+      Core::File distortionFile = Core::gFileSystem->createFile(
+        (Core::MountPoint)Core::ApplicationMountPoints::Application,
+        "res/textures/WaterNormalMap.png",
+        Core::FileOpenType::Binary | Core::FileOpenType::In);
+      Buffer unparsedDistortion = imageFile.readBinary();
+
+      ImagePixels parsedDistortion = getImagePixelsFromBuffer(unparsed);
+
+      sWaterDistortionTexture->init(
+        graphicsContext.device(),
+        TextureType::T2D | TextureType::WrapSampling,
+        TextureContents::Color,
+        VK_FORMAT_R8G8B8A8_UNORM,
+        VK_FILTER_LINEAR,
+        {(uint32_t)parsedDistortion.width, (uint32_t)parsedDistortion.height, 1},
+        1, 1);
+
+      sWaterDistortionTexture->fillWithStaging(
+        graphicsContext.device(),
+        graphicsContext.commandPool(),
+        {(uint8_t *)parsedDistortion.data,
+         (uint32_t)(parsedDistortion.width * parsedDistortion.height * 4)});
+      
+      sWaterUniform = flAlloc<VulkanUniform>();
+
+      sWaterUniform->init(
         graphicsContext.device(),
         graphicsContext.descriptorPool(),
         graphicsContext.descriptorLayouts(),
         makeArray<VulkanTexture, AllocationType::Linear>(
-          *sWaterNormalMapTexture));
+          *sWaterNormalMapTexture, *sWaterDistortionTexture));
     }
   }
 
@@ -249,7 +279,7 @@ void DeferredLighting::init(
           VulkanPipelineDescriptorLayout{
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
           VulkanPipelineDescriptorLayout{
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2});
 
         res.init(
           graphicsContext.device(),
@@ -339,7 +369,7 @@ void DeferredLighting::render(
     mLightingPropertiesUniform,
     sky.uniform(),
     water.uniform(),
-    *sWaterNormalMapUniform);
+    *sWaterUniform);
 
   commandBuffer.setViewport();
   commandBuffer.setScissor();

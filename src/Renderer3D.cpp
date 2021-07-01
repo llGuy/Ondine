@@ -152,6 +152,14 @@ void Renderer3D::init() {
     sceneObj2.rotation = glm::angleAxis(
       glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     sceneObj2.constructTransform();
+
+    auto handle3 = mScene.createSceneObject(); 
+    auto &sceneObj3 = mScene.getSceneObject(handle3);
+    sceneObj3.position = glm::vec3(0.0f, 55.0f, -30.0f);
+    sceneObj3.scale = glm::vec3(5.0f);
+    sceneObj3.rotation = glm::angleAxis(
+      glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    sceneObj3.constructTransform();
   }
 
   mWaterRenderer.init(

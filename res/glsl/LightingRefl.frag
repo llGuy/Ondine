@@ -35,6 +35,7 @@ layout (set = 4, binding = 3) uniform sampler2D uIrradianceTexture;
 
 layout (set = 5, binding = 0) uniform sampler2D uReflectionTexture;
 layout (set = 6, binding = 0) uniform sampler2D uWaterNormalMapTexture;
+layout (set = 6, binding = 1) uniform sampler2D uWaterDistortionTexture;
 
 vec4 getPointRadianceBRDF(
   float roughness, float metal,
@@ -53,7 +54,8 @@ vec4 getPointRadianceBRDF(
     skyIrradiance = getIrradiance(uSky.sky, uIrradianceTexture, r, muSun) *
       (1.0 + dot(normal, point) / r) * 0.5;
 
-    vec3 moonIrradiance = getIrradiance(uSky.sky, uIrradianceTexture, r, muMoon) *
+    vec3 moonIrradiance =
+      getIrradiance(uSky.sky, uIrradianceTexture, r, muMoon) *
       (1.0 + dot(normal, point) / r) * 0.5;
 
     float incidentIntensity = max(dot(normal, sunDirection), 0.0);
@@ -199,21 +201,44 @@ RayIntersection raySphereIntersection(
 }
 
 const float OCEAN_HEIGHT = 0.05;
+const float OCEAN_RADIANCE_FACTOR = 0.015;
 
-vec4 getOceanColor() {
-  return texture(
-    uReflectionTexture, vec2(1.0 - inUVs.x, inUVs.y)) *
-    vec4(uLighting.lighting.waterSurfaceColor, 1.0);
+vec4 getOceanColor(
+  in vec3 position,
+  in vec3 normal) {
+  vec2 distortion = vec2(normal.x, normal.z) * 0.1;
+
+  vec2 coords = vec2(1.0 - inUVs.x, inUVs.y) + distortion;
+  coords = clamp(coords, vec2(0.0001), vec2(0.9999));
+
+  // return texture(uReflectionTexture, coords) * OCEAN_RADIANCE_FACTOR *
+  return vec4(uLighting.lighting.waterSurfaceColor, 1.0);
 }
 
 vec3 getOceanNormal(in vec3 pointPosition) {
-  return vec3(0.0, 1.0, 0.0);
+  vec2 displacement = vec2(uLighting.lighting.continuous) * 0.3;
 
   vec3 normal = readNormalFromMap(
-      vec2(pointPosition.x, pointPosition.z) * 0.1,
-      uWaterNormalMapTexture);
+    vec2(pointPosition.x, pointPosition.z) * 0.01 + displacement,
+    uWaterNormalMapTexture);
 
-  return normal;
+  normal += readNormalFromMap(
+    vec2(pointPosition.x, -pointPosition.z) * 0.005 + displacement,
+    uWaterNormalMapTexture);
+
+  float distToPoint = length(pointPosition - uCamera.camera.wPosition);
+  distToPoint = clamp(distToPoint / 550.0, 0.0, 1.0);
+
+  float progress = dot(
+    vec3(0.0, 1.0, 0.0),
+    normalize(pointPosition - uCamera.camera.wPosition));
+
+  progress = pow(progress, 1.0);
+  
+  return mix(
+    normalize(normal * vec3(0.2, 1.0, 0.2)),
+    vec3(0.0, 1.0, 0.0),
+    1.0 - progress);
 }
 
 void main() {
@@ -259,11 +284,15 @@ void main() {
       pointRadiance = vec3(0.0);
 
       oceanAlpha = 1.0;
-      oceanGBuffer.albedo = getOceanColor();
       oceanGBuffer.wNormal =
         vec4(getOceanNormal(oceanGBuffer.wPosition.xyz), 1.0);
+      oceanGBuffer.albedo = getOceanColor(
+        oceanGBuffer.wPosition.xyz,
+        oceanGBuffer.wNormal.xyz);
 
-      oceanRadiance = getPointRadianceBRDF(0.6, 0.1, oceanGBuffer).rgb;
+      oceanRadiance = getPointRadianceBRDF(0.3, 0.0, oceanGBuffer).rgb;
+      // oceanRadiance = oceanGBuffer.wNormal.xyz;
+      // oceanRadiance = oceanGBuffer.albedo.rgb;
     }
     else {
       // This is a rendered object
@@ -277,11 +306,15 @@ void main() {
 
     oceanAlpha = 1.0;
 
-    oceanGBuffer.albedo = getOceanColor();
     oceanGBuffer.wNormal =
       vec4(getOceanNormal(oceanGBuffer.wPosition.xyz), 1.0);
+    oceanGBuffer.albedo = getOceanColor(
+      oceanGBuffer.wPosition.xyz,
+      oceanGBuffer.wNormal.xyz);
 
-    oceanRadiance = getPointRadianceBRDF(0.6, 0.1, oceanGBuffer).rgb;
+    oceanRadiance = getPointRadianceBRDF(0.3, 0.0, oceanGBuffer).rgb;
+    // oceanRadiance = oceanGBuffer.wNormal.xyz;
+    // oceanRadiance = oceanGBuffer.albedo.rgb;
   }
   else {
     radianceBaseColor = gbuffer.albedo.rgb;

@@ -21,6 +21,8 @@ struct LightingProperties {
     alignas(4) float time;
     alignas(4) float dt;
     alignas(4) float moonStrength;
+    // Gets reset to 0 every 10 seconds
+    alignas(4) float continuous;
   } data;
 
   float rotationAngle;
@@ -94,7 +96,8 @@ private:
   static const char *const LIGHTING_REFL_FRAG_SPV;
 
   static VulkanTexture *sWaterNormalMapTexture;
-  static VulkanUniform *sWaterNormalMapUniform;
+  static VulkanTexture *sWaterDistortionTexture;
+  static VulkanUniform *sWaterUniform;
 
   VulkanUniform mLightingOutputUniform;
   VulkanUniform mLightingPropertiesUniform;
