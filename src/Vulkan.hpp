@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Log.hpp"
+#include <vulkan/vulkan.h>
 
 /* Some utility stuff for vulkan */
 #define VK_CHECK(call) \

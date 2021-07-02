@@ -1,5 +1,6 @@
 #pragma once
 
+#include <glm/glm.hpp>
 #include <vulkan/vulkan.h>
 #include "VulkanQueue.hpp"
 
@@ -73,6 +74,8 @@ public:
   DeviceType deviceType() const;
 
 private:
+  void initDebugExtProcs();
+
   bool verifyHardwareMeetsRequirements(
     DeviceType requestedType,
     const VulkanSurface &surface,
@@ -113,6 +116,12 @@ private:
   VulkanQueue mPresentQueue;
   DeviceType mDeviceType;
 
+  PFN_vkDebugMarkerSetObjectTagEXT mVkDebugMarkerSetObjectTag;
+  PFN_vkDebugMarkerSetObjectNameEXT mVkDebugMarkerSetObjectName;
+  PFN_vkCmdDebugMarkerBeginEXT mVkCmdDebugMarkerBegin;
+  PFN_vkCmdDebugMarkerEndEXT mVkCmdDebugMarkerEnd;
+  PFN_vkCmdDebugMarkerInsertEXT mVkCmdDebugMarkerInsert;
+
   friend class VulkanContext;
   friend class VulkanSwapchain;
   friend class VulkanRenderPass;
@@ -130,6 +139,7 @@ private:
   friend class VulkanTexture;
   friend class VulkanBuffer;
   friend class VulkanUniform;
+  friend class VulkanCommandBuffer;
 };
 
 }

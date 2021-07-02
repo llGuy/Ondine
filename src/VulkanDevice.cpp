@@ -147,8 +147,27 @@ void VulkanDevice::init(
     
   if (usedExt.available & 1 << DebugMarkerExtIndex) {
     LOG_INFO("Initialising debug procs\n");
-    // TODO once we have a scene rendering
-    // initDebugExtProcs();
+    initDebugExtProcs();
+  }
+}
+
+void VulkanDevice::initDebugExtProcs() {
+  mVkDebugMarkerSetObjectTag = (PFN_vkDebugMarkerSetObjectTagEXT)
+    vkGetDeviceProcAddr(mLogicalDevice, "vkDebugMarkerSetObjectTagEXT");
+  mVkDebugMarkerSetObjectName = (PFN_vkDebugMarkerSetObjectNameEXT)
+    vkGetDeviceProcAddr(mLogicalDevice, "vkDebugMarkerSetObjectNameEXT");
+  mVkCmdDebugMarkerBegin = (PFN_vkCmdDebugMarkerBeginEXT)
+    vkGetDeviceProcAddr(mLogicalDevice, "vkCmdDebugMarkerBeginEXT");
+  mVkCmdDebugMarkerEnd = (PFN_vkCmdDebugMarkerEndEXT)
+    vkGetDeviceProcAddr(mLogicalDevice, "vkCmdDebugMarkerEndEXT");
+  mVkCmdDebugMarkerInsert = (PFN_vkCmdDebugMarkerInsertEXT)
+    vkGetDeviceProcAddr(mLogicalDevice, "vkCmdDebugMarkerInsertEXT");
+
+  if (mVkDebugMarkerSetObjectTag == VK_NULL_HANDLE) {
+    LOG_ERROR("Vulkan debug marker functions were not found\n");
+  }
+  else {
+    LOG_INFO("Vulkan debug marker functions were found\n");
   }
 }
 

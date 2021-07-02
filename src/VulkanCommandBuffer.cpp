@@ -443,4 +443,38 @@ void VulkanCommandBuffer::blitImage(
     1, &region, VK_FILTER_NEAREST);
 }
 
+#ifndef NDEBUG
+void VulkanCommandBuffer::dbgBeginRegion(
+  const VulkanDevice &device,
+  const char *name,
+  const glm::vec4 &color) {
+  if (device.mVkCmdDebugMarkerBegin) {
+    VkDebugMarkerMarkerInfoEXT marker_info = {};
+    marker_info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+    memcpy(marker_info.color, &color[0], sizeof(float) * 4);
+    marker_info.pMarkerName = name;
+    device.mVkCmdDebugMarkerBegin(mCommandBuffer, &marker_info);
+  }
+}
+
+void VulkanCommandBuffer::dbgInsertMarker(
+  const VulkanDevice &device,
+  const char *name,
+  const glm::vec4 &color) {
+  if (device.mVkCmdDebugMarkerInsert) {
+    VkDebugMarkerMarkerInfoEXT marker_info = {};
+    marker_info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+    memcpy(marker_info.color, &color[0], sizeof(float) * 4);
+    marker_info.pMarkerName = name;
+    device.mVkCmdDebugMarkerInsert(mCommandBuffer, &marker_info);
+  }
+}
+
+void VulkanCommandBuffer::dbgEndRegion(const VulkanDevice &device) {
+  if (device.mVkCmdDebugMarkerEnd) {
+    device.mVkCmdDebugMarkerEnd(mCommandBuffer);
+  }
+}
+#endif
+
 }
