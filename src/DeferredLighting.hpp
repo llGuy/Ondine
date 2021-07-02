@@ -21,6 +21,7 @@ struct LightingProperties {
     alignas(4) float time;
     alignas(4) float dt;
     alignas(4) float moonStrength;
+    alignas(4) float moonLightingStrength;
     // Gets reset to 0 every 10 seconds
     alignas(4) float continuous;
   } data;

@@ -76,7 +76,8 @@ vec4 getPointRadianceBRDF(
       normalize(gbuffer.wPosition.xyz - uCamera.camera.wPosition),
       uSky.sky.solarIrradiance * getTransmittanceToSun(
         uSky.sky, uTransmittanceTexture, r, muMoon),
-      uLighting.lighting.moonDirection) * uLighting.lighting.moonStrength * 5.0;
+      uLighting.lighting.moonDirection) *
+      uLighting.lighting.moonLightingStrength * 5.0;
 
     pointRadiance = accumulatedRadiance +
       gbuffer.albedo.rgb * (1.0 / PI) * skyIrradiance +

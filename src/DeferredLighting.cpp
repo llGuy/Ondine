@@ -91,6 +91,16 @@ void LightingProperties::tick(
   data.moonStrength = 1.0f - fadeAmount;
   data.moonStrength = glm::pow(
     data.moonStrength, 1.0f) * 0.005f;
+
+  // We want the light of the moon to appear later
+  const float LIGHTING_FADE_START = 0.0f;
+  float lightingFadeAmount = (muSun - planet.muSunMin) /
+    (LIGHTING_FADE_START - planet.muSunMin);
+  lightingFadeAmount = glm::clamp(lightingFadeAmount, 0.0f, 1.0f);
+
+  data.moonLightingStrength = 1.0f - lightingFadeAmount;
+  data.moonLightingStrength = glm::pow(
+    data.moonLightingStrength, 1.0f) * 0.0005f;
 }
 
 void LightingProperties::rotateBy(float radians) {

@@ -64,7 +64,8 @@ vec3 accumulateSunAndNightRadianceBRDF(
     normalize(gbuffer.wPosition.xyz - uCamera.camera.wPosition),
     uSky.sky.solarIrradiance * getTransmittanceToSun(
       uSky.sky, uTransmittanceTexture, r, muMoon),
-    uLighting.lighting.moonDirection) * uLighting.lighting.moonStrength * 4.0;
+    uLighting.lighting.moonDirection) *
+    uLighting.lighting.moonLightingStrength * 4.0;
 
   return ret;
 }
@@ -119,6 +120,7 @@ vec4 getPointRadianceBRDF(
   return vec4(pointRadiance, 1.0);
 }
 
+#if 1
 vec4 getReflectivePointRadiancePseudoBRDF(
   float roughness, float metal,
   in vec3 reflectedColor,
@@ -149,13 +151,6 @@ vec4 getReflectivePointRadiancePseudoBRDF(
 
     vec3 accumulatedRadiance = accumulateSunAndNightRadianceBRDF(
       gbuffer, roughness, metal, r, muSun, muMoon, viewDirection);
-
-#if 0
-    pointRadiance = accumulatedRadiance +
-      gbuffer.albedo.rgb * (1.0 / PI) * skyIrradiance +
-      gbuffer.albedo.rgb * (1.0 / PI) * moonIrradiance *
-      uLighting.lighting.moonStrength * 8.0;
-#endif
 
     // vec3 baseReflectivity = mix(vec3(0.04), gbuffer.albedo.rgb, 1.0);
     vec3 baseReflectivity = gbuffer.albedo.rgb;
@@ -201,6 +196,16 @@ vec4 getReflectivePointRadiancePseudoBRDF(
 
   return vec4(pointRadiance, 1.0);
 }
+#else
+
+vec4 getReflectivePointRadiancePseudoBRDF(
+  float roughness, float metal,
+  in vec3 reflectedColor,
+  in GBufferData gbuffer) {
+  return vec4(reflectedColor, 1.0);
+}
+
+#endif
 
 vec4 getPointRadiance(in GBufferData gbuffer) {
   vec3 skyIrradiance;
@@ -300,7 +305,7 @@ RayIntersection raySphereIntersection(
 
 const float OCEAN_HEIGHT = 0.05;
 const float OCEAN_RADIANCE_FACTOR = 0.015;
-const float OCEAN_ROUGHNESS = 0.1;
+const float OCEAN_ROUGHNESS = 0.01;
 const float OCEAN_METAL = 0.8;
 
 vec4 getOceanReflectionColor(
