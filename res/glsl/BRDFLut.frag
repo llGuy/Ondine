@@ -96,5 +96,5 @@ vec2 integrate(float ndotv, float roughness) {
 }
 
 void main()  {
-  outColor = integrate(inUVs.x, inUVs.y);
+  outColor = integrate(inUVs.x, 1.0 - inUVs.y);
 }

@@ -37,6 +37,8 @@ layout (set = 5, binding = 0) uniform sampler2D uReflectionTexture;
 layout (set = 6, binding = 0) uniform sampler2D uWaterNormalMapTexture;
 layout (set = 6, binding = 1) uniform sampler2D uWaterDistortionTexture;
 
+layout (set = 7, binding = 0) uniform sampler2D uBRDFLutTexture;
+
 vec3 accumulateSunAndNightRadianceBRDF(
   in GBufferData gbuffer,
   float roughness, float metal,
@@ -412,5 +414,5 @@ void main() {
 
   outColor.rgb = pow(diff, gamma);
 
-  outColor.a = 1.0;
+  outColor.a = texture(uBRDFLutTexture, vec2(0.0)).r;
 }

@@ -113,6 +113,9 @@ VulkanTexture *DeferredLighting::sWaterNormalMapTexture = nullptr;
 VulkanTexture *DeferredLighting::sWaterDistortionTexture = nullptr;
 VulkanUniform *DeferredLighting::sWaterUniform = nullptr;
 
+VulkanTexture *DeferredLighting::sBRDFLutTexture = nullptr;
+VulkanUniform *DeferredLighting::sBRDFLutUniform = nullptr;
+
 void DeferredLighting::init(
   VulkanContext &graphicsContext,
   VkExtent2D initialExtent,
@@ -285,7 +288,9 @@ void DeferredLighting::init(
           VulkanPipelineDescriptorLayout{
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
           VulkanPipelineDescriptorLayout{
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2});
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2},
+          VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
 
         res.init(
           graphicsContext.device(),
@@ -375,7 +380,8 @@ void DeferredLighting::render(
     mLightingPropertiesUniform,
     sky.uniform(),
     water.uniform(),
-    *sWaterUniform);
+    *sWaterUniform,
+    *sBRDFLutUniform);
 
   commandBuffer.setViewport();
   commandBuffer.setScissor();
@@ -441,7 +447,101 @@ void DeferredLighting::updateData(
 }
 
 void DeferredLighting::precomputeBRDFLut(VulkanContext &graphicsContext) {
-  
+  VulkanRenderPass precomputeBRDFRenderPass;
+  { // Create render pass
+    VulkanRenderPassConfig renderPassConfig(1, 1);
+
+    renderPassConfig.addAttachment(
+      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
+      OutputUsage::FragmentShaderRead, AttachmentType::Color,
+      VK_FORMAT_R32G32_SFLOAT);
+
+    renderPassConfig.addSubpass(
+      makeArray<uint32_t, AllocationType::Linear>(0U),
+      makeArray<uint32_t, AllocationType::Linear>(),
+      false);
+
+    precomputeBRDFRenderPass.init(
+      graphicsContext.device(), renderPassConfig);
+  }
+
+  Resolution resolution = {512, 512};
+  VulkanFramebuffer precomputeBRDFFBO;
+  { // Create framebuffer and attachments
+    sBRDFLutTexture->init(
+      graphicsContext.device(),
+      TextureType::Attachment | TextureType::T2D,
+      TextureContents::Color,
+      VK_FORMAT_R32G32_SFLOAT,
+      VK_FILTER_LINEAR,
+      {resolution.width, resolution.height, 1},
+      1, 1);
+
+    sBRDFLutUniform->init(
+      graphicsContext.device(),
+      graphicsContext.descriptorPool(),
+      graphicsContext.descriptorLayouts(),
+      makeArray<VulkanTexture, AllocationType::Linear>(*sBRDFLutTexture));
+
+    VulkanFramebufferConfig fboConfig(1, precomputeBRDFRenderPass);
+    fboConfig.addAttachment(*sBRDFLutTexture);
+    precomputeBRDFFBO.init(graphicsContext.device(), fboConfig);
+  }
+
+  VulkanPipeline precomputeBRDFPipeline;
+  { // Create precompute graphics pipeline
+    Core::File precomputeVsh = Core::gFileSystem->createFile(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
+      "res/spv/TexturedQuad.vert.spv",
+      Core::FileOpenType::Binary | Core::FileOpenType::In);
+    Buffer vsh = precomputeVsh.readBinary();
+
+    Core::File precomputeFsh = Core::gFileSystem->createFile(
+      (Core::MountPoint)Core::ApplicationMountPoints::Application,
+      "res/spv/BRDFLut.frag.spv",
+      Core::FileOpenType::Binary | Core::FileOpenType::In);
+    Buffer fsh = precomputeFsh.readBinary();
+
+    VulkanPipelineConfig pipelineConfig(
+      {precomputeBRDFRenderPass, 0},
+      VulkanShader(graphicsContext.device(), vsh, VulkanShaderType::Vertex),
+      VulkanShader(graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+    pipelineConfig.configurePipelineLayout(0);
+
+    precomputeBRDFPipeline.init(
+      graphicsContext.device(),
+      graphicsContext.descriptorLayouts(),
+      pipelineConfig);
+  }
+
+  { // Precompute
+    VulkanCommandBuffer commandBuffer =
+      graphicsContext.commandPool().makeCommandBuffer(
+        graphicsContext.device(), VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+    commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
+
+    commandBuffer.beginRenderPass(
+      precomputeBRDFRenderPass,
+      precomputeBRDFFBO,
+      {}, {resolution.width, resolution.height});
+
+    commandBuffer.bindPipeline(precomputeBRDFPipeline);
+    commandBuffer.setViewport();
+    commandBuffer.setScissor();
+    commandBuffer.draw(4, 1, 0, 0);
+    commandBuffer.endRenderPass();
+
+    commandBuffer.end();
+
+    graphicsContext.device().graphicsQueue().submitCommandBuffer(
+      commandBuffer,
+      makeArray<VulkanSemaphore, AllocationType::Linear>(),
+      makeArray<VulkanSemaphore, AllocationType::Linear>(),
+      0, VulkanFence());
+
+    graphicsContext.device().idle();
+  }
 }
 
 }

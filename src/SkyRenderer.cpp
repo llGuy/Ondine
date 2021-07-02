@@ -539,7 +539,6 @@ void SkyRenderer::prepareScatteringDensityPrecompute(
       }
   
       { // Create pipeline
-
         VulkanPipelineConfig pipelineConfig(
           {dstRenderPass, 0},
           VulkanShader(
