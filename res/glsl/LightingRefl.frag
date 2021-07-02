@@ -44,7 +44,9 @@ vec3 accumulateSunAndNightRadianceBRDF(
   float roughness, float metal,
   float r, float muSun, float muMoon,
   vec3 viewDirection) {
-  vec3 ret = directionalRadianceBRDF(
+  vec3 ret = vec3(0.0);
+
+  ret += directionalRadianceBRDF(
     gbuffer,
     mix(vec3(0.04), gbuffer.albedo.rgb, metal),
     roughness,
@@ -134,7 +136,8 @@ vec4 getReflectivePointRadiancePseudoBRDF(
     float muSun = dot(point, sunDirection) / r;
     float muMoon = dot(point, moonDirection) / r;
 
-    skyIrradiance = getIrradiance(uSky.sky, uIrradianceTexture, r, muSun) *
+    skyIrradiance =
+      getIrradiance(uSky.sky, uIrradianceTexture, r, muSun) *
       (1.0 + dot(normal, point) / r) * 0.5;
 
     vec3 moonIrradiance =
@@ -186,7 +189,15 @@ vec4 getReflectivePointRadiancePseudoBRDF(
     uLighting.lighting.sunDirection,
     transmittance);
 
-  pointRadiance = pointRadiance * transmittance + inScatter;
+  vec3 inScatterMoon = getSkyRadianceToPoint(
+    uSky.sky, uTransmittanceTexture,
+    uScatteringTexture, uSingleMieScatteringTexture,
+    uCamera.camera.wPosition / 1000.0 - uSky.sky.wPlanetCenter,
+    gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter, 0.0,
+    uLighting.lighting.moonDirection,
+    transmittance) * uLighting.lighting.moonStrength * 5.0;
+
+  pointRadiance = pointRadiance * transmittance + inScatter + inScatterMoon;
 
   return vec4(pointRadiance, 1.0);
 }
