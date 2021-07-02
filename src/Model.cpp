@@ -51,6 +51,8 @@ void Model::init(const ModelConfig &def, VulkanContext &context) {
       def.mIndices);
   }
 
+  mVertexBufferCount = 0;
+
   // For now, store each attribute in a separate vertex buffer
   for (int i = 0; i < def.mAttributeCount; ++i) {
     auto &attribute = def.mAttributes[i];

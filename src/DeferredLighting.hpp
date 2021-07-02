@@ -90,6 +90,7 @@ public:
 private:
   void initTargets(VulkanContext &graphicsContext);
   void destroyTargets(VulkanContext &graphicsContext);
+  void precomputeBRDFLut(VulkanContext &graphicsContext);
 
 private:
   static const char *const LIGHTING_FRAG_SPV;
@@ -98,6 +99,9 @@ private:
   static VulkanTexture *sWaterNormalMapTexture;
   static VulkanTexture *sWaterDistortionTexture;
   static VulkanUniform *sWaterUniform;
+
+  static VulkanTexture *sBRDFLutTexture;
+  static VulkanUniform *sBRDFLutUniform;
 
   VulkanUniform mLightingOutputUniform;
   VulkanUniform mLightingPropertiesUniform;

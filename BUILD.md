@@ -2,6 +2,8 @@
 
 ## Application
 
+Make sure to call `git submodule update --init --recursive` after cloning.
+
 TODO (CMake).
 
 ## Shaders

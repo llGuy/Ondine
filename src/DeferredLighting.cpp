@@ -179,6 +179,12 @@ void DeferredLighting::init(
     }
   }
 
+  if (!sBRDFLutTexture) {
+    sBRDFLutTexture = flAlloc<VulkanTexture>();
+    sBRDFLutUniform = flAlloc<VulkanUniform>();
+    precomputeBRDFLut(graphicsContext);
+  }
+
   { // Create render pass
     VulkanRenderPassConfig renderPassConfig(1, 1);
 
@@ -432,6 +438,10 @@ void DeferredLighting::updateData(
   const LightingProperties &properties) {
   commandBuffer.updateBuffer(
     mLightingPropertiesBuffer, 0, sizeof(properties), &properties);
+}
+
+void DeferredLighting::precomputeBRDFLut(VulkanContext &graphicsContext) {
+  
 }
 
 }
