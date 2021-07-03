@@ -117,7 +117,7 @@ void Renderer3D::init() {
 
   { // Set lighting properties
     mLightingProperties.data.sunDirection =
-      glm::normalize(glm::vec3(0.000001f, 0.01f, -1.00001f));
+      glm::normalize(glm::vec3(0.000001f, 0.1f, -1.00001f));
     mLightingProperties.data.moonDirection =
       glm::normalize(glm::vec3(1.000001f, 1.6f, +1.00001f));
     mLightingProperties.data.sunSize = glm::vec3(
@@ -128,7 +128,7 @@ void Renderer3D::init() {
       glm::vec3(8.0f, 54.0f, 76.0f) / 255.0f;
     mLightingProperties.pause = false;
 
-    mLightingProperties.rotationAngle = glm::radians(89.0f);
+    mLightingProperties.rotationAngle = glm::radians(86.5f);
   }
 
   mDeferredLighting.init(

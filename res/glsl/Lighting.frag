@@ -82,7 +82,7 @@ vec4 getPointRadianceBRDF(
     pointRadiance = accumulatedRadiance +
       gbuffer.albedo.rgb * (1.0 / PI) * skyIrradiance +
       gbuffer.albedo.rgb * (1.0 / PI) * moonIrradiance *
-      uLighting.lighting.moonStrength * 5.0;
+      uLighting.lighting.moonLightingStrength * 25.0;
   }
 
   /* How much is scattered towards us */

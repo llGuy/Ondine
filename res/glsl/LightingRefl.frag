@@ -65,7 +65,7 @@ vec3 accumulateSunAndNightRadianceBRDF(
     uSky.sky.solarIrradiance * getTransmittanceToSun(
       uSky.sky, uTransmittanceTexture, r, muMoon),
     uLighting.lighting.moonDirection) *
-    uLighting.lighting.moonLightingStrength * 4.0;
+    uLighting.lighting.moonLightingStrength * 25.0;
 
   return ret;
 }
