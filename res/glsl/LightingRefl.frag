@@ -34,8 +34,8 @@ layout (set = 4, binding = 2) uniform sampler3D uSingleMieScatteringTexture;
 layout (set = 4, binding = 3) uniform sampler2D uIrradianceTexture;
 
 layout (set = 5, binding = 0) uniform sampler2D uReflectionTexture;
-layout (set = 6, binding = 0) uniform sampler2D uWaterNormalMapTexture;
-layout (set = 6, binding = 1) uniform sampler2D uWaterDistortionTexture;
+layout (set = 6, binding = 0) uniform sampler2D uWaterNormalMapTexture0;
+layout (set = 6, binding = 1) uniform sampler2D uWaterNormalMapTexture1;
 
 layout (set = 7, binding = 0) uniform sampler2D uBRDFLutTexture;
 
@@ -322,20 +322,32 @@ vec4 getOceanReflectionColor(
 vec3 getOceanNormal(in vec3 pointPosition) {
   vec2 displacement = vec2(uLighting.lighting.continuous) * 0.3;
 
-  vec3 normal = readNormalFromMap(
+  vec3 normal = vec3(0.0);
+
+  normal += readNormalFromMap(
     vec2(pointPosition.x, pointPosition.z) * 0.01 + displacement,
-    uWaterNormalMapTexture);
+    uWaterNormalMapTexture0);
 
   normal += readNormalFromMap(
     vec2(pointPosition.x, -pointPosition.z) * 0.005 + displacement,
-    uWaterNormalMapTexture);
+    uWaterNormalMapTexture0);
+
+  /*
+  normal += readNormalFromMap(
+    vec2(pointPosition.x, pointPosition.z) * 0.008 + displacement,
+    uWaterNormalMapTexture1) * 3.0;
+
+  normal += readNormalFromMap(
+    vec2(pointPosition.x, pointPosition.z) * 0.001 + displacement,
+    uWaterNormalMapTexture1) * 2.0;
+    */
 
   float distToPoint = length(pointPosition - uCamera.camera.wPosition);
   distToPoint = clamp(distToPoint / 550.0, 0.0, 1.0);
 
   float progress = dot(
     vec3(0.0, 1.0, 0.0),
-    normalize(pointPosition - uCamera.camera.wPosition));
+    normalize(uCamera.camera.wPosition - pointPosition));
 
   progress = pow(progress, 1.0);
   

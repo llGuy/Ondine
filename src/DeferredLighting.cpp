@@ -160,7 +160,7 @@ void DeferredLighting::init(
 
       Core::File distortionFile = Core::gFileSystem->createFile(
         (Core::MountPoint)Core::ApplicationMountPoints::Application,
-        "res/textures/WaterNormalMap.png",
+        "res/textures/WaterNormalMap.jpeg",
         Core::FileOpenType::Binary | Core::FileOpenType::In);
       Buffer unparsedDistortion = imageFile.readBinary();
 
