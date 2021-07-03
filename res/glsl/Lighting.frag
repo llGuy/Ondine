@@ -192,7 +192,9 @@ void main() {
   }
 
   radiance = mix(radiance, pointRadiance, pointAlpha) + radianceBaseColor;
+  outColor.rgb = radiance;
 
+  /*
   vec3 one = vec3(1.0);
   vec3 expValue =
     exp(-radiance / uLighting.lighting.white * uLighting.lighting.exposure);
@@ -200,6 +202,7 @@ void main() {
   vec3 gamma = vec3(1.0 / 2.2);
 
   outColor.rgb = pow(diff, gamma);
+  */
 
   outColor.a = 1.0;
 }

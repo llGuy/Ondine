@@ -126,6 +126,7 @@ void Renderer3D::init() {
     mLightingProperties.data.white = glm::vec3(2.0f);
     mLightingProperties.data.waterSurfaceColor =
       glm::vec3(8.0f, 54.0f, 76.0f) / 255.0f;
+    mLightingProperties.pause = false;
 
     mLightingProperties.rotationAngle = glm::radians(89.0f);
   }

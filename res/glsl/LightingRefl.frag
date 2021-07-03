@@ -304,9 +304,9 @@ RayIntersection raySphereIntersection(
 }
 
 const float OCEAN_HEIGHT = 0.05;
-const float OCEAN_RADIANCE_FACTOR = 0.015;
+const float OCEAN_RADIANCE_FACTOR = 0.08;
 const float OCEAN_ROUGHNESS = 0.01;
-const float OCEAN_METAL = 0.8;
+const float OCEAN_METAL = 0.7;
 
 vec4 getOceanReflectionColor(
   in vec3 position,
@@ -316,7 +316,7 @@ vec4 getOceanReflectionColor(
   vec2 coords = vec2(1.0 - inUVs.x, inUVs.y) + distortion;
   coords = clamp(coords, vec2(0.0001), vec2(0.9999));
 
-  return texture(uReflectionTexture, coords) * OCEAN_RADIANCE_FACTOR;
+  return texture(uReflectionTexture, coords);
 }
 
 vec3 getOceanNormal(in vec3 pointPosition) {

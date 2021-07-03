@@ -32,6 +32,7 @@ struct LightingProperties {
   float diff;
   bool isFastForwarding;
   float fastForwardTime;
+  bool pause;
 
   enum class FastForwardDst {
     Sunset,
@@ -96,6 +97,8 @@ private:
 private:
   static const char *const LIGHTING_FRAG_SPV;
   static const char *const LIGHTING_REFL_FRAG_SPV;
+  static constexpr VkFormat LIGHTING_TEXTURE_FORMAT =
+    VK_FORMAT_R16G16B16A16_SFLOAT;
 
   static VulkanTexture *sWaterNormalMapTexture;
   static VulkanTexture *sWaterDistortionTexture;

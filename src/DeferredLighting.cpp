@@ -64,7 +64,7 @@ void LightingProperties::tick(
       isFastForwarding = false;
     }
   }
-  else {
+  else if (!pause) {
     rotationAngle += rotationDiff;
   }
 
@@ -204,7 +204,7 @@ void DeferredLighting::init(
     renderPassConfig.addAttachment(
       LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
       OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      VK_FORMAT_R8G8B8A8_UNORM);
+      LIGHTING_TEXTURE_FORMAT);
 
     renderPassConfig.addSubpass(
       makeArray<uint32_t, AllocationType::Linear>(0U),
@@ -428,7 +428,7 @@ VkExtent2D DeferredLighting::extent() const {
 void DeferredLighting::initTargets(VulkanContext &graphicsContext) {
   mLightingTexture.init(
     graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
-    TextureContents::Color, VK_FORMAT_R8G8B8A8_UNORM, VK_FILTER_LINEAR,
+    TextureContents::Color, LIGHTING_TEXTURE_FORMAT, VK_FILTER_LINEAR,
     {mLightingExtent.width, mLightingExtent.height, 1}, 1, 1);
 
   mLightingOutputUniform.init(

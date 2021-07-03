@@ -514,6 +514,12 @@ void EditorView::renderGraphicsWindow() {
         Graphics::LightingProperties::FastForwardDst::BeautifulMoment);
     }
 
+    if (ImGui::Checkbox(
+          "Pause Planet Rotation",
+          &mRenderer3D.mLightingProperties.pause)) {
+      
+    }
+
     ImGui::Separator();
     
     ImGui::End();
