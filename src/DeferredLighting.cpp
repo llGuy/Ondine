@@ -100,7 +100,7 @@ void LightingProperties::tick(
 
   data.moonLightingStrength = 1.0f - lightingFadeAmount;
   data.moonLightingStrength = glm::pow(
-    data.moonLightingStrength, 1.0f) * 0.0005f;
+    data.moonLightingStrength, 1.0f) * 0.005f;
 }
 
 void LightingProperties::rotateBy(float radians) {

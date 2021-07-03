@@ -65,7 +65,7 @@ vec3 accumulateSunAndNightRadianceBRDF(
     uSky.sky.solarIrradiance * getTransmittanceToSun(
       uSky.sky, uTransmittanceTexture, r, muMoon),
     uLighting.lighting.moonDirection) *
-    uLighting.lighting.moonLightingStrength * 25.0;
+    uLighting.lighting.moonLightingStrength * 2.5;
 
   return ret;
 }
@@ -115,7 +115,15 @@ vec4 getPointRadianceBRDF(
     uLighting.lighting.sunDirection,
     transmittance);
 
-  pointRadiance = pointRadiance * transmittance + inScatter;
+  vec3 inScatterMoon = getSkyRadianceToPoint(
+    uSky.sky, uTransmittanceTexture,
+    uScatteringTexture, uSingleMieScatteringTexture,
+    uCamera.camera.wPosition / 1000.0 - uSky.sky.wPlanetCenter,
+    gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter, 0.0,
+    uLighting.lighting.moonDirection,
+    transmittance) * uLighting.lighting.moonStrength * 5.0;
+
+  pointRadiance = pointRadiance * transmittance + inScatter + inScatterMoon;
 
   return vec4(pointRadiance, 1.0);
 }
