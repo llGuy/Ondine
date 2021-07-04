@@ -128,7 +128,6 @@ vec4 getPointRadianceBRDF(
   return vec4(pointRadiance, 1.0);
 }
 
-#if 1
 vec4 getReflectivePointRadiancePseudoBRDF(
   float roughness, float metal,
   in vec3 reflectedColor,
@@ -203,16 +202,84 @@ vec4 getReflectivePointRadiancePseudoBRDF(
 
   return vec4(pointRadiance, 1.0);
 }
-#else
 
-vec4 getReflectivePointRadiancePseudoBRDF(
+// Testing
+vec4 getOceanPointRadiancePseudoBRDF(
   float roughness, float metal,
   in vec3 reflectedColor,
+  in vec3 refractedColor,
   in GBufferData gbuffer) {
-  return vec4(reflectedColor, 1.0);
-}
+  vec3 skyIrradiance, sunIrradiance, pointRadiance;
+  { // Calculate sun and sky irradiance which will contribute to the final BRDF
+    vec3 point = gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter;
+    vec3 normal = gbuffer.wNormal.xyz;
+    vec3 sunDirection = uLighting.lighting.sunDirection;
+    vec3 moonDirection = uLighting.lighting.moonDirection;
+    vec3 viewDirection =
+      normalize(gbuffer.wPosition.xyz - uCamera.camera.wPosition);
 
-#endif
+    float r = length(point);
+    float muSun = dot(point, sunDirection) / r;
+    float muMoon = dot(point, moonDirection) / r;
+
+    skyIrradiance =
+      getIrradiance(uSky.sky, uIrradianceTexture, r, muSun) *
+      (1.0 + dot(normal, point) / r) * 0.5;
+
+    vec3 moonIrradiance =
+      getIrradiance(uSky.sky, uIrradianceTexture, r, muMoon) *
+      (1.0 + dot(normal, point) / r) * 0.5;
+
+    float incidentIntensity = max(dot(normal, sunDirection), 0.0);
+    float toonIntensity = toonShadingIncidentIntensity(incidentIntensity);
+
+    vec3 accumulatedRadiance = accumulateSunAndNightRadianceBRDF(
+      gbuffer, roughness, metal, r, muSun, muMoon, viewDirection);
+
+     vec3 baseReflectivity = mix(vec3(0.04), gbuffer.albedo.rgb, metal);
+
+    vec3 fresnel = 1.0 * fresnelRoughness(
+      max(dot(-viewDirection, normal), 0.0000001), baseReflectivity, roughness);
+
+    vec3 kd = (vec3(1.0f) - fresnel) * (1.0f - metal);
+
+    vec2 brdf = texture(
+      uBRDFLutTexture,
+      vec2(max(dot(normal, viewDirection), 0.0), roughness)).rg;
+
+    vec3 specular = reflectedColor * (fresnel * brdf.r + clamp(brdf.g, 0, 1));
+
+    pointRadiance = accumulatedRadiance +
+      refractedColor * kd +
+      gbuffer.albedo.rgb * (1.0 / PI) * skyIrradiance +
+      gbuffer.albedo.rgb * (1.0 / PI) * moonIrradiance *
+      uLighting.lighting.moonStrength * 8.0;
+
+    pointRadiance += specular * 1.3;
+  }
+
+  /* How much is scattered towards us */
+  vec3 transmittance;
+  vec3 inScatter = getSkyRadianceToPoint(
+    uSky.sky, uTransmittanceTexture,
+    uScatteringTexture, uSingleMieScatteringTexture,
+    uCamera.camera.wPosition / 1000.0 - uSky.sky.wPlanetCenter,
+    gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter, 0.0,
+    uLighting.lighting.sunDirection,
+    transmittance);
+
+  vec3 inScatterMoon = getSkyRadianceToPoint(
+    uSky.sky, uTransmittanceTexture,
+    uScatteringTexture, uSingleMieScatteringTexture,
+    uCamera.camera.wPosition / 1000.0 - uSky.sky.wPlanetCenter,
+    gbuffer.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter, 0.0,
+    uLighting.lighting.moonDirection,
+    transmittance) * uLighting.lighting.moonStrength * 5.0;
+
+  pointRadiance = pointRadiance * transmittance + inScatter + inScatterMoon;
+
+  return vec4(pointRadiance, 1.0);
+}
 
 vec4 getPointRadiance(in GBufferData gbuffer) {
   vec3 skyIrradiance;
@@ -415,8 +482,13 @@ void main() {
     vec4 vOceanPosition = uCamera.camera.view * vec4(
       oceanIntersection.wIntersectionPoint, 1.0);
 
+    // This is a rendered object
+    vec4 rasterizedRadiance = getPointRadianceBRDF(0.8, 0.0, gbuffer);
+
     if (vPosition.z < vOceanPosition.z && oceanIntersection.didIntersect) {
       // This is the ocean
+      // Need to do refraction in this case
+
       oceanGBuffer.wPosition *= 1000.0;
 
       pointAlpha = 0.0;
@@ -432,13 +504,11 @@ void main() {
 
       oceanRadiance = getReflectivePointRadiancePseudoBRDF(
         uLighting.lighting.waterRoughness, uLighting.lighting.waterMetal,
-        reflectionColor, oceanGBuffer).rgb;
+        reflectionColor, /*rasterizedRadiance.rgb,*/ oceanGBuffer).rgb;
     }
     else {
-      // This is a rendered object
-      vec4 radiance = getPointRadianceBRDF(0.8, 0.0, gbuffer);
-      pointRadiance = radiance.rgb;
-      pointAlpha = radiance.a;
+      pointRadiance = rasterizedRadiance.rgb;
+      pointAlpha = rasterizedRadiance.a;
     }
   }
   else if (oceanIntersection.didIntersect) {

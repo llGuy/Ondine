@@ -174,7 +174,7 @@ void Renderer3D::init() {
 
     auto handle4 = mScene.createSceneObject(); 
     auto &sceneObj4 = mScene.getSceneObject(handle4);
-    sceneObj4.position = glm::vec3(-100.0f, 50.0f, 100.0f);
+    sceneObj4.position = glm::vec3(-100.0f, 40.0f, 100.0f);
     sceneObj4.scale = glm::vec3(20.0f);
     sceneObj4.rotation = glm::angleAxis(
       glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
