@@ -55,7 +55,7 @@ private:
     const PlanetProperties &planetProperties);
 
 private:
-  static constexpr float VIEWPORT_SCALE = 0.3f;
+  static constexpr float VIEWPORT_SCALE = 0.5f;
   static constexpr float OCEAN_HEIGHT = 0.05f;
 
   GBuffer mGBuffer;

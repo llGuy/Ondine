@@ -9,8 +9,8 @@ void GBuffer::init(
   auto ctxProperties = graphicsContext.getProperties();
 
   mGBufferExtent = {
-    ctxProperties.swapchainExtent.width,
-    ctxProperties.swapchainExtent.height,
+    extent.width,
+    extent.height,
   };
 
   mGBufferFormats[0] = VK_FORMAT_R16G16B16A16_SFLOAT;

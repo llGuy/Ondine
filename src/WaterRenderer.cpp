@@ -11,8 +11,8 @@ void WaterRenderer::init(
   const LightingProperties *lightingProperties) {
   auto properties = graphicsContext.getProperties();
   mReflectionViewport = {
-    (uint32_t)((float)properties.swapchainExtent.width/* * VIEWPORT_SCALE*/),
-    (uint32_t)((float)properties.swapchainExtent.height/* * VIEWPORT_SCALE*/)
+    (uint32_t)((float)properties.swapchainExtent.width * VIEWPORT_SCALE),
+    (uint32_t)((float)properties.swapchainExtent.height * VIEWPORT_SCALE)
   };
 
   updateCameraInfo(sceneCamera, planetProperties);
@@ -49,11 +49,12 @@ void WaterRenderer::tick(
 void WaterRenderer::resize(
   VulkanContext &vulkanContext, Resolution newResolution) {
   mReflectionViewport = {
-    newResolution.width, newResolution.height
+    (uint32_t)((float)newResolution.width * VIEWPORT_SCALE),
+    (uint32_t)((float)newResolution.height * VIEWPORT_SCALE)
   };
 
-  mGBuffer.resize(vulkanContext, newResolution);
-  mLighting.resize(vulkanContext, newResolution);
+  mGBuffer.resize(vulkanContext, mReflectionViewport);
+  mLighting.resize(vulkanContext, mReflectionViewport);
 
   mCameraProperties.aspectRatio =
     (float)mReflectionViewport.width / (float)mReflectionViewport.height;

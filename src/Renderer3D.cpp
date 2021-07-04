@@ -129,7 +129,7 @@ void Renderer3D::init() {
       glm::vec3(8.0f, 54.0f, 76.0f) / 255.0f;
     mLightingProperties.pause = false;
     mLightingProperties.data.continuous = 0.0f;
-    mLightingProperties.data.waveStrength = 0.27f;
+    mLightingProperties.data.waveStrength = 0.54f;
     mLightingProperties.data.waterRoughness = 0.01f;
     mLightingProperties.data.waterMetal = 0.7f;
 
