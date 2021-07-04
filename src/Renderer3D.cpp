@@ -35,8 +35,9 @@ void Renderer3D::init() {
   // Idle with all precomputation stuff
   mGraphicsContext.device().graphicsQueue().idle();
 
+  /* Temporary - These parameters will all be defined in asset files */
+
   { // Set planet properties
-    /* Temporary - the world needs to define this */
     mPlanetProperties.solarIrradiance = glm::vec3(1.474f, 1.8504f, 1.91198f);
 
     // Angular radius of the Sun (radians)
@@ -128,6 +129,14 @@ void Renderer3D::init() {
       glm::vec3(8.0f, 54.0f, 76.0f) / 255.0f;
     mLightingProperties.pause = false;
     mLightingProperties.data.continuous = 0.0f;
+    mLightingProperties.data.waveStrength = 0.27f;
+    mLightingProperties.data.waterRoughness = 0.01f;
+    mLightingProperties.data.waterMetal = 0.7f;
+
+    mLightingProperties.data.waveProfiles[0] = {0.01f, 1.0f, 1.0f};
+    mLightingProperties.data.waveProfiles[1] = {0.005f, 1.0f, 1.0f};
+    mLightingProperties.data.waveProfiles[2] = {0.008f, 0.3f, 2.0f};
+    mLightingProperties.data.waveProfiles[3] = {0.001f, 0.5f, 3.0f};
 
     mLightingProperties.rotationAngle = glm::radians(86.5f);
   }
@@ -257,8 +266,10 @@ void Renderer3D::resize(Resolution newResolution) {
 void Renderer3D::trackInput(
   const Core::Tick &tick,
   const Core::InputTracker &inputTracker) {
-  auto right = glm::cross(
-    mCameraProperties.wViewDirection, mCameraProperties.wUp);
+  auto up = mCameraProperties.wUp;
+  auto right = glm::normalize(glm::cross(
+    mCameraProperties.wViewDirection, mCameraProperties.wUp));
+  auto forward = glm::normalize(glm::cross(up, right));
 
   float speedMultiplier = 30.0f;
   if (inputTracker.key(Core::KeyboardButton::R).isDown) {
@@ -267,7 +278,7 @@ void Renderer3D::trackInput(
 
   if (inputTracker.key(Core::KeyboardButton::W).isDown) {
     mCameraProperties.wPosition +=
-      mCameraProperties.wViewDirection * tick.dt * speedMultiplier;
+      forward * tick.dt * speedMultiplier;
   }
   if (inputTracker.key(Core::KeyboardButton::A).isDown) {
     mCameraProperties.wPosition -=
@@ -275,7 +286,7 @@ void Renderer3D::trackInput(
   }
   if (inputTracker.key(Core::KeyboardButton::S).isDown) {
     mCameraProperties.wPosition -=
-      mCameraProperties.wViewDirection * tick.dt * speedMultiplier;
+      forward * tick.dt * speedMultiplier;
   }
   if (inputTracker.key(Core::KeyboardButton::D).isDown) {
     mCameraProperties.wPosition +=

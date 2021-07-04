@@ -9,6 +9,14 @@
 
 namespace Ondine::Graphics {
 
+struct WaveProfile {
+  alignas(4) float zoom;
+  alignas(4) float displacementSpeed;
+
+  alignas(4) float strength;
+  alignas(4) float pad1;
+};
+
 struct LightingProperties {
   // Vector going out towards the sun
   struct {
@@ -24,6 +32,11 @@ struct LightingProperties {
     alignas(4) float moonLightingStrength;
     // Gets reset to 0 every 10 seconds
     alignas(4) float continuous;
+    alignas(4) float waveStrength;
+    alignas(4) float waterRoughness;
+    alignas(4) float waterMetal;
+
+    alignas(16) WaveProfile waveProfiles[4];
   } data;
 
   float rotationAngle;

@@ -454,74 +454,109 @@ const char *&EditorView::windowName(EditorWindow window) {
 }
 
 void EditorView::renderGraphicsWindow() {
-  if (ImGui::Begin(
-    windowName(EditorWindow::Graphics), nullptr,
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
-
+  if (ImGui::Begin(windowName(EditorWindow::Graphics), nullptr, WINDOW_FLAGS)) {
     if (ImGui::IsWindowFocused()) {
       mFocusedWindow = EditorWindow::Graphics;
     }
 
-    // Pixelation
-    ImGui::Separator();
+    if (ImGui::TreeNodeEx("Lighting", ImGuiTreeNodeFlags_SpanFullWidth)) {
+      ImGui::SliderFloat(
+        "Exposure",
+        &mRenderer3D.mLightingProperties.data.exposure,
+        1.0f, 50.0f);
 
-    ImGui::SliderFloat(
-      "Pixelation Strength",
-      &mRenderer3D.mPixelater.pixelationStrength,
-      1.0f, 5.0f);
-
-    ImGui::Separator();
-
-    ImGui::SliderFloat(
-      "Exposure",
-      &mRenderer3D.mLightingProperties.data.exposure,
-      1.0f, 50.0f);
-    ImGui::Separator();
-
-    ImGui::ColorEdit3(
-      "Water Surface Color",
-      &mRenderer3D.mLightingProperties.data.waterSurfaceColor.r);
-    ImGui::Separator();
-
-    if (ImGui::Button("Sunset")) {
-      mRenderer3D.mLightingProperties.fastForwardTo(
-        Graphics::LightingProperties::FastForwardDst::Sunset);
+      ImGui::TreePop();
     }
 
-    ImGui::SameLine();
+    if (ImGui::TreeNodeEx("Post Process", ImGuiTreeNodeFlags_SpanFullWidth)) {
+      ImGui::SliderFloat(
+        "Pixelation Strength",
+        &mRenderer3D.mPixelater.pixelationStrength,
+        1.0f, 5.0f);
 
-    if (ImGui::Button("Midday")) {
-      mRenderer3D.mLightingProperties.fastForwardTo(
-        Graphics::LightingProperties::FastForwardDst::Midday);
+      ImGui::TreePop();
     }
 
-    ImGui::SameLine();
+    if (ImGui::TreeNodeEx("Water", ImGuiTreeNodeFlags_SpanFullWidth)) {
+      ImGui::ColorEdit3(
+        "Water Surface Color",
+        &mRenderer3D.mLightingProperties.data.waterSurfaceColor.r);
 
-    if (ImGui::Button("Midnight")) {
-      mRenderer3D.mLightingProperties.fastForwardTo(
-        Graphics::LightingProperties::FastForwardDst::Midnight);
+      ImGui::SliderFloat(
+        "Water Roughness",
+        &mRenderer3D.mLightingProperties.data.waterRoughness,
+        0.0f, 1.0f);
+
+      ImGui::SliderFloat(
+        "Water Metalness",
+        &mRenderer3D.mLightingProperties.data.waterMetal,
+        0.0f, 1.0f);
+
+      ImGui::SliderFloat(
+        "Wave Strength",
+        &mRenderer3D.mLightingProperties.data.waveStrength,
+        0.0f, 1.0f);
+
+      for (int i = 0; i < 4; ++i) {
+        char buffer[] = "Wave Profile X";
+        buffer[13] = (char)i + '0';
+
+        if (ImGui::TreeNodeEx(
+              buffer,
+              ImGuiTreeNodeFlags_SpanFullWidth)) {
+          auto &waveProfile =
+            mRenderer3D.mLightingProperties.data.waveProfiles[i];
+
+          ImGui::SliderFloat(
+            "Zoom", &waveProfile.zoom, 0.0f, 0.05f);
+          ImGui::SliderFloat(
+            "Speed", &waveProfile.displacementSpeed, 0.0f, 2.0f);
+          ImGui::SliderFloat(
+            "Strength", &waveProfile.strength, 0.0f, 5.0f);
+
+          ImGui::TreePop();
+        }
+      }
+
+      ImGui::TreePop();
     }
 
-    ImGui::SameLine();
+    if (ImGui::TreeNodeEx("Day/Night", ImGuiTreeNodeFlags_SpanFullWidth)) {
+      if (ImGui::Button("Sunset")) {
+        mRenderer3D.mLightingProperties.fastForwardTo(
+          Graphics::LightingProperties::FastForwardDst::Sunset);
+      }
 
-    if (ImGui::Button("Sunrise")) {
-      mRenderer3D.mLightingProperties.fastForwardTo(
-        Graphics::LightingProperties::FastForwardDst::Sunrise);
-    }
+      ImGui::SameLine();
 
-    if (ImGui::Button("Beautiful Moment")) {
-      mRenderer3D.mLightingProperties.fastForwardTo(
-        Graphics::LightingProperties::FastForwardDst::BeautifulMoment);
-    }
+      if (ImGui::Button("Midday")) {
+        mRenderer3D.mLightingProperties.fastForwardTo(
+          Graphics::LightingProperties::FastForwardDst::Midday);
+      }
 
-    if (ImGui::Checkbox(
-          "Pause Planet Rotation",
-          &mRenderer3D.mLightingProperties.pause)) {
+      ImGui::SameLine();
+
+      if (ImGui::Button("Midnight")) {
+        mRenderer3D.mLightingProperties.fastForwardTo(
+          Graphics::LightingProperties::FastForwardDst::Midnight);
+      }
+
+      ImGui::SameLine();
+
+      if (ImGui::Button("Sunrise")) {
+        mRenderer3D.mLightingProperties.fastForwardTo(
+          Graphics::LightingProperties::FastForwardDst::Sunrise);
+      }
+
+      if (ImGui::Checkbox(
+            "Pause Day/Night Cycle",
+            &mRenderer3D.mLightingProperties.pause)) {
       
+      }
+
+      ImGui::TreePop();
     }
 
-    ImGui::Separator();
-    
     ImGui::End();
   }
 }

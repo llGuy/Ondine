@@ -59,6 +59,11 @@ private:
   void renderGraphicsWindow();
 
 private:
+  static constexpr ImGuiWindowFlags WINDOW_FLAGS =
+    ImGuiWindowFlags_NoTitleBar |
+    ImGuiWindowFlags_NoResize |
+    ImGuiWindowFlags_NoCollapse;
+
   ImGuiID mDock;
   bool mIsDockLayoutInitialised;
   Resolution mViewportResolution;

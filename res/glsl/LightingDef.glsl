@@ -1,6 +1,12 @@
 #ifndef LIGHTING_DEF_GLSL
 #define LIGHTING_DEF_GLSL
 
+struct WaveProfile {
+  float zoom;
+  float displacementSpeed;
+  float strength;
+};
+
 struct LightingProperties {
   vec3 sunDirection;
   vec3 moonDirection;
@@ -13,6 +19,10 @@ struct LightingProperties {
   float moonStrength;
   float moonLightingStrength;
   float continuous;
+  float waveStrength;
+  float waterRoughness;
+  float waterMetal;
+  WaveProfile waveProfiles[4];
 };
 
 #endif

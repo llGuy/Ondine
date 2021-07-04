@@ -160,10 +160,9 @@ vec4 getReflectivePointRadiancePseudoBRDF(
     vec3 accumulatedRadiance = accumulateSunAndNightRadianceBRDF(
       gbuffer, roughness, metal, r, muSun, muMoon, viewDirection);
 
-    // vec3 baseReflectivity = mix(vec3(0.04), gbuffer.albedo.rgb, 1.0);
-    vec3 baseReflectivity = gbuffer.albedo.rgb;
+     vec3 baseReflectivity = mix(vec3(0.04), gbuffer.albedo.rgb, metal);
 
-    vec3 fresnel = 1.5 * fresnelRoughness(
+    vec3 fresnel = 1.0 * fresnelRoughness(
       max(dot(-viewDirection, normal), 0.0000001), baseReflectivity, roughness);
 
     vec3 kd = (vec3(1.0f) - fresnel) * (1.0f - metal);
@@ -327,28 +326,41 @@ vec4 getOceanReflectionColor(
   return texture(uReflectionTexture, coords);
 }
 
+vec3 getWaveProfileNormal(
+  in vec2 pointPosition,
+  in vec2 displacement,
+  in sampler2D normalMap,
+  in WaveProfile profile) {
+  return profile.strength * readNormalFromMap(
+    pointPosition * profile.zoom +
+      displacement * profile.displacementSpeed,
+    normalMap);
+}
+
 vec3 getOceanNormal(in vec3 pointPosition) {
   vec2 displacement = vec2(uLighting.lighting.continuous) * 0.3;
 
+  vec2 pos = pointPosition.xz;
+
   vec3 normal = vec3(0.0);
 
-  normal += readNormalFromMap(
-    vec2(pointPosition.x, pointPosition.z) * 0.01 + displacement,
-    uWaterNormalMapTexture0);
+  normal += getWaveProfileNormal(
+    pos, displacement, uWaterNormalMapTexture0,
+    uLighting.lighting.waveProfiles[0]);
 
-  normal += readNormalFromMap(
-    vec2(pointPosition.x, -pointPosition.z) * 0.005 + displacement,
-    uWaterNormalMapTexture0);
+  normal += getWaveProfileNormal(
+    pos, displacement, uWaterNormalMapTexture0,
+    uLighting.lighting.waveProfiles[1]);
 
-  /*
-  normal += readNormalFromMap(
-    vec2(pointPosition.x, pointPosition.z) * 0.008 + displacement,
-    uWaterNormalMapTexture1) * 3.0;
+#if 1
+  normal += getWaveProfileNormal(
+    pos, displacement, uWaterNormalMapTexture1,
+    uLighting.lighting.waveProfiles[2]);
 
-  normal += readNormalFromMap(
-    vec2(pointPosition.x, pointPosition.z) * 0.001 + displacement,
-    uWaterNormalMapTexture1) * 2.0;
-    */
+  normal += getWaveProfileNormal(
+    pos, displacement, uWaterNormalMapTexture1,
+    uLighting.lighting.waveProfiles[3]);
+#endif
 
   float distToPoint = length(pointPosition - uCamera.camera.wPosition);
   distToPoint = clamp(distToPoint / 550.0, 0.0, 1.0);
@@ -358,9 +370,12 @@ vec3 getOceanNormal(in vec3 pointPosition) {
     normalize(uCamera.camera.wPosition - pointPosition));
 
   progress = pow(progress, 1.0);
-  
+
+  vec3 waveFactor = vec3(
+    uLighting.lighting.waveStrength, 1.0, uLighting.lighting.waveStrength);
+
   return mix(
-    normalize(normal * vec3(0.2, 1.0, 0.2)),
+    normalize(normal * waveFactor),
     vec3(0.0, 1.0, 0.0),
     1.0 - progress);
 }
@@ -416,7 +431,8 @@ void main() {
         oceanGBuffer.wNormal.xyz).rgb;
 
       oceanRadiance = getReflectivePointRadiancePseudoBRDF(
-        OCEAN_ROUGHNESS, OCEAN_METAL, reflectionColor, oceanGBuffer).rgb;
+        uLighting.lighting.waterRoughness, uLighting.lighting.waterMetal,
+        reflectionColor, oceanGBuffer).rgb;
     }
     else {
       // This is a rendered object
@@ -439,7 +455,8 @@ void main() {
       oceanGBuffer.wNormal.xyz).rgb;
 
     oceanRadiance = getReflectivePointRadiancePseudoBRDF(
-      OCEAN_ROUGHNESS, OCEAN_METAL, reflectionColor, oceanGBuffer).rgb;
+      uLighting.lighting.waterRoughness, uLighting.lighting.waterMetal,
+      reflectionColor, oceanGBuffer).rgb;
   }
   else {
     radianceBaseColor = gbuffer.albedo.rgb;
