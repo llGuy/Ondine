@@ -11,8 +11,8 @@ void WaterRenderer::init(
   const LightingProperties *lightingProperties) {
   auto properties = graphicsContext.getProperties();
   mReflectionViewport = {
-    (uint32_t)((float)properties.swapchainExtent.width * VIEWPORT_SCALE),
-    (uint32_t)((float)properties.swapchainExtent.height * VIEWPORT_SCALE)
+    (uint32_t)((float)properties.swapchainExtent.width/* * VIEWPORT_SCALE*/),
+    (uint32_t)((float)properties.swapchainExtent.height/* * VIEWPORT_SCALE*/)
   };
 
   updateCameraInfo(sceneCamera, planetProperties);
