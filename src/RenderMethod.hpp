@@ -23,8 +23,14 @@ using RenderBindResourceProc = void (*)(
   const VulkanCommandBuffer &commandBuffer,
   const RenderResources &resources);
 
+using RenderPushConstantProc = void (*)(
+  const VulkanCommandBuffer &commandBuffer,
+  const struct SceneObject &object);
+
 class RenderMethod {
 public:
+  RenderMethod() = default;
+
   RenderMethod(
     const ModelManager &models,
     const RenderShaderEntries &entries);
@@ -32,20 +38,30 @@ public:
   void init(
     const std::string &shaderName,
     StaticModelHandle handleModel,
-    RenderBindResourceProc proc);
+    RenderBindResourceProc bindResProc,
+    RenderPushConstantProc pushConstantProc);
 
-  void prepare(const VulkanFrame &frame);
+  void bindShader(const VulkanFrame &frame);
+
+  void bindBuffers(const VulkanFrame &frame);
 
   void bindResources(
     const VulkanFrame &frame,
     const RenderResources &resources);
+
+  void pushConstant(
+    const VulkanFrame &frame,
+    const struct SceneObject &object);
+
+  void submit(const VulkanFrame &frame);
   
 private:
   FastMapHandle mRenderShader;
   StaticModelHandle mModel;
   RenderBindResourceProc mBindResourceProc;
-  const RenderShaderEntries &mShaderEntries;
-  const ModelManager &mModelManager;
+  RenderPushConstantProc mPushConstantProc;
+  const RenderShaderEntries *mShaderEntries;
+  const ModelManager *mModelManager;
 };
 
 using RenderMethodEntries = FastMapStd<std::string, RenderMethod, 1000>;

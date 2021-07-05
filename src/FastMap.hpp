@@ -1,5 +1,6 @@
 #pragma once
 
+#include <new>
 #include "Buffer.hpp"
 #include <unordered_map>
 
@@ -25,14 +26,22 @@ public:
     mEntries.init(MaxEntries);
   }
 
-  void insert(const Key &key, const T &value) {
+  void insert(const T &value, const Key &key) {
     FastMapHandle handle = mEntries.size;
     mMap.insert({key, handle});
     mEntries[mEntries.size++] = value;
   }
 
+  template <typename ...Ts>
+  T &insert(const Key &key, Ts &&...constructor) {
+    FastMapHandle handle = mEntries.size;
+    mMap.insert({key, handle});
+    new (&mEntries[mEntries.size]) T(std::forward<Ts>(constructor)...);
+    return mEntries[mEntries.size++];
+  }
+
   FastMapHandle getHandle(const Key &key) {
-    return mMap.get(key);
+    return mMap.at(key);
   }
 
   T &getEntry(const Key &key) {

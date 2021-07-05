@@ -5,8 +5,9 @@
 
 namespace Ondine::Graphics {
 
-Scene::Scene(ModelManager &modelManager)
+Scene::Scene(ModelManager &modelManager, RenderMethodEntries &renderMethods)
   : mModelManager(modelManager),
+    mRenderMethods(renderMethods),
     mSceneObjects(MAX_SCENE_OBJECTS_COUNT) {
   
 }
@@ -59,25 +60,25 @@ void Scene::submit(
   const Camera &camera,
   const PlanetRenderer &planet,
   VulkanFrame &frame) {
-  // Render test model
   auto &commandBuffer = frame.primaryCommandBuffer;
-  commandBuffer.bindPipeline(mTestPipeline);
-  commandBuffer.bindUniforms(camera.uniform(), planet.uniform());
-
-  // For now just render one model
-  auto &model = mModelManager.getStaticModel(mTestModel);
-  model.bindIndexBuffer(commandBuffer);
-  model.bindVertexBuffers(commandBuffer);
 
   commandBuffer.setViewport();
   commandBuffer.setScissor();
 
+  const RenderResources RESOURCES = {
+    camera, planet
+  };
+
+  // Need to sort this to remove the need to repeat calls to binding resources
   for (int i = 0; i < mSceneObjects.size(); ++i) {
     auto &sceneObj = mSceneObjects[i];
-    if (sceneObj.isInitialised) {
-      commandBuffer.pushConstants(sizeof(glm::mat4), &sceneObj.transform);
-      model.submitForRenderIndexed(commandBuffer);
-    }
+    auto &renderMethod = mRenderMethods.getEntry(sceneObj.renderMethod);
+
+    renderMethod.bindShader(frame);
+    renderMethod.bindBuffers(frame);
+    renderMethod.bindResources(frame, RESOURCES);
+    renderMethod.pushConstant(frame, sceneObj);
+    renderMethod.submit(frame);
   }
 }
 

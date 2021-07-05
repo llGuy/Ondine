@@ -14,7 +14,7 @@ constexpr SceneObjectHandle SCENE_OBJECT_HANDLE_INVALID = 0xFFFFFFFF;
 
 class Scene {
 public:
-  Scene(ModelManager &modelManager);
+  Scene(ModelManager &modelManager, RenderMethodEntries &renderMethods);
 
   void init(
     const GBuffer &gbuffer,
@@ -39,6 +39,7 @@ private:
   VulkanPipeline mTestPipeline;
 
   ModelManager &mModelManager;
+  RenderMethodEntries &mRenderMethods;
 };
 
 }

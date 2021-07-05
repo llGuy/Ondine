@@ -1,6 +1,8 @@
 #include "Utils.hpp"
 #include "Vulkan.hpp"
 #include "VulkanSync.hpp"
+#include "FileSystem.hpp"
+#include "Application.hpp"
 #include "VulkanDevice.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanCommandPool.hpp"
@@ -173,6 +175,30 @@ void VulkanTexture::init(
 
   VK_CHECK(
     vkCreateSampler(device.mLogicalDevice, &samplerInfo, NULL, &mSampler));
+}
+
+
+void VulkanTexture::initFromFile(
+  const VulkanDevice &device,
+  const VulkanCommandPool &commandPool,
+  const char *imagePath,
+  TextureTypeBits type, TextureContents contents, VkFormat format,
+  VkFilter filter, size_t mipLevels) {
+  Core::File imageFile = Core::gFileSystem->createFile(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
+    imagePath,
+    Core::FileOpenType::Binary | Core::FileOpenType::In);
+  Buffer unparsed = imageFile.readBinary();
+  ImagePixels parsed = getImagePixelsFromBuffer(unparsed);
+
+  init(
+    device, type, contents, format, filter,
+    {(uint32_t)parsed.width, (uint32_t)parsed.height, 1}, 1, mipLevels);
+
+  fillWithStaging(
+    device,
+    commandPool,
+    {(uint8_t *)parsed.data, (uint32_t)(parsed.width * parsed.height * 4)});
 }
 
 VkImageMemoryBarrier VulkanTexture::makeBarrier(

@@ -1,4 +1,6 @@
 #include "Vulkan.hpp"
+#include "FileSystem.hpp"
+#include "Application.hpp"
 #include "VulkanDevice.hpp"
 #include "VulkanPipeline.hpp"
 #include "VulkanDescriptor.hpp"
@@ -14,6 +16,43 @@ VulkanShader::VulkanShader(
   shaderInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   shaderInfo.codeSize = source.size;
   shaderInfo.pCode = (uint32_t *)source.data;
+
+  VK_CHECK(
+    vkCreateShaderModule(
+      device.mLogicalDevice,
+      &shaderInfo,
+      NULL,
+      &mModule));
+}
+
+VulkanShader::VulkanShader(const VulkanDevice &device, const char *path) {
+  size_t pathLen = strlen(path);
+  const char *ext = &path[pathLen - 8];
+  if (!strcmp(ext, "vert.spv")) {
+    mType = VulkanShaderType::Vertex;
+  }
+  else if (!strcmp(ext, "geom.spv")) {
+    mType = VulkanShaderType::Geometry;
+  }
+  else if (!strcmp(ext, "frag.spv")) {
+    mType = VulkanShaderType::Fragment;
+  }
+  else {
+    LOG_ERRORV("Unknown shader file extention: %s\n", path);
+    PANIC_AND_EXIT();
+  }
+
+  Core::File file = Core::gFileSystem->createFile(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
+    path,
+    Core::FileOpenType::Binary | Core::FileOpenType::In);
+
+  Buffer data = file.readBinary();
+
+  VkShaderModuleCreateInfo shaderInfo = {};
+  shaderInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  shaderInfo.codeSize = data.size;
+  shaderInfo.pCode = (uint32_t *)data.data;
 
   VK_CHECK(
     vkCreateShaderModule(

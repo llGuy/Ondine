@@ -13,7 +13,7 @@ namespace Ondine::Graphics {
 
 Renderer3D::Renderer3D(VulkanContext &graphicsContext)
   : mGraphicsContext(graphicsContext),
-    mScene(mModelManager) {
+    mScene(mModelManager, mRenderMethods) {
   
 }
 
@@ -24,6 +24,8 @@ void Renderer3D::init() {
   };
 
   mModelManager.init();
+  mRenderMethods.init();
+  mShaderEntries.init();
 
   mGBuffer.init(
     mGraphicsContext, {mPipelineViewport.width, mPipelineViewport.height});
@@ -146,42 +148,98 @@ void Renderer3D::init() {
     {mPipelineViewport.width, mPipelineViewport.height},
     &mLightingProperties);
 
-  { // Create render methods
+  { // Prepare scene resources
+    /* Create model */
+    ModelConfig modelConfig;
+    auto sphereModelHandle = mModelManager.loadStaticModel(
+      "res/model/UVSphere.fbx", mGraphicsContext, modelConfig);
+    auto monkeyModelHandle = mModelManager.loadStaticModel(
+      "res/model/Taurus.fbx", mGraphicsContext, modelConfig);
     
+    /* Create shader */
+    VulkanPipelineConfig pipelineConfig(
+      {mGBuffer.renderPass(), 0},
+      VulkanShader{mGraphicsContext.device(), "res/spv/BaseModel.vert.spv"},
+      VulkanShader{mGraphicsContext.device(), "res/spv/BaseModel.frag.spv"});
+
+    pipelineConfig.enableDepthTesting();
+    pipelineConfig.configurePipelineLayout(
+      sizeof(glm::mat4),
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
+
+    modelConfig.configureVertexInput(pipelineConfig);
+    pipelineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+
+    auto &baseModelShader = mShaderEntries.insert("BaseModelShader");
+      
+    baseModelShader.init(
+      mGraphicsContext.device(),
+      mGraphicsContext.descriptorLayouts(),
+      pipelineConfig);
+
+    /* Create render method */
+    RenderMethod baseModelMethod(mModelManager, mShaderEntries);
+    baseModelMethod.init(
+      "BaseModelShader", sphereModelHandle,
+      [](const VulkanCommandBuffer &cmdbuf, const RenderResources &res) {
+        cmdbuf.bindUniforms(res.camera.uniform(), res.planet.uniform());
+      },
+      [](const VulkanCommandBuffer &cmdbuf, const SceneObject &obj) {
+        cmdbuf.pushConstants(sizeof(glm::mat4), &obj.transform);
+      });
+
+    mRenderMethods.insert("SphereModelRenderMethod", baseModelMethod);
+
+    RenderMethod monkeyModelMethod(mModelManager, mShaderEntries);
+    monkeyModelMethod.init(
+      "BaseModelShader", monkeyModelHandle,
+      [](const VulkanCommandBuffer &cmdbuf, const RenderResources &res) {
+        cmdbuf.bindUniforms(res.camera.uniform(), res.planet.uniform());
+      },
+      [](const VulkanCommandBuffer &cmdbuf, const SceneObject &obj) {
+        cmdbuf.pushConstants(sizeof(glm::mat4), &obj.transform);
+      });
+
+    mRenderMethods.insert("TaurusModelRenderMethod", monkeyModelMethod);
   }
 
   mScene.init(mGBuffer, mGraphicsContext);
   {
+    auto rmHandle = mRenderMethods.getHandle("SphereModelRenderMethod");
+    auto rmTaurusHandle = mRenderMethods.getHandle("TaurusModelRenderMethod");
+
     auto handle1 = mScene.createSceneObject(); 
     auto &sceneObj1 = mScene.getSceneObject(handle1);
+    sceneObj1.renderMethod = rmTaurusHandle;
     sceneObj1.position = glm::vec3(0.0f, 80.0f, 0.0f);
-    sceneObj1.scale = glm::vec3(5.0f);
+    sceneObj1.scale = glm::vec3(10.0f);
     sceneObj1.rotation = glm::angleAxis(
-      glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+      glm::radians(30.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
     sceneObj1.constructTransform();
 
     auto handle2 = mScene.createSceneObject(); 
     auto &sceneObj2 = mScene.getSceneObject(handle2);
+    sceneObj2.renderMethod = rmHandle;
     sceneObj2.position = glm::vec3(30.0f, 100.0f, 0.0f);
     sceneObj2.scale = glm::vec3(5.0f);
-    sceneObj2.rotation = glm::angleAxis(
-      glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    sceneObj2.rotation = glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
     sceneObj2.constructTransform();
 
     auto handle3 = mScene.createSceneObject(); 
     auto &sceneObj3 = mScene.getSceneObject(handle3);
+    sceneObj3.renderMethod = rmHandle;
     sceneObj3.position = glm::vec3(0.0f, 55.0f, -30.0f);
     sceneObj3.scale = glm::vec3(5.0f);
-    sceneObj3.rotation = glm::angleAxis(
-      glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    sceneObj3.rotation = glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
     sceneObj3.constructTransform();
 
     auto handle4 = mScene.createSceneObject(); 
     auto &sceneObj4 = mScene.getSceneObject(handle4);
+    sceneObj4.renderMethod = rmHandle;
     sceneObj4.position = glm::vec3(-100.0f, 40.0f, 100.0f);
     sceneObj4.scale = glm::vec3(20.0f);
-    sceneObj4.rotation = glm::angleAxis(
-      glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    sceneObj4.rotation = glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
     sceneObj4.constructTransform();
   }
 

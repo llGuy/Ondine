@@ -21,6 +21,8 @@ public:
     const VulkanDevice &device,
     const Buffer &source, VulkanShaderType type);
 
+  VulkanShader(const VulkanDevice &device, const char *path);
+
 private:
   VkShaderModule mModule;
   VulkanShaderType mType;

@@ -133,54 +133,20 @@ void DeferredLighting::init(
   { // Load water normal map
     if (!sWaterNormalMapTexture) {
       sWaterNormalMapTexture = flAlloc<VulkanTexture>();
-
-      Core::File imageFile = Core::gFileSystem->createFile(
-        (Core::MountPoint)Core::ApplicationMountPoints::Application,
+      sWaterNormalMapTexture->initFromFile(
+        graphicsContext.device(), graphicsContext.commandPool(),
         "res/textures/WaterNormalMap.png",
-        Core::FileOpenType::Binary | Core::FileOpenType::In);
-      Buffer unparsed = imageFile.readBinary();
-
-      ImagePixels parsed = getImagePixelsFromBuffer(unparsed);
-
-      sWaterNormalMapTexture->init(
-        graphicsContext.device(),
-        TextureType::T2D | TextureType::WrapSampling,
-        TextureContents::Color,
-        VK_FORMAT_R8G8B8A8_UNORM,
-        VK_FILTER_LINEAR,
-        {(uint32_t)parsed.width, (uint32_t)parsed.height, 1},
-        1, 1);
-
-      sWaterNormalMapTexture->fillWithStaging(
-        graphicsContext.device(),
-        graphicsContext.commandPool(),
-        {(uint8_t *)parsed.data, (uint32_t)(parsed.width * parsed.height * 4)});
+        TextureType::T2D | TextureType::WrapSampling, TextureContents::Color,
+        VK_FORMAT_R8G8B8A8_UNORM, VK_FILTER_LINEAR, 1);
 
       sWaterDistortionTexture = flAlloc<VulkanTexture>();
 
-      Core::File distortionFile = Core::gFileSystem->createFile(
-        (Core::MountPoint)Core::ApplicationMountPoints::Application,
+      sWaterDistortionTexture->initFromFile(
+        graphicsContext.device(), graphicsContext.commandPool(),
         "res/textures/WaterNormalMap.jpeg",
-        Core::FileOpenType::Binary | Core::FileOpenType::In);
-      Buffer unparsedDistortion = imageFile.readBinary();
+        TextureType::T2D | TextureType::WrapSampling, TextureContents::Color,
+        VK_FORMAT_R8G8B8A8_UNORM, VK_FILTER_LINEAR, 1);
 
-      ImagePixels parsedDistortion = getImagePixelsFromBuffer(unparsed);
-
-      sWaterDistortionTexture->init(
-        graphicsContext.device(),
-        TextureType::T2D | TextureType::WrapSampling,
-        TextureContents::Color,
-        VK_FORMAT_R8G8B8A8_UNORM,
-        VK_FILTER_LINEAR,
-        {(uint32_t)parsedDistortion.width, (uint32_t)parsedDistortion.height, 1},
-        1, 1);
-
-      sWaterDistortionTexture->fillWithStaging(
-        graphicsContext.device(),
-        graphicsContext.commandPool(),
-        {(uint8_t *)parsedDistortion.data,
-         (uint32_t)(parsedDistortion.width * parsedDistortion.height * 4)});
-      
       sWaterUniform = flAlloc<VulkanUniform>();
 
       sWaterUniform->init(
@@ -223,25 +189,10 @@ void DeferredLighting::init(
     mLightingPipeline.init(
       [](VulkanPipeline &res, DeferredLighting &owner,
          VulkanContext &graphicsContext) {
-        Core::File lightingVert = Core::gFileSystem->createFile(
-          (Core::MountPoint)Core::ApplicationMountPoints::Application,
-          "res/spv/Lighting.vert.spv",
-          Core::FileOpenType::Binary | Core::FileOpenType::In);
-        Buffer vsh = lightingVert.readBinary();
-
-        Core::File lightingFrag = Core::gFileSystem->createFile(
-          (Core::MountPoint)Core::ApplicationMountPoints::Application,
-          LIGHTING_FRAG_SPV,
-          Core::FileOpenType::Binary | Core::FileOpenType::In);
-
-        Buffer fsh = lightingFrag.readBinary();
-
         VulkanPipelineConfig pipelineConfig(
           {owner.mLightingRenderPass, 0},
-          VulkanShader(
-            graphicsContext.device(), vsh, VulkanShaderType::Vertex),
-          VulkanShader(
-            graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+          VulkanShader(graphicsContext.device(), "res/spv/Lighting.vert.spv"),
+          VulkanShader(graphicsContext.device(), LIGHTING_FRAG_SPV));
 
         pipelineConfig.configurePipelineLayout(
           0,
@@ -266,25 +217,10 @@ void DeferredLighting::init(
     mLightingReflPipeline.init(
       [](VulkanPipeline &res, DeferredLighting &owner,
          VulkanContext &graphicsContext) {
-        Core::File lightingVert = Core::gFileSystem->createFile(
-          (Core::MountPoint)Core::ApplicationMountPoints::Application,
-          "res/spv/Lighting.vert.spv",
-          Core::FileOpenType::Binary | Core::FileOpenType::In);
-        Buffer vsh = lightingVert.readBinary();
-
-        Core::File lightingFrag = Core::gFileSystem->createFile(
-          (Core::MountPoint)Core::ApplicationMountPoints::Application,
-          LIGHTING_REFL_FRAG_SPV,
-          Core::FileOpenType::Binary | Core::FileOpenType::In);
-
-        Buffer fsh = lightingFrag.readBinary();
-
         VulkanPipelineConfig pipelineConfig(
           {owner.mLightingRenderPass, 0},
-          VulkanShader(
-            graphicsContext.device(), vsh, VulkanShaderType::Vertex),
-          VulkanShader(
-            graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+          VulkanShader(graphicsContext.device(), "res/spv/Lighting.vert.spv"),
+          VulkanShader(graphicsContext.device(), LIGHTING_REFL_FRAG_SPV));
 
         pipelineConfig.configurePipelineLayout(
           0,

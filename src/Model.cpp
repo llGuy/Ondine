@@ -88,7 +88,7 @@ void Model::bindIndexBuffer(const VulkanCommandBuffer &commandBuffer) const {
 
 void Model::submitForRenderIndexed(
   const VulkanCommandBuffer &commandBuffer,
-  uint32_t instanceCount) {
+  uint32_t instanceCount) const {
   commandBuffer.drawIndexed(mIndexCount, instanceCount, 0, 0, 0);
 }
 

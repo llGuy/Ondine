@@ -43,6 +43,13 @@ public:
     VkFilter filter, VkExtent3D extent, size_t layerCount,
     size_t mipLevels);
 
+  void initFromFile(
+    const VulkanDevice &device,
+    const VulkanCommandPool &commandPool,
+    const char *imagePath,
+    TextureTypeBits type, TextureContents contents, VkFormat format,
+    VkFilter filter, size_t mipLevels);
+
   VkImageMemoryBarrier makeBarrier(
     VkImageLayout oldLayout,
     VkImageLayout newLayout) const;

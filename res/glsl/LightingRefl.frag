@@ -421,11 +421,11 @@ vec3 getOceanNormal(in vec3 pointPosition) {
 
 #if 1
   normal += getWaveProfileNormal(
-    pos, displacement, uWaterNormalMapTexture1,
+    pos, displacement, uWaterNormalMapTexture0,
     uLighting.lighting.waveProfiles[2]);
 
   normal += getWaveProfileNormal(
-    pos, displacement, uWaterNormalMapTexture1,
+    pos, displacement, uWaterNormalMapTexture0,
     uLighting.lighting.waveProfiles[3]);
 #endif
 

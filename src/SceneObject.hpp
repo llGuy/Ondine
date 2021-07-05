@@ -8,6 +8,10 @@
 
 namespace Ondine::Graphics {
 
+using SceneObjectPushConstantProc = void (*)(
+  const VulkanFrame &frame,
+  struct SceneObject *obj);
+
 struct SceneObject {
   union {
     uint32_t flagBits;

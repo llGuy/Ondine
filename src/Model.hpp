@@ -52,7 +52,7 @@ public:
   void bindIndexBuffer(const VulkanCommandBuffer &commandBuffer) const;
   void submitForRenderIndexed(
     const VulkanCommandBuffer &commandBuffer,
-    uint32_t instanceCount = 1);
+    uint32_t instanceCount = 1) const;
 
   void submitForRender(
     const VulkanCommandBuffer &commandBuffer,

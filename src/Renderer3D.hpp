@@ -59,6 +59,7 @@ private:
   DeferredLighting mDeferredLighting;
   Pixelater mPixelater;
   RenderMethodEntries mRenderMethods;
+  RenderShaderEntries mShaderEntries;
 
   ModelManager mModelManager;
   Scene mScene;
