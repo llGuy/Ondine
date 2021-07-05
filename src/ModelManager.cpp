@@ -66,4 +66,9 @@ Model &ModelManager::getStaticModel(StaticModelHandle modelHandle) {
   return mStaticModels[modelHandle];
 }
 
+const Model &ModelManager::getStaticModel(StaticModelHandle modelHandle) const {
+  assert(modelHandle != MODEL_HANDLE_INVALID);
+  return mStaticModels[modelHandle];
+}
+
 }

@@ -13,6 +13,7 @@
 #include "SkyRenderer.hpp"
 #include "RenderStage.hpp"
 #include "ModelManager.hpp"
+#include "RenderMethod.hpp"
 #include "StarRenderer.hpp"
 #include "WaterRenderer.hpp"
 #include "VulkanContext.hpp"
@@ -57,6 +58,7 @@ private:
   WaterRenderer mWaterRenderer;
   DeferredLighting mDeferredLighting;
   Pixelater mPixelater;
+  RenderMethodEntries mRenderMethods;
 
   ModelManager mModelManager;
   Scene mScene;

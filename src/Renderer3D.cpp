@@ -146,6 +146,10 @@ void Renderer3D::init() {
     {mPipelineViewport.width, mPipelineViewport.height},
     &mLightingProperties);
 
+  { // Create render methods
+    
+  }
+
   mScene.init(mGBuffer, mGraphicsContext);
   {
     auto handle1 = mScene.createSceneObject(); 

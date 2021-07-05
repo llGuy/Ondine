@@ -4,6 +4,8 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include "RenderMethod.hpp"
+
 namespace Ondine::Graphics {
 
 struct SceneObject {
@@ -18,6 +20,7 @@ struct SceneObject {
   glm::quat rotation;
   glm::vec3 scale;
   glm::mat4 transform;
+  RenderMethodHandle renderMethod;
 
   inline void constructTransform() {
     transform = glm::translate(position) *

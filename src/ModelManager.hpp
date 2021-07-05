@@ -16,6 +16,7 @@ public:
     const char *path, VulkanContext &context,
     ModelConfig &config);
   Model &getStaticModel(StaticModelHandle modelHandle);
+  const Model &getStaticModel(StaticModelHandle modelHandle) const;
 
 private:
   static constexpr uint32_t MAX_MODEL_COUNT = 100;
