@@ -1,6 +1,7 @@
 #include "FileSystem.hpp"
 #include "Application.hpp"
 #include "WaterRenderer.hpp"
+#include "RendererDebug.hpp"
 #include "DeferredLighting.hpp"
 
 namespace Ondine::Graphics {
@@ -285,6 +286,9 @@ void DeferredLighting::render(
   const SkyRenderer &sky) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
+  commandBuffer.dbgBeginRegion(
+    "LightingStage", DBG_DEFERRED_LIGHTING_COLOR);
+
   commandBuffer.beginRenderPass(
     mLightingRenderPass,
     mLightingFBO,
@@ -304,6 +308,8 @@ void DeferredLighting::render(
   commandBuffer.draw(4, 1, 0, 0);
 
   commandBuffer.endRenderPass();
+
+  commandBuffer.dbgEndRegion();
 }
 
 void DeferredLighting::render(
@@ -312,6 +318,9 @@ void DeferredLighting::render(
   const WaterRenderer &water,
   const SkyRenderer &sky) {
   auto &commandBuffer = frame.primaryCommandBuffer;
+
+  commandBuffer.dbgBeginRegion(
+    "LightingReflStage", DBG_DEFERRED_LIGHTING_COLOR);
 
   commandBuffer.beginRenderPass(
     mLightingRenderPass,
@@ -335,6 +344,8 @@ void DeferredLighting::render(
   commandBuffer.draw(4, 1, 0, 0);
 
   commandBuffer.endRenderPass();
+
+  commandBuffer.dbgEndRegion();
 }
 
 void DeferredLighting::resize(

@@ -2,6 +2,7 @@
 #include "Application.hpp"
 #include "Utils.hpp"
 #include <imgui_internal.h>
+#include "RendererDebug.hpp"
 #include "IOEvent.hpp"
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
@@ -72,6 +73,8 @@ void EditorView::processEvents(ViewProcessEventsParams &params) {
 
 void EditorView::render(ViewRenderParams &params) {
   auto &commandBuffer = params.frame.primaryCommandBuffer;
+
+  commandBuffer.dbgBeginRegion("EditorStage", Graphics::DBG_EDITOR_COLOR);
 
   commandBuffer.beginRenderPass(
     mRenderPass, mFramebuffer, {0, 0},
@@ -211,6 +214,9 @@ void EditorView::render(ViewRenderParams &params) {
 
   // Render the viewport
   if (renderViewport) {
+    commandBuffer.dbgInsertMarker(
+      "EditorViewport", Graphics::DBG_VIEWPORT_COLOR);
+
     commandBuffer.bindPipeline(mRenderViewport);
     commandBuffer.bindUniforms(params.previousOutput);
     commandBuffer.setScissor(
@@ -224,6 +230,8 @@ void EditorView::render(ViewRenderParams &params) {
   }
 
   commandBuffer.endRenderPass();
+
+  commandBuffer.dbgEndRegion();
 
   if (mFocusedWindow != prevFocusedWindow) {
     if (mFocusedWindow == EditorWindow::Viewport) {

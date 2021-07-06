@@ -5,6 +5,7 @@
 #include <imgui_impl_vulkan.h>
 #include "VulkanImgui.hpp"
 #include "VulkanFrame.hpp"
+#include "RendererDebug.hpp"
 #include "VulkanInstance.hpp"
 #include "VulkanSwapchain.hpp"
 #include "VulkanDescriptor.hpp"
@@ -60,6 +61,8 @@ void VulkanImgui::beginRender() const {
 }
 
 void VulkanImgui::endRender(const VulkanFrame &frame) const {
+  frame.primaryCommandBuffer.dbgInsertMarker("ImGui", Graphics::DBG_IMGUI_COLOR);
+
   ImGui::Render();
 
   ImGui_ImplVulkan_RenderDrawData(

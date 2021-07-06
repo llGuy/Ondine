@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Vulkan.hpp"
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.h>
 #include "VulkanQueue.hpp"
@@ -115,12 +116,6 @@ private:
   VulkanQueue mGraphicsQueue;
   VulkanQueue mPresentQueue;
   DeviceType mDeviceType;
-
-  PFN_vkDebugMarkerSetObjectTagEXT mVkDebugMarkerSetObjectTag;
-  PFN_vkDebugMarkerSetObjectNameEXT mVkDebugMarkerSetObjectName;
-  PFN_vkCmdDebugMarkerBeginEXT mVkCmdDebugMarkerBegin;
-  PFN_vkCmdDebugMarkerEndEXT mVkCmdDebugMarkerEnd;
-  PFN_vkCmdDebugMarkerInsertEXT mVkCmdDebugMarkerInsert;
 
   friend class VulkanContext;
   friend class VulkanSwapchain;

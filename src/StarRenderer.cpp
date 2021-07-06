@@ -81,8 +81,10 @@ void StarRenderer::init(
   }
 }
 
-void StarRenderer::render(const Camera &camera, VulkanFrame &frame) const {
+void StarRenderer::render(
+  float starSize, const Camera &camera, VulkanFrame &frame) const {
   auto &commandBuffer = frame.primaryCommandBuffer;
+
   commandBuffer.bindPipeline(mPipeline.res);
   commandBuffer.bindUniforms(camera.uniform());
 
@@ -91,7 +93,10 @@ void StarRenderer::render(const Camera &camera, VulkanFrame &frame) const {
   commandBuffer.setViewport();
   commandBuffer.setScissor();
 
-  commandBuffer.pushConstants(sizeof(mPushConstant), &mPushConstant);
+  PushConstant pushConstant = mPushConstant;
+
+  pushConstant.starSize = starSize;
+  commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
 
   mStarsModel.submitForRender(commandBuffer);
 }

@@ -33,7 +33,9 @@ public:
     const GBuffer &gbuffer,
     uint32_t starCount);
 
-  void render(const Camera &camera, VulkanFrame &frame) const;
+  void render(
+    float starSize,
+    const Camera &camera, VulkanFrame &frame) const;
 
   void tick(
     const CameraProperties &camera,
@@ -50,6 +52,7 @@ private:
   struct PushConstant {
     glm::mat4 transform;
     float fade;
+    float starSize;
   } mPushConstant;
 
   uint32_t mStarCount;

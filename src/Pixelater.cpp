@@ -1,6 +1,7 @@
 #include "Pixelater.hpp"
 #include "FileSystem.hpp"
 #include "Application.hpp"
+#include "RendererDebug.hpp"
 
 namespace Ondine::Graphics {
 
@@ -80,6 +81,8 @@ void Pixelater::init(
 void Pixelater::render(VulkanFrame &frame, const RenderStage &prev) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
+  commandBuffer.dbgBeginRegion("PixelatorStage", DBG_PIXELATOR_COLOR);
+
   commandBuffer.beginRenderPass(mRenderPass, mFBO, {}, mExtent);
 
   commandBuffer.bindPipeline(mPipeline.res);
@@ -98,6 +101,8 @@ void Pixelater::render(VulkanFrame &frame, const RenderStage &prev) {
   commandBuffer.draw(4, 1, 0, 0);
 
   commandBuffer.endRenderPass();
+
+  commandBuffer.dbgEndRegion();
 }
 
 void Pixelater::resize(VulkanContext &vulkanContext, Resolution newResolution) {

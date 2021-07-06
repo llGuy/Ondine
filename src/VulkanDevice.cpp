@@ -152,18 +152,18 @@ void VulkanDevice::init(
 }
 
 void VulkanDevice::initDebugExtProcs() {
-  mVkDebugMarkerSetObjectTag = (PFN_vkDebugMarkerSetObjectTagEXT)
+  vkDebugMarkerSetObjectTag = (PFN_vkDebugMarkerSetObjectTagEXT)
     vkGetDeviceProcAddr(mLogicalDevice, "vkDebugMarkerSetObjectTagEXT");
-  mVkDebugMarkerSetObjectName = (PFN_vkDebugMarkerSetObjectNameEXT)
+  vkDebugMarkerSetObjectName = (PFN_vkDebugMarkerSetObjectNameEXT)
     vkGetDeviceProcAddr(mLogicalDevice, "vkDebugMarkerSetObjectNameEXT");
-  mVkCmdDebugMarkerBegin = (PFN_vkCmdDebugMarkerBeginEXT)
+  vkCmdDebugMarkerBegin = (PFN_vkCmdDebugMarkerBeginEXT)
     vkGetDeviceProcAddr(mLogicalDevice, "vkCmdDebugMarkerBeginEXT");
-  mVkCmdDebugMarkerEnd = (PFN_vkCmdDebugMarkerEndEXT)
+  vkCmdDebugMarkerEnd = (PFN_vkCmdDebugMarkerEndEXT)
     vkGetDeviceProcAddr(mLogicalDevice, "vkCmdDebugMarkerEndEXT");
-  mVkCmdDebugMarkerInsert = (PFN_vkCmdDebugMarkerInsertEXT)
+  vkCmdDebugMarkerInsert = (PFN_vkCmdDebugMarkerInsertEXT)
     vkGetDeviceProcAddr(mLogicalDevice, "vkCmdDebugMarkerInsertEXT");
 
-  if (mVkDebugMarkerSetObjectTag == VK_NULL_HANDLE) {
+  if (vkDebugMarkerSetObjectTag == VK_NULL_HANDLE) {
     LOG_ERROR("Vulkan debug marker functions were not found\n");
   }
   else {

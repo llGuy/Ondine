@@ -1,4 +1,5 @@
 #include "GBuffer.hpp"
+#include "RendererDebug.hpp"
 
 namespace Ondine::Graphics {
 
@@ -55,6 +56,8 @@ void GBuffer::init(
 }
 
 void GBuffer::beginRender(VulkanFrame &frame) {
+  frame.primaryCommandBuffer.dbgBeginRegion("GBufferStage", DBG_GBUFFER_COLOR);
+
   frame.primaryCommandBuffer.beginRenderPass(
     *sGBufferRenderPass,
     mGBufferFBO,
@@ -63,6 +66,8 @@ void GBuffer::beginRender(VulkanFrame &frame) {
 
 void GBuffer::endRender(VulkanFrame &frame) {
   frame.primaryCommandBuffer.endRenderPass();
+
+  frame.primaryCommandBuffer.dbgEndRegion();
 }
 
 void GBuffer::resize(VulkanContext &vulkanContext, Resolution newResolution) {

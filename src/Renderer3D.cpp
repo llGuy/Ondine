@@ -4,12 +4,12 @@
 #include "Application.hpp"
 #include "Application.hpp"
 #include "RendererCache.hpp"
+#include "RendererDebug.hpp"
 #include "VulkanRenderPass.hpp"
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
 namespace Ondine::Graphics {
-
 
 Renderer3D::Renderer3D(VulkanContext &graphicsContext)
   : mGraphicsContext(graphicsContext),
@@ -104,9 +104,7 @@ void Renderer3D::init() {
 
     mCameraProperties.inverseProjection = glm::inverse(
       mCameraProperties.projection);
-
-    mCameraProperties.inverseView = glm::inverse(
-      mCameraProperties.view);
+    mCameraProperties.inverseView = glm::inverse(mCameraProperties.view);
 
     mCameraProperties.viewProjection =
       mCameraProperties.projection * mCameraProperties.view;
@@ -282,13 +280,15 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
   mWaterRenderer.updateCameraUBO(frame.primaryCommandBuffer);
   mWaterRenderer.updateLightingUBO(
     mLightingProperties, frame.primaryCommandBuffer);
+
+  /* Rendering to water texture */
   mWaterRenderer.tick(
     frame, mPlanetRenderer, mSkyRenderer, mStarRenderer, mScene);
      
   mGBuffer.beginRender(frame);
   { // Render 3D scene
     mScene.submit(mCamera, mPlanetRenderer, frame);
-    mStarRenderer.render(mCamera, frame);
+    mStarRenderer.render(3.0f, mCamera, frame);
   }
   mGBuffer.endRender(frame);
 

@@ -8,6 +8,7 @@ layout (location = 0) out float outBrightness;
 layout (push_constant) uniform PushConstant {
   mat4 transform;
   float fade;
+  float starSize;
 } uPushConstant;
 
 layout (set = 0, binding = 0) uniform CameraUniform {
@@ -30,5 +31,5 @@ void main() {
 
   gl_Position = uCamera.camera.projection * vec4(viewPos.xyz, 1.0);
   gl_Position.y *= -1.0;
-  gl_PointSize = 3.0;
+  gl_PointSize = uPushConstant.starSize;
 }

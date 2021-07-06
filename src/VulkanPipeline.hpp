@@ -17,7 +17,8 @@ enum VulkanShaderType {
 
 class VulkanShader {
 public:
-  VulkanShader(
+  // To uncomment when I feel like replacing calls to the shader constructor */
+  /* [[deprecated]] */ VulkanShader(
     const VulkanDevice &device,
     const Buffer &source, VulkanShaderType type);
 

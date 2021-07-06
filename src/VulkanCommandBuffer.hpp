@@ -110,36 +110,30 @@ public:
 
 #ifdef NDEBUG
   inline void dbgBeginRegion(
-    const VulkanDevice &device,
     const char *name,
     const glm::vec4 &color) const {
     // Compiler should optimise out calls to these functions
   }
 
   inline void dbgInsertMarker(
-    const VulkanDevice &device,
     const char *name,
     const glm::vec4 &color) const {
     // Compiler should optimise out calls to these functions
   }
 
-  inline void dbgEndRegion(
-    const VulkanDevice &device) const {
+  inline void dbgEndRegion() const {
     // Compiler should optimise out calls to these functions
   }
 #else
   void dbgBeginRegion(
-    const VulkanDevice &device,
     const char *name,
     const glm::vec4 &color);
 
   void dbgInsertMarker(
-    const VulkanDevice &device,
     const char *name,
     const glm::vec4 &color);
 
-  void dbgEndRegion(
-    const VulkanDevice &device);
+  void dbgEndRegion();
 #endif
 
 private:

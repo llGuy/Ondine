@@ -1,3 +1,4 @@
+#include "RendererDebug.hpp"
 #include "WaterRenderer.hpp"
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -35,15 +36,19 @@ void WaterRenderer::tick(
   const SkyRenderer &sky,
   const StarRenderer &stars,
   Scene &sceneSubmitter) {
+  frame.primaryCommandBuffer.dbgBeginRegion("WaterStage", DBG_WATER_COLOR);
+
   mGBuffer.beginRender(frame);
   { // Render 3D scene
     sceneSubmitter.submit(mReflectionCamera, planet, frame);
-    stars.render(mReflectionCamera, frame);
+    stars.render(1.0f, mReflectionCamera, frame);
   }
   mGBuffer.endRender(frame);
 
   mLighting.render(
     frame, mGBuffer, mReflectionCamera, planet, sky);
+
+  frame.primaryCommandBuffer.dbgEndRegion();
 }
 
 void WaterRenderer::resize(

@@ -1,3 +1,4 @@
+#include "RendererDebug.hpp"
 #include "VulkanContext.hpp"
 
 #ifndef NDEBUG
@@ -164,6 +165,8 @@ void VulkanContext::endFrame(const VulkanFrame &frame) {
 }
 
 void VulkanContext::beginSwapchainRender(const VulkanFrame &frame) {
+  frame.primaryCommandBuffer.dbgBeginRegion("Swapchain", DBG_SWAPCHAIN_COLOR);
+
   frame.primaryCommandBuffer.beginRenderPass(
     mFinalRenderPass,
     mFinalFramebuffers[frame.imageIndex],
@@ -173,6 +176,8 @@ void VulkanContext::beginSwapchainRender(const VulkanFrame &frame) {
 
 void VulkanContext::endSwapchainRender(const VulkanFrame &frame) {
   frame.primaryCommandBuffer.endRenderPass();
+
+  frame.primaryCommandBuffer.dbgEndRegion();
 }
 
 void VulkanContext::resize(const Resolution &newResolution) {
