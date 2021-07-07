@@ -21,6 +21,7 @@ void Scene::init(
 void Scene::submit(
   const Camera &camera,
   const PlanetRenderer &planet,
+  const Clipping &clipping,
   VulkanFrame &frame) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
@@ -28,7 +29,7 @@ void Scene::submit(
   commandBuffer.setScissor();
 
   const RenderResources RESOURCES = {
-    camera, planet
+    camera, planet, clipping
   };
 
   // Need to sort this to remove the need to repeat calls to binding resources

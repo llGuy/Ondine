@@ -29,11 +29,6 @@ public:
 
   void shutdown(VulkanContext &graphicsContext);
 
-  void tick(
-    const Core::Tick &tick,
-    VulkanFrame &frame,
-    const CameraProperties &camera);
-
   const VulkanUniform &uniform() const;
 
 private:

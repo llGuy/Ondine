@@ -2,10 +2,12 @@
 
 #include "Camera.hpp"
 #include "GBuffer.hpp"
+#include "Clipping.hpp"
 #include "SceneObject.hpp"
 #include "DynamicArray.hpp"
 #include "ModelManager.hpp"
 #include "PlanetRenderer.hpp"
+#include "DeferredLighting.hpp"
 
 namespace Ondine::Graphics {
 
@@ -23,12 +25,17 @@ public:
   void submit(
     const Camera &camera,
     const PlanetRenderer &planet,
+    const Clipping &clipping,
     VulkanFrame &frame);
 
   SceneObjectHandle createSceneObject(const char *renderMethodName);
   void destroySceneObject(SceneObjectHandle handle);
 
   SceneObject &getSceneObject(SceneObjectHandle handle);
+
+public:
+  CameraProperties camera;
+  LightingProperties lighting;
 
 private:
   static constexpr uint32_t MAX_SCENE_OBJECTS_COUNT = 5000;

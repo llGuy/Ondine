@@ -48,6 +48,8 @@ private:
   VkFormat mGBufferFormats[Count];
 
   VkExtent2D mGBufferExtent;
+
+  friend class Renderer3D;
 };
 
 }

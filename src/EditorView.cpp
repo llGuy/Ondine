@@ -467,10 +467,12 @@ void EditorView::renderGraphicsWindow() {
       mFocusedWindow = EditorWindow::Graphics;
     }
 
+    auto *boundScene = mRenderer3D.mBoundScene;
+
     if (ImGui::TreeNodeEx("Lighting", ImGuiTreeNodeFlags_SpanFullWidth)) {
       ImGui::SliderFloat(
         "Exposure",
-        &mRenderer3D.mLightingProperties.data.exposure,
+        &boundScene->lighting.data.exposure,
         1.0f, 50.0f);
 
       ImGui::TreePop();
@@ -488,21 +490,21 @@ void EditorView::renderGraphicsWindow() {
     if (ImGui::TreeNodeEx("Water", ImGuiTreeNodeFlags_SpanFullWidth)) {
       ImGui::ColorEdit3(
         "Water Surface Color",
-        &mRenderer3D.mLightingProperties.data.waterSurfaceColor.r);
+        &boundScene->lighting.data.waterSurfaceColor.r);
 
       ImGui::SliderFloat(
         "Water Roughness",
-        &mRenderer3D.mLightingProperties.data.waterRoughness,
+        &boundScene->lighting.data.waterRoughness,
         0.0f, 1.0f);
 
       ImGui::SliderFloat(
         "Water Metalness",
-        &mRenderer3D.mLightingProperties.data.waterMetal,
+        &boundScene->lighting.data.waterMetal,
         0.0f, 1.0f);
 
       ImGui::SliderFloat(
         "Wave Strength",
-        &mRenderer3D.mLightingProperties.data.waveStrength,
+        &boundScene->lighting.data.waveStrength,
         0.0f, 1.0f);
 
       for (int i = 0; i < 4; ++i) {
@@ -513,7 +515,7 @@ void EditorView::renderGraphicsWindow() {
               buffer,
               ImGuiTreeNodeFlags_SpanFullWidth)) {
           auto &waveProfile =
-            mRenderer3D.mLightingProperties.data.waveProfiles[i];
+            boundScene->lighting.data.waveProfiles[i];
 
           ImGui::SliderFloat(
             "Zoom", &waveProfile.zoom, 0.0f, 0.05f);
@@ -531,34 +533,34 @@ void EditorView::renderGraphicsWindow() {
 
     if (ImGui::TreeNodeEx("Day/Night", ImGuiTreeNodeFlags_SpanFullWidth)) {
       if (ImGui::Button("Sunset")) {
-        mRenderer3D.mLightingProperties.fastForwardTo(
+        boundScene->lighting.fastForwardTo(
           Graphics::LightingProperties::FastForwardDst::Sunset);
       }
 
       ImGui::SameLine();
 
       if (ImGui::Button("Midday")) {
-        mRenderer3D.mLightingProperties.fastForwardTo(
+        boundScene->lighting.fastForwardTo(
           Graphics::LightingProperties::FastForwardDst::Midday);
       }
 
       ImGui::SameLine();
 
       if (ImGui::Button("Midnight")) {
-        mRenderer3D.mLightingProperties.fastForwardTo(
+        boundScene->lighting.fastForwardTo(
           Graphics::LightingProperties::FastForwardDst::Midnight);
       }
 
       ImGui::SameLine();
 
       if (ImGui::Button("Sunrise")) {
-        mRenderer3D.mLightingProperties.fastForwardTo(
+        boundScene->lighting.fastForwardTo(
           Graphics::LightingProperties::FastForwardDst::Sunrise);
       }
 
       if (ImGui::Checkbox(
             "Pause Day/Night Cycle",
-            &mRenderer3D.mLightingProperties.pause)) {
+            &boundScene->lighting.pause)) {
       
       }
 

@@ -18,25 +18,21 @@ Renderer3D::Renderer3D(VulkanContext &graphicsContext)
 
 void Renderer3D::init() {
   auto properties = mGraphicsContext.getProperties();
-  mPipelineViewport = {
+  pipelineViewport = {
     properties.swapchainExtent.width, properties.swapchainExtent.height
   };
 
   mModelManager.init();
   mRenderMethods.init();
   mShaderEntries.init();
-
   mGBuffer.init(
-    mGraphicsContext, {mPipelineViewport.width, mPipelineViewport.height});
-
+    mGraphicsContext, {pipelineViewport.width, pipelineViewport.height});
   mSkyRenderer.init(mGraphicsContext, mGBuffer);
-
   mStarRenderer.init(mGraphicsContext, mGBuffer, 1000);
+  mClipping.init(mGraphicsContext, 1.0f, mPlanetProperties.bottomRadius);
 
   // Idle with all precomputation stuff
   mGraphicsContext.device().graphicsQueue().idle();
-
-  /* Temporary - These parameters will all be defined in asset files */
 
   { // Set planet properties
     mPlanetProperties.solarIrradiance = glm::vec3(1.474f, 1.8504f, 1.91198f);
@@ -78,72 +74,10 @@ void Renderer3D::init() {
     mPlanetRenderer.init(mGraphicsContext, mGBuffer, &mPlanetProperties);
   }
 
-  { // Set camera properties
-    mCameraProperties.fov = glm::radians(50.0f);
-    mCameraProperties.aspectRatio =
-      (float)mPipelineViewport.width / (float)mPipelineViewport.height;
-    mCameraProperties.near = 0.1f;
-    mCameraProperties.far = 10000.0f;
-
-    mCameraProperties.projection = glm::perspective(
-      mCameraProperties.fov,
-      mCameraProperties.aspectRatio,
-      mCameraProperties.near,
-      mCameraProperties.far);
-
-    mCameraProperties.wPosition = glm::vec3(100.0f, 90.0f, -180.0f);
-    mCameraProperties.wViewDirection =
-      glm::normalize(glm::vec3(-0.3f, -0.1f, 1.0f));
-    mCameraProperties.wUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-    mCameraProperties.view = glm::lookAt(
-      mCameraProperties.wPosition,
-      mCameraProperties.wPosition + mCameraProperties.wViewDirection,
-      mCameraProperties.wUp);
-
-    mCameraProperties.inverseProjection = glm::inverse(
-      mCameraProperties.projection);
-    mCameraProperties.inverseView = glm::inverse(mCameraProperties.view);
-
-    mCameraProperties.viewProjection =
-      mCameraProperties.projection * mCameraProperties.view;
-
-    mCameraProperties.clipUnderPlanet = 1.0f;
-    mCameraProperties.clippingRadius =
-      mPlanetProperties.bottomRadius;
-  }
-
-  mCamera.init(mGraphicsContext, &mCameraProperties);
-
-  { // Set lighting properties
-    mLightingProperties.data.sunDirection =
-      glm::normalize(glm::vec3(0.000001f, 0.1f, -1.00001f));
-    mLightingProperties.data.moonDirection =
-      glm::normalize(glm::vec3(1.000001f, 1.6f, +1.00001f));
-    mLightingProperties.data.sunSize = glm::vec3(
-      0.0046750340586467079f, 0.99998907220740285f, 0.0f);
-    mLightingProperties.data.exposure = 20.0f;
-    mLightingProperties.data.white = glm::vec3(2.0f);
-    mLightingProperties.data.waterSurfaceColor =
-      glm::vec3(8.0f, 54.0f, 76.0f) / 255.0f;
-    mLightingProperties.pause = false;
-    mLightingProperties.data.continuous = 0.0f;
-    mLightingProperties.data.waveStrength = 0.54f;
-    mLightingProperties.data.waterRoughness = 0.01f;
-    mLightingProperties.data.waterMetal = 0.7f;
-
-    mLightingProperties.data.waveProfiles[0] = {0.01f, 1.0f, 1.0f};
-    mLightingProperties.data.waveProfiles[1] = {0.005f, 1.0f, 1.0f};
-    mLightingProperties.data.waveProfiles[2] = {0.008f, 0.3f, 2.0f};
-    mLightingProperties.data.waveProfiles[3] = {0.001f, 0.5f, 3.0f};
-
-    mLightingProperties.rotationAngle = glm::radians(86.5f);
-  }
-
+  mCamera.init(mGraphicsContext);
   mDeferredLighting.init(
     mGraphicsContext,
-    {mPipelineViewport.width, mPipelineViewport.height},
-    &mLightingProperties);
+    {pipelineViewport.width, pipelineViewport.height});
 
   { // Prepare scene resources
     /* Create model */
@@ -163,6 +97,7 @@ void Renderer3D::init() {
     pipelineConfig.configurePipelineLayout(
       sizeof(glm::mat4),
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
     modelConfig.configureVertexInput(pipelineConfig);
@@ -180,7 +115,8 @@ void Renderer3D::init() {
     baseModelMethod.init(
       "BaseModelShader", sphereModelHandle,
       [](const VulkanCommandBuffer &cmdbuf, const RenderResources &res) {
-        cmdbuf.bindUniforms(res.camera.uniform(), res.planet.uniform());
+        cmdbuf.bindUniforms(
+          res.camera.uniform(), res.planet.uniform(), res.clipping.uniform);
       },
       [](const VulkanCommandBuffer &cmdbuf, const SceneObject &obj) {
         cmdbuf.pushConstants(sizeof(glm::mat4), &obj.transform);
@@ -192,7 +128,8 @@ void Renderer3D::init() {
     monkeyModelMethod.init(
       "BaseModelShader", monkeyModelHandle,
       [](const VulkanCommandBuffer &cmdbuf, const RenderResources &res) {
-        cmdbuf.bindUniforms(res.camera.uniform(), res.planet.uniform());
+        cmdbuf.bindUniforms(
+          res.camera.uniform(), res.planet.uniform(), res.clipping.uniform);
       },
       [](const VulkanCommandBuffer &cmdbuf, const SceneObject &obj) {
         cmdbuf.pushConstants(sizeof(glm::mat4), &obj.transform);
@@ -201,13 +138,11 @@ void Renderer3D::init() {
     mRenderMethods.insert("TaurusModelRenderMethod", monkeyModelMethod);
   }
 
-  mWaterRenderer.init(
-    mGraphicsContext, mCameraProperties,
-    mPlanetProperties, &mLightingProperties);
+  mWaterRenderer.init(mGraphicsContext, mPlanetProperties);
 
   mPixelater.init(
     mGraphicsContext,
-    {mPipelineViewport.width, mPipelineViewport.height});
+    {pipelineViewport.width, pipelineViewport.height});
 }
 
 void Renderer3D::shutdown() {
@@ -223,23 +158,22 @@ void Renderer3D::shutdown() {
 }
 
 void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
-  mCameraProperties.aspectRatio =
-    (float)mPipelineViewport.width / (float)mPipelineViewport.height;
+  mBoundScene->lighting.tick(tick, mPlanetProperties);
+  mBoundScene->camera.tick(
+    {mGBuffer.mGBufferExtent.width, mGBuffer.mGBufferExtent.height});
 
-  mLightingProperties.tick(tick, mPlanetProperties);
-
-  mCamera.updateData(frame.primaryCommandBuffer, mCameraProperties);
-  mDeferredLighting.updateData(frame.primaryCommandBuffer, mLightingProperties);
+  mCamera.updateData(frame.primaryCommandBuffer, mBoundScene->camera);
+  mDeferredLighting.updateData(frame.primaryCommandBuffer, mBoundScene->lighting);
 
   mStarRenderer.tick(
-    mCameraProperties,
-    mLightingProperties,
+    mBoundScene->camera,
+    mBoundScene->lighting,
     mPlanetProperties, tick);
 
-  mWaterRenderer.updateCameraInfo(mCameraProperties, mPlanetProperties);
+  mWaterRenderer.updateCameraInfo(mBoundScene->camera, mPlanetProperties);
   mWaterRenderer.updateCameraUBO(frame.primaryCommandBuffer);
   mWaterRenderer.updateLightingUBO(
-    mLightingProperties, frame.primaryCommandBuffer);
+    mBoundScene->lighting, frame.primaryCommandBuffer);
 
   /* Rendering to water texture */
   mWaterRenderer.tick(
@@ -247,7 +181,7 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
      
   mGBuffer.beginRender(frame);
   { // Render 3D scene
-    mBoundScene->submit(mCamera, mPlanetRenderer, frame);
+    mBoundScene->submit(mCamera, mPlanetRenderer, mClipping, frame);
     mStarRenderer.render(3.0f, mCamera, frame);
   }
   mGBuffer.endRender(frame);
@@ -261,102 +195,19 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
 void Renderer3D::resize(Resolution newResolution) {
   mGraphicsContext.device().idle();
 
-  mPipelineViewport = {
+  pipelineViewport = {
     newResolution.width, newResolution.height
   };
 
   mGBuffer.resize(mGraphicsContext, newResolution);
   mDeferredLighting.resize(mGraphicsContext, newResolution);
 
-  mCameraProperties.aspectRatio =
-    (float)mPipelineViewport.width / (float)mPipelineViewport.height;
-
-  mCameraProperties.projection = glm::perspective(
-    mCameraProperties.fov,
-    mCameraProperties.aspectRatio,
-    mCameraProperties.near,
-    mCameraProperties.far);
-
-  mCameraProperties.inverseProjection = glm::inverse(
-    mCameraProperties.projection);
+  mBoundScene->camera.mAspectRatio =
+    (float)pipelineViewport.width / (float)pipelineViewport.height;
 
   mWaterRenderer.resize(mGraphicsContext, newResolution);
 
   mPixelater.resize(mGraphicsContext, newResolution);
-}
-
-void Renderer3D::trackInput(
-  const Core::Tick &tick,
-  const Core::InputTracker &inputTracker) {
-  auto up = mCameraProperties.wUp;
-  auto right = glm::normalize(glm::cross(
-    mCameraProperties.wViewDirection, mCameraProperties.wUp));
-  auto forward = glm::normalize(glm::cross(up, right));
-
-  float speedMultiplier = 30.0f;
-  if (inputTracker.key(Core::KeyboardButton::R).isDown) {
-    speedMultiplier *= 10.0f;
-  }
-
-  if (inputTracker.key(Core::KeyboardButton::W).isDown) {
-    mCameraProperties.wPosition +=
-      forward * tick.dt * speedMultiplier;
-  }
-  if (inputTracker.key(Core::KeyboardButton::A).isDown) {
-    mCameraProperties.wPosition -=
-      right * tick.dt * speedMultiplier;
-  }
-  if (inputTracker.key(Core::KeyboardButton::S).isDown) {
-    mCameraProperties.wPosition -=
-      forward * tick.dt * speedMultiplier;
-  }
-  if (inputTracker.key(Core::KeyboardButton::D).isDown) {
-    mCameraProperties.wPosition +=
-      right * tick.dt * speedMultiplier;
-  }
-  if (inputTracker.key(Core::KeyboardButton::Space).isDown) {
-    mCameraProperties.wPosition +=
-      mCameraProperties.wUp * tick.dt * speedMultiplier;
-  }
-  if (inputTracker.key(Core::KeyboardButton::LeftShift).isDown) {
-    mCameraProperties.wPosition -=
-      mCameraProperties.wUp * tick.dt * speedMultiplier;
-  }
-
-  const auto &cursor = inputTracker.cursor();
-  if (cursor.didCursorMove) {
-    static constexpr float SENSITIVITY = 15.0f;
-
-    auto delta = glm::vec2(cursor.cursorPos) - glm::vec2(cursor.previousPos);
-    auto res = mCameraProperties.wViewDirection;
-
-    float xAngle = glm::radians(-delta.x) * SENSITIVITY * tick.dt;
-    float yAngle = glm::radians(-delta.y) * SENSITIVITY * tick.dt;
-                
-    res = glm::mat3(glm::rotate(xAngle, mCameraProperties.wUp)) * res;
-    auto rotateY = glm::cross(res, mCameraProperties.wUp);
-    res = glm::mat3(glm::rotate(yAngle, rotateY)) * res;
-
-    res = glm::normalize(res);
-
-    mCameraProperties.wViewDirection = res;
-  }
-
-  if (cursor.didScroll) {
-    mLightingProperties.rotateBy(
-      glm::radians(30.0f * cursor.scroll.y * tick.dt));
-  }
-
-  mCameraProperties.view = glm::lookAt(
-    mCameraProperties.wPosition,
-    mCameraProperties.wPosition + mCameraProperties.wViewDirection,
-    mCameraProperties.wUp);
-
-  mCameraProperties.inverseView = glm::inverse(
-    mCameraProperties.view);
-
-  mCameraProperties.viewProjection =
-    mCameraProperties.projection * mCameraProperties.view;
 }
 
 void Renderer3D::trackPath(Core::TrackPathID id, const char *path) {

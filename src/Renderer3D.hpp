@@ -3,11 +3,12 @@
 #include "IO.hpp"
 #include "Event.hpp"
 #include "Utils.hpp"
-#include "Window.hpp"
 #include "Scene.hpp"
+#include "Window.hpp"
 #include "Camera.hpp"
 #include "GBuffer.hpp"
 #include "Delegate.hpp"
+#include "Clipping.hpp"
 #include "Pixelater.hpp"
 #include "EditorView.hpp"
 #include "SkyRenderer.hpp"
@@ -22,8 +23,7 @@
 namespace Ondine::Graphics {
 
 class Renderer3D :
-  public DelegateResize,
-  public DelegateTrackInput {
+  public DelegateResize {
 public:
   Renderer3D(
     VulkanContext &graphicsContext);
@@ -35,10 +35,6 @@ public:
 
   void resize(Resolution newResolution) override;
 
-  void trackInput(
-    const Core::Tick &tick,
-    const Core::InputTracker &inputTracker) override;
-
   void trackPath(Core::TrackPathID id, const char *path);
 
   const RenderStage &mainRenderStage() const;
@@ -47,15 +43,20 @@ public:
   Scene *createScene();
   void bindScene(Scene *scene);
 
+  inline PlanetProperties &planet() {
+    return mPlanetProperties;
+  }
+
+public:
+  Resolution pipelineViewport;
+
 private:
   Camera mCamera;
 
-  /* Temporary while we don't have a proper scene system */
-  CameraProperties mCameraProperties;
   PlanetProperties mPlanetProperties;
-  LightingProperties mLightingProperties;
 
   GBuffer mGBuffer;
+  Clipping mClipping;
   StarRenderer mStarRenderer;
   SkyRenderer mSkyRenderer;
   PlanetRenderer mPlanetRenderer;
@@ -67,8 +68,6 @@ private:
 
   ModelManager mModelManager;
   Scene *mBoundScene;
-
-  Resolution mPipelineViewport;
 
   VulkanContext &mGraphicsContext;
 

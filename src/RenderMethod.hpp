@@ -2,6 +2,7 @@
 
 #include "Camera.hpp"
 #include "FastMap.hpp"
+#include "Clipping.hpp"
 #include "VulkanFrame.hpp"
 #include "ModelManager.hpp"
 #include "PlanetRenderer.hpp"
@@ -16,6 +17,7 @@ using RenderShaderEntries = FastMapStd<std::string, RenderShader, 1000>;
 struct RenderResources {
   const Camera &camera;
   const PlanetRenderer &planet;
+  const Clipping &clipping;
   // Skeletal animation stuff
 };
 

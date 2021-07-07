@@ -3,6 +3,7 @@
 #include "Scene.hpp"
 #include "Scene.hpp"
 #include "GBuffer.hpp"
+#include "Clipping.hpp"
 #include "RenderStage.hpp"
 #include "StarRenderer.hpp"
 #include "DeferredLighting.hpp"
@@ -17,9 +18,7 @@ public:
 
   void init(
     VulkanContext &graphicsContext,
-    const CameraProperties &sceneCamera,
-    const PlanetProperties &planetProperties,
-    const LightingProperties *lightingProperties);
+    const PlanetProperties &planetProperties);
 
   void tick(
     VulkanFrame &frame,
@@ -66,6 +65,7 @@ private:
   Camera mReflectionCamera;
   CameraProperties mCameraProperties;
   Resolution mReflectionViewport;
+  Clipping mClipping;
 };
 
 }

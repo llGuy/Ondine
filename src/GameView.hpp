@@ -39,7 +39,6 @@ private:
 
   // Allows to call Renderer3D::resize
   DelegateResize &mDelegateResize3D;
-  DelegateTrackInput &mDelegateTrackInput;
   Core::OnEventProc mOnEvent;
 };
 

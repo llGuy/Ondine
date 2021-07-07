@@ -7,16 +7,12 @@ namespace Ondine::Graphics {
 
 void WaterRenderer::init(
   VulkanContext &graphicsContext,
-  const CameraProperties &sceneCamera,
-  const PlanetProperties &planetProperties,
-  const LightingProperties *lightingProperties) {
+  const PlanetProperties &planetProperties) {
   auto properties = graphicsContext.getProperties();
   mReflectionViewport = {
     (uint32_t)((float)properties.swapchainExtent.width * VIEWPORT_SCALE),
     (uint32_t)((float)properties.swapchainExtent.height * VIEWPORT_SCALE)
   };
-
-  updateCameraInfo(sceneCamera, planetProperties);
 
   mGBuffer.init(
     graphicsContext,
@@ -26,8 +22,11 @@ void WaterRenderer::init(
 
   mLighting.init(
     graphicsContext,
-    {mReflectionViewport.width, mReflectionViewport.height},
-    lightingProperties);
+    {mReflectionViewport.width, mReflectionViewport.height});
+
+  mClipping.init(
+    graphicsContext, 1.0f,
+    planetProperties.bottomRadius + OCEAN_HEIGHT);
 }
 
 void WaterRenderer::tick(
@@ -40,7 +39,7 @@ void WaterRenderer::tick(
 
   mGBuffer.beginRender(frame);
   { // Render 3D scene
-    sceneSubmitter.submit(mReflectionCamera, planet, frame);
+    sceneSubmitter.submit(mReflectionCamera, planet, mClipping, frame);
     stars.render(1.0f, mReflectionCamera, frame);
   }
   mGBuffer.endRender(frame);
@@ -61,17 +60,17 @@ void WaterRenderer::resize(
   mGBuffer.resize(vulkanContext, mReflectionViewport);
   mLighting.resize(vulkanContext, mReflectionViewport);
 
-  mCameraProperties.aspectRatio =
+  mCameraProperties.mAspectRatio =
     (float)mReflectionViewport.width / (float)mReflectionViewport.height;
 
-  mCameraProperties.projection = glm::perspective(
+  mCameraProperties.mProjection = glm::perspective(
     mCameraProperties.fov,
-    mCameraProperties.aspectRatio,
-    mCameraProperties.near,
-    mCameraProperties.far);
+    mCameraProperties.mAspectRatio,
+    mCameraProperties.mNear,
+    mCameraProperties.mFar);
 
-  mCameraProperties.inverseProjection = glm::inverse(
-    mCameraProperties.projection);
+  mCameraProperties.mInverseProjection = glm::inverse(
+    mCameraProperties.mProjection);
 }
 
 glm::vec3 WaterRenderer::reflectCameraPosition(
@@ -105,16 +104,16 @@ void WaterRenderer::updateCameraInfo(
   const CameraProperties &camera,
   const PlanetProperties &planet) {
   mCameraProperties.fov = glm::radians(50.0f);
-  mCameraProperties.aspectRatio =
+  mCameraProperties.mAspectRatio =
     (float)mReflectionViewport.width / (float)mReflectionViewport.height;
-  mCameraProperties.near = 0.1f;
-  mCameraProperties.far = 10000.0f;
+  mCameraProperties.mNear = 0.1f;
+  mCameraProperties.mFar = 10000.0f;
 
-  mCameraProperties.projection = glm::perspective(
+  mCameraProperties.mProjection = glm::perspective(
     mCameraProperties.fov,
-    mCameraProperties.aspectRatio,
-    mCameraProperties.near,
-    mCameraProperties.far);
+    mCameraProperties.mAspectRatio,
+    mCameraProperties.mNear,
+    mCameraProperties.mFar);
 
   mCameraProperties.wPosition = reflectCameraPosition(
     camera, planet) * 1000.0f;
@@ -124,23 +123,19 @@ void WaterRenderer::updateCameraInfo(
   // planet.wPlanetCenter - camera.wPosition / 1000.0f);
   mCameraProperties.wUp = - camera.wUp;
 
-  mCameraProperties.view = glm::lookAt(
+  mCameraProperties.mView = glm::lookAt(
     mCameraProperties.wPosition,
     mCameraProperties.wPosition + mCameraProperties.wViewDirection,
     mCameraProperties.wUp);
 
-  mCameraProperties.inverseProjection = glm::inverse(
-    mCameraProperties.projection);
+  mCameraProperties.mInverseProjection = glm::inverse(
+    mCameraProperties.mProjection);
 
-  mCameraProperties.inverseView = glm::inverse(
-    mCameraProperties.view);
+  mCameraProperties.mInverseView = glm::inverse(
+    mCameraProperties.mView);
 
-  mCameraProperties.viewProjection =
-    mCameraProperties.projection * mCameraProperties.view;
-
-  mCameraProperties.clipUnderPlanet = 1.0f;
-  mCameraProperties.clippingRadius =
-    planet.bottomRadius + OCEAN_HEIGHT;
+  mCameraProperties.mViewProjection =
+    mCameraProperties.mProjection * mCameraProperties.mView;
 }
 
 void WaterRenderer::updateCameraUBO(const VulkanCommandBuffer &commandBuffer) {

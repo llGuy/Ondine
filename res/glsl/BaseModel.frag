@@ -1,5 +1,6 @@
 #version 450
 
+#include "Clipping.glsl"
 #include "CameraDef.glsl"
 #include "PlanetDef.glsl"
 
@@ -21,14 +22,19 @@ layout (set = 1, binding = 0) uniform PlanetUniform {
   PlanetProperties planet;
 } uPlanet;
 
+layout (set = 2, binding = 0) uniform ClippingUniform {
+  Clipping clipping;
+} uClipping;
+
 void main() {
   // Get distance from center of planet
   vec3 diff = inFS.wPosition.xyz / 1000.0 - uPlanet.planet.wPlanetCenter;
   float radius2 = dot(diff, diff);
   float radius2Diff =
-    radius2 - uCamera.camera.clippingRadius * uCamera.camera.clippingRadius;
+    radius2 - uClipping.clipping.clippingRadius *
+    uClipping.clipping.clippingRadius;
 
-  if (radius2Diff * uCamera.camera.clipUnderPlanet < 0.0) {
+  if (radius2Diff * uClipping.clipping.clipUnderPlanet < 0.0) {
     discard;
   }
   else {
