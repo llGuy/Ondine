@@ -25,7 +25,7 @@ public:
     const PlanetRenderer &planet,
     VulkanFrame &frame);
 
-  SceneObjectHandle createSceneObject();
+  SceneObjectHandle createSceneObject(const char *renderMethodName);
   void destroySceneObject(SceneObjectHandle handle);
 
   SceneObject &getSceneObject(SceneObjectHandle handle);
@@ -34,9 +34,6 @@ private:
   static constexpr uint32_t MAX_SCENE_OBJECTS_COUNT = 5000;
 
   DynamicArray<SceneObject> mSceneObjects;
-
-  StaticModelHandle mTestModel;
-  VulkanPipeline mTestPipeline;
 
   ModelManager &mModelManager;
   RenderMethodEntries &mRenderMethods;

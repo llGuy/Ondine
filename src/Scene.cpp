@@ -15,45 +15,7 @@ Scene::Scene(ModelManager &modelManager, RenderMethodEntries &renderMethods)
 void Scene::init(
   const GBuffer &gbuffer,
   VulkanContext &graphicsContext) {
-  { // Create test model
-    ModelConfig modelConfig;
-    mTestModel = mModelManager.loadStaticModel(
-      "res/model/UVSphere.fbx", graphicsContext, modelConfig);
 
-    Core::File vshFile = Core::gFileSystem->createFile(
-      (Core::MountPoint)Core::ApplicationMountPoints::Application,
-      "res/spv/BaseModel.vert.spv",
-      Core::FileOpenType::Binary | Core::FileOpenType::In);
-
-    Core::File fshFile = Core::gFileSystem->createFile(
-      (Core::MountPoint)Core::ApplicationMountPoints::Application,
-      "res/spv/BaseModel.frag.spv",
-      Core::FileOpenType::Binary | Core::FileOpenType::In);
-
-    Buffer vsh = vshFile.readBinary();
-    Buffer fsh = fshFile.readBinary();
-    
-    VulkanPipelineConfig pipelineConfig(
-      {gbuffer.renderPass(), 0},
-      VulkanShader{graphicsContext.device(), vsh, VulkanShaderType::Vertex},
-      VulkanShader{graphicsContext.device(), fsh, VulkanShaderType::Fragment});
-
-    pipelineConfig.enableDepthTesting();
-    pipelineConfig.configurePipelineLayout(
-      sizeof(glm::mat4),
-      // Camera UBO
-      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-      // Planet UBO
-      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
-
-    modelConfig.configureVertexInput(pipelineConfig);
-    pipelineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-      
-    mTestPipeline.init(
-      graphicsContext.device(),
-      graphicsContext.descriptorLayouts(),
-      pipelineConfig);
-  }
 }
 
 void Scene::submit(
@@ -82,9 +44,10 @@ void Scene::submit(
   }
 }
 
-SceneObjectHandle Scene::createSceneObject() {
+SceneObjectHandle Scene::createSceneObject(const char *renderMethod) {
   auto handle = (SceneObjectHandle)mSceneObjects.add();
   mSceneObjects[handle].isInitialised = true;
+  mSceneObjects[handle].renderMethod = mRenderMethods.getHandle(renderMethod);
   return handle;
 }
 

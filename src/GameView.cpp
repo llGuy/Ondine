@@ -5,17 +5,47 @@
 namespace Ondine::View {
 
 GameView::GameView(
-  const Graphics::RenderStage &gameRenderStage,
-  DelegateResize &delegateResize3D,
-  DelegateTrackInput &delegateTrackInput,
+  Graphics::Renderer3D &renderer,
   Core::OnEventProc proc)
-  : mGameRenderStage(gameRenderStage),
-    mDelegateResize3D(delegateResize3D),
-    mDelegateTrackInput(delegateTrackInput),
+  : mGameRenderStage(renderer.mainRenderStage()),
+    mDelegateResize3D(renderer),
+    mDelegateTrackInput(renderer),
     mOnEvent(proc) {
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
   cursorChange->show = false;
   mOnEvent(cursorChange);
+
+  mGameScene = renderer.createScene();
+  renderer.bindScene(mGameScene);
+  
+  auto handle1 = mGameScene->createSceneObject("TaurusModelRenderMethod"); 
+  auto &sceneObj1 = mGameScene->getSceneObject(handle1);
+  sceneObj1.position = glm::vec3(0.0f, 80.0f, 0.0f);
+  sceneObj1.scale = glm::vec3(10.0f);
+  sceneObj1.rotation = glm::angleAxis(
+    glm::radians(30.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+  sceneObj1.constructTransform();
+
+  auto handle2 = mGameScene->createSceneObject("SphereModelRenderMethod"); 
+  auto &sceneObj2 = mGameScene->getSceneObject(handle2);
+  sceneObj2.position = glm::vec3(30.0f, 100.0f, 0.0f);
+  sceneObj2.scale = glm::vec3(5.0f);
+  sceneObj2.rotation = glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+  sceneObj2.constructTransform();
+
+  auto handle3 = mGameScene->createSceneObject("SphereModelRenderMethod"); 
+  auto &sceneObj3 = mGameScene->getSceneObject(handle3);
+  sceneObj3.position = glm::vec3(0.0f, 55.0f, -30.0f);
+  sceneObj3.scale = glm::vec3(5.0f);
+  sceneObj3.rotation = glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+  sceneObj3.constructTransform();
+
+  auto handle4 = mGameScene->createSceneObject("SphereModelRenderMethod"); 
+  auto &sceneObj4 = mGameScene->getSceneObject(handle4);
+  sceneObj4.position = glm::vec3(-100.0f, 40.0f, 100.0f);
+  sceneObj4.scale = glm::vec3(20.0f);
+  sceneObj4.rotation = glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+  sceneObj4.constructTransform();
 }
 
 GameView::~GameView() {
@@ -88,6 +118,11 @@ FocusedView GameView::trackInput(
   else {
     return FocusedView::Current;
   }
+}
+
+void GameView::processGameInput(
+  const Core::Tick &tick, const Core::InputTracker &tracker) {
+  
 }
 
 }

@@ -42,9 +42,7 @@ void Application::run() {
   mRenderer3D.init();
   mViewStack.init();
 
-  mViewStack.push(
-    new View::GameView(
-      mRenderer3D.mainRenderStage(), mRenderer3D, mRenderer3D, evProc));
+  mViewStack.push(new View::GameView(mRenderer3D, evProc));
 
   mViewStack.push(
     new View::EditorView(

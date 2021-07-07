@@ -43,6 +43,10 @@ public:
 
   const RenderStage &mainRenderStage() const;
 
+public:
+  Scene *createScene();
+  void bindScene(Scene *scene);
+
 private:
   Camera mCamera;
 
@@ -62,7 +66,7 @@ private:
   RenderShaderEntries mShaderEntries;
 
   ModelManager mModelManager;
-  Scene mScene;
+  Scene *mBoundScene;
 
   Resolution mPipelineViewport;
 
