@@ -80,6 +80,10 @@ GameView::GameView(
   }
 }
 
+void GameView::onPush(ViewPushParams &params) {
+  params.renderer.bindScene(mGameScene);
+}
+
 GameView::~GameView() {
   
 }

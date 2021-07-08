@@ -26,14 +26,14 @@ public:
     mEntries.init(MaxEntries);
   }
 
-  void insert(const T &value, const Key &key) {
+  void insert(const Key &key, const T &value) {
     FastMapHandle handle = mEntries.size;
     mMap.insert({key, handle});
     mEntries[mEntries.size++] = value;
   }
 
   template <typename ...Ts>
-  T &insert(const Key &key, Ts &&...constructor) {
+  T &emplace(const Key &key, Ts &&...constructor) {
     FastMapHandle handle = mEntries.size;
     mMap.insert({key, handle});
     new (&mEntries[mEntries.size]) T(std::forward<Ts>(constructor)...);

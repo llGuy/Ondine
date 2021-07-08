@@ -103,7 +103,7 @@ void Renderer3D::init() {
     modelConfig.configureVertexInput(pipelineConfig);
     pipelineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
-    auto &baseModelShader = mShaderEntries.insert("BaseModelShader");
+    auto &baseModelShader = mShaderEntries.emplace("BaseModelShader");
       
     baseModelShader.init(
       mGraphicsContext.device(),

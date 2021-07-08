@@ -55,6 +55,10 @@ EditorView::EditorView(
   mOnEvent(cursorChange);
 }
 
+void EditorView::onPush(ViewPushParams &params) {
+  // Nothing for now
+}
+
 EditorView::~EditorView() {
   
 }
@@ -265,8 +269,16 @@ void EditorView::tickMenuBar() {
 
     if (ImGui::BeginMenu("Viewport")) {
       if (ImGui::MenuItem("Game")) {
+        auto *hierarchyChange = lnEmplaceAlloc<Core::EventViewHierarchyChange>();
+        hierarchyChange->views = makeArray<const char *, AllocationType::Linear>(
+          "GameView", "EditorView");
+        mOnEvent(hierarchyChange);
       }
       if (ImGui::MenuItem("Level Editor")) {
+        auto *hierarchyChange = lnEmplaceAlloc<Core::EventViewHierarchyChange>();
+        hierarchyChange->views = makeArray<const char *, AllocationType::Linear>(
+          "MapView", "EditorView");
+        mOnEvent(hierarchyChange);
       }
       ImGui::EndMenu();
     }

@@ -23,6 +23,7 @@ enum class EventType {
   CursorDisplayChange,
   Breakpoint,
   PathChanged,
+  ViewHierarchyChange,
   Invalid
 };
 

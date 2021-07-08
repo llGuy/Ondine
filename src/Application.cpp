@@ -13,7 +13,7 @@ namespace Ondine::Core {
 Application::Application(int argc, char **argv)
   : mWindow(WindowMode::Windowed, "Ondine"),
     mRenderer3D(mGraphicsContext),
-    mViewStack(mGraphicsContext) {
+    mViewStack(mRenderer3D, mGraphicsContext) {
   /* Initialise graphics context, etc... */
   setMaxFramerate(60.0f);
 }
@@ -42,11 +42,14 @@ void Application::run() {
   mRenderer3D.init();
   mViewStack.init();
 
-  mViewStack.push(new View::GameView(mRenderer3D, evProc));
-
-  mViewStack.push(
-    new View::EditorView(
+  mViewStack.createView("GameView", new View::GameView(mRenderer3D, evProc));
+  mViewStack.createView("MapView", new View::GameView(mRenderer3D, evProc));
+  mViewStack.createView(
+    "EditorView", new View::EditorView(
       surfaceInfo, mGraphicsContext, mRenderer3D, evProc));
+
+  mViewStack.push("GameView");
+  mViewStack.push("EditorView");
 
   /* User-defined function which will be overriden */
   start();

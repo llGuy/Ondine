@@ -34,6 +34,8 @@ public:
 
   ~EditorView() override;
 
+  void onPush(ViewPushParams &params) override;
+
   void processEvents(ViewProcessEventsParams &) override;
   void render(ViewRenderParams &) override;
 

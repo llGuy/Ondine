@@ -5,12 +5,22 @@
 #include "VulkanContext.hpp"
 #include "VulkanUniform.hpp"
 
+namespace Ondine::Graphics {
+
+class Renderer3D;
+
+}
+
 namespace Ondine::View {
 
 /* 
    These structures are here so that when changing params, don't need to
    worry about changing it for all child classes
 */
+
+struct ViewPushParams {
+  Graphics::Renderer3D &renderer;
+};
 
 struct ViewProcessEventsParams {
   Core::EventQueue &queue;
@@ -36,6 +46,9 @@ class View {
 public:
   View() = default;
   virtual ~View() {};
+
+  /* When the hierarchy changes, this function gets called */
+  virtual void onPush(ViewPushParams &) = 0;
 
   /* Used for processing events like viewport resize, etc... */
   virtual void processEvents(ViewProcessEventsParams &) = 0;
