@@ -6,6 +6,7 @@
 #include "IOEvent.hpp"
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+#include <glm/gtx/string_cast.hpp>
 #include "FileSystem.hpp"
 #include "EditorView.hpp"
 #include "GraphicsEvent.hpp"
@@ -21,6 +22,7 @@ EditorView::EditorView(
   : mIsDockLayoutInitialised(false),
     mViewportResolution{0, 0},
     mFocusedWindow(EditorWindow::None),
+    mBoundViewport(ViewportType::GameEditor),
     mRenderer3D(renderer3D),
     mOnEvent(onEventProc) {
   windowName(EditorWindow::Graphics) = "Graphics";
@@ -180,39 +182,9 @@ void EditorView::render(ViewRenderParams &params) {
     ImGui::End();
   }
 
-  if (ImGui::Begin(
-    windowName(EditorWindow::Console), nullptr,
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
-
-    if (ImGui::IsWindowFocused()) {
-      mFocusedWindow = EditorWindow::Console;
-    }
-
-    ImGui::End();
-  }
-
-  if (ImGui::Begin(
-    windowName(EditorWindow::GameState), nullptr,
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
-
-    if (ImGui::IsWindowFocused()) {
-      mFocusedWindow = EditorWindow::GameState;
-    }
-
-    ImGui::End();
-  }
-
-  if (ImGui::Begin(
-    windowName(EditorWindow::General), nullptr,
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
-    ImGui::Text("Framerate: %.1f", ImGui::GetIO().Framerate);
-
-    if (ImGui::IsWindowFocused()) {
-      mFocusedWindow = EditorWindow::General;
-    }
-
-    ImGui::End();
-  }
+  renderConsoleWindow();
+  renderGameStateWindow();
+  renderGeneralWindow();
 
   params.graphicsContext.imgui().endRender(params.frame);
 
@@ -268,17 +240,22 @@ void EditorView::tickMenuBar() {
     }
 
     if (ImGui::BeginMenu("Viewport")) {
-      if (ImGui::MenuItem("Game")) {
+      if (ImGui::MenuItem("Game Editor", "Alt+Shift+1")) {
         auto *hierarchyChange = lnEmplaceAlloc<Core::EventViewHierarchyChange>();
         hierarchyChange->views = makeArray<const char *, AllocationType::Linear>(
           "GameView", "EditorView");
         mOnEvent(hierarchyChange);
+
+        mBoundViewport = ViewportType::GameEditor;
       }
-      if (ImGui::MenuItem("Level Editor")) {
+
+      if (ImGui::MenuItem("Map Editor", "Alt+Shift+2")) {
         auto *hierarchyChange = lnEmplaceAlloc<Core::EventViewHierarchyChange>();
         hierarchyChange->views = makeArray<const char *, AllocationType::Linear>(
           "MapView", "EditorView");
         mOnEvent(hierarchyChange);
+
+        mBoundViewport = ViewportType::MapEditor;
       }
       ImGui::EndMenu();
     }
@@ -473,6 +450,58 @@ const char *&EditorView::windowName(EditorWindow window) {
   return mWindowNames[(int)window];
 }
 
+void EditorView::renderGeneralWindow() {
+  if (ImGui::Begin(
+    windowName(EditorWindow::General), nullptr,
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+    ImGui::Text("Framerate: %.1f", ImGui::GetIO().Framerate);
+
+    switch (mBoundViewport) {
+    case ViewportType::GameEditor: {
+      ImGui::Text("3D Viewport: Game Editor");
+    } break;
+
+    case ViewportType::MapEditor: {
+      ImGui::Text("3D Viewport: Map Editor");
+    } break;
+
+    default:;
+    }
+
+    if (ImGui::IsWindowFocused()) {
+      mFocusedWindow = EditorWindow::General;
+    }
+
+    ImGui::End();
+  }
+}
+
+void EditorView::renderGameStateWindow() {
+  if (ImGui::Begin(
+    windowName(EditorWindow::GameState), nullptr,
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+
+    if (ImGui::IsWindowFocused()) {
+      mFocusedWindow = EditorWindow::GameState;
+    }
+
+    ImGui::End();
+  }
+}
+
+void EditorView::renderConsoleWindow() {
+  if (ImGui::Begin(
+    windowName(EditorWindow::Console), nullptr,
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+
+    if (ImGui::IsWindowFocused()) {
+      mFocusedWindow = EditorWindow::Console;
+    }
+
+    ImGui::End();
+  }
+}
+
 void EditorView::renderGraphicsWindow() {
   if (ImGui::Begin(windowName(EditorWindow::Graphics), nullptr, WINDOW_FLAGS)) {
     if (ImGui::IsWindowFocused()) {
@@ -486,6 +515,14 @@ void EditorView::renderGraphicsWindow() {
         "Exposure",
         &boundScene->lighting.data.exposure,
         1.0f, 50.0f);
+
+      ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNodeEx("Camera", ImGuiTreeNodeFlags_SpanFullWidth)) {
+      ImGui::DragFloat3("Position", &boundScene->camera.wPosition[0]);
+      ImGui::DragFloat3("View Direction", &boundScene->camera.wViewDirection[0]);
+      ImGui::DragFloat3("Up Vector", &boundScene->camera.wUp[0]);
 
       ImGui::TreePop();
     }

@@ -1,6 +1,7 @@
 #include "Log.hpp"
 #include "Memory.hpp"
 #include "IOEvent.hpp"
+#include "MapView.hpp"
 #include "GameView.hpp"
 #include "FileEvent.hpp"
 #include "FileSystem.hpp"
@@ -43,7 +44,7 @@ void Application::run() {
   mViewStack.init();
 
   mViewStack.createView("GameView", new View::GameView(mRenderer3D, evProc));
-  mViewStack.createView("MapView", new View::GameView(mRenderer3D, evProc));
+  mViewStack.createView("MapView", new View::MapView(mRenderer3D, evProc));
   mViewStack.createView(
     "EditorView", new View::EditorView(
       surfaceInfo, mGraphicsContext, mRenderer3D, evProc));

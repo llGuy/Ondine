@@ -24,6 +24,11 @@ enum class EditorWindow {
   Count
 };
 
+enum class ViewportType {
+  GameEditor,
+  MapEditor
+};
+
 class EditorView : public View {
 public:
   EditorView(
@@ -51,7 +56,11 @@ private:
   void initImguiContext(
     const Core::WindowContextInfo &contextInfo,
     Graphics::VulkanContext &graphicsContext);
+
   void tickMenuBar();
+  void renderGeneralWindow();
+  void renderGameStateWindow();
+  void renderConsoleWindow();
 
   void processInputEvent(Core::Event *ev, ViewProcessEventsParams &params);
   void processDeferredEvents(Graphics::VulkanContext &graphicsContext);
@@ -78,6 +87,7 @@ private:
   Graphics::Renderer3D &mRenderer3D;
 
   EditorWindow mFocusedWindow;
+  ViewportType mBoundViewport;
   uint8_t mChangedFocusToViewport : 4;
   uint8_t mChangedFocusToEditor : 4;
   const char *mWindowNames[(int)EditorWindow::Count];
