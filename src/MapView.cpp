@@ -20,7 +20,7 @@ MapView::MapView(
 
   { // Set lighting properties
     mMapScene->lighting.data.sunDirection =
-      glm::normalize(glm::vec3(0.000001f, 2.0f, -1.00001f));
+      glm::normalize(glm::vec3(0.000001f, 2.0f, 0.1f));
     mMapScene->lighting.data.moonDirection =
       glm::normalize(glm::vec3(1.000001f, 1.6f, +1.00001f));
     mMapScene->lighting.data.sunSize = glm::vec3(
@@ -38,14 +38,14 @@ MapView::MapView(
     mMapScene->lighting.data.waveProfiles[1] = {0.005f, 1.0f, 1.0f};
     mMapScene->lighting.data.waveProfiles[2] = {0.008f, 0.3f, 2.0f};
     mMapScene->lighting.data.waveProfiles[3] = {0.001f, 0.5f, 3.0f};
-    mMapScene->lighting.rotationAngle = glm::radians(86.5f);
+    mMapScene->lighting.rotationAngle = glm::radians(40.5f);
   }
 
   { // Set camera properties
     mMapScene->camera.fov = glm::radians(50.0f);
-    mMapScene->camera.wPosition = glm::vec3(-100.0f, 90.0f, 180.0f);
+    mMapScene->camera.wPosition = glm::vec3(0.0f, 90.0f, 0.0f);
     mMapScene->camera.wViewDirection =
-      glm::normalize(glm::vec3(0.3f, -0.1f, -1.0f));
+      glm::normalize(glm::vec3(0.5f, -0.1f, 0.8f));
     mMapScene->camera.wUp = glm::vec3(0.0f, 1.0f, 0.0f);
   }
 }

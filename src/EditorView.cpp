@@ -471,9 +471,9 @@ void EditorView::renderGeneralWindow() {
     if (ImGui::IsWindowFocused()) {
       mFocusedWindow = EditorWindow::General;
     }
-
-    ImGui::End();
   }
+
+  ImGui::End();
 }
 
 void EditorView::renderGameStateWindow() {
@@ -484,9 +484,9 @@ void EditorView::renderGameStateWindow() {
     if (ImGui::IsWindowFocused()) {
       mFocusedWindow = EditorWindow::GameState;
     }
-
-    ImGui::End();
   }
+
+  ImGui::End();
 }
 
 void EditorView::renderConsoleWindow() {
@@ -497,9 +497,9 @@ void EditorView::renderConsoleWindow() {
     if (ImGui::IsWindowFocused()) {
       mFocusedWindow = EditorWindow::Console;
     }
-
-    ImGui::End();
   }
+
+  ImGui::End();
 }
 
 void EditorView::renderGraphicsWindow() {
@@ -615,9 +615,9 @@ void EditorView::renderGraphicsWindow() {
 
       ImGui::TreePop();
     }
-
-    ImGui::End();
   }
+
+  ImGui::End();
 }
 
 }
