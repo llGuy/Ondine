@@ -39,6 +39,7 @@ void Application::run() {
   auto evProc = RECV_EVENT_PROC(recvEvent);
   auto surfaceInfo = mWindow.init(evProc);
 
+  srand(time(nullptr));
   mGraphicsContext.initContext(surfaceInfo);
   mRenderer3D.init();
   mViewStack.init();
