@@ -163,7 +163,9 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
     {mGBuffer.mGBufferExtent.width, mGBuffer.mGBufferExtent.height});
 
   mCamera.updateData(frame.primaryCommandBuffer, mBoundScene->camera);
-  mDeferredLighting.updateData(frame.primaryCommandBuffer, mBoundScene->lighting);
+
+  mDeferredLighting.updateData(
+    frame.primaryCommandBuffer, mBoundScene->lighting);
 
   mStarRenderer.tick(
     mBoundScene->camera,

@@ -151,7 +151,7 @@ public:
     PANIC_AND_EXIT();
   }
 
-  const T &get(uint32_t hash) const {
+  const T *get(uint32_t hash) const {
     static int32_t invalid = -1;
     const Bucket *bucket = &mBuckets[hash % BucketCount];
     uint32_t bucketItem = 0;
@@ -162,7 +162,7 @@ public:
       if (item->hash != UNINITIALISED_HASH) {
         ++filledItems;
         if (hash == item->hash) {
-          return item->value;
+          return &item->value;
         }
       }
     }
@@ -172,10 +172,10 @@ public:
     }
 
     PANIC_AND_EXIT();
-    return NullReference<T>::nullRef;
+    return nullptr;
   }
     
-  T &get(uint32_t hash) {
+  T *get(uint32_t hash) {
     static int32_t invalid = -1;
     Bucket *bucket = &mBuckets[hash % BucketCount];
     uint32_t bucketItem = 0;
@@ -186,7 +186,7 @@ public:
       if (item->hash != UNINITIALISED_HASH) {
         ++filledItems;
         if (hash == item->hash) {
-          return item->value;
+          return &item->value;
         }
       }
     }
@@ -196,7 +196,7 @@ public:
     }
 
     PANIC_AND_EXIT();
-    return NullReference<T>::nullRef;
+    return nullptr;
   }
 
 private:

@@ -2,21 +2,34 @@
 
 #include <stdint.h>
 #include <glm/glm.hpp>
+#include "VulkanBuffer.hpp"
 
 namespace Ondine::Graphics {
 
 struct Voxel {
   // Work out what needs to be here
-  uint32_t bits;
+  uint16_t density;
 };
+
+extern const int8_t VOXEL_EDGE_CONNECT[256][16];
 
 constexpr uint32_t CHUNK_DIM = 32;
 constexpr uint32_t CHUNK_VOLUME = CHUNK_DIM * CHUNK_DIM * CHUNK_DIM;
+
+struct ChunkVertex {
+  glm::vec3 position;
+};
+
+struct ChunkVertices {
+  VulkanBuffer vbo;
+};
 
 struct Chunk {
   Voxel voxels[CHUNK_VOLUME];
   glm::ivec3 chunkCoord;
   uint32_t chunkStackIndex;
+  ChunkVertices vertices;
+  glm::mat4 transform;
 };
 
 }

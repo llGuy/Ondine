@@ -9,7 +9,8 @@ Scene::Scene(ModelManager &modelManager, RenderMethodEntries &renderMethods)
   : mModelManager(modelManager),
     mRenderMethods(renderMethods),
     mSceneObjects(MAX_SCENE_OBJECTS_COUNT) {
-  
+  memset(&lighting, 0, sizeof(lighting));
+  memset(&camera, 0, sizeof(camera));
 }
 
 void Scene::init(
