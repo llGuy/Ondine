@@ -1,5 +1,9 @@
 #include "Math.hpp"
+#include "Camera.hpp"
 #include "Terrain.hpp"
+#include "Clipping.hpp"
+#include "VulkanContext.hpp"
+#include "PlanetRenderer.hpp"
 
 namespace Ondine::Graphics {
 
@@ -31,6 +35,8 @@ void Terrain::init() {
 
   mChunkIndices.init();
   mLoadedChunks.init(MAX_CHUNKS);
+
+  mTemporaryVertices = flAllocv<ChunkVertex>(CHUNK_MAX_VERTICES);
 }
 
 Chunk *Terrain::getChunk(const glm::ivec3 &coord) {
@@ -106,12 +112,17 @@ uint32_t Terrain::hashChunkCoord(const glm::ivec3 &coord) const {
   return (uint32_t)hasher.value;
 }
 
+uint32_t Terrain::getVoxelIndex(int x, int y, int z) const {
+  return z * (CHUNK_DIM * CHUNK_DIM) +
+    y * CHUNK_DIM + x;
+}
+
 uint32_t Terrain::getVoxelIndex(const glm::ivec3 &coord) const {
   return coord.z * (CHUNK_DIM * CHUNK_DIM) +
     coord.y * CHUNK_DIM + coord.x;
 }
 
-void Terrain::pushVertextoTriangleList(
+void Terrain::pushVertexToTriangleList(
   uint32_t v0, uint32_t v1,
   glm::vec3 *vertices, Voxel *voxels,
   Voxel surfaceDensity,
@@ -140,27 +151,262 @@ void Terrain::pushVertextoTriangleList(
   ++vertexCount;
 }
 
-ChunkVertices Terrain::generateChunkVertices(
-  const Chunk &chunk) {
-  return {};
+void Terrain::updateVoxelCube(
+  Voxel *voxels,
+  const glm::ivec3 &coord,
+  Voxel surfaceDensity,
+  ChunkVertex *meshVertices,
+  uint32_t &vertexCount) {
+  uint8_t bitCombination = 0;
+  for (uint32_t i = 0; i < 8; ++i) {
+    bool isOverSurface = (voxels[i].density > surfaceDensity.density);
+    bitCombination |= isOverSurface << i;
+  }
+
+  const int8_t *triangleEntry = &VOXEL_EDGE_CONNECT[bitCombination][0];
+
+  uint32_t edge = 0;
+
+  int8_t edgePair[3] = {};
+
+  while(triangleEntry[edge] != -1) {
+    int8_t edgeIndex = triangleEntry[edge];
+    edgePair[edge % 3] = edgeIndex;
+
+    if (edge % 3 == 2) {
+      uint32_t dominantVoxel = 0;
+
+      glm::vec3 vertices[8] = {};
+      for (uint32_t i = 0; i < 8; ++i) {
+        vertices[i] = NORMALIZED_CUBE_VERTICES[i] +
+          glm::vec3(0.5f) + glm::vec3(coord);
+
+        if (voxels[i].density > voxels[dominantVoxel].density) {
+          dominantVoxel = i;
+        }
+      }
+
+      for (uint32_t i = 0; i < 3; ++i) {
+        switch(edgePair[i]) {
+        case 0: {
+          pushVertexToTriangleList(
+            0, 1, vertices, voxels, surfaceDensity,
+            meshVertices, vertexCount);
+        } break;
+
+        case 1: {
+          pushVertexToTriangleList(
+            1, 2, vertices, voxels, surfaceDensity,
+            meshVertices, vertexCount);
+        } break;
+
+        case 2: {
+          pushVertexToTriangleList(
+            2, 3, vertices, voxels, surfaceDensity,
+            meshVertices, vertexCount);
+        } break;
+
+        case 3: {
+          pushVertexToTriangleList(
+            3, 0, vertices, voxels, surfaceDensity,
+            meshVertices, vertexCount);
+        } break;
+
+        case 4: {
+          pushVertexToTriangleList(
+            4, 5, vertices, voxels, surfaceDensity,
+            meshVertices, vertexCount);
+        } break;
+
+        case 5: {
+          pushVertexToTriangleList(
+            5, 6, vertices, voxels, surfaceDensity,
+            meshVertices, vertexCount);
+        } break;
+
+        case 6: {
+          pushVertexToTriangleList(
+            6, 7, vertices, voxels, surfaceDensity,
+            meshVertices, vertexCount);
+        } break;
+
+        case 7: {
+          pushVertexToTriangleList(
+            7, 4, vertices, voxels, surfaceDensity,
+            meshVertices, vertexCount);
+        } break;
+
+        case 8: {
+          pushVertexToTriangleList(
+            0, 4, vertices, voxels, surfaceDensity,
+            meshVertices, vertexCount);
+        } break;
+
+        case 9: {
+          pushVertexToTriangleList(
+            1, 5, vertices, voxels, surfaceDensity,
+            meshVertices, vertexCount);
+        } break;
+
+        case 10: {
+          pushVertexToTriangleList(
+            2, 6, vertices, voxels, surfaceDensity,
+            meshVertices, vertexCount);
+        } break;
+
+        case 11: {
+          pushVertexToTriangleList(
+            3, 7, vertices, voxels, surfaceDensity,
+            meshVertices, vertexCount);
+        } break;
+
+        }
+      }
+    }
+
+    ++edge;
+  }
+}
+
+uint32_t Terrain::generateChunkVertices(
+  const Chunk &chunk,
+  Voxel surfaceDensity,
+  ChunkVertex *meshVertices) {
+  uint32_t vertexCount = 0;
+
+  const Chunk *xSuperior = at(chunk.chunkCoord + glm::ivec3(1, 0, 0));
+  const Chunk *ySuperior = at(chunk.chunkCoord + glm::ivec3(0, 1, 0));
+  const Chunk *zSuperior = at(chunk.chunkCoord + glm::ivec3(0, 0, 1));
+    
+  bool doesntExist = 0;
+  if (xSuperior) {
+    // x_superior
+    for (uint32_t z = 0; z < CHUNK_DIM; ++z) {
+      for (uint32_t y = 0; y < CHUNK_DIM - 1; ++y) {
+        doesntExist = 0;
+                
+        uint32_t x = CHUNK_DIM - 1;
+
+        Voxel voxelValues[8] = {
+          chunk.voxels[getVoxelIndex(x, y, z)],
+          getChunkEdgeVoxel(x + 1, y, z, &doesntExist, chunk.chunkCoord),
+          getChunkEdgeVoxel(x + 1, y, z + 1, &doesntExist, chunk.chunkCoord),
+          getChunkEdgeVoxel(x,     y, z + 1, &doesntExist, chunk.chunkCoord),
+                    
+          chunk.voxels[getVoxelIndex(x, y + 1, z)],
+          getChunkEdgeVoxel(x + 1, y + 1, z,&doesntExist, chunk.chunkCoord),
+          getChunkEdgeVoxel(x + 1, y + 1, z + 1, &doesntExist, chunk.chunkCoord),
+          getChunkEdgeVoxel(x,     y + 1, z + 1, &doesntExist, chunk.chunkCoord)
+        };
+
+        if (!doesntExist) {
+          updateVoxelCube(
+            voxelValues, glm::ivec3(x, y, z), surfaceDensity,
+            meshVertices, vertexCount);
+        }
+      }
+    }
+  }
+
+  if (ySuperior) {
+    // y_superior    
+    for (uint32_t z = 0; z < CHUNK_DIM; ++z) {
+      for (uint32_t x = 0; x < CHUNK_DIM; ++x) {
+        doesntExist = 0;
+                
+        uint32_t y = CHUNK_DIM - 1;
+
+        Voxel voxelValues[8] = {
+          chunk.voxels[getVoxelIndex(x, y, z)],
+          getChunkEdgeVoxel(x + 1, y, z, &doesntExist, chunk.chunkCoord),
+          getChunkEdgeVoxel(x + 1, y, z + 1, &doesntExist, chunk.chunkCoord),
+          getChunkEdgeVoxel(x,     y, z + 1, &doesntExist, chunk.chunkCoord),
+                    
+          getChunkEdgeVoxel(x, y + 1, z, &doesntExist, chunk.chunkCoord),
+          getChunkEdgeVoxel(x + 1, y + 1, z, &doesntExist, chunk.chunkCoord),
+          getChunkEdgeVoxel(x + 1, y + 1, z + 1, &doesntExist, chunk.chunkCoord),
+          getChunkEdgeVoxel(x,     y + 1, z + 1, &doesntExist, chunk.chunkCoord)
+        };
+
+        if (!doesntExist) {
+          updateVoxelCube(
+            voxelValues, glm::ivec3(x, y, z), surfaceDensity,
+            meshVertices, vertexCount);
+        }
+      }
+    }
+  }
+
+  if (zSuperior) {
+    // z_superior
+    for (uint32_t y = 0; y < CHUNK_DIM - 1; ++y) {
+      for (uint32_t x = 0; x < CHUNK_DIM - 1; ++x) {
+        doesntExist = 0;
+                
+        uint32_t z = CHUNK_DIM - 1;
+
+        Voxel voxelValues[8] = {
+          chunk.voxels[getVoxelIndex(x, y, z)],
+          getChunkEdgeVoxel(x + 1, y, z, &doesntExist, chunk.chunkCoord),
+          getChunkEdgeVoxel(x + 1, y, z + 1, &doesntExist, chunk.chunkCoord),
+          getChunkEdgeVoxel(x,     y, z + 1, &doesntExist, chunk.chunkCoord),
+                    
+          chunk.voxels[getVoxelIndex(x, y + 1, z)],
+          getChunkEdgeVoxel(x + 1, y + 1, z, &doesntExist, chunk.chunkCoord),
+          getChunkEdgeVoxel(x + 1, y + 1, z + 1, &doesntExist, chunk.chunkCoord),
+          getChunkEdgeVoxel(x,     y + 1, z + 1, &doesntExist, chunk.chunkCoord)
+        };
+
+        if (!doesntExist) {
+          updateVoxelCube(
+            voxelValues, glm::ivec3(x, y, z), surfaceDensity,
+            meshVertices, vertexCount);
+        }
+      }
+    }
+  }
+    
+  for (uint32_t z = 0; z < CHUNK_DIM - 1; ++z) {
+    for (uint32_t y = 0; y < CHUNK_DIM - 1; ++y) {
+      for (uint32_t x = 0; x < CHUNK_DIM - 1; ++x) {
+        Voxel voxelValues[8] = {
+          chunk.voxels[getVoxelIndex(x, y, z)],
+          chunk.voxels[getVoxelIndex(x + 1, y, z)],
+          chunk.voxels[getVoxelIndex(x + 1, y, z + 1)],
+          chunk.voxels[getVoxelIndex(x, y, z + 1)],
+                    
+          chunk.voxels[getVoxelIndex(x, y + 1, z)],
+          chunk.voxels[getVoxelIndex(x + 1, y + 1, z)],
+          chunk.voxels[getVoxelIndex(x + 1, y + 1, z + 1)],
+          chunk.voxels[getVoxelIndex(x, y + 1, z + 1)]
+        };
+
+        updateVoxelCube(
+          voxelValues, glm::ivec3(x, y, z), surfaceDensity,
+          meshVertices, vertexCount);
+      }
+    }
+  }
+
+  return vertexCount;
 }
 
 Voxel Terrain::getChunkEdgeVoxel(
-  const glm::ivec3 &inCoord,
+  int x, int y, int z,
   bool *doesntExist,
   const glm::ivec3 &chunkCoord) const {
   glm::ivec3 chunkCoordOffset = glm::ivec3(0);
-  glm::ivec3 finalCoord = inCoord;
+  glm::ivec3 finalCoord = glm::ivec3(x, y, z);
 
-  if (inCoord.x == CHUNK_DIM) {
+  if (x == CHUNK_DIM) {
     finalCoord.x = 0;
     chunkCoordOffset.x = 1;
   }
-  if (inCoord.y == CHUNK_DIM) {
+  if (y == CHUNK_DIM) {
     finalCoord.y = 0;
     chunkCoordOffset.y = 1;
   }
-  if (inCoord.z == CHUNK_DIM) {
+  if (z == CHUNK_DIM) {
     finalCoord.z = 0;
     chunkCoordOffset.z = 1;
   }
@@ -177,7 +423,43 @@ Voxel Terrain::getChunkEdgeVoxel(
   if (*doesntExist)
     return { 0 };
     
-  return chunk->voxels[getVoxelIndex(finalCoord)];
+  return chunk->voxels[getVoxelIndex(finalCoord.x, finalCoord.y, finalCoord.z)];
+}
+
+ChunkVertices Terrain::createChunkVertices(
+  const Chunk &chunk, VulkanContext &graphicsContext) {
+  uint32_t vertexCount = 0;
+  Voxel surfaceDensity = { 1000 };
+  generateChunkVertices(chunk, surfaceDensity, mTemporaryVertices);
+
+  ChunkVertices ret = {};
+  ret.vbo.init(
+    graphicsContext.device(),
+    vertexCount * sizeof(ChunkVertex),
+    (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer);
+
+  ret.vbo.fillWithStaging(
+    graphicsContext.device(),
+    graphicsContext.commandPool(),
+    {(uint8_t *)mTemporaryVertices, vertexCount});
+
+  return ret;
+}
+
+void Terrain::prepareForRender(VulkanContext &graphicsContext) {
+  for (int i = 0; i < mLoadedChunks.size; ++i) {
+    Chunk *chunk = mLoadedChunks[i];
+    // Don't worry, this will be thoroughly redone
+    chunk->vertices = createChunkVertices(*chunk, graphicsContext);
+  }
+}
+
+void Terrain::submitForRender(
+  const Camera &camera,
+  const PlanetRenderer &planet,
+  const Clipping &clipping,
+  VulkanFrame &frame) {
+  
 }
 
 }

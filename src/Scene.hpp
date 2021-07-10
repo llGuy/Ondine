@@ -7,6 +7,7 @@
 #include "DynamicArray.hpp"
 #include "ModelManager.hpp"
 #include "PlanetRenderer.hpp"
+#include "TerrainRenderer.hpp"
 #include "DeferredLighting.hpp"
 
 namespace Ondine::Graphics {
