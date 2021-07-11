@@ -17,7 +17,7 @@ MapView::MapView(
 
   mMapScene = renderer.createScene();
   mMapScene->terrain.init();
-  mMapScene->terrain.makeSphere(3.0f, glm::vec3(121.0f, 90.0f, 194.0f));
+  mMapScene->terrain.makeSphere(30.0f, glm::vec3(121.0f, 90.0f, 194.0f));
   mMapScene->terrain.prepareForRender(renderer.mGraphicsContext);
 
   renderer.bindScene(mMapScene);

@@ -55,7 +55,9 @@ void TerrainRenderer::render(
       terrain.chunkCoordToWorld(chunk->chunkCoord));
     commandBuffer.pushConstants(sizeof(translate), &translate[0][0]);
     commandBuffer.draw(chunk->vertices.vertexCount, 1, 0, 0);
+    printf("%d ", chunk->vertices.vertexCount);
   }
+  printf("\n");
 }
 
 }

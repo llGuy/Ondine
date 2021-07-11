@@ -53,7 +53,7 @@ private:
   uint32_t generateChunkVertices(
     const Chunk &chunk,
     Voxel surfaceDensity,
-    ChunkVertex *meshVertices);
+    glm::vec3 *meshVertices);
 
   Voxel getChunkEdgeVoxel(
     int x, int y, int z,
@@ -64,19 +64,19 @@ private:
     uint32_t v0, uint32_t v1,
     glm::vec3 *vertices, Voxel *voxels,
     Voxel surfaceDensity,
-    ChunkVertex *meshVertices, uint32_t &vertexCount);
+    glm::vec3 *meshVertices, uint32_t &vertexCount);
 
   void updateVoxelCube(
     Voxel *voxels,
     const glm::ivec3 &coord,
     Voxel surfaceDensity,
-    ChunkVertex *meshVertices,
+    glm::vec3 *meshVertices,
     uint32_t &vertexCount);
 
 private:
   static constexpr uint32_t MAX_CHUNKS = 300;
   static constexpr uint32_t CHUNK_MAX_VERTICES =
-    5 * (CHUNK_DIM - 1) * (CHUNK_DIM - 1) * (CHUNK_DIM - 1);
+    10 * (CHUNK_DIM) * (CHUNK_DIM) * (CHUNK_DIM);
   static const glm::vec3 NORMALIZED_CUBE_VERTICES[8];
   static const glm::ivec3 NORMALIZED_CUBE_VERTEX_INDICES[8];
 
@@ -85,7 +85,7 @@ private:
   Array<Chunk *> mLoadedChunks;
   // Maps 3-D chunk coord to the chunk's index in the mLoadedChunks array
   FastMap<uint32_t, MAX_CHUNKS, 30, 10> mChunkIndices;
-  ChunkVertex *mTemporaryVertices;
+  glm::vec3 *mTemporaryVertices;
 
   friend class TerrainRenderer;
 };

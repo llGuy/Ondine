@@ -37,7 +37,7 @@ void Terrain::init() {
   mChunkIndices.init();
   mLoadedChunks.init(MAX_CHUNKS);
 
-  mTemporaryVertices = flAllocv<ChunkVertex>(CHUNK_MAX_VERTICES);
+  mTemporaryVertices = flAllocv<glm::vec3>(CHUNK_MAX_VERTICES);
 }
 
 Chunk *Terrain::getChunk(const glm::ivec3 &coord) {
@@ -133,7 +133,7 @@ void Terrain::pushVertexToTriangleList(
   uint32_t v0, uint32_t v1,
   glm::vec3 *vertices, Voxel *voxels,
   Voxel surfaceDensity,
-  ChunkVertex *meshVertices, uint32_t &vertexCount) {
+  glm::vec3 *meshVertices, uint32_t &vertexCount) {
   float surfaceLevelF = (float)surfaceDensity.density;
   float voxelValue0 = (float)voxels[v0].density;
   float voxelValue1 = (float)voxels[v1].density;
@@ -153,7 +153,7 @@ void Terrain::pushVertexToTriangleList(
   glm::vec3 vertex = interpolate(
     vertices[v0], vertices[v1], interpolatedVoxelValues);
 
-  meshVertices[vertexCount].position = vertex;
+  meshVertices[vertexCount] = vertex;
 
   ++vertexCount;
 }
@@ -162,7 +162,7 @@ void Terrain::updateVoxelCube(
   Voxel *voxels,
   const glm::ivec3 &coord,
   Voxel surfaceDensity,
-  ChunkVertex *meshVertices,
+  glm::vec3 *meshVertices,
   uint32_t &vertexCount) {
   uint8_t bitCombination = 0;
   for (uint32_t i = 0; i < 8; ++i) {
@@ -278,7 +278,7 @@ void Terrain::updateVoxelCube(
 uint32_t Terrain::generateChunkVertices(
   const Chunk &chunk,
   Voxel surfaceDensity,
-  ChunkVertex *meshVertices) {
+  glm::vec3 *meshVertices) {
   uint32_t vertexCount = 0;
 
   const Chunk *xSuperior = at(chunk.chunkCoord + glm::ivec3(1, 0, 0));
@@ -442,13 +442,13 @@ ChunkVertices Terrain::createChunkVertices(
   ChunkVertices ret = {};
   ret.vbo.init(
     graphicsContext.device(),
-    vertexCount * sizeof(ChunkVertex),
+    vertexCount * sizeof(glm::vec3),
     (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer);
 
   ret.vbo.fillWithStaging(
     graphicsContext.device(),
     graphicsContext.commandPool(),
-    {(uint8_t *)mTemporaryVertices, vertexCount});
+    {(uint8_t *)mTemporaryVertices, vertexCount * sizeof(glm::vec3)});
 
   ret.vertexCount = vertexCount;
 
@@ -478,9 +478,9 @@ void Terrain::makeSphere(float radius, const glm::vec3 &center) {
 
           glm::ivec3 chunkOriginDiff = position - c * (int32_t)CHUNK_DIM;
 
-          if (chunkOriginDiff.x >= 0 && chunkOriginDiff.x < 16 &&
-              chunkOriginDiff.y >= 0 && chunkOriginDiff.y < 16 &&
-              chunkOriginDiff.z >= 0 && chunkOriginDiff.z < 16) {
+          if (chunkOriginDiff.x >= 0 && chunkOriginDiff.x < CHUNK_DIM &&
+              chunkOriginDiff.y >= 0 && chunkOriginDiff.y < CHUNK_DIM &&
+              chunkOriginDiff.z >= 0 && chunkOriginDiff.z < CHUNK_DIM) {
             // Is within current chunk boundaries
             float proportion = 1.0f - (distance2 / radius2);
 
@@ -489,9 +489,6 @@ void Terrain::makeSphere(float radius, const glm::vec3 &center) {
             Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
             uint16_t newValue = (uint32_t)((proportion) * 2000.0f);
             v->density = newValue;
-            LOG_INFOV(
-              "Voxel at %s has density %d\n",
-              glm::to_string(position).c_str(), (int)newValue);
           }
           else {
             glm::ivec3 c = worldToChunkCoord(position);
@@ -507,9 +504,6 @@ void Terrain::makeSphere(float radius, const glm::vec3 &center) {
             Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
             uint16_t newValue = (uint32_t)((proportion) * 2000.0f);
             v->density = newValue;
-            LOG_INFOV(
-              "Voxel at %s has density %d\n",
-              glm::to_string(position).c_str(), (int)newValue);
           }
         }
       }

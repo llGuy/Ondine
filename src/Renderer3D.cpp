@@ -30,7 +30,6 @@ void Renderer3D::init() {
   mSkyRenderer.init(mGraphicsContext, mGBuffer);
   mStarRenderer.init(mGraphicsContext, mGBuffer, 1000);
   mTerrainRenderer.init(mGraphicsContext, mGBuffer);
-  mClipping.init(mGraphicsContext, 1.0f, mPlanetProperties.bottomRadius);
 
   // Idle with all precomputation stuff
   mGraphicsContext.device().graphicsQueue().idle();
@@ -79,6 +78,7 @@ void Renderer3D::init() {
   mDeferredLighting.init(
     mGraphicsContext,
     {pipelineViewport.width, pipelineViewport.height});
+  mClipping.init(mGraphicsContext, 1.0f, mPlanetProperties.bottomRadius);
 
   { // Prepare scene resources
     /* Create model */
