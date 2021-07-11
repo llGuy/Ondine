@@ -2,6 +2,7 @@
 
 #include "Camera.hpp"
 #include "GBuffer.hpp"
+#include "Terrain.hpp"
 #include "Clipping.hpp"
 #include "SceneObject.hpp"
 #include "DynamicArray.hpp"
@@ -27,6 +28,7 @@ public:
     const Camera &camera,
     const PlanetRenderer &planet,
     const Clipping &clipping,
+    const TerrainRenderer &terrainRenderer,
     VulkanFrame &frame);
 
   SceneObjectHandle createSceneObject(const char *renderMethodName);
@@ -37,6 +39,7 @@ public:
 public:
   CameraProperties camera;
   LightingProperties lighting;
+  Terrain terrain;
 
 private:
   static constexpr uint32_t MAX_SCENE_OBJECTS_COUNT = 5000;

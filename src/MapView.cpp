@@ -16,6 +16,10 @@ MapView::MapView(
   mOnEvent(cursorChange);
 
   mMapScene = renderer.createScene();
+  mMapScene->terrain.init();
+  mMapScene->terrain.makeSphere(3.0f, glm::vec3(121.0f, 90.0f, 194.0f));
+  mMapScene->terrain.prepareForRender(renderer.mGraphicsContext);
+
   renderer.bindScene(mMapScene);
 
   { // Set lighting properties

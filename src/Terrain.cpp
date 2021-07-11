@@ -4,6 +4,7 @@
 #include "Clipping.hpp"
 #include "VulkanContext.hpp"
 #include "PlanetRenderer.hpp"
+#include <glm/gtx/string_cast.hpp>
 
 namespace Ondine::Graphics {
 
@@ -52,6 +53,7 @@ Chunk *Terrain::getChunk(const glm::ivec3 &coord) {
     Chunk *&chunk = mLoadedChunks[i];
     chunk = flAlloc<Chunk>();
 
+    memset(chunk, 0, sizeof(Chunk));
     chunk->chunkCoord = coord;
     chunk->chunkStackIndex = i;
 
@@ -88,6 +90,11 @@ const Chunk *Terrain::at(const glm::ivec3 &coord) const {
 glm::ivec3 Terrain::worldToChunkCoord(const glm::vec3 &wPosition) const {
   glm::vec3 scaled = glm::floor(wPosition / (float)CHUNK_DIM);
   return (glm::ivec3)scaled;
+}
+
+glm::vec3 Terrain::chunkCoordToWorld(const glm::ivec3 &chunkCoord) const {
+  glm::vec3 scaled = glm::floor((glm::vec3)chunkCoord * (float)CHUNK_DIM);
+  return scaled;
 }
 
 uint32_t Terrain::hashChunkCoord(const glm::ivec3 &coord) const {
@@ -428,9 +435,9 @@ Voxel Terrain::getChunkEdgeVoxel(
 
 ChunkVertices Terrain::createChunkVertices(
   const Chunk &chunk, VulkanContext &graphicsContext) {
-  uint32_t vertexCount = 0;
   Voxel surfaceDensity = { 1000 };
-  generateChunkVertices(chunk, surfaceDensity, mTemporaryVertices);
+  uint32_t vertexCount = generateChunkVertices(
+    chunk, surfaceDensity, mTemporaryVertices);
 
   ChunkVertices ret = {};
   ret.vbo.init(
@@ -443,7 +450,71 @@ ChunkVertices Terrain::createChunkVertices(
     graphicsContext.commandPool(),
     {(uint8_t *)mTemporaryVertices, vertexCount});
 
+  ret.vertexCount = vertexCount;
+
   return ret;
+}
+
+void Terrain::makeSphere(float radius, const glm::vec3 &center) {
+  glm::ivec3 start = (glm::ivec3)center - glm::ivec3((int32_t)radius);
+  float radius2 = radius * radius;
+  int32_t diameter = (int32_t)radius * 2 + 1;
+
+  glm::ivec3 currentChunkCoord = worldToChunkCoord(center);
+
+  Chunk *currentChunk = getChunk(currentChunkCoord);
+
+  for (int32_t z = start.z; z < start.z + diameter; ++z) {
+    for (int32_t y = start.y; y < start.y + diameter; ++y) {
+      for (int32_t x = start.x; x < start.x + diameter; ++x) {
+        glm::ivec3 position = glm::ivec3(x, y, z);
+        glm::vec3 posFloat = (glm::vec3)position;
+        glm::vec3 diff = posFloat - center;
+
+        float distance2 = glm::dot(diff, diff);
+
+        if (distance2 <= radius2) {
+          glm::ivec3 c = worldToChunkCoord(posFloat);
+
+          glm::ivec3 chunkOriginDiff = position - c * (int32_t)CHUNK_DIM;
+
+          if (chunkOriginDiff.x >= 0 && chunkOriginDiff.x < 16 &&
+              chunkOriginDiff.y >= 0 && chunkOriginDiff.y < 16 &&
+              chunkOriginDiff.z >= 0 && chunkOriginDiff.z < 16) {
+            // Is within current chunk boundaries
+            float proportion = 1.0f - (distance2 / radius2);
+
+            glm::ivec3 voxelCoord = chunkOriginDiff;
+
+            Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
+            uint16_t newValue = (uint32_t)((proportion) * 2000.0f);
+            v->density = newValue;
+            LOG_INFOV(
+              "Voxel at %s has density %d\n",
+              glm::to_string(position).c_str(), (int)newValue);
+          }
+          else {
+            glm::ivec3 c = worldToChunkCoord(position);
+
+            currentChunk = getChunk(c);
+            currentChunkCoord = c;
+
+            float proportion = 1.0f / (distance2 / radius2);
+
+            glm::ivec3 voxelCoord = position -
+              currentChunkCoord * (int32_t)CHUNK_DIM;
+
+            Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
+            uint16_t newValue = (uint32_t)((proportion) * 2000.0f);
+            v->density = newValue;
+            LOG_INFOV(
+              "Voxel at %s has density %d\n",
+              glm::to_string(position).c_str(), (int)newValue);
+          }
+        }
+      }
+    }
+  }
 }
 
 void Terrain::prepareForRender(VulkanContext &graphicsContext) {

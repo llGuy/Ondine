@@ -6,6 +6,7 @@
 #include "Scene.hpp"
 #include "Window.hpp"
 #include "Camera.hpp"
+#include "MapView.hpp"
 #include "GBuffer.hpp"
 #include "Delegate.hpp"
 #include "Clipping.hpp"
@@ -18,6 +19,7 @@
 #include "StarRenderer.hpp"
 #include "WaterRenderer.hpp"
 #include "VulkanContext.hpp"
+#include "TerrainRenderer.hpp"
 #include "DeferredLighting.hpp"
 
 namespace Ondine::Graphics {
@@ -61,6 +63,7 @@ private:
   SkyRenderer mSkyRenderer;
   PlanetRenderer mPlanetRenderer;
   WaterRenderer mWaterRenderer;
+  TerrainRenderer mTerrainRenderer;
   DeferredLighting mDeferredLighting;
   Pixelater mPixelater;
   RenderMethodEntries mRenderMethods;
@@ -73,6 +76,7 @@ private:
 
   // Only relevant in DEV builds
   friend class View::EditorView;
+  friend class View::MapView;
 };
 
 }

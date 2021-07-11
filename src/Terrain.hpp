@@ -30,6 +30,8 @@ public:
     const Clipping &clipping,
     VulkanFrame &frame);
 
+  void makeSphere(float radius, const glm::vec3 &center);
+
   // TODO: Get buffers from a pool
   ChunkVertices createChunkVertices(
     const Chunk &chunk,
@@ -42,6 +44,7 @@ public:
   const Chunk *at(const glm::ivec3 &coord) const;
 
   glm::ivec3 worldToChunkCoord(const glm::vec3 &wPosition) const;
+  glm::vec3 chunkCoordToWorld(const glm::ivec3 &chunkCoord) const;
   uint32_t hashChunkCoord(const glm::ivec3 &coord) const;
   uint32_t getVoxelIndex(const glm::ivec3 &coord) const;
   uint32_t getVoxelIndex(int x, int y, int z) const;
@@ -80,8 +83,11 @@ private:
   float mTerrainScale;
   float mChunkWidth;
   Array<Chunk *> mLoadedChunks;
+  // Maps 3-D chunk coord to the chunk's index in the mLoadedChunks array
   FastMap<uint32_t, MAX_CHUNKS, 30, 10> mChunkIndices;
   ChunkVertex *mTemporaryVertices;
+
+  friend class TerrainRenderer;
 };
 
 }

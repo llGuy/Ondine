@@ -169,9 +169,9 @@ public:
 
     if (filledItems == BucketSize) {
       LOG_ERROR("Error in hash table get()\n");
+      PANIC_AND_EXIT();
     }
 
-    PANIC_AND_EXIT();
     return nullptr;
   }
     
@@ -193,9 +193,9 @@ public:
 
     if (filledItems == BucketSize) {
       LOG_ERROR("Error in hash table get()\n");
+      PANIC_AND_EXIT();
     }
 
-    PANIC_AND_EXIT();
     return nullptr;
   }
 

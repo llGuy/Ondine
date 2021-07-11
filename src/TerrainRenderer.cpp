@@ -1,5 +1,6 @@
 #include "Camera.hpp"
 #include "GBuffer.hpp"
+#include "Terrain.hpp"
 #include "Clipping.hpp"
 #include "VulkanContext.hpp"
 #include "PlanetRenderer.hpp"
@@ -8,8 +9,8 @@
 namespace Ondine::Graphics {
 
 void TerrainRenderer::init(
-  const GBuffer &gbuffer,
-  VulkanContext &graphicsContext) {
+  VulkanContext &graphicsContext,
+  const GBuffer &gbuffer) {
   /* Create shader */
   VulkanPipelineConfig pipelineConfig(
     {gbuffer.renderPass(), 0},
@@ -39,8 +40,22 @@ void TerrainRenderer::render(
   const Camera &camera,
   const PlanetRenderer &planet,
   const Clipping &clipping,
-  VulkanFrame &frame) {
-  
+  const Terrain &terrain,
+  VulkanFrame &frame) const {
+  auto &commandBuffer = frame.primaryCommandBuffer;
+
+  commandBuffer.bindPipeline(mPipeline);
+  commandBuffer.bindUniforms(
+    camera.uniform(), planet.uniform(), clipping.uniform);
+
+  for (int i = 0; i < terrain.mLoadedChunks.size; ++i) {
+    const Chunk *chunk = terrain.mLoadedChunks[i];
+    commandBuffer.bindVertexBuffers(0, 1, &chunk->vertices.vbo);
+    glm::mat4 translate = glm::translate(
+      terrain.chunkCoordToWorld(chunk->chunkCoord));
+    commandBuffer.pushConstants(sizeof(translate), &translate[0][0]);
+    commandBuffer.draw(chunk->vertices.vertexCount, 1, 0, 0);
+  }
 }
 
 }

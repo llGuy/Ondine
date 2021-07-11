@@ -15,6 +15,7 @@ GameView::GameView(
   mOnEvent(cursorChange);
 
   mGameScene = renderer.createScene();
+  mGameScene->terrain.init();
   renderer.bindScene(mGameScene);
   
   { // Set up scene objects

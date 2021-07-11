@@ -23,6 +23,7 @@ void Scene::submit(
   const Camera &camera,
   const PlanetRenderer &planet,
   const Clipping &clipping,
+  const TerrainRenderer &terrainRenderer,
   VulkanFrame &frame) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
@@ -44,6 +45,8 @@ void Scene::submit(
     renderMethod.pushConstant(frame, sceneObj);
     renderMethod.submit(frame);
   }
+
+  terrainRenderer.render(camera, planet, clipping, terrain, frame);
 }
 
 SceneObjectHandle Scene::createSceneObject(const char *renderMethod) {

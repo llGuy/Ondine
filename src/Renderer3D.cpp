@@ -29,6 +29,7 @@ void Renderer3D::init() {
     mGraphicsContext, {pipelineViewport.width, pipelineViewport.height});
   mSkyRenderer.init(mGraphicsContext, mGBuffer);
   mStarRenderer.init(mGraphicsContext, mGBuffer, 1000);
+  mTerrainRenderer.init(mGraphicsContext, mGBuffer);
   mClipping.init(mGraphicsContext, 1.0f, mPlanetProperties.bottomRadius);
 
   // Idle with all precomputation stuff
@@ -179,11 +180,13 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
 
   /* Rendering to water texture */
   mWaterRenderer.tick(
-    frame, mPlanetRenderer, mSkyRenderer, mStarRenderer, *mBoundScene);
+    frame, mPlanetRenderer, mSkyRenderer,
+    mStarRenderer, mTerrainRenderer, *mBoundScene);
      
   mGBuffer.beginRender(frame);
   { // Render 3D scene
-    mBoundScene->submit(mCamera, mPlanetRenderer, mClipping, frame);
+    mBoundScene->submit(
+      mCamera, mPlanetRenderer, mClipping, mTerrainRenderer, frame);
     mStarRenderer.render(3.0f, mCamera, frame);
   }
   mGBuffer.endRender(frame);

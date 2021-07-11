@@ -9,20 +9,22 @@ class GBuffer;
 class Camera;
 class PlanetRenderer;
 class Clipping;
+class Terrain;
 class VulkanContext;
 struct VulkanFrame;
 
 class TerrainRenderer {
 public:
   void init(
-    const GBuffer &gbuffer,
-    VulkanContext &graphicsContext);
+    VulkanContext &graphicsContext,
+    const GBuffer &gbuffer);
 
   void render(
     const Camera &camera,
     const PlanetRenderer &planet,
     const Clipping &clipping,
-    VulkanFrame &frame);
+    const Terrain &terrain,
+    VulkanFrame &frame) const;
 
 private:
   VulkanPipeline mPipeline;

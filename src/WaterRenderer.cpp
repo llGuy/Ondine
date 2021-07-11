@@ -34,12 +34,14 @@ void WaterRenderer::tick(
   const PlanetRenderer &planet,
   const SkyRenderer &sky,
   const StarRenderer &stars,
+  const TerrainRenderer &terrainRenderer,
   Scene &sceneSubmitter) {
   frame.primaryCommandBuffer.dbgBeginRegion("WaterStage", DBG_WATER_COLOR);
 
   mGBuffer.beginRender(frame);
   { // Render 3D scene
-    sceneSubmitter.submit(mReflectionCamera, planet, mClipping, frame);
+    sceneSubmitter.submit(
+      mReflectionCamera, planet, mClipping, terrainRenderer, frame);
     stars.render(1.0f, mReflectionCamera, frame);
   }
   mGBuffer.endRender(frame);

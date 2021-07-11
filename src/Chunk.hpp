@@ -22,6 +22,7 @@ struct ChunkVertex {
 
 struct ChunkVertices {
   VulkanBuffer vbo;
+  uint32_t vertexCount;
 };
 
 struct Chunk {
