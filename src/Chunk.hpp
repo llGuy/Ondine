@@ -13,7 +13,7 @@ struct Voxel {
 
 extern const int8_t VOXEL_EDGE_CONNECT[256][16];
 
-constexpr uint32_t CHUNK_DIM = 32;
+constexpr uint32_t CHUNK_DIM = 16;
 constexpr uint32_t CHUNK_VOLUME = CHUNK_DIM * CHUNK_DIM * CHUNK_DIM;
 
 struct ChunkVertex {

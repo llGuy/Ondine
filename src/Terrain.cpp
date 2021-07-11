@@ -120,8 +120,7 @@ uint32_t Terrain::hashChunkCoord(const glm::ivec3 &coord) const {
 }
 
 uint32_t Terrain::getVoxelIndex(int x, int y, int z) const {
-  return z * (CHUNK_DIM * CHUNK_DIM) +
-    y * CHUNK_DIM + x;
+  return z * (CHUNK_DIM * CHUNK_DIM) + y * CHUNK_DIM + x;
 }
 
 uint32_t Terrain::getVoxelIndex(const glm::ivec3 &coord) const {
@@ -154,6 +153,7 @@ void Terrain::pushVertexToTriangleList(
     vertices[v0], vertices[v1], interpolatedVoxelValues);
 
   meshVertices[vertexCount] = vertex;
+  printf("%s\n", glm::to_string(vertex).c_str());
 
   ++vertexCount;
 }
@@ -418,10 +418,7 @@ Voxel Terrain::getChunkEdgeVoxel(
     chunkCoordOffset.z = 1;
   }
 
-  glm::ivec3 newChunkCoord = glm::ivec3(
-    chunkCoord.x + chunkCoordOffset.x,
-    chunkCoord.y + chunkCoordOffset.y,
-    chunkCoord.z + chunkCoordOffset.z);
+  glm::ivec3 newChunkCoord = chunkCoord + chunkCoordOffset;
 
   const Chunk *chunk = at(newChunkCoord);
     
@@ -430,12 +427,12 @@ Voxel Terrain::getChunkEdgeVoxel(
   if (*doesntExist)
     return { 0 };
     
-  return chunk->voxels[getVoxelIndex(finalCoord.x, finalCoord.y, finalCoord.z)];
+  return chunk->voxels[getVoxelIndex(finalCoord)];
 }
 
 ChunkVertices Terrain::createChunkVertices(
   const Chunk &chunk, VulkanContext &graphicsContext) {
-  Voxel surfaceDensity = { 1000 };
+  Voxel surfaceDensity = { 70 };
   uint32_t vertexCount = generateChunkVertices(
     chunk, surfaceDensity, mTemporaryVertices);
 
@@ -474,9 +471,8 @@ void Terrain::makeSphere(float radius, const glm::vec3 &center) {
         float distance2 = glm::dot(diff, diff);
 
         if (distance2 <= radius2) {
-          glm::ivec3 c = worldToChunkCoord(posFloat);
-
-          glm::ivec3 chunkOriginDiff = position - c * (int32_t)CHUNK_DIM;
+          glm::ivec3 chunkOriginDiff = position -
+            currentChunkCoord * (int32_t)CHUNK_DIM;
 
           if (chunkOriginDiff.x >= 0 && chunkOriginDiff.x < CHUNK_DIM &&
               chunkOriginDiff.y >= 0 && chunkOriginDiff.y < CHUNK_DIM &&
@@ -487,7 +483,7 @@ void Terrain::makeSphere(float radius, const glm::vec3 &center) {
             glm::ivec3 voxelCoord = chunkOriginDiff;
 
             Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
-            uint16_t newValue = (uint32_t)((proportion) * 2000.0f);
+            uint16_t newValue = (uint32_t)((proportion) * 250.0f);
             v->density = newValue;
           }
           else {
@@ -502,7 +498,7 @@ void Terrain::makeSphere(float radius, const glm::vec3 &center) {
               currentChunkCoord * (int32_t)CHUNK_DIM;
 
             Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
-            uint16_t newValue = (uint32_t)((proportion) * 2000.0f);
+            uint16_t newValue = (uint32_t)((proportion) * 254.0f);
             v->density = newValue;
           }
         }

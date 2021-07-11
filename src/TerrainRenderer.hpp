@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Chunk.hpp"
 #include "VulkanPipeline.hpp"
 
 namespace Ondine::Graphics {
