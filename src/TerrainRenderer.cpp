@@ -24,9 +24,13 @@ void TerrainRenderer::init(
     VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
     VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
-  pipelineConfig.configureVertexInput(1, 1);
-  pipelineConfig.setBinding(0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX);
-  pipelineConfig.setBindingAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
+  pipelineConfig.configureVertexInput(2, 1);
+  pipelineConfig.setBinding(
+    0, sizeof(glm::vec3) * 2, VK_VERTEX_INPUT_RATE_VERTEX);
+  pipelineConfig.setBindingAttribute(
+    0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
+  pipelineConfig.setBindingAttribute(
+    1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(glm::vec3));
 
   pipelineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 

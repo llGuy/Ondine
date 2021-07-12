@@ -37,7 +37,7 @@ void Terrain::init() {
   mChunkIndices.init();
   mLoadedChunks.init(MAX_CHUNKS);
 
-  mTemporaryVertices = flAllocv<glm::vec3>(CHUNK_MAX_VERTICES);
+  mTemporaryVertices = flAllocv<ChunkVertex>(CHUNK_MAX_VERTICES);
 }
 
 Chunk *Terrain::getChunk(const glm::ivec3 &coord) {
@@ -132,7 +132,7 @@ void Terrain::pushVertexToTriangleList(
   uint32_t v0, uint32_t v1,
   glm::vec3 *vertices, Voxel *voxels,
   Voxel surfaceDensity,
-  glm::vec3 *meshVertices, uint32_t &vertexCount) {
+  ChunkVertex *meshVertices, uint32_t &vertexCount) {
   float surfaceLevelF = (float)surfaceDensity.density;
   float voxelValue0 = (float)voxels[v0].density;
   float voxelValue1 = (float)voxels[v1].density;
@@ -152,7 +152,15 @@ void Terrain::pushVertexToTriangleList(
   glm::vec3 vertex = interpolate(
     vertices[v0], vertices[v1], interpolatedVoxelValues);
 
-  meshVertices[vertexCount] = vertex;
+  glm::vec3 normal0 = glm::vec3(
+    voxels[v0].normalX, voxels[v0].normalY, voxels[v0].normalZ) / 1000.0f;
+  glm::vec3 normal1 = glm::vec3(
+    voxels[v0].normalX, voxels[v0].normalY, voxels[v0].normalZ) / 1000.0f;
+
+  glm::vec3 normal = interpolate(
+    normal0, normal1, interpolatedVoxelValues);
+
+  meshVertices[vertexCount] = {vertex, normal};
 
   ++vertexCount;
 }
@@ -161,7 +169,7 @@ void Terrain::updateVoxelCube(
   Voxel *voxels,
   const glm::ivec3 &coord,
   Voxel surfaceDensity,
-  glm::vec3 *meshVertices,
+  ChunkVertex *meshVertices,
   uint32_t &vertexCount) {
   uint8_t bitCombination = 0;
   for (uint32_t i = 0; i < 8; ++i) {
@@ -196,74 +204,62 @@ void Terrain::updateVoxelCube(
         switch(edgePair[i]) {
         case 0: {
           pushVertexToTriangleList(
-            0, 1, vertices, voxels, surfaceDensity,
-            meshVertices, vertexCount);
+            0, 1, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
         } break;
 
         case 1: {
           pushVertexToTriangleList(
-            1, 2, vertices, voxels, surfaceDensity,
-            meshVertices, vertexCount);
+            1, 2, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
         } break;
 
         case 2: {
           pushVertexToTriangleList(
-            2, 3, vertices, voxels, surfaceDensity,
-            meshVertices, vertexCount);
+            2, 3, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
         } break;
 
         case 3: {
           pushVertexToTriangleList(
-            3, 0, vertices, voxels, surfaceDensity,
-            meshVertices, vertexCount);
+            3, 0, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
         } break;
 
         case 4: {
           pushVertexToTriangleList(
-            4, 5, vertices, voxels, surfaceDensity,
-            meshVertices, vertexCount);
+            4, 5, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
         } break;
 
         case 5: {
           pushVertexToTriangleList(
-            5, 6, vertices, voxels, surfaceDensity,
-            meshVertices, vertexCount);
+            5, 6, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
         } break;
 
         case 6: {
           pushVertexToTriangleList(
-            6, 7, vertices, voxels, surfaceDensity,
-            meshVertices, vertexCount);
+            6, 7, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
         } break;
 
         case 7: {
           pushVertexToTriangleList(
-            7, 4, vertices, voxels, surfaceDensity,
-            meshVertices, vertexCount);
+            7, 4, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
         } break;
 
         case 8: {
           pushVertexToTriangleList(
-            0, 4, vertices, voxels, surfaceDensity,
-            meshVertices, vertexCount);
+            0, 4, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
         } break;
 
         case 9: {
           pushVertexToTriangleList(
-            1, 5, vertices, voxels, surfaceDensity,
-            meshVertices, vertexCount);
+            1, 5, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
         } break;
 
         case 10: {
           pushVertexToTriangleList(
-            2, 6, vertices, voxels, surfaceDensity,
-            meshVertices, vertexCount);
+            2, 6, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
         } break;
 
         case 11: {
           pushVertexToTriangleList(
-            3, 7, vertices, voxels, surfaceDensity,
-            meshVertices, vertexCount);
+            3, 7, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
         } break;
 
         }
@@ -277,7 +273,7 @@ void Terrain::updateVoxelCube(
 uint32_t Terrain::generateChunkVertices(
   const Chunk &chunk,
   Voxel surfaceDensity,
-  glm::vec3 *meshVertices) {
+  ChunkVertex *meshVertices) {
   uint32_t vertexCount = 0;
 
   const Chunk *xSuperior = at(chunk.chunkCoord + glm::ivec3(1, 0, 0));
@@ -440,13 +436,13 @@ ChunkVertices Terrain::createChunkVertices(
   if (vertexCount) {
     ret.vbo.init(
       graphicsContext.device(),
-      vertexCount * sizeof(glm::vec3),
+      vertexCount * sizeof(ChunkVertex),
       (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer);
 
     ret.vbo.fillWithStaging(
       graphicsContext.device(),
       graphicsContext.commandPool(),
-      {(uint8_t *)mTemporaryVertices, vertexCount * sizeof(glm::vec3)});
+      {(uint8_t *)mTemporaryVertices, vertexCount * sizeof(ChunkVertex)});
   }
 
   ret.vertexCount = vertexCount;
@@ -510,6 +506,8 @@ void Terrain::makeSphere(float radius, const glm::vec3 &center) {
 }
 
 void Terrain::prepareForRender(VulkanContext &graphicsContext) {
+  generateVoxelNormals();
+
   for (int i = 0; i < mLoadedChunks.size; ++i) {
     Chunk *chunk = mLoadedChunks[i];
     // Don't worry, this will be thoroughly redone
@@ -523,6 +521,42 @@ void Terrain::submitForRender(
   const Clipping &clipping,
   VulkanFrame &frame) {
   
+}
+
+void Terrain::generateVoxelNormals() {
+  for (int i = 0; i < mLoadedChunks.size; ++i) {
+    Chunk *chunk = mLoadedChunks[i];
+    for (int z = 1; z < CHUNK_DIM - 1; ++z) {
+      for (int y = 1; y < CHUNK_DIM - 1; ++y) {
+        for (int x = 1; x < CHUNK_DIM - 1; ++x) {
+          glm::ivec3 voxelCoord = glm::ivec3(x, y, z);
+
+          glm::ivec3 diffx = glm::ivec3(1, 0, 0);
+          glm::ivec3 diffy = glm::ivec3(0, 1, 0);
+          glm::ivec3 diffz = glm::ivec3(0, 0, 1);
+
+          glm::vec3 grad;
+          grad.x =
+            chunk->voxels[getVoxelIndex(voxelCoord + diffx)].density -
+            chunk->voxels[getVoxelIndex(voxelCoord - diffx)].density;
+          grad.y =
+            chunk->voxels[getVoxelIndex(voxelCoord + diffy)].density -
+            chunk->voxels[getVoxelIndex(voxelCoord - diffy)].density;
+          grad.z =
+            chunk->voxels[getVoxelIndex(voxelCoord + diffz)].density -
+            chunk->voxels[getVoxelIndex(voxelCoord - diffz)].density;
+
+          glm::vec3 normal = -glm::normalize(grad);
+          chunk->voxels[getVoxelIndex(voxelCoord)].normalX =
+            (int)(normal.x * 1000.0f);
+          chunk->voxels[getVoxelIndex(voxelCoord)].normalY =
+            (int)(normal.y * 1000.0f);
+          chunk->voxels[getVoxelIndex(voxelCoord)].normalZ =
+            (int)(normal.z * 1000.0f);
+        }
+      }
+    }
+  }
 }
 
 }

@@ -3,6 +3,7 @@
 #include "CameraDef.glsl"
 
 layout (location = 0) in vec3 inPosition;
+layout (location = 1) in vec3 inNormal;
 // Add normals in future
 
 layout (location = 0) out VS_DATA {
@@ -20,7 +21,7 @@ layout (set = 0, binding = 0) uniform CameraUniform {
 
 void main() {
   outVS.wPosition = uPushConstant.modelMatrix * vec4(inPosition, 1.0);
-  outVS.wNormal = vec4(0, 1, 0, 1);
+  outVS.wNormal = uPushConstant.modelMatrix * vec4(inNormal, 0.0);
 
   gl_Position = uCamera.camera.viewProjection * outVS.wPosition;
 
