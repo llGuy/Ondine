@@ -50,11 +50,13 @@ void TerrainRenderer::render(
 
   for (int i = 0; i < terrain.mLoadedChunks.size; ++i) {
     const Chunk *chunk = terrain.mLoadedChunks[i];
-    commandBuffer.bindVertexBuffers(0, 1, &chunk->vertices.vbo);
-    glm::mat4 translate = glm::translate(
-      terrain.chunkCoordToWorld(chunk->chunkCoord));
-    commandBuffer.pushConstants(sizeof(translate), &translate[0][0]);
-    commandBuffer.draw(chunk->vertices.vertexCount, 1, 0, 0);
+    if (chunk->vertices.vertexCount) {
+      commandBuffer.bindVertexBuffers(0, 1, &chunk->vertices.vbo);
+      glm::mat4 translate = glm::translate(
+        terrain.chunkCoordToWorld(chunk->chunkCoord));
+      commandBuffer.pushConstants(sizeof(translate), &translate[0][0]);
+      commandBuffer.draw(chunk->vertices.vertexCount, 1, 0, 0);
+    }
   }
 }
 

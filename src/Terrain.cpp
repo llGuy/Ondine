@@ -153,7 +153,6 @@ void Terrain::pushVertexToTriangleList(
     vertices[v0], vertices[v1], interpolatedVoxelValues);
 
   meshVertices[vertexCount] = vertex;
-  printf("%s\n", glm::to_string(vertex).c_str());
 
   ++vertexCount;
 }
@@ -437,15 +436,18 @@ ChunkVertices Terrain::createChunkVertices(
     chunk, surfaceDensity, mTemporaryVertices);
 
   ChunkVertices ret = {};
-  ret.vbo.init(
-    graphicsContext.device(),
-    vertexCount * sizeof(glm::vec3),
-    (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer);
 
-  ret.vbo.fillWithStaging(
-    graphicsContext.device(),
-    graphicsContext.commandPool(),
-    {(uint8_t *)mTemporaryVertices, vertexCount * sizeof(glm::vec3)});
+  if (vertexCount) {
+    ret.vbo.init(
+      graphicsContext.device(),
+      vertexCount * sizeof(glm::vec3),
+      (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer);
+
+    ret.vbo.fillWithStaging(
+      graphicsContext.device(),
+      graphicsContext.commandPool(),
+      {(uint8_t *)mTemporaryVertices, vertexCount * sizeof(glm::vec3)});
+  }
 
   ret.vertexCount = vertexCount;
 
@@ -492,7 +494,7 @@ void Terrain::makeSphere(float radius, const glm::vec3 &center) {
             currentChunk = getChunk(c);
             currentChunkCoord = c;
 
-            float proportion = 1.0f / (distance2 / radius2);
+            float proportion = 1.0f - (distance2 / radius2);
 
             glm::ivec3 voxelCoord = position -
               currentChunkCoord * (int32_t)CHUNK_DIM;
