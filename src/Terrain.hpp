@@ -75,6 +75,26 @@ private:
     ChunkVertex *meshVertices,
     uint32_t &vertexCount);
 
+  template <typename Proc>
+  void apply3D(int start, int end, Proc applyProc) {
+    for (int z = start; z < end; ++z) {
+      for (int y = start; y < end; ++y) {
+        for (int x = start; x < end; ++x) {
+          applyProc(glm::ivec3(x, y, z));
+        }
+      }
+    }
+  }
+
+  template <typename Proc>
+  void apply2D(int start, int end, Proc applyProc) {
+    for (int y = start; y < end; ++y) {
+      for (int x = start; x < end; ++x) {
+        applyProc(glm::ivec2(x, y));
+      }
+    }
+  }
+
 private:
   static constexpr uint32_t MAX_CHUNKS = 300;
   static constexpr uint32_t CHUNK_MAX_VERTICES =
@@ -84,6 +104,7 @@ private:
 
   float mTerrainScale;
   float mChunkWidth;
+  Chunk *mNullChunk;
   Array<Chunk *> mLoadedChunks;
   // Maps 3-D chunk coord to the chunk's index in the mLoadedChunks array
   FastMap<uint32_t, MAX_CHUNKS, 30, 10> mChunkIndices;
