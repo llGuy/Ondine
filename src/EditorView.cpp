@@ -423,6 +423,30 @@ void EditorView::processInputEvent(Core::Event *ev, ViewProcessEventsParams &par
 
 FocusedView EditorView::trackInput(
   const Core::Tick &tick, const Core::InputTracker &tracker) {
+  // Keybindings
+  if (tracker.key(Core::KeyboardButton::LeftAlt).isDown) {
+    if (tracker.key(Core::KeyboardButton::LeftShift).isDown) {
+      if (tracker.key(Core::KeyboardButton::One).didInstant) {
+        auto *hierarchyChange = lnEmplaceAlloc<Core::EventViewHierarchyChange>();
+        hierarchyChange->views = makeArray<const char *, AllocationType::Linear>(
+          "GameView", "EditorView");
+        mOnEvent(hierarchyChange);
+
+        mChangedFocusToEditor = true;
+        mChangedFocusToViewport = false;
+      }
+      else if (tracker.key(Core::KeyboardButton::Two).didInstant) {
+        auto *hierarchyChange = lnEmplaceAlloc<Core::EventViewHierarchyChange>();
+        hierarchyChange->views = makeArray<const char *, AllocationType::Linear>(
+          "MapView", "EditorView");
+        mOnEvent(hierarchyChange);
+
+        mChangedFocusToEditor = true;
+        mChangedFocusToViewport = false;
+      }
+    }
+  }
+
   if (mChangedFocusToViewport) {
     mChangedFocusToViewport = false;
 

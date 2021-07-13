@@ -240,6 +240,7 @@ void Window::keyCallback(int key, int scancode, int action, int mods) const {
   case GLFW_KEY_RIGHT: { button = KeyboardButton::Right; } break;
   case GLFW_KEY_SPACE: { button = KeyboardButton::Space; } break;
   case GLFW_KEY_LEFT_SHIFT: { button = KeyboardButton::LeftShift; } break;
+  case GLFW_KEY_LEFT_ALT: { button = KeyboardButton::LeftAlt; } break;
   case GLFW_KEY_LEFT_CONTROL: { button = KeyboardButton::LeftControl; } break;
   case GLFW_KEY_ENTER: { button = KeyboardButton::Enter; } break;
   case GLFW_KEY_BACKSPACE: { button = KeyboardButton::Backspace; } break;

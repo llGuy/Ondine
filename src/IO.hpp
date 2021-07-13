@@ -21,7 +21,7 @@ enum class KeyboardButton {
 
   Zero, One, Two, Three, Four, Five, Six,
   Seven, Eight, Nine, Up, Left, Down, Right,
-  Space, LeftShift, LeftControl, Enter, Backspace,
+  Space, LeftShift, LeftControl, LeftAlt, Enter, Backspace,
   Escape, F1, F2, F3, F4, F5, F9, F11,
   Unhandled
 };

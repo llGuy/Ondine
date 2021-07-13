@@ -40,6 +40,7 @@ void Terrain::init() {
   memset(mNullChunk, 0, sizeof(Chunk));
 
   mTemporaryVertices = flAllocv<ChunkVertex>(CHUNK_MAX_VERTICES);
+  mMaxVoxelDensity = (float)0xFFFF;
 }
 
 Chunk *Terrain::getChunk(const glm::ivec3 &coord) {
@@ -157,10 +158,14 @@ void Terrain::pushVertexToTriangleList(
   glm::vec3 normal0 = glm::vec3(
     voxels[v0].normalX, voxels[v0].normalY, voxels[v0].normalZ) / 1000.0f;
   glm::vec3 normal1 = glm::vec3(
-    voxels[v0].normalX, voxels[v0].normalY, voxels[v0].normalZ) / 1000.0f;
+    voxels[v1].normalX, voxels[v1].normalY, voxels[v1].normalZ) / 1000.0f;
 
   glm::vec3 normal = interpolate(
     normal0, normal1, interpolatedVoxelValues);
+
+  if (normal.x == 0.0f && normal.y == 0.0f && normal.z == 0.0f) {
+    printf("NULL NORMAL\n");
+  }
 
   meshVertices[vertexCount] = {vertex, normal};
 
@@ -388,6 +393,8 @@ uint32_t Terrain::generateChunkVertices(
         updateVoxelCube(
           voxelValues, glm::ivec3(x, y, z), surfaceDensity,
           meshVertices, vertexCount);
+
+        // printf("Hello\n");
       }
     }
   }
@@ -429,7 +436,7 @@ Voxel Terrain::getChunkEdgeVoxel(
 
 ChunkVertices Terrain::createChunkVertices(
   const Chunk &chunk, VulkanContext &graphicsContext) {
-  Voxel surfaceDensity = { 70 };
+  Voxel surfaceDensity = { (uint16_t)(30000) };
   uint32_t vertexCount = generateChunkVertices(
     chunk, surfaceDensity, mTemporaryVertices);
 
@@ -483,7 +490,7 @@ void Terrain::makeSphere(float radius, const glm::vec3 &center) {
             glm::ivec3 voxelCoord = chunkOriginDiff;
 
             Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
-            uint16_t newValue = (uint32_t)((proportion) * 250.0f);
+            uint16_t newValue = (uint32_t)((proportion) * mMaxVoxelDensity);
             v->density = newValue;
           }
           else {
@@ -498,7 +505,7 @@ void Terrain::makeSphere(float radius, const glm::vec3 &center) {
               currentChunkCoord * (int32_t)CHUNK_DIM;
 
             Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
-            uint16_t newValue = (uint32_t)((proportion) * 254.0f);
+            uint16_t newValue = (uint32_t)((proportion) * mMaxVoxelDensity);
             v->density = newValue;
           }
         }
@@ -525,27 +532,101 @@ void Terrain::submitForRender(
   
 }
 
+void Terrain::generateChunkFaceNormals(
+  Chunk *chunk,
+  Chunk *p, Chunk *n,
+  uint32_t dimension) {
+  auto density = [chunk, this](const glm::ivec3 &coord) {
+    return chunk->voxels[getVoxelIndex(coord)].density;
+  };
+
+  glm::ivec3 diff[3] = {
+    glm::ivec3(1, 0, 0),
+    glm::ivec3(0, 1, 0),
+    glm::ivec3(0, 0, 1)
+  };
+
+  apply2D(
+    1, CHUNK_DIM - 1,
+    [this, chunk, density, diff, p, n, dimension](
+      const glm::ivec2 &voxelCoordXY) {
+      // One pass for when z == CHUNK_DIM, one for when z == 0
+      glm::ivec3 voxelCoord;
+      glm::ivec3 converted;
+      glm::vec3 grad;
+
+      for (int i = 0, j = 0; i < 3; ++i) {
+        if (i == dimension) {
+          voxelCoord[i] = CHUNK_DIM - 1;
+          converted[i] = 0;
+        }
+        else {
+          voxelCoord[i] = voxelCoordXY[j++];
+          converted[i] = voxelCoord[i];
+        }
+      }
+
+      for (int i = 0; i < 3; ++i) {
+        if (i == dimension)
+          grad[i] = p->voxels[getVoxelIndex(converted)].density -
+            density(voxelCoord - diff[i]);
+        else
+          grad[i] = density(voxelCoord + diff[i]) -
+            density(voxelCoord - diff[i]);
+      }
+
+      setVoxelNormal(chunk, voxelCoord, grad);
+
+      for (int i = 0, j = 0; i < 3; ++i) {
+        if (i == dimension) {
+          voxelCoord[i] = 0;
+          converted[i] = CHUNK_DIM - 1;
+        }
+        else {
+          voxelCoord[i] = voxelCoordXY[j++];
+          converted[i] = voxelCoord[i];
+        }
+      }
+
+      for (int i = 0; i < 3; ++i) {
+        if (i == dimension) 
+          grad[i] = density(voxelCoord + diff[i]) - 
+            n->voxels[getVoxelIndex(converted)].density;
+        else
+          grad[i] = density(voxelCoord + diff[i]) -
+            density(voxelCoord - diff[i]);
+      }
+
+      setVoxelNormal(chunk, voxelCoord, grad);
+    });
+}
+
+void Terrain::setVoxelNormal(
+  Chunk *chunk,
+  const glm::ivec3 &voxelCoord,
+  const glm::vec3 &grad) {
+  glm::vec3 normal = -glm::normalize(grad);
+  chunk->voxels[getVoxelIndex(voxelCoord)].normalX =
+    (int)(normal.x * 1000.0f);
+  chunk->voxels[getVoxelIndex(voxelCoord)].normalY =
+    (int)(normal.y * 1000.0f);
+  chunk->voxels[getVoxelIndex(voxelCoord)].normalZ =
+    (int)(normal.z * 1000.0f);
+
+  if (chunk->voxels[getVoxelIndex(voxelCoord)].density > 0 &&
+      chunk->voxels[getVoxelIndex(voxelCoord)].normalX == 0 &&
+      chunk->voxels[getVoxelIndex(voxelCoord)].normalY == 0 &&
+      chunk->voxels[getVoxelIndex(voxelCoord)].normalZ == 0) {
+    printf("Something is wrong\n");
+  }
+}
+
 void Terrain::generateVoxelNormals() {
   for (int i = 0; i < mLoadedChunks.size; ++i) {
     Chunk *chunk = mLoadedChunks[i];
 
     auto density = [chunk, this](const glm::ivec3 &coord) {
       return chunk->voxels[getVoxelIndex(coord)].density;
-    };
-
-    auto densityMod = [chunk, this](const glm::ivec3 &coord) {
-      return chunk->voxels[getVoxelIndex(coord)].density;
-    };
-
-    auto setNorm = [chunk, this](
-      const glm::ivec3 &voxelCoord, const glm::vec3 &grad) {
-      glm::vec3 normal = -glm::normalize(grad);
-      chunk->voxels[getVoxelIndex(voxelCoord)].normalX =
-        (int)(normal.x * 1000.0f);
-      chunk->voxels[getVoxelIndex(voxelCoord)].normalY =
-        (int)(normal.y * 1000.0f);
-      chunk->voxels[getVoxelIndex(voxelCoord)].normalZ =
-        (int)(normal.z * 1000.0f);
     };
 
     glm::ivec3 diff[3] = {
@@ -556,103 +637,102 @@ void Terrain::generateVoxelNormals() {
 
     apply3D(
       1, CHUNK_DIM - 1,
-      [this, chunk, density, diff, setNorm](const glm::ivec3 &voxelCoord) {
+      [this, chunk, density, diff](const glm::ivec3 &voxelCoord) {
         glm::vec3 grad;
         grad.x = density(voxelCoord + diff[0]) - density(voxelCoord - diff[0]);
         grad.y = density(voxelCoord + diff[1]) - density(voxelCoord - diff[1]);
         grad.z = density(voxelCoord + diff[2]) - density(voxelCoord - diff[2]);
-        setNorm(voxelCoord, grad);
+        setVoxelNormal(chunk, voxelCoord, grad);
       });
 
-    // Need to calculate for edges and corners!
     Chunk *px = at(chunk->chunkCoord + glm::ivec3(1, 0, 0));
     if (!px) px = mNullChunk;
     Chunk *nx = at(chunk->chunkCoord - glm::ivec3(1, 0, 0));
     if (!nx) nx = mNullChunk;
-
-    apply2D(
-      1, CHUNK_DIM - 1,
-      [this, chunk, density, diff, px, setNorm, nx](
-        const glm::ivec2 voxelCoordXY) {
-        // One pass for when z == CHUNK_DIM, one for when z == 0
-        glm::ivec3 voxelCoord = {CHUNK_DIM - 1, voxelCoordXY.x, voxelCoordXY.y};
-
-        glm::vec3 grad;
-        glm::ivec3 converted = glm::ivec3(0, voxelCoord.y, voxelCoord.z);
-        grad.x = px->voxels[getVoxelIndex(converted)].density -
-          density(voxelCoord - diff[0]);
-        grad.y = density(voxelCoord + diff[1]) - density(voxelCoord - diff[1]);
-        grad.z = density(voxelCoord + diff[2]) - density(voxelCoord - diff[2]);
-        setNorm(voxelCoord, grad);
-
-        voxelCoord = {0, voxelCoordXY.x, voxelCoordXY.y};
-        converted = glm::ivec3(CHUNK_DIM - 1, voxelCoord.y, voxelCoord.z);
-        grad.x = density(voxelCoord + diff[0]) -
-          nx->voxels[getVoxelIndex(converted)].density;
-        grad.y = density(voxelCoord + diff[1]) - density(voxelCoord - diff[1]);
-        grad.z = density(voxelCoord + diff[2]) - density(voxelCoord - diff[2]);
-        setNorm(voxelCoord, grad);
-      });
-
-    // Need to calculate for edges and corners!
     Chunk *py = at(chunk->chunkCoord + glm::ivec3(0, 1, 0));
     if (!py) py = mNullChunk;
     Chunk *ny = at(chunk->chunkCoord - glm::ivec3(0, 1, 0));
     if (!ny) ny = mNullChunk;
-
-    apply2D(
-      1, CHUNK_DIM - 1,
-      [this, chunk, density, diff, py, setNorm, ny](
-        const glm::ivec2 voxelCoordXY) {
-        // One pass for when z == CHUNK_DIM, one for when z == 0
-        glm::ivec3 voxelCoord = {voxelCoordXY.x, CHUNK_DIM - 1, voxelCoordXY.y};
-
-        glm::vec3 grad;
-        glm::ivec3 converted = glm::ivec3(voxelCoord.x, 0, voxelCoord.z);
-        grad.x = density(voxelCoord + diff[0]) - density(voxelCoord - diff[0]);
-        grad.y = py->voxels[getVoxelIndex(converted)].density -
-          density(voxelCoord - diff[1]);
-        grad.z = density(voxelCoord + diff[2]) - density(voxelCoord - diff[2]);
-        setNorm(voxelCoord, grad);
-
-        voxelCoord = {voxelCoordXY.x, 0, voxelCoordXY.y};
-        converted = glm::ivec3(voxelCoord.x, CHUNK_DIM - 1, voxelCoord.z);
-        grad.x = density(voxelCoord + diff[0]) - density(voxelCoord - diff[0]);
-        grad.y = density(voxelCoord + diff[1]) -
-          ny->voxels[getVoxelIndex(converted)].density;
-        grad.z = density(voxelCoord + diff[2]) - density(voxelCoord - diff[2]);
-        setNorm(voxelCoord, grad);
-      });
-
-    // Need to calculate for edges and corners!
     Chunk *pz = at(chunk->chunkCoord + glm::ivec3(0, 0, 1));
     if (!pz) pz = mNullChunk;
     Chunk *nz = at(chunk->chunkCoord - glm::ivec3(0, 0, 1));
     if (!nz) nz = mNullChunk;
 
-    apply2D(
-      1, CHUNK_DIM - 1,
-      [this, chunk, density, diff, pz, setNorm, nz](
-        const glm::ivec2 voxelCoordXY) {
-        // One pass for when z == CHUNK_DIM, one for when z == 0
-        glm::ivec3 voxelCoord = {voxelCoordXY.x, voxelCoordXY.y, CHUNK_DIM - 1};
+    generateChunkFaceNormals(chunk, px, nx, 0);
+    generateChunkFaceNormals(chunk, py, ny, 1);
+    generateChunkFaceNormals(chunk, pz, nz, 2);
 
-        glm::vec3 grad;
-        grad.x = density(voxelCoord + diff[0]) - density(voxelCoord - diff[0]);
-        grad.y = density(voxelCoord + diff[1]) - density(voxelCoord - diff[1]);
-        glm::ivec3 converted = glm::ivec3(voxelCoord.x, voxelCoord.y, 0);
-        grad.z = pz->voxels[getVoxelIndex(converted)].density -
-          density(voxelCoord - diff[2]);
-        setNorm(voxelCoord, grad);
+    auto densitym = [chunk, this](const glm::ivec3 &coord) {
+      glm::ivec3 chunkCoordOffset = glm::ivec3(0);
+      glm::ivec3 voxelCoord = coord;
+      for (int i = 0; i < 3; ++i) {
+        if (coord[i] > (int)CHUNK_DIM - 1) {
+          chunkCoordOffset[i] = 1;
+          voxelCoord[i] = 0;
+        }
+        else if (coord[i] < 0) {
+          chunkCoordOffset[i] = -1; 
+          voxelCoord[i] = (int)CHUNK_DIM - 1;
+        }
+      }
 
-        voxelCoord = {voxelCoordXY.x, voxelCoordXY.y, 0};
-        grad.x = density(voxelCoord + diff[0]) - density(voxelCoord - diff[0]);
-        grad.y = density(voxelCoord + diff[1]) - density(voxelCoord - diff[1]);
-        converted = glm::ivec3(voxelCoord.x, voxelCoord.y, CHUNK_DIM - 1);
-        grad.z = density(voxelCoord + diff[2]) -
-          nz->voxels[getVoxelIndex(converted)].density;
-        setNorm(voxelCoord, grad);
-      });
+      Chunk *actualChunk = at(chunk->chunkCoord + chunkCoordOffset);
+      if (!actualChunk) actualChunk = mNullChunk;
+
+      return actualChunk->voxels[getVoxelIndex(voxelCoord)].density;
+    };
+
+    glm::ivec3 corners[] = {
+      glm::ivec3(0, 0, 0) * int(CHUNK_DIM - 1),
+      glm::ivec3(0, 0, 1) * int(CHUNK_DIM - 1),
+      glm::ivec3(0, 1, 0) * int(CHUNK_DIM - 1),
+      glm::ivec3(0, 1, 1) * int(CHUNK_DIM - 1),
+
+      glm::ivec3(1, 0, 0) * int(CHUNK_DIM - 1),
+      glm::ivec3(1, 0, 1) * int(CHUNK_DIM - 1),
+      glm::ivec3(1, 1, 0) * int(CHUNK_DIM - 1),
+      glm::ivec3(1, 1, 1) * int(CHUNK_DIM - 1),
+    };
+
+    for (int i = 0; i < 8; ++i) {
+      const glm::ivec3 &voxelCoord = corners[i];
+      glm::vec3 grad;
+      grad.x = densitym(voxelCoord + diff[0]) - densitym(voxelCoord - diff[0]);
+      grad.y = densitym(voxelCoord + diff[1]) - densitym(voxelCoord - diff[1]);
+      grad.z = densitym(voxelCoord + diff[2]) - densitym(voxelCoord - diff[2]);
+      setVoxelNormal(chunk, voxelCoord, grad);
+    }
+
+    // Edges
+    for (int dim = 0; dim < 3; ++dim) {
+      const glm::ivec2 PERMUTATIONS_2D[4] = {
+        glm::ivec2(0, 0),
+        glm::ivec2(0, 1),
+        glm::ivec2(1, 0),
+        glm::ivec2(1, 1)
+      };
+
+      glm::ivec3 permutations[4];
+      for (int p = 0; p < 4; ++p) {
+        permutations[p][dim] = 0;
+
+        for (int i = 1; i < 3; ++i) {
+          permutations[p][(dim + i) % 3] =
+            PERMUTATIONS_2D[p][i - 1] * (CHUNK_DIM - 1);
+        }
+
+        for (int component = 1; component < CHUNK_DIM - 1; ++component) {
+          glm::ivec3 voxelCoord = permutations[p];
+          voxelCoord[dim] = component;
+
+          glm::vec3 grad;
+          grad.x = densitym(voxelCoord + diff[0]) - densitym(voxelCoord - diff[0]);
+          grad.y = densitym(voxelCoord + diff[1]) - densitym(voxelCoord - diff[1]);
+          grad.z = densitym(voxelCoord + diff[2]) - densitym(voxelCoord - diff[2]);
+          setVoxelNormal(chunk, voxelCoord, grad);
+        }
+      }
+    }
   }
 }
 

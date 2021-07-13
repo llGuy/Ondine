@@ -95,6 +95,16 @@ private:
     }
   }
 
+  void generateChunkFaceNormals(
+    Chunk *chunk,
+    Chunk *p, Chunk *n,
+    uint32_t dimension);
+
+  void setVoxelNormal(
+    Chunk *chunk,
+    const glm::ivec3 &voxelCoord,
+    const glm::vec3 &grad);
+
 private:
   static constexpr uint32_t MAX_CHUNKS = 300;
   static constexpr uint32_t CHUNK_MAX_VERTICES =
@@ -104,6 +114,7 @@ private:
 
   float mTerrainScale;
   float mChunkWidth;
+  float mMaxVoxelDensity;
   Chunk *mNullChunk;
   Array<Chunk *> mLoadedChunks;
   // Maps 3-D chunk coord to the chunk's index in the mLoadedChunks array
