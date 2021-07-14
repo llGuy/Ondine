@@ -32,7 +32,7 @@ const glm::ivec3 Terrain::NORMALIZED_CUBE_VERTEX_INDICES[8] = {
 };
 
 void Terrain::init() {
-  mTerrainScale = 10;
+  mTerrainScale = 20;
   mChunkWidth = mTerrainScale * (float)CHUNK_DIM;
 
   mChunkIndices.init();

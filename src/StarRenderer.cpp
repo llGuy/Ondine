@@ -9,7 +9,7 @@ namespace Ondine::Graphics {
 const char *const StarRenderer::STARS_VERT_SPV = "res/spv/Stars.vert.spv";
 const char *const StarRenderer::STARS_FRAG_SPV = "res/spv/Stars.frag.spv";
 
-constexpr uint32_t STAR_COUNT = 300;
+constexpr uint32_t STAR_COUNT = 150;
 
 StarRenderer::StarRenderer()
   : mPipelineModelConfig(STAR_COUNT) {

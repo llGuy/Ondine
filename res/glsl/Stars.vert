@@ -24,7 +24,7 @@ void main() {
     sin(zenithAngle) * cos(azimuthAngle),
     sin(azimuthAngle) * sin(zenithAngle),
     cos(zenithAngle)
-  ) * 1000.0;
+  ) * 3000.0;
 
   outBrightness = brightness * uPushConstant.fade;
   vec4 viewPos = uCamera.camera.view * uPushConstant.transform * vec4(pos, 0.0);
