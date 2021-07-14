@@ -32,7 +32,7 @@ const glm::ivec3 Terrain::NORMALIZED_CUBE_VERTEX_INDICES[8] = {
 };
 
 void Terrain::init() {
-  mTerrainScale = 2;
+  mTerrainScale = 10;
   mChunkWidth = mTerrainScale * (float)CHUNK_DIM;
 
   mChunkIndices.init();
@@ -534,7 +534,7 @@ void Terrain::makeIslands(
     glm::vec3(start.x, seaLevel, start.y));
   Chunk *currentChunk = getChunk(currentChunkCoord);
 
-  int32_t minHeight = (int32_t)seaLevel;
+  int32_t minHeight = (int32_t)seaLevel - 5;
 
   for (int32_t z = start.y; z < end.y; ++z) {
     for (int32_t x = start.x; x < end.x; ++x) {
@@ -543,7 +543,7 @@ void Terrain::makeIslands(
         float(z - start.y) / (float)range.y) * 3.0f;
 
       float noise = glm::perlin(perlinCoord);
-      float height = (noise * 20.0f) + seaLevel;
+      float height = (noise * 100.0f) + seaLevel;
       height = fmax(height, minHeight);
 
       for (int32_t y = (int32_t)minHeight; y < (int32_t)height; ++y) {
@@ -552,12 +552,13 @@ void Terrain::makeIslands(
           currentChunkCoord * (int32_t)CHUNK_DIM;
 
         float proportion = 1.0f - (y - minHeight) / (height - minHeight);
+        proportion *= 0.8f;
 
         if (chunkOriginDiff.x >= 0 && chunkOriginDiff.x < CHUNK_DIM &&
             chunkOriginDiff.y >= 0 && chunkOriginDiff.y < CHUNK_DIM &&
             chunkOriginDiff.z >= 0 && chunkOriginDiff.z < CHUNK_DIM) {
           currentChunk->voxels[getVoxelIndex(chunkOriginDiff)].density = 
-            (uint16_t)(mMaxVoxelDensity - 5000) + 5000 * proportion;
+            (uint16_t)(mMaxVoxelDensity) * proportion;
         }
         else {
           glm::ivec3 c = worldToChunkCoord(position);
@@ -569,7 +570,7 @@ void Terrain::makeIslands(
             currentChunkCoord * (int32_t)CHUNK_DIM;
 
           currentChunk->voxels[getVoxelIndex(chunkOriginDiff)].density = 
-            (uint16_t)(mMaxVoxelDensity - 5000) + 5000 * proportion;
+            (uint16_t)(mMaxVoxelDensity) * proportion;
         }
       }
     }
