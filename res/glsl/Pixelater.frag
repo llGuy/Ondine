@@ -11,7 +11,7 @@ layout (push_constant) uniform PushConstant {
   float height;
 } uPushConstant;
 
-#define ENABLE_PIXELATION
+// #define ENABLE_PIXELATION
 
 void main() {
 #ifdef ENABLE_PIXELATION

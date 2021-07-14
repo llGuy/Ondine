@@ -2,6 +2,7 @@
 #include "Camera.hpp"
 #include "Terrain.hpp"
 #include "Clipping.hpp"
+#include <glm/gtc/noise.hpp>
 #include "VulkanContext.hpp"
 #include "PlanetRenderer.hpp"
 #include <glm/gtx/string_cast.hpp>
@@ -31,7 +32,7 @@ const glm::ivec3 Terrain::NORMALIZED_CUBE_VERTEX_INDICES[8] = {
 };
 
 void Terrain::init() {
-  mTerrainScale = 1.0f;
+  mTerrainScale = 2;
   mChunkWidth = mTerrainScale * (float)CHUNK_DIM;
 
   mChunkIndices.init();
@@ -91,12 +92,13 @@ const Chunk *Terrain::at(const glm::ivec3 &coord) const {
 }
 
 glm::ivec3 Terrain::worldToChunkCoord(const glm::vec3 &wPosition) const {
-  glm::vec3 scaled = glm::floor(wPosition / (float)CHUNK_DIM);
+  glm::vec3 scaled = glm::floor(wPosition / ((float)CHUNK_DIM));
   return (glm::ivec3)scaled;
 }
 
 glm::vec3 Terrain::chunkCoordToWorld(const glm::ivec3 &chunkCoord) const {
-  glm::vec3 scaled = glm::floor((glm::vec3)chunkCoord * (float)CHUNK_DIM);
+  glm::vec3 scaled = glm::floor(
+    (glm::vec3)chunkCoord * (float)(CHUNK_DIM));
   return scaled;
 }
 
@@ -459,13 +461,15 @@ ChunkVertices Terrain::createChunkVertices(
   return ret;
 }
 
-void Terrain::makeSphere(float radius, const glm::vec3 &center) {
+void Terrain::makeSphere(float radius, glm::vec3 center) {
+  radius /= mTerrainScale;
+  center /= mTerrainScale;
+
   glm::ivec3 start = (glm::ivec3)center - glm::ivec3((int32_t)radius);
   float radius2 = radius * radius;
   int32_t diameter = (int32_t)radius * 2 + 1;
 
   glm::ivec3 currentChunkCoord = worldToChunkCoord(center);
-
   Chunk *currentChunk = getChunk(currentChunkCoord);
 
   for (int32_t z = start.z; z < start.z + diameter; ++z) {
@@ -514,7 +518,67 @@ void Terrain::makeSphere(float radius, const glm::vec3 &center) {
   }
 }
 
+void Terrain::makeIslands(
+  float seaLevel,
+  glm::vec2 s, glm::vec2 e) {
+  seaLevel /= mTerrainScale;
+  s /= mTerrainScale;
+  e /= mTerrainScale;
+
+  glm::ivec2 start = (glm::ivec2)s;
+  glm::ivec2 end = (glm::ivec2)e;
+
+  glm::vec2 range = (glm::vec2)(end - start);
+
+  glm::ivec3 currentChunkCoord = worldToChunkCoord(
+    glm::vec3(start.x, seaLevel, start.y));
+  Chunk *currentChunk = getChunk(currentChunkCoord);
+
+  int32_t minHeight = (int32_t)seaLevel;
+
+  for (int32_t z = start.y; z < end.y; ++z) {
+    for (int32_t x = start.x; x < end.x; ++x) {
+      glm::vec2 perlinCoord = glm::vec2(
+        float(x - start.x) / (float)range.x,
+        float(z - start.y) / (float)range.y) * 3.0f;
+
+      float noise = glm::perlin(perlinCoord);
+      float height = (noise * 20.0f) + seaLevel;
+      height = fmax(height, minHeight);
+
+      for (int32_t y = (int32_t)minHeight; y < (int32_t)height; ++y) {
+        glm::ivec3 position = glm::ivec3(x, y, z);
+        glm::ivec3 chunkOriginDiff = position -
+          currentChunkCoord * (int32_t)CHUNK_DIM;
+
+        float proportion = 1.0f - (y - minHeight) / (height - minHeight);
+
+        if (chunkOriginDiff.x >= 0 && chunkOriginDiff.x < CHUNK_DIM &&
+            chunkOriginDiff.y >= 0 && chunkOriginDiff.y < CHUNK_DIM &&
+            chunkOriginDiff.z >= 0 && chunkOriginDiff.z < CHUNK_DIM) {
+          currentChunk->voxels[getVoxelIndex(chunkOriginDiff)].density = 
+            (uint16_t)(mMaxVoxelDensity - 5000) + 5000 * proportion;
+        }
+        else {
+          glm::ivec3 c = worldToChunkCoord(position);
+
+          currentChunk = getChunk(c);
+          currentChunkCoord = c;
+
+          chunkOriginDiff = position -
+            currentChunkCoord * (int32_t)CHUNK_DIM;
+
+          currentChunk->voxels[getVoxelIndex(chunkOriginDiff)].density = 
+            (uint16_t)(mMaxVoxelDensity - 5000) + 5000 * proportion;
+        }
+      }
+    }
+  }
+}
+
 void Terrain::prepareForRender(VulkanContext &graphicsContext) {
+  LOG_INFOV("Loaded %d chunks\n", (int)mLoadedChunks.size);
+
   generateVoxelNormals();
 
   for (int i = 0; i < mLoadedChunks.size; ++i) {
@@ -522,14 +586,6 @@ void Terrain::prepareForRender(VulkanContext &graphicsContext) {
     // Don't worry, this will be thoroughly redone
     chunk->vertices = createChunkVertices(*chunk, graphicsContext);
   }
-}
-
-void Terrain::submitForRender(
-  const Camera &camera,
-  const PlanetRenderer &planet,
-  const Clipping &clipping,
-  VulkanFrame &frame) {
-  
 }
 
 void Terrain::generateChunkFaceNormals(
@@ -612,13 +668,6 @@ void Terrain::setVoxelNormal(
     (int)(normal.y * 1000.0f);
   chunk->voxels[getVoxelIndex(voxelCoord)].normalZ =
     (int)(normal.z * 1000.0f);
-
-  if (chunk->voxels[getVoxelIndex(voxelCoord)].density > 0 &&
-      chunk->voxels[getVoxelIndex(voxelCoord)].normalX == 0 &&
-      chunk->voxels[getVoxelIndex(voxelCoord)].normalY == 0 &&
-      chunk->voxels[getVoxelIndex(voxelCoord)].normalZ == 0) {
-    printf("Something is wrong\n");
-  }
 }
 
 void Terrain::generateVoxelNormals() {
@@ -726,9 +775,9 @@ void Terrain::generateVoxelNormals() {
           voxelCoord[dim] = component;
 
           glm::vec3 grad;
-          grad.x = densitym(voxelCoord + diff[0]) - densitym(voxelCoord - diff[0]);
-          grad.y = densitym(voxelCoord + diff[1]) - densitym(voxelCoord - diff[1]);
-          grad.z = densitym(voxelCoord + diff[2]) - densitym(voxelCoord - diff[2]);
+          grad.x = densitym(voxelCoord + diff[0])-densitym(voxelCoord - diff[0]);
+          grad.y = densitym(voxelCoord + diff[1])-densitym(voxelCoord - diff[1]);
+          grad.z = densitym(voxelCoord + diff[2])-densitym(voxelCoord - diff[2]);
           setVoxelNormal(chunk, voxelCoord, grad);
         }
       }

@@ -431,6 +431,7 @@ FocusedView EditorView::trackInput(
         hierarchyChange->views = makeArray<const char *, AllocationType::Linear>(
           "GameView", "EditorView");
         mOnEvent(hierarchyChange);
+        mBoundViewport = ViewportType::GameEditor;
 
         mChangedFocusToEditor = true;
         mChangedFocusToViewport = false;
@@ -440,6 +441,7 @@ FocusedView EditorView::trackInput(
         hierarchyChange->views = makeArray<const char *, AllocationType::Linear>(
           "MapView", "EditorView");
         mOnEvent(hierarchyChange);
+        mBoundViewport = ViewportType::MapEditor;
 
         mChangedFocusToEditor = true;
         mChangedFocusToViewport = false;

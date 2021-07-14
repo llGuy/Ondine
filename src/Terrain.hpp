@@ -24,13 +24,10 @@ public:
 
   void prepareForRender(VulkanContext &graphicsContext);
 
-  void submitForRender(
-    const Camera &camera,
-    const PlanetRenderer &planet,
-    const Clipping &clipping,
-    VulkanFrame &frame);
-
-  void makeSphere(float radius, const glm::vec3 &center);
+  void makeSphere(float radius, glm::vec3 center);
+  void makeIslands(
+    float seaLevel,
+    glm::vec2 start, glm::vec2 end);
 
   // TODO: Get buffers from a pool
   ChunkVertices createChunkVertices(
@@ -106,13 +103,13 @@ private:
     const glm::vec3 &grad);
 
 private:
-  static constexpr uint32_t MAX_CHUNKS = 300;
+  static constexpr uint32_t MAX_CHUNKS = 3000;
   static constexpr uint32_t CHUNK_MAX_VERTICES =
     10 * (CHUNK_DIM) * (CHUNK_DIM) * (CHUNK_DIM);
   static const glm::vec3 NORMALIZED_CUBE_VERTICES[8];
   static const glm::ivec3 NORMALIZED_CUBE_VERTEX_INDICES[8];
 
-  float mTerrainScale;
+  int mTerrainScale;
   float mChunkWidth;
   float mMaxVoxelDensity;
   Chunk *mNullChunk;
