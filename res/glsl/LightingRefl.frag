@@ -430,13 +430,13 @@ vec3 getOceanNormal(in vec3 pointPosition) {
 #endif
 
   float distToPoint = length(pointPosition - uCamera.camera.wPosition);
-  distToPoint = clamp(distToPoint / 550.0, 0.0, 1.0);
+  distToPoint = clamp(distToPoint / 550.0, 0.0, 0.9);
 
   float progress = dot(
     vec3(0.0, 1.0, 0.0),
     normalize(uCamera.camera.wPosition - pointPosition));
 
-  progress = pow(progress, 1.0);
+  progress = pow(progress, 1.0) * (1.0 - distToPoint);
 
   vec3 waveFactor = vec3(
     uLighting.lighting.waveStrength, 1.0, uLighting.lighting.waveStrength);
