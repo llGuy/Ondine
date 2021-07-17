@@ -26,8 +26,10 @@ public:
 
   void makeSphere(float radius, glm::vec3 center);
   void makeIslands(
-    float seaLevel,
-    glm::vec2 start, glm::vec2 end);
+    float seaLevel, uint32_t octaveCount,
+    float persistance, float lacunarity,
+    float baseAmplitude, float baseFrequency,
+    glm::vec2 s, glm::vec2 e);
 
   // TODO: Get buffers from a pool
   ChunkVertices createChunkVertices(

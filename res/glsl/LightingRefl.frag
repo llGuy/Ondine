@@ -131,6 +131,9 @@ vec4 getPointRadianceBRDF(
 vec4 getReflectivePointRadiancePseudoBRDF(
   float roughness, float metal,
   in vec3 reflectedColor,
+  // GBuffer information for rasterized point
+  in GBufferData surfaceGBuffer,
+  // GBuffer information for ocean surface (raytraced)
   in GBufferData gbuffer) {
   vec3 skyIrradiance, sunIrradiance, pointRadiance;
   { // Calculate sun and sky irradiance which will contribute to the final BRDF
@@ -200,10 +203,18 @@ vec4 getReflectivePointRadiancePseudoBRDF(
 
   pointRadiance = pointRadiance * transmittance + inScatter + inScatterMoon;
 
-  return vec4(pointRadiance, 1.0);
+  // return vec4(pointRadiance, 1.0);
+
+  // Can avoid calling length by storing the lengths to points
+  float diff = length(surfaceGBuffer.wPosition.xyz - gbuffer.wPosition.xyz);
+  float murkiness = clamp(diff / 10.0, 0, 1);
+  // return vec4(vec3(murkiness), 1.0);
+
+  return mix(surfaceGBuffer.albedo, vec4(pointRadiance, 1.0), murkiness);
 }
 
 // Testing
+#if 0
 vec4 getOceanPointRadiancePseudoBRDF(
   float roughness, float metal,
   in vec3 reflectedColor,
@@ -280,6 +291,7 @@ vec4 getOceanPointRadiancePseudoBRDF(
 
   return vec4(pointRadiance, 1.0);
 }
+#endif
 
 vec4 getPointRadiance(in GBufferData gbuffer) {
   vec3 skyIrradiance;
@@ -484,6 +496,7 @@ void main() {
 
     // This is a rendered object
     vec4 rasterizedRadiance = getPointRadianceBRDF(0.8, 0.0, gbuffer);
+    gbuffer.albedo = rasterizedRadiance;
 
     if (vPosition.z < vOceanPosition.z && oceanIntersection.didIntersect) {
       // This is the ocean
@@ -504,7 +517,7 @@ void main() {
 
       oceanRadiance = getReflectivePointRadiancePseudoBRDF(
         uLighting.lighting.waterRoughness, uLighting.lighting.waterMetal,
-        reflectionColor, /*rasterizedRadiance.rgb,*/ oceanGBuffer).rgb;
+        reflectionColor, gbuffer, oceanGBuffer).rgb;
     }
     else {
       pointRadiance = rasterizedRadiance.rgb;
@@ -524,9 +537,16 @@ void main() {
       oceanGBuffer.wPosition.xyz,
       oceanGBuffer.wNormal.xyz).rgb;
 
+    RayIntersection planetIntersection = raySphereIntersection(
+      viewRay, uSky.sky.wPlanetCenter, uSky.sky.bottomRadius);
+    gbuffer.wPosition = vec4(planetIntersection.wIntersectionPoint, 1.0);
+    gbuffer.wNormal = vec4(0.0, 1.0, 0.0, 1.0);
+    gbuffer.depth = 0.0;
+    gbuffer.albedo = vec4(0.0);
+
     oceanRadiance = getReflectivePointRadiancePseudoBRDF(
       uLighting.lighting.waterRoughness, uLighting.lighting.waterMetal,
-      reflectionColor, oceanGBuffer).rgb;
+      reflectionColor, gbuffer, oceanGBuffer).rgb;
   }
   else {
     radianceBaseColor = gbuffer.albedo.rgb;

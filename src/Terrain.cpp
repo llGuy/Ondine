@@ -32,7 +32,7 @@ const glm::ivec3 Terrain::NORMALIZED_CUBE_VERTEX_INDICES[8] = {
 };
 
 void Terrain::init() {
-  mTerrainScale = 20;
+  mTerrainScale = 40;
   mChunkWidth = mTerrainScale * (float)CHUNK_DIM;
 
   mChunkIndices.init();
@@ -164,10 +164,6 @@ void Terrain::pushVertexToTriangleList(
 
   glm::vec3 normal = interpolate(
     normal0, normal1, interpolatedVoxelValues);
-
-  if (normal.x == 0.0f && normal.y == 0.0f && normal.z == 0.0f) {
-    printf("NULL NORMAL\n");
-  }
 
   meshVertices[vertexCount] = {vertex, normal};
 
@@ -395,8 +391,6 @@ uint32_t Terrain::generateChunkVertices(
         updateVoxelCube(
           voxelValues, glm::ivec3(x, y, z), surfaceDensity,
           meshVertices, vertexCount);
-
-        // printf("Hello\n");
       }
     }
   }
@@ -519,7 +513,9 @@ void Terrain::makeSphere(float radius, glm::vec3 center) {
 }
 
 void Terrain::makeIslands(
-  float seaLevel,
+  float seaLevel, uint32_t octaveCount,
+  float persistance, float lacunarity,
+  float baseAmplitude, float baseFrequency,
   glm::vec2 s, glm::vec2 e) {
   seaLevel /= mTerrainScale;
   s /= mTerrainScale;
@@ -538,12 +534,22 @@ void Terrain::makeIslands(
 
   for (int32_t z = start.y; z < end.y; ++z) {
     for (int32_t x = start.x; x < end.x; ++x) {
-      glm::vec2 perlinCoord = glm::vec2(
-        float(x - start.x) / (float)range.x,
-        float(z - start.y) / (float)range.y) * 3.0f;
+      float height = seaLevel;
+      float freq = baseFrequency;
+      float amp = baseAmplitude;
 
-      float noise = glm::perlin(perlinCoord);
-      float height = (noise * 100.0f) + seaLevel;
+      for (int i = 0; i < octaveCount; ++i) {
+        glm::vec2 perlinCoord = glm::vec2(
+          float(x - start.x) / (float)range.x,
+          float(z - start.y) / (float)range.y) * freq;
+
+        float noise = glm::perlin(perlinCoord);
+        height += (noise * amp);
+
+        amp += persistance;
+        freq *= lacunarity;
+      }
+
       height = fmax(height, minHeight);
 
       for (int32_t y = (int32_t)minHeight; y < (int32_t)height; ++y) {

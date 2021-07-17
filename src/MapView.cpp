@@ -19,9 +19,9 @@ MapView::MapView(
   mMapScene->terrain.init();
   // mMapScene->terrain.makeSphere(150.0f, glm::vec3(121.0f, 40.0f, 194.0f));
   mMapScene->terrain.makeIslands(
-    50,
-    glm::ivec2(-250, -250) * 6,
-    glm::ivec2(250, 250) * 6);
+    50, 4, 0.1f, 1.4f, 20.0f, 2.0f,
+    glm::ivec2(-250, -250) * 12,
+    glm::ivec2(250, 250) * 12);
   mMapScene->terrain.prepareForRender(renderer.mGraphicsContext);
 
   renderer.bindScene(mMapScene);
@@ -46,7 +46,8 @@ MapView::MapView(
     mMapScene->lighting.data.waveProfiles[1] = {0.005f, 1.0f, 1.0f};
     mMapScene->lighting.data.waveProfiles[2] = {0.008f, 0.3f, 2.0f};
     mMapScene->lighting.data.waveProfiles[3] = {0.001f, 0.5f, 3.0f};
-    mMapScene->lighting.rotationAngle = glm::radians(40.5f);
+    mMapScene->lighting.rotationAngle = glm::radians(86.5f);
+
   }
 
   { // Set camera properties
