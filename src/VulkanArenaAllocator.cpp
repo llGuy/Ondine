@@ -7,15 +7,18 @@ void VulkanArenaAllocator::init(
   uint32_t maxBlockCount,
   VulkanBufferFlagBits bufferFlags,
   VulkanContext &graphicsContext) {
-  mFreeBlocks.init(maxBlockCount);
+  mBlocks.init(maxBlockCount);
   mAllocatedSize = maxBlockCount * POOL_BLOCK_SIZE;
   mGPUPool.init(graphicsContext.device(), mAllocatedSize, bufferFlags);
-  mFreeBlocks.init(maxBlockCount);
-  mFreeBlocks[0].nextFreeBlock = 0xFFFF;
-  mFreeBlocks[0].blockCount = maxBlockCount;
-  mFirstFreeBlock.nextFreeBlock = 0;
+  mBlocks.init(maxBlockCount);
+  mBlocks[0].next = INVALID_BLOCK_INDEX;
+  mBlocks[0].prev = INVALID_BLOCK_INDEX;
+  mBlocks[0].blockCount = maxBlockCount;
+  mBlocks[0].isFree = 1;
+  mFirstFreeBlock.next = 0;
+  mFirstFreeBlock.prev = INVALID_BLOCK_INDEX;
   mFirstFreeBlock.blockCount = 0;
-  mFirstFreeBlock.baseBlock = 0;
+  mFirstFreeBlock.base = 0;
   mFirstFreeBlock.isFree = 1;
   mLastFreeBlock = 0;
   setRangeTo(true, 0, maxBlockCount, 0);
@@ -28,84 +31,78 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
   uint16_t prevBlockIndex = 0;
   auto *prevBlock = &mFirstFreeBlock;
 
-  while (mFreeBlocks[prevBlock->nextFreeBlock].blockCount < requiredBlocks) {
-    assert(
-      mFreeBlocks[prevBlock->nextFreeBlock].nextFreeBlock !=
-      INVALID_BLOCK_INDEX);
+  while (getBlock(prevBlock->next).blockCount < requiredBlocks) {
+    assert(getBlock(prevBlock->next).next != INVALID_BLOCK_INDEX);
 
-    prevBlock = &mFreeBlocks[
-      mFreeBlocks[
-        prevBlock->nextFreeBlock
-      ].nextFreeBlock
-    ];
-
-    prevBlockIndex = prevBlock->nextFreeBlock;
+    prevBlockIndex = prevBlock->next;
+    prevBlock = &getBlock(prevBlockIndex);
   }
 
   VulkanArenaSlot slot = {
-    POOL_BLOCK_SIZE * prevBlock->nextFreeBlock,
+    POOL_BLOCK_SIZE * prevBlock->next,
     POOL_BLOCK_SIZE * requiredBlocks
   };
 
   // This will no longer be a free block
-  auto *oldFreeBlock = &mFreeBlocks[prevBlock->nextFreeBlock];
+  auto *toOccupy = &getBlock(prevBlock->next);
+  FreeBlock copy = *toOccupy;
+  memset(toOccupy, 0, sizeof(FreeBlock));
 
-  if (oldFreeBlock->blockCount == requiredBlocks) {
-    setRangeTo(
-      false,
-      prevBlock->nextFreeBlock,
-      oldFreeBlock->nextFreeBlock,
-      prevBlock->nextFreeBlock);
-    prevBlock->nextFreeBlock = oldFreeBlock->nextFreeBlock;
+  setRangeTo(
+    false,
+    prevBlock->next,
+    prevBlock->next + requiredBlocks,
+    prevBlock->next);
 
-    if (prevBlock->nextFreeBlock == INVALID_BLOCK_INDEX) {
+  if (toOccupy->blockCount == requiredBlocks) {
+    // This block needs to disappear from the list of free blocks
+    prevBlock->next = copy.next;
+
+    if (prevBlock->next == INVALID_BLOCK_INDEX) {
       mLastFreeBlock = prevBlockIndex;
+    }
+    else {
+      getBlock(prevBlock->next).prev = prevBlockIndex;
     }
   }
   else {
-    setRangeTo(
-      false,
-      prevBlock->nextFreeBlock,
-      prevBlock->nextFreeBlock + requiredBlocks,
-      prevBlock->nextFreeBlock);
-    
-    prevBlock->nextFreeBlock = prevBlock->nextFreeBlock + requiredBlocks;
-
-    auto *newFreeBlock = &mFreeBlocks[prevBlock->nextFreeBlock];
-
-    newFreeBlock->blockCount = oldFreeBlock->blockCount - requiredBlocks;
-    newFreeBlock->nextFreeBlock = oldFreeBlock->nextFreeBlock;
-
-    if (newFreeBlock->nextFreeBlock == INVALID_BLOCK_INDEX) {
-      // Index of newFreeBlock
-      mLastFreeBlock = prevBlock->nextFreeBlock;
-    }
+    // We need to create a new block
+    FreeBlock &newBlock = getBlock(prevBlock->next + requiredBlocks);
 
     setRangeTo(
       true,
-      prevBlock->nextFreeBlock,
-      prevBlock->nextFreeBlock + newFreeBlock->blockCount,
-      prevBlock->nextFreeBlock);
-  }
+      prevBlock->next + requiredBlocks,
+      prevBlock->next + copy.blockCount,
+      prevBlock->next + requiredBlocks);
 
-  memset(oldFreeBlock, 0, sizeof(FreeBlock));
+    prevBlock->next = prevBlock->next + requiredBlocks;
+
+    newBlock.next = copy.next;
+    newBlock.prev = copy.prev;
+    newBlock.isFree = true;
+    newBlock.blockCount = copy.blockCount - requiredBlocks;
+
+    if (newBlock.next == INVALID_BLOCK_INDEX) {
+      mLastFreeBlock = prevBlock->next + requiredBlocks;
+    }
+  }
 
   return slot;
 }
 
 void VulkanArenaAllocator::free(uint32_t address) {
   uint32_t blockIndex = address / POOL_BLOCK_SIZE;
-  FreeBlock *newFreeBlock = &mFreeBlocks[blockIndex];
+  FreeBlock *newFreeBlock = &mBlocks[blockIndex];
   
   { // Check if the previous block adjacent is free
-    FreeBlock &prev = mFreeBlocks[blockIndex - 1];
+    FreeBlock &prev = mBlocks[blockIndex - 1];
     if (prev.isFree) {
       // Need to merge with this block
       setRangeTo(
         true,
         blockIndex,
         blockIndex + newFreeBlock->blockCount,
-        prev.baseBlock);
+        prev.base);
     }
   }
 }
@@ -114,16 +111,17 @@ void VulkanArenaAllocator::debugLogState() {
   FreeBlock *prevBlock = &mFirstFreeBlock;
 
   printf("\n");
+  LOG_INFO("--- LOGGING ARENA ALLOCATOR STATE ---\n");
   LOG_INFOV(
     "First free block at %p\n",
-    (void *)(uint64_t)(mFirstFreeBlock.nextFreeBlock * POOL_BLOCK_SIZE));
+    (void *)(uint64_t)(mFirstFreeBlock.next * POOL_BLOCK_SIZE));
   LOG_INFOV(
     "Last free block at %p\n",
     (void *)(uint64_t)(mLastFreeBlock * POOL_BLOCK_SIZE));
   printf("\n");
 
-  for (int i = 0; i < mFreeBlocks.capacity; ++i) {
-    mFreeBlocks[i].log(i * POOL_BLOCK_SIZE);
+  for (int i = 0; i < mBlocks.capacity; ++i) {
+    mBlocks[i].log(i * POOL_BLOCK_SIZE);
     printf("\n");
   }
 }
@@ -131,9 +129,13 @@ void VulkanArenaAllocator::debugLogState() {
 void VulkanArenaAllocator::setRangeTo(
   bool isFree, uint16_t start, uint16_t end, uint16_t base) {
   for (int i = start; i < end; ++i) {
-    mFreeBlocks[i].isFree = isFree;
-    mFreeBlocks[i].baseBlock = base;
+    mBlocks[i].isFree = isFree;
+    mBlocks[i].base= base;
   }
+}
+
+VulkanArenaAllocator::FreeBlock &VulkanArenaAllocator::getBlock(uint32_t index) {
+  return mBlocks[index];
 }
 
 }

@@ -29,23 +29,14 @@ public:
   void debugLogState();
 
 private:
-  void setRangeTo(bool isFree, uint16_t start, uint16_t end, uint16_t base);
-
-private:
-  static constexpr uint32_t POOL_BLOCK_SIZE = 4096;
-  static constexpr uint32_t INVALID_BLOCK_INDEX = 0xFFFF;
-
   struct FreeBlock {
     // Might need to add more information in bitfield
-    uint16_t nextFreeBlock;
-    uint16_t blockCount;
-    uint16_t baseBlock;
-    union {
-      uint16_t flags;
-      struct {
-        uint16_t isFree : 1;
-        uint16_t pad : 15;
-      };
+    uint16_t next;
+    uint16_t prev;
+    uint16_t base;
+    struct {
+      uint16_t isFree : 1;
+      uint16_t blockCount : 15;
     };
 
     void log(uint32_t address) {
@@ -55,12 +46,15 @@ private:
           LOG_INFOV("\tBase of %d blocks\n", blockCount);
           LOG_INFOV(
             "\tNext free block at %p\n",
-            (void *)((uint64_t)nextFreeBlock * POOL_BLOCK_SIZE));
+            (void *)((uint64_t)next * POOL_BLOCK_SIZE));
+          LOG_INFOV(
+            "\tPrevious free block at %p\n",
+            (void *)((uint64_t)prev * POOL_BLOCK_SIZE));
         }
         else {
           LOG_INFOV(
             "\tRoot at %p\n",
-            (void *)((uint64_t)baseBlock * POOL_BLOCK_SIZE));
+            (void *)((uint64_t)base * POOL_BLOCK_SIZE));
         }
       }
       else {
@@ -71,18 +65,25 @@ private:
         else {
           LOG_INFOV(
             "\tRoot at %p\n",
-            (void *)((uint64_t)baseBlock * POOL_BLOCK_SIZE));
+            (void *)((uint64_t)base * POOL_BLOCK_SIZE));
         }
       }
     }
   };
+
+  void setRangeTo(bool isFree, uint16_t start, uint16_t end, uint16_t base);
+  FreeBlock &getBlock(uint32_t index);
+
+private:
+  static constexpr uint32_t POOL_BLOCK_SIZE = 4096;
+  static constexpr uint32_t INVALID_BLOCK_INDEX = 0xFFFF;
 
   uint32_t mAllocatedSize;
   VulkanBuffer mGPUPool;
   FreeBlock mFirstFreeBlock;
   // Index to the block whose nextFreeBlock member is equal to 0xFFFF
   uint16_t mLastFreeBlock;
-  Array<FreeBlock> mFreeBlocks;
+  Array<FreeBlock> mBlocks;
 };
 
 }

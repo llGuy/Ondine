@@ -152,7 +152,9 @@ void Renderer3D::init() {
     mGraphicsContext);
 
   VulkanArenaSlot slot0 = mArena.allocate(4000);
+  mArena.debugLogState();
   VulkanArenaSlot slot1 = mArena.allocate(3000);
+  mArena.debugLogState();
   VulkanArenaSlot slot2 = mArena.allocate(6000);
   mArena.debugLogState();
 }
