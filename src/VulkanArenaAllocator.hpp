@@ -1,0 +1,88 @@
+#pragma once
+
+#include "Log.hpp"
+#include <stdint.h>
+#include "Buffer.hpp"
+#include "VulkanBuffer.hpp"
+
+namespace Ondine::Graphics {
+
+class VulkanContext;
+
+struct VulkanArenaSlot {
+  // Offset will be aligned with the size of one block
+  uint32_t offset;
+  // Size will be aligned with the size of one block
+  uint32_t size;
+};
+
+class VulkanArenaAllocator {
+public:
+  void init(
+    uint32_t maxBlockCount,
+    VulkanBufferFlagBits bufferFlags,
+    VulkanContext &graphicsContext);
+
+  VulkanArenaSlot allocate(uint32_t size);
+  void free(uint32_t address);
+
+  void debugLogState();
+
+private:
+  void setRangeTo(bool isFree, uint16_t start, uint16_t end, uint16_t base);
+
+private:
+  static constexpr uint32_t POOL_BLOCK_SIZE = 4096;
+  static constexpr uint32_t INVALID_BLOCK_INDEX = 0xFFFF;
+
+  struct FreeBlock {
+    // Might need to add more information in bitfield
+    uint16_t nextFreeBlock;
+    uint16_t blockCount;
+    uint16_t baseBlock;
+    union {
+      uint16_t flags;
+      struct {
+        uint16_t isFree : 1;
+        uint16_t pad : 15;
+      };
+    };
+
+    void log(uint32_t address) {
+      if (isFree) {
+        LOG_INFOV("Free block at %p\n", (void *)(uint64_t)address);
+        if (blockCount) {
+          LOG_INFOV("\tBase of %d blocks\n", blockCount);
+          LOG_INFOV(
+            "\tNext free block at %p\n",
+            (void *)((uint64_t)nextFreeBlock * POOL_BLOCK_SIZE));
+        }
+        else {
+          LOG_INFOV(
+            "\tRoot at %p\n",
+            (void *)((uint64_t)baseBlock * POOL_BLOCK_SIZE));
+        }
+      }
+      else {
+        LOG_INFOV("Occupied block at %p\n", (void *)(uint64_t)address);
+        if (blockCount) {
+          LOG_INFOV("\tBase of %d blocks\n", blockCount);
+        }
+        else {
+          LOG_INFOV(
+            "\tRoot at %p\n",
+            (void *)((uint64_t)baseBlock * POOL_BLOCK_SIZE));
+        }
+      }
+    }
+  };
+
+  uint32_t mAllocatedSize;
+  VulkanBuffer mGPUPool;
+  FreeBlock mFirstFreeBlock;
+  // Index to the block whose nextFreeBlock member is equal to 0xFFFF
+  uint16_t mLastFreeBlock;
+  Array<FreeBlock> mFreeBlocks;
+};
+
+}

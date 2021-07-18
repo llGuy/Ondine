@@ -444,6 +444,14 @@ ChunkVertices Terrain::createChunkVertices(
       vertexCount * sizeof(ChunkVertex),
       (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer);
 
+#if 0
+    LOG_INFOV(
+      "Chunk at %s requires VBO of size %d bytes (%d kilobytes)\n",
+      glm::to_string(chunk.chunkCoord).c_str(),
+      (int)(vertexCount * sizeof(ChunkVertex)),
+      (int)(vertexCount * sizeof(ChunkVertex) / 1000));
+#endif
+
     ret.vbo.fillWithStaging(
       graphicsContext.device(),
       graphicsContext.commandPool(),

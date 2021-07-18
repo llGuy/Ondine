@@ -144,6 +144,17 @@ void Renderer3D::init() {
   mPixelater.init(
     mGraphicsContext,
     {pipelineViewport.width, pipelineViewport.height});
+
+  // Testing vulkan arena allocator
+  mArena.init(
+    10,
+    (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer,
+    mGraphicsContext);
+
+  VulkanArenaSlot slot0 = mArena.allocate(4000);
+  VulkanArenaSlot slot1 = mArena.allocate(3000);
+  VulkanArenaSlot slot2 = mArena.allocate(6000);
+  mArena.debugLogState();
 }
 
 void Renderer3D::shutdown() {

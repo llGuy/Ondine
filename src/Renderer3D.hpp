@@ -21,6 +21,7 @@
 #include "VulkanContext.hpp"
 #include "TerrainRenderer.hpp"
 #include "DeferredLighting.hpp"
+#include "VulkanArenaAllocator.hpp"
 
 namespace Ondine::Graphics {
 
@@ -54,9 +55,7 @@ public:
 
 private:
   Camera mCamera;
-
   PlanetProperties mPlanetProperties;
-
   GBuffer mGBuffer;
   Clipping mClipping;
   StarRenderer mStarRenderer;
@@ -68,10 +67,9 @@ private:
   Pixelater mPixelater;
   RenderMethodEntries mRenderMethods;
   RenderShaderEntries mShaderEntries;
-
   ModelManager mModelManager;
+  VulkanArenaAllocator mArena;
   Scene *mBoundScene;
-
   VulkanContext &mGraphicsContext;
 
   // Only relevant in DEV builds
