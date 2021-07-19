@@ -46,7 +46,6 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
   // This will no longer be a free block
   auto *toOccupy = &getBlock(prevBlock->next);
   FreeBlock copy = *toOccupy;
-  memset(toOccupy, 0, sizeof(FreeBlock));
 
   setRangeTo(
     false,
@@ -54,7 +53,11 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
     prevBlock->next + requiredBlocks,
     prevBlock->next);
 
-  if (toOccupy->blockCount == requiredBlocks) {
+  toOccupy->base = prevBlock->next;
+  toOccupy->blockCount = requiredBlocks;
+  toOccupy->isFree = false;
+
+  if (copy.blockCount == requiredBlocks) {
     // This block needs to disappear from the list of free blocks
     prevBlock->next = copy.next;
 
@@ -83,7 +86,7 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
     newBlock.blockCount = copy.blockCount - requiredBlocks;
 
     if (newBlock.next == INVALID_BLOCK_INDEX) {
-      mLastFreeBlock = prevBlock->next + requiredBlocks;
+      mLastFreeBlock = prevBlock->next;
     }
   }
 
@@ -93,9 +96,13 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
 void VulkanArenaAllocator::free(uint32_t address) {
   uint32_t blockIndex = address / POOL_BLOCK_SIZE;
   FreeBlock *newFreeBlock = &mBlocks[blockIndex];
-  
-  { // Check if the previous block adjacent is free
-    FreeBlock &prev = mBlocks[blockIndex - 1];
+  uint32_t newFreeBlockCount = newFreeBlock->blockCount;
+
+  bool createNewBlock = true;
+
+  if (blockIndex > 0) {
+    // Check if the previous block adjacent is free
+    FreeBlock &prev = getBlock(blockIndex - 1);
     if (prev.isFree) {
       // Need to merge with this block
       setRangeTo(
@@ -103,7 +110,31 @@ void VulkanArenaAllocator::free(uint32_t address) {
         blockIndex,
         blockIndex + newFreeBlock->blockCount,
         prev.base);
+
+      FreeBlock &newBase = getBlock(prev.base);
+      newBase.blockCount = newBase.blockCount + newFreeBlockCount;
+
+      createNewBlock = false;
     }
+  }
+
+  if (createNewBlock) {
+    setRangeTo(
+      true,
+      blockIndex,
+      blockIndex + newFreeBlock->blockCount,
+      blockIndex);
+
+    // Need to add a new free block
+    FreeBlock &last = getBlock(mLastFreeBlock);
+    last.next = blockIndex;
+    newFreeBlock->prev = mLastFreeBlock;
+    newFreeBlock->next = 0xFFFF;
+    newFreeBlock->isFree = true;
+    newFreeBlock->base = blockIndex;
+    newFreeBlock->blockCount = newFreeBlockCount;
+
+    mLastFreeBlock = blockIndex;
   }
 }
 
@@ -130,7 +161,7 @@ void VulkanArenaAllocator::setRangeTo(
   bool isFree, uint16_t start, uint16_t end, uint16_t base) {
   for (int i = start; i < end; ++i) {
     mBlocks[i].isFree = isFree;
-    mBlocks[i].base= base;
+    mBlocks[i].base = base;
   }
 }
 
