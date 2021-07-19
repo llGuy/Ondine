@@ -173,10 +173,12 @@ void main() {
     (uCamera.camera.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter),
     viewRay, 0.0, uLighting.lighting.sunDirection, transmittance);
 
+#if 0
   if (dot(viewRay, uLighting.lighting.sunDirection) >
       uLighting.lighting.sunSize.y) {
     radiance = radiance + transmittance * getSolarRadiance(uSky.sky);
   }
+#endif
 
   radiance += getSkyRadiance(
     uSky.sky, uTransmittanceTexture,
