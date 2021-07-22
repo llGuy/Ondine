@@ -31,11 +31,11 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
   uint16_t prevBlockIndex = 0;
   auto *prevBlock = &mFirstFreeBlock;
 
-  while (getBlock(prevBlock->next).blockCount < requiredBlocks) {
-    assert(getBlock(prevBlock->next).next != INVALID_BLOCK_INDEX);
+  while (getBlock(prevBlock->next)->blockCount < requiredBlocks) {
+    assert(getBlock(prevBlock->next)->next != INVALID_BLOCK_INDEX);
 
     prevBlockIndex = prevBlock->next;
-    prevBlock = &getBlock(prevBlockIndex);
+    prevBlock = getBlock(prevBlockIndex);
   }
 
   VulkanArenaSlot slot = {
@@ -44,7 +44,7 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
   };
 
   // This will no longer be a free block
-  auto *toOccupy = &getBlock(prevBlock->next);
+  auto *toOccupy = getBlock(prevBlock->next);
   FreeBlock copy = *toOccupy;
 
   setRangeTo(
@@ -65,12 +65,13 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
       mLastFreeBlock = prevBlockIndex;
     }
     else {
-      getBlock(prevBlock->next).prev = prevBlockIndex;
+      getBlock(prevBlock->next)->prev = prevBlockIndex;
     }
   }
   else {
     // We need to create a new block
-    FreeBlock &newBlock = getBlock(prevBlock->next + requiredBlocks);
+    uint16_t newBlockIndex = prevBlock->next + requiredBlocks;
+    FreeBlock *newBlock = getBlock(newBlockIndex);
 
     setRangeTo(
       true,
@@ -80,14 +81,16 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
 
     prevBlock->next = prevBlock->next + requiredBlocks;
 
-    newBlock.next = copy.next;
-    newBlock.prev = copy.prev;
-    newBlock.isFree = true;
-    newBlock.blockCount = copy.blockCount - requiredBlocks;
+    newBlock->next = copy.next;
+    newBlock->prev = copy.prev;
+    newBlock->isFree = true;
+    newBlock->blockCount = copy.blockCount - requiredBlocks;
 
-    if (newBlock.next == INVALID_BLOCK_INDEX) {
+    if (newBlock->next == INVALID_BLOCK_INDEX) {
       mLastFreeBlock = prevBlock->next;
     }
+
+    sortFrom(newBlockIndex);
   }
 
   return slot;
@@ -102,19 +105,22 @@ void VulkanArenaAllocator::free(uint32_t address) {
 
   if (blockIndex > 0) {
     // Check if the previous block adjacent is free
-    FreeBlock &prev = getBlock(blockIndex - 1);
-    if (prev.isFree) {
+    FreeBlock *prev = getBlock(blockIndex - 1);
+    if (prev->isFree) {
       // Need to merge with this block
       setRangeTo(
         true,
         blockIndex,
         blockIndex + newFreeBlock->blockCount,
-        prev.base);
+        prev->base);
 
-      FreeBlock &newBase = getBlock(prev.base);
-      newBase.blockCount = newBase.blockCount + newFreeBlockCount;
+      uint16_t newBaseIndex = prev->base;
+      FreeBlock *newBase = getBlock(prev->base);
+      newBase->blockCount = newBase->blockCount + newFreeBlockCount;
 
       createNewBlock = false;
+
+      sortFrom(newBaseIndex);
     }
   }
 
@@ -126,8 +132,8 @@ void VulkanArenaAllocator::free(uint32_t address) {
       blockIndex);
 
     // Need to add a new free block
-    FreeBlock &last = getBlock(mLastFreeBlock);
-    last.next = blockIndex;
+    FreeBlock *last = getBlock(mLastFreeBlock);
+    last->next = blockIndex;
     newFreeBlock->prev = mLastFreeBlock;
     newFreeBlock->next = 0xFFFF;
     newFreeBlock->isFree = true;
@@ -135,6 +141,8 @@ void VulkanArenaAllocator::free(uint32_t address) {
     newFreeBlock->blockCount = newFreeBlockCount;
 
     mLastFreeBlock = blockIndex;
+
+    sortFrom(blockIndex);
   }
 }
 
@@ -155,6 +163,13 @@ void VulkanArenaAllocator::debugLogState() {
     mBlocks[i].log(i * POOL_BLOCK_SIZE);
     printf("\n");
   }
+
+  // Print the list of block counts
+  FreeBlock *block = getBlock(mFirstFreeBlock.next);
+  while (block) {
+    printf("%d -> ", block->blockCount);
+    block = getBlock(block->next);
+  }
 }
 
 void VulkanArenaAllocator::setRangeTo(
@@ -165,8 +180,87 @@ void VulkanArenaAllocator::setRangeTo(
   }
 }
 
-VulkanArenaAllocator::FreeBlock &VulkanArenaAllocator::getBlock(uint32_t index) {
-  return mBlocks[index];
+VulkanArenaAllocator::FreeBlock *VulkanArenaAllocator::getBlock(uint32_t index) {
+  if (index == INVALID_BLOCK_INDEX) {
+    return nullptr;
+  }
+  else {
+    return &mBlocks[index];
+  }
+}
+
+void VulkanArenaAllocator::swapBlockOrder(FreeBlock &a, FreeBlock &b) {
+  auto aCopyNext = a.next;
+  a.next = a.prev;
+  a.prev = aCopyNext;
+  auto bCopyNext = b.next;
+  b.next = b.prev;
+  b.prev = bCopyNext;
+}
+
+void VulkanArenaAllocator::sortFrom(uint16_t blockIndex) {
+  FreeBlock *original = getBlock(blockIndex);
+  FreeBlock *current = original;
+  /* 
+     This will run if the new block isn't already sorted in one direction
+  */
+  while (current->prev != INVALID_BLOCK_INDEX) {
+    FreeBlock *prev = getBlock(current->prev);
+    if (prev->blockCount > current->blockCount) {
+      swapBlockOrder(*current, *prev);
+
+      if (current->next == INVALID_BLOCK_INDEX) {
+        mLastFreeBlock = blockIndex;
+      }
+      else if (prev->next == INVALID_BLOCK_INDEX) {
+        mLastFreeBlock = current->prev;
+      }
+
+      if (current->prev == INVALID_BLOCK_INDEX) {
+        mFirstFreeBlock.next = blockIndex;
+      }
+      else if (prev->prev == INVALID_BLOCK_INDEX) {
+        mFirstFreeBlock.next = current->prev;
+      }
+
+      current = prev;
+      blockIndex = current->prev;
+    }
+    else {
+      break;
+    }
+  }
+
+  current = original;
+  /* 
+     This is will run if the new block is sorted in the other direction
+     but maybe not in the other
+  */
+  while (current->next != INVALID_BLOCK_INDEX) {
+    FreeBlock *next = getBlock(current->next);
+    if (next->blockCount < current->blockCount) {
+      swapBlockOrder(*current, *next);
+
+      if (current->next == INVALID_BLOCK_INDEX) {
+        mLastFreeBlock = blockIndex;
+      }
+      else if (next->next == INVALID_BLOCK_INDEX) {
+        mLastFreeBlock = current->prev;
+      }
+
+      if (current->prev == INVALID_BLOCK_INDEX) {
+        mFirstFreeBlock.next = blockIndex;
+      }
+      else if (next->prev == INVALID_BLOCK_INDEX) {
+        mFirstFreeBlock.next = current->prev;
+      }
+
+      current = next;
+    }
+    else {
+      break;
+    }
+  }
 }
 
 }

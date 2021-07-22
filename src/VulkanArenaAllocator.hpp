@@ -72,7 +72,11 @@ private:
   };
 
   void setRangeTo(bool isFree, uint16_t start, uint16_t end, uint16_t base);
-  FreeBlock &getBlock(uint32_t index);
+  FreeBlock *getBlock(uint32_t index);
+
+  void swapBlockOrder(FreeBlock &a, FreeBlock &b);
+  // Sorts the linked list from a, backwards until the beginning
+  void sortFrom(uint16_t blockIndex);
 
 private:
   static constexpr uint32_t POOL_BLOCK_SIZE = 4096;
@@ -80,6 +84,7 @@ private:
 
   uint32_t mAllocatedSize;
   VulkanBuffer mGPUPool;
+  // Sorted linked list (smallest to largest)
   FreeBlock mFirstFreeBlock;
   // Index to the block whose nextFreeBlock member is equal to 0xFFFF
   uint16_t mLastFreeBlock;

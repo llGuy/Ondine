@@ -1,3 +1,4 @@
+#include <iostream>
 #include "Buffer.hpp"
 #include "Renderer3D.hpp"
 #include "FileSystem.hpp"
@@ -147,24 +148,44 @@ void Renderer3D::init() {
 
   // Testing vulkan arena allocator
   mArena.init(
-    10,
+    20,
     (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer,
     mGraphicsContext);
 
-  VulkanArenaSlot slot0 = mArena.allocate(4000);
+  VulkanArenaSlot slot0 = mArena.allocate(0x1000);
+  VulkanArenaSlot slot1 = mArena.allocate(0x2000);
+  VulkanArenaSlot slot2 = mArena.allocate(0x3000);
+  VulkanArenaSlot slot3 = mArena.allocate(0x4000);
+  VulkanArenaSlot slot4 = mArena.allocate(0x5000);
   mArena.debugLogState();
 
-  VulkanArenaSlot slot1 = mArena.allocate(3000);
-  mArena.debugLogState();
-
-  VulkanArenaSlot slot2 = mArena.allocate(6000);
-  mArena.debugLogState();
+  std::cin.get();
 
   mArena.free(slot1.offset);
   mArena.debugLogState();
 
+  std::cin.get();
+
   mArena.free(slot0.offset);
   mArena.debugLogState();
+
+  std::cin.get();
+
+  mArena.free(slot3.offset);
+  mArena.debugLogState();
+
+  std::cin.get();
+
+  slot1 = mArena.allocate(0x2000);
+  mArena.debugLogState();
+
+  std::cin.get();
+
+  slot3 = mArena.allocate(0x4000);
+  mArena.debugLogState();
+
+  LOG_INFO("Last before game\n");
+  std::cin.get();
 }
 
 void Renderer3D::shutdown() {
