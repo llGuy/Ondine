@@ -41,7 +41,8 @@ MapView::MapView(
     mMapScene->lighting.data.continuous = 0.0f;
     mMapScene->lighting.data.waveStrength = 0.54f;
     mMapScene->lighting.data.waterRoughness = 0.01f;
-    mMapScene->lighting.data.waterMetal = 0.7f;
+    // mMapScene->lighting.data.waterMetal = 0.7f;
+    mMapScene->lighting.data.waterMetal = 0.95f;
     mMapScene->lighting.data.waveProfiles[0] = {0.01f, 1.0f, 1.0f};
     mMapScene->lighting.data.waveProfiles[1] = {0.005f, 1.0f, 1.0f};
     mMapScene->lighting.data.waveProfiles[2] = {0.008f, 0.3f, 2.0f};

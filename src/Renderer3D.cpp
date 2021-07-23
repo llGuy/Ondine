@@ -152,6 +152,7 @@ void Renderer3D::init() {
     (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer,
     mGraphicsContext);
 
+#if 0
   VulkanArenaSlot slot0 = mArena.allocate(0x1000);
   VulkanArenaSlot slot1 = mArena.allocate(0x2000);
   VulkanArenaSlot slot2 = mArena.allocate(0x3000);
@@ -186,6 +187,7 @@ void Renderer3D::init() {
 
   LOG_INFO("Last before game\n");
   std::cin.get();
+#endif
 }
 
 void Renderer3D::shutdown() {

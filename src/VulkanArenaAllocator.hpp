@@ -74,7 +74,7 @@ private:
   void setRangeTo(bool isFree, uint16_t start, uint16_t end, uint16_t base);
   FreeBlock *getBlock(uint32_t index);
 
-  void swapBlockOrder(FreeBlock &a, FreeBlock &b);
+  void swapBlockOrder(uint16_t aIndex, uint16_t bIndex);
   // Sorts the linked list from a, backwards until the beginning
   void sortFrom(uint16_t blockIndex);
 

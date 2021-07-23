@@ -189,42 +189,61 @@ VulkanArenaAllocator::FreeBlock *VulkanArenaAllocator::getBlock(uint32_t index) 
   }
 }
 
-void VulkanArenaAllocator::swapBlockOrder(FreeBlock &a, FreeBlock &b) {
-  auto aCopyNext = a.next;
-  a.next = a.prev;
-  a.prev = aCopyNext;
-  auto bCopyNext = b.next;
-  b.next = b.prev;
-  b.prev = bCopyNext;
+// a's next block needs to be b
+void VulkanArenaAllocator::swapBlockOrder(uint16_t aIndex, uint16_t bIndex) {
+  FreeBlock *a = getBlock(aIndex);
+  FreeBlock *b = getBlock(bIndex);
+
+  FreeBlock aCopy = *a;
+  FreeBlock bCopy = *b;
+
+  b->prev = a->prev;
+  a->next = b->next;
+
+  b->next = aIndex;
+  a->prev = bIndex;
+
+  FreeBlock *after = getBlock(a->next);
+  FreeBlock *before = getBlock(b->prev);
+
+  if (after) {
+    after->prev = aIndex;
+  }
+  if (before) {
+    before->next = bIndex;
+  }
 }
 
 void VulkanArenaAllocator::sortFrom(uint16_t blockIndex) {
+  uint16_t originalBlockIndex = blockIndex;
   FreeBlock *original = getBlock(blockIndex);
   FreeBlock *current = original;
   /* 
      This will run if the new block isn't already sorted in one direction
   */
-  while (current->prev != INVALID_BLOCK_INDEX) {
+  while (blockIndex != INVALID_BLOCK_INDEX) {
+    if (current->prev == INVALID_BLOCK_INDEX) {
+      break;
+    }
+
+    uint16_t prevIndex = current->prev;
     FreeBlock *prev = getBlock(current->prev);
     if (prev->blockCount > current->blockCount) {
-      swapBlockOrder(*current, *prev);
+      swapBlockOrder(current->prev, blockIndex);
 
       if (current->next == INVALID_BLOCK_INDEX) {
         mLastFreeBlock = blockIndex;
       }
       else if (prev->next == INVALID_BLOCK_INDEX) {
-        mLastFreeBlock = current->prev;
+        mLastFreeBlock = prevIndex;
       }
 
       if (current->prev == INVALID_BLOCK_INDEX) {
         mFirstFreeBlock.next = blockIndex;
       }
       else if (prev->prev == INVALID_BLOCK_INDEX) {
-        mFirstFreeBlock.next = current->prev;
+        mFirstFreeBlock.next = prevIndex;
       }
-
-      current = prev;
-      blockIndex = current->prev;
     }
     else {
       break;
@@ -232,30 +251,34 @@ void VulkanArenaAllocator::sortFrom(uint16_t blockIndex) {
   }
 
   current = original;
+  blockIndex = originalBlockIndex;
   /* 
      This is will run if the new block is sorted in the other direction
      but maybe not in the other
   */
-  while (current->next != INVALID_BLOCK_INDEX) {
+  while (blockIndex != INVALID_BLOCK_INDEX) {
+    if (current->next == INVALID_BLOCK_INDEX) {
+      break;
+    }
+
+    uint16_t nextIndex = current->next;
     FreeBlock *next = getBlock(current->next);
     if (next->blockCount < current->blockCount) {
-      swapBlockOrder(*current, *next);
+      swapBlockOrder(blockIndex, current->next);
 
       if (current->next == INVALID_BLOCK_INDEX) {
         mLastFreeBlock = blockIndex;
       }
       else if (next->next == INVALID_BLOCK_INDEX) {
-        mLastFreeBlock = current->prev;
+        mLastFreeBlock = nextIndex;
       }
 
       if (current->prev == INVALID_BLOCK_INDEX) {
         mFirstFreeBlock.next = blockIndex;
       }
       else if (next->prev == INVALID_BLOCK_INDEX) {
-        mFirstFreeBlock.next = current->prev;
+        mFirstFreeBlock.next = nextIndex;
       }
-
-      current = next;
     }
     else {
       break;

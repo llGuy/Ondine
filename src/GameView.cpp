@@ -64,7 +64,8 @@ GameView::GameView(
     mGameScene->lighting.data.continuous = 0.0f;
     mGameScene->lighting.data.waveStrength = 0.54f;
     mGameScene->lighting.data.waterRoughness = 0.01f;
-    mGameScene->lighting.data.waterMetal = 0.7f;
+    // mMapScene->lighting.data.waterMetal = 0.7f;
+    mGameScene->lighting.data.waterMetal = 0.95f;
     mGameScene->lighting.data.waveProfiles[0] = {0.01f, 1.0f, 1.0f};
     mGameScene->lighting.data.waveProfiles[1] = {0.005f, 1.0f, 1.0f};
     mGameScene->lighting.data.waveProfiles[2] = {0.008f, 0.3f, 2.0f};
