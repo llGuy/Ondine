@@ -38,10 +38,11 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
     prevBlock = getBlock(prevBlockIndex);
   }
 
-  VulkanArenaSlot slot = {
+  VulkanArenaSlot slot(
+    mGPUPool,
     POOL_BLOCK_SIZE * prevBlock->next,
     POOL_BLOCK_SIZE * requiredBlocks
-  };
+  );
 
   // This will no longer be a free block
   auto *toOccupy = getBlock(prevBlock->next);
@@ -96,8 +97,8 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
   return slot;
 }
 
-void VulkanArenaAllocator::free(uint32_t address) {
-  uint32_t blockIndex = address / POOL_BLOCK_SIZE;
+void VulkanArenaAllocator::free(const VulkanArenaSlot &slot) {
+  uint32_t blockIndex = slot.mOffset / POOL_BLOCK_SIZE;
   FreeBlock *newFreeBlock = &mBlocks[blockIndex];
   uint32_t newFreeBlockCount = newFreeBlock->blockCount;
 

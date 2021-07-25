@@ -3,6 +3,7 @@
 #include "Chunk.hpp"
 #include "Buffer.hpp"
 #include "FastMap.hpp"
+#include "VulkanArenaAllocator.hpp"
 
 /* 
    For now everything linked to the terrain is in graphics module
@@ -119,6 +120,7 @@ private:
   // Maps 3-D chunk coord to the chunk's index in the mLoadedChunks array
   FastMap<uint32_t, MAX_CHUNKS, 30, 10> mChunkIndices;
   ChunkVertex *mTemporaryVertices;
+  VulkanArenaAllocator mGPUVerticesAllocator;
 
   friend class TerrainRenderer;
 };

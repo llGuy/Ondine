@@ -26,7 +26,7 @@ void Camera::init(
 }
 
 void Camera::updateData(
-  const VulkanCommandBuffer commandBuffer,
+  const VulkanCommandBuffer &commandBuffer,
   const CameraProperties &properties) {
   commandBuffer.updateBuffer(
     mCameraBuffer, 0, sizeof(properties), &properties);

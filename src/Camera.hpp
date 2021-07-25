@@ -57,7 +57,7 @@ public:
     const CameraProperties *properties = nullptr);
 
   void updateData(
-    const VulkanCommandBuffer commandBuffer,
+    const VulkanCommandBuffer &commandBuffer,
     const CameraProperties &properties);
 
   const VulkanUniform &uniform() const;

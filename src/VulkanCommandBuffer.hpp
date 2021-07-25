@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
 #include "Buffer.hpp"
+#include <vulkan/vulkan.h>
 #include "VulkanUniform.hpp"
 #include "VulkanPipeline.hpp"
 
@@ -12,6 +12,7 @@ class VulkanFramebuffer;
 class VulkanBuffer;
 class VulkanCommandBuffer;
 class VulkanTexture;
+class VulkanArenaSlot;
 
 class VulkanCommandBuffer {
 public:
@@ -43,6 +44,7 @@ public:
   void bindVertexBuffers(
     uint32_t firstBinding, uint32_t bindingCount,
     const VulkanBuffer *buffers, VkDeviceSize *offsets = nullptr) const;
+  void bindVertexBuffersArena(const VulkanArenaSlot &slot) const;
   void bindIndexBuffer(
     VkDeviceSize offset, VkIndexType indexType,
     const VulkanBuffer &buffer) const;

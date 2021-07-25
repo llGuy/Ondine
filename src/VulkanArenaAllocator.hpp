@@ -4,17 +4,11 @@
 #include <stdint.h>
 #include "Buffer.hpp"
 #include "VulkanBuffer.hpp"
+#include "VulkanArenaSlot.hpp"
 
 namespace Ondine::Graphics {
 
 class VulkanContext;
-
-struct VulkanArenaSlot {
-  // Offset will be aligned with the size of one block
-  uint32_t offset;
-  // Size will be aligned with the size of one block
-  uint32_t size;
-};
 
 class VulkanArenaAllocator {
 public:
@@ -24,7 +18,7 @@ public:
     VulkanContext &graphicsContext);
 
   VulkanArenaSlot allocate(uint32_t size);
-  void free(uint32_t address);
+  void free(const VulkanArenaSlot &slot);
 
   void debugLogState();
 

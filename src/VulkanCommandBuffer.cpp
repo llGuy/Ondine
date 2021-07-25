@@ -3,6 +3,7 @@
 #include "Utils.hpp"
 #include "VulkanBuffer.hpp"
 #include "VulkanPipeline.hpp"
+#include "VulkanArenaSlot.hpp"
 #include "VulkanRenderPass.hpp"
 #include "VulkanFramebuffer.hpp"
 #include "VulkanCommandBuffer.hpp"
@@ -216,6 +217,13 @@ void VulkanCommandBuffer::bindVertexBuffers(
   vkCmdBindVertexBuffers(
     mCommandBuffer, firstBinding, bindingCount,
     buffersRaw, offsets);
+}
+
+void VulkanCommandBuffer::bindVertexBuffersArena(
+  const VulkanArenaSlot &slot) const {
+  VkDeviceSize offset = (VkDeviceSize)slot.mOffset;
+  vkCmdBindVertexBuffers(
+    mCommandBuffer, 0, 1, &slot.mBuffer.mBuffer, &offset);
 }
 
 void VulkanCommandBuffer::bindVertexBuffers(
