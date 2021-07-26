@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VulkanPipeline.hpp"
+#include "VulkanArenaAllocator.hpp"
 
 namespace Ondine::Graphics {
 
@@ -22,11 +23,16 @@ public:
     const Camera &camera,
     const PlanetRenderer &planet,
     const Clipping &clipping,
-    const Terrain &terrain,
-    VulkanFrame &frame) const;
+    Terrain &terrain,
+    VulkanFrame &frame);
+
+  void sync(
+    Terrain &terrain,
+    const VulkanCommandBuffer &commandBuffer);
 
 private:
   VulkanPipeline mPipeline;
+  VulkanArenaAllocator mGPUVerticesAllocator;
 };
 
 }

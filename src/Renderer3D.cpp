@@ -203,6 +203,8 @@ void Renderer3D::shutdown() {
 }
 
 void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
+  mTerrainRenderer.sync(mBoundScene->terrain, frame.primaryCommandBuffer);
+
   mBoundScene->lighting.tick(tick, mPlanetProperties);
   mBoundScene->camera.tick(
     {mGBuffer.mGBufferExtent.width, mGBuffer.mGBufferExtent.height});

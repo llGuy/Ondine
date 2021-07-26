@@ -400,7 +400,7 @@ void DeferredLighting::updateData(
   const VulkanCommandBuffer &commandBuffer,
   const LightingProperties &properties) {
   commandBuffer.updateBuffer(
-    mLightingPropertiesBuffer, 0, sizeof(properties), &properties);
+    mLightingPropertiesBuffer, 0, sizeof(properties.data), &properties.data);
 }
 
 void DeferredLighting::precomputeBRDFLut(VulkanContext &graphicsContext) {

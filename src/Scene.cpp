@@ -23,7 +23,7 @@ void Scene::submit(
   const Camera &camera,
   const PlanetRenderer &planet,
   const Clipping &clipping,
-  const TerrainRenderer &terrainRenderer,
+  TerrainRenderer &terrainRenderer,
   VulkanFrame &frame) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 

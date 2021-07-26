@@ -38,14 +38,19 @@ void TerrainRenderer::init(
     graphicsContext.device(),
     graphicsContext.descriptorLayouts(),
     pipelineConfig);
+
+  mGPUVerticesAllocator.init(
+    5000,
+    (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer,
+    graphicsContext);
 }
 
 void TerrainRenderer::render(
   const Camera &camera,
   const PlanetRenderer &planet,
   const Clipping &clipping,
-  const Terrain &terrain,
-  VulkanFrame &frame) const {
+  Terrain &terrain,
+  VulkanFrame &frame) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.bindPipeline(mPipeline);
@@ -54,13 +59,54 @@ void TerrainRenderer::render(
 
   for (int i = 0; i < terrain.mLoadedChunks.size; ++i) {
     const Chunk *chunk = terrain.mLoadedChunks[i];
-    if (chunk->vertices.vertexCount) {
-      commandBuffer.bindVertexBuffers(0, 1, &chunk->vertices.vbo);
+    if (chunk->verticesMemory.size()) {
+      commandBuffer.bindVertexBuffersArena(chunk->verticesMemory);
       glm::mat4 translate = glm::scale(glm::vec3(terrain.mTerrainScale)) *
         glm::translate(terrain.chunkCoordToWorld(chunk->chunkCoord));
       commandBuffer.pushConstants(sizeof(translate), &translate[0][0]);
-      commandBuffer.draw(chunk->vertices.vertexCount, 1, 0, 0);
+      commandBuffer.draw(chunk->vertexCount, 1, 0, 0);
     }
+  }
+}
+
+void TerrainRenderer::sync(
+  Terrain &terrain,
+  const VulkanCommandBuffer &commandBuffer) {
+  if (terrain.mUpdated) {
+    terrain.mUpdated = false;
+    terrain.generateVoxelNormals();
+
+    uint32_t totalCount = 0;
+
+    // Later change this to just the updated chunks
+    for (int i = 0; i < terrain.mLoadedChunks.size; ++i) {
+      Chunk *chunk = terrain.mLoadedChunks[i];
+      uint32_t vertexCount = 0;
+      ChunkVertex *vertices = terrain.createChunkVertices(*chunk, &vertexCount);
+
+      chunk->vertexCount = vertexCount;
+
+      totalCount += vertexCount;
+
+      if (chunk->verticesMemory.size()) {
+        // This chunk already has allocated memory
+        mGPUVerticesAllocator.free(chunk->verticesMemory);
+      }
+
+      if (vertexCount) {
+        auto slot = mGPUVerticesAllocator.allocate(
+          sizeof(ChunkVertex) * vertexCount);
+
+        slot.write(commandBuffer, vertices, sizeof(ChunkVertex) * vertexCount);
+
+        chunk->verticesMemory = slot;
+      }
+      else {
+        chunk->verticesMemory = {};
+      }
+    }
+
+    LOG_INFOV("Total size: %d\n", totalCount * sizeof(ChunkVertex));
   }
 }
 

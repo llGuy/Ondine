@@ -42,6 +42,7 @@ void Terrain::init() {
 
   mTemporaryVertices = flAllocv<ChunkVertex>(CHUNK_MAX_VERTICES);
   mMaxVoxelDensity = (float)0xFFFF;
+  mUpdated = false;
 }
 
 Chunk *Terrain::getChunk(const glm::ivec3 &coord) {
@@ -430,37 +431,13 @@ Voxel Terrain::getChunkEdgeVoxel(
   return chunk->voxels[getVoxelIndex(finalCoord)];
 }
 
-ChunkVertices Terrain::createChunkVertices(
-  const Chunk &chunk, VulkanContext &graphicsContext) {
+ChunkVertex *Terrain::createChunkVertices(
+  const Chunk &chunk, uint32_t *vertexCount) {
   Voxel surfaceDensity = { (uint16_t)(30000) };
-  uint32_t vertexCount = generateChunkVertices(
+  *vertexCount = generateChunkVertices(
     chunk, surfaceDensity, mTemporaryVertices);
 
-  ChunkVertices ret = {};
-
-  if (vertexCount) {
-    ret.vbo.init(
-      graphicsContext.device(),
-      vertexCount * sizeof(ChunkVertex),
-      (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer);
-
-#if 0
-    LOG_INFOV(
-      "Chunk at %s requires VBO of size %d bytes (%d kilobytes)\n",
-      glm::to_string(chunk.chunkCoord).c_str(),
-      (int)(vertexCount * sizeof(ChunkVertex)),
-      (int)(vertexCount * sizeof(ChunkVertex) / 1000));
-#endif
-
-    ret.vbo.fillWithStaging(
-      graphicsContext.device(),
-      graphicsContext.commandPool(),
-      {(uint8_t *)mTemporaryVertices, vertexCount * sizeof(ChunkVertex)});
-  }
-
-  ret.vertexCount = vertexCount;
-
-  return ret;
+  return mTemporaryVertices;
 }
 
 void Terrain::makeSphere(float radius, glm::vec3 center) {
@@ -589,11 +566,14 @@ void Terrain::makeIslands(
       }
     }
   }
+
+  mUpdated = true;
 }
 
 void Terrain::prepareForRender(VulkanContext &graphicsContext) {
   LOG_INFOV("Loaded %d chunks\n", (int)mLoadedChunks.size);
 
+#if 0
   generateVoxelNormals();
 
   for (int i = 0; i < mLoadedChunks.size; ++i) {
@@ -601,6 +581,7 @@ void Terrain::prepareForRender(VulkanContext &graphicsContext) {
     // Don't worry, this will be thoroughly redone
     chunk->vertices = createChunkVertices(*chunk, graphicsContext);
   }
+#endif
 }
 
 void Terrain::generateChunkFaceNormals(

@@ -18,7 +18,7 @@ public:
     VulkanContext &graphicsContext);
 
   VulkanArenaSlot allocate(uint32_t size);
-  void free(const VulkanArenaSlot &slot);
+  void free(VulkanArenaSlot &slot);
 
   void debugLogState();
 

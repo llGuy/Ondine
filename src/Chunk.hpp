@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <glm/glm.hpp>
-#include "VulkanBuffer.hpp"
+#include "VulkanArenaSlot.hpp"
 
 namespace Ondine::Graphics {
 
@@ -25,16 +25,12 @@ struct ChunkVertex {
   glm::vec3 normal;
 };
 
-struct ChunkVertices {
-  VulkanBuffer vbo;
-  uint32_t vertexCount;
-};
-
 struct Chunk {
   Voxel voxels[CHUNK_VOLUME];
   glm::ivec3 chunkCoord;
   uint32_t chunkStackIndex;
-  ChunkVertices vertices;
+  VulkanArenaSlot verticesMemory;
+  uint32_t vertexCount;
   glm::mat4 transform;
 };
 

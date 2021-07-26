@@ -34,7 +34,7 @@ void WaterRenderer::tick(
   const PlanetRenderer &planet,
   const SkyRenderer &sky,
   const StarRenderer &stars,
-  const TerrainRenderer &terrainRenderer,
+  TerrainRenderer &terrainRenderer,
   Scene &sceneSubmitter) {
   frame.primaryCommandBuffer.dbgBeginRegion("WaterStage", DBG_WATER_COLOR);
 

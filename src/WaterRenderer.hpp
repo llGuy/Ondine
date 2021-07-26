@@ -25,7 +25,7 @@ public:
     const PlanetRenderer &planet,
     const SkyRenderer &sky,
     const StarRenderer &stars,
-    const TerrainRenderer &terrainRenderer,
+    TerrainRenderer &terrainRenderer,
     Scene &sceneSubmitter);
 
   void updateCameraInfo(

@@ -28,7 +28,7 @@ public:
     const Camera &camera,
     const PlanetRenderer &planet,
     const Clipping &clipping,
-    const TerrainRenderer &terrainRenderer,
+    TerrainRenderer &terrainRenderer,
     VulkanFrame &frame);
 
   SceneObjectHandle createSceneObject(const char *renderMethodName);

@@ -223,7 +223,7 @@ void VulkanCommandBuffer::bindVertexBuffersArena(
   const VulkanArenaSlot &slot) const {
   VkDeviceSize offset = (VkDeviceSize)slot.mOffset;
   vkCmdBindVertexBuffers(
-    mCommandBuffer, 0, 1, &slot.mBuffer.mBuffer, &offset);
+    mCommandBuffer, 0, 1, &slot.mBuffer->mBuffer, &offset);
 }
 
 void VulkanCommandBuffer::bindVertexBuffers(

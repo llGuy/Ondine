@@ -33,9 +33,9 @@ public:
     glm::vec2 s, glm::vec2 e);
 
   // TODO: Get buffers from a pool
-  ChunkVertices createChunkVertices(
+  ChunkVertex *createChunkVertices(
     const Chunk &chunk,
-    VulkanContext &graphicsContext);
+    uint32_t *vertexCount);
 
   // Creates a chunk if it doesn't exist
   Chunk *getChunk(const glm::ivec3 &coord);
@@ -120,7 +120,7 @@ private:
   // Maps 3-D chunk coord to the chunk's index in the mLoadedChunks array
   FastMap<uint32_t, MAX_CHUNKS, 30, 10> mChunkIndices;
   ChunkVertex *mTemporaryVertices;
-  VulkanArenaAllocator mGPUVerticesAllocator;
+  bool mUpdated;
 
   friend class TerrainRenderer;
 };

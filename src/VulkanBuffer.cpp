@@ -106,9 +106,15 @@ VkBufferMemoryBarrier VulkanBuffer::makeBarrier(
   VkBufferMemoryBarrier bufferBarrier = {};
   bufferBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
   bufferBarrier.buffer = mBuffer;
-  bufferBarrier.size = size;
   bufferBarrier.offset = offset;
-  bufferBarrier.size = mSize;
+
+  if (size) {
+    bufferBarrier.size = size;
+  }
+  else {
+    bufferBarrier.size = mSize;
+  }
+
   bufferBarrier.srcAccessMask = findAccessFlagsForStage(src);
   bufferBarrier.dstAccessMask = findAccessFlagsForStage(dst);
 
