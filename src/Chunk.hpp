@@ -27,10 +27,11 @@ struct ChunkVertex {
 
 struct Chunk {
   Voxel voxels[CHUNK_VOLUME];
-  glm::ivec3 chunkCoord;
-  uint32_t chunkStackIndex;
   VulkanArenaSlot verticesMemory;
+  uint32_t chunkStackIndex;
   uint32_t vertexCount;
+  bool needsUpdating;
+  glm::ivec3 chunkCoord;
   glm::mat4 transform;
 };
 

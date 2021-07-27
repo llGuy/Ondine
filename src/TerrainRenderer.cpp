@@ -72,15 +72,17 @@ void TerrainRenderer::render(
 void TerrainRenderer::sync(
   Terrain &terrain,
   const VulkanCommandBuffer &commandBuffer) {
-  if (terrain.mUpdated) {
-    terrain.mUpdated = false;
+  if (terrain.mUpdatedChunks.size) {
     terrain.generateVoxelNormals();
 
     uint32_t totalCount = 0;
 
     // Later change this to just the updated chunks
-    for (int i = 0; i < terrain.mLoadedChunks.size; ++i) {
-      Chunk *chunk = terrain.mLoadedChunks[i];
+    for (int i = 0; i < terrain.mUpdatedChunks.size; ++i) {
+      uint32_t chunkIndex = terrain.mUpdatedChunks[i];
+      Chunk *chunk = terrain.mLoadedChunks[chunkIndex];
+      chunk->needsUpdating = false;
+      
       uint32_t vertexCount = 0;
       ChunkVertex *vertices = terrain.createChunkVertices(*chunk, &vertexCount);
 
@@ -91,6 +93,7 @@ void TerrainRenderer::sync(
       if (chunk->verticesMemory.size()) {
         // This chunk already has allocated memory
         mGPUVerticesAllocator.free(chunk->verticesMemory);
+        LOG_INFO("Freed a chunk\n");
       }
 
       if (vertexCount) {
@@ -106,7 +109,9 @@ void TerrainRenderer::sync(
       }
     }
 
-    LOG_INFOV("Total size: %d\n", totalCount * sizeof(ChunkVertex));
+    LOG_INFOV("Total size: %u\n", (uint32_t)(totalCount * sizeof(ChunkVertex)));
+
+    terrain.mUpdatedChunks.size = 0;
   }
 }
 

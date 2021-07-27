@@ -196,6 +196,15 @@ void MapView::processGameInput(
     mMapScene->lighting.rotateBy(
       glm::radians(30.0f * cursor.scroll.y * tick.dt));
   }
+
+  if (inputTracker.mouseButton(Core::MouseButton::Right).isDown) {
+    // mMapScene->terrain.makeSphere(100.0f, mMapScene->camera.wPosition);
+    mMapScene->terrain.paint(
+      mMapScene->camera.wPosition,
+      mMapScene->camera.wViewDirection,
+      100.0f,
+      0.1f);
+  }
 }
 
 }

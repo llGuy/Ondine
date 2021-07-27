@@ -25,12 +25,17 @@ public:
 
   void prepareForRender(VulkanContext &graphicsContext);
 
-  void makeSphere(float radius, glm::vec3 center);
+  void makeSphere(float radius, glm::vec3 center, float intensity = 1.0f);
   void makeIslands(
     float seaLevel, uint32_t octaveCount,
     float persistance, float lacunarity,
     float baseAmplitude, float baseFrequency,
     glm::vec2 s, glm::vec2 e);
+  void paint(
+    glm::vec3 position,
+    glm::vec3 direction,
+    float radius,
+    float strength);
 
   // TODO: Get buffers from a pool
   ChunkVertex *createChunkVertices(
@@ -105,10 +110,14 @@ private:
     const glm::ivec3 &voxelCoord,
     const glm::vec3 &grad);
 
+  void markChunkForUpdate(Chunk *chunk);
+
 private:
+  static constexpr uint32_t MAX_DENSITY = 0xFFFF;
   static constexpr uint32_t MAX_CHUNKS = 3000;
   static constexpr uint32_t CHUNK_MAX_VERTICES =
     10 * (CHUNK_DIM) * (CHUNK_DIM) * (CHUNK_DIM);
+  static constexpr uint32_t SURFACE_DENSITY = 30000;
   static const glm::vec3 NORMALIZED_CUBE_VERTICES[8];
   static const glm::ivec3 NORMALIZED_CUBE_VERTEX_INDICES[8];
 
@@ -117,6 +126,7 @@ private:
   float mMaxVoxelDensity;
   Chunk *mNullChunk;
   Array<Chunk *> mLoadedChunks;
+  Array<uint32_t> mUpdatedChunks;
   // Maps 3-D chunk coord to the chunk's index in the mLoadedChunks array
   FastMap<uint32_t, MAX_CHUNKS, 30, 10> mChunkIndices;
   ChunkVertex *mTemporaryVertices;

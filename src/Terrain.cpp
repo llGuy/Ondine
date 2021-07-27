@@ -37,6 +37,7 @@ void Terrain::init() {
 
   mChunkIndices.init();
   mLoadedChunks.init(MAX_CHUNKS);
+  mUpdatedChunks.init(MAX_CHUNKS);
   mNullChunk = flAlloc<Chunk>();
   memset(mNullChunk, 0, sizeof(Chunk));
 
@@ -433,14 +434,14 @@ Voxel Terrain::getChunkEdgeVoxel(
 
 ChunkVertex *Terrain::createChunkVertices(
   const Chunk &chunk, uint32_t *vertexCount) {
-  Voxel surfaceDensity = { (uint16_t)(30000) };
+  Voxel surfaceDensity = { (uint16_t)(SURFACE_DENSITY) };
   *vertexCount = generateChunkVertices(
     chunk, surfaceDensity, mTemporaryVertices);
 
   return mTemporaryVertices;
 }
 
-void Terrain::makeSphere(float radius, glm::vec3 center) {
+void Terrain::makeSphere(float radius, glm::vec3 center, float intensity) {
   radius /= mTerrainScale;
   center /= mTerrainScale;
 
@@ -450,6 +451,7 @@ void Terrain::makeSphere(float radius, glm::vec3 center) {
 
   glm::ivec3 currentChunkCoord = worldToChunkCoord(center);
   Chunk *currentChunk = getChunk(currentChunkCoord);
+  markChunkForUpdate(currentChunk);
 
   for (int32_t z = start.z; z < start.z + diameter; ++z) {
     for (int32_t y = start.y; y < start.y + diameter; ++y) {
@@ -468,28 +470,35 @@ void Terrain::makeSphere(float radius, glm::vec3 center) {
               chunkOriginDiff.y >= 0 && chunkOriginDiff.y < CHUNK_DIM &&
               chunkOriginDiff.z >= 0 && chunkOriginDiff.z < CHUNK_DIM) {
             // Is within current chunk boundaries
-            float proportion = 1.0f - (distance2 / radius2);
+            float proportion = (1.0f - (distance2 / radius2)) * intensity;
 
             glm::ivec3 voxelCoord = chunkOriginDiff;
 
             Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
-            uint16_t newValue = (uint32_t)((proportion) * mMaxVoxelDensity);
-            v->density = newValue;
+            uint16_t addedValue = (uint32_t)((proportion) * mMaxVoxelDensity);
+
+            uint32_t finalValue = (uint32_t)addedValue + (uint32_t)v->density;
+            finalValue = glm::min(finalValue, MAX_DENSITY);
+            
+            v->density = finalValue;
           }
           else {
             glm::ivec3 c = worldToChunkCoord(position);
 
             currentChunk = getChunk(c);
             currentChunkCoord = c;
+            markChunkForUpdate(currentChunk);
 
-            float proportion = 1.0f - (distance2 / radius2);
+            float proportion = (1.0f - (distance2 / radius2)) * intensity;
 
             glm::ivec3 voxelCoord = position -
               currentChunkCoord * (int32_t)CHUNK_DIM;
 
             Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
-            uint16_t newValue = (uint32_t)((proportion) * mMaxVoxelDensity);
-            v->density = newValue;
+            uint16_t addedValue = (uint32_t)((proportion) * mMaxVoxelDensity);
+            uint32_t finalValue = (uint32_t)addedValue + (uint32_t)v->density;
+            finalValue = glm::min(finalValue, MAX_DENSITY);
+            v->density = finalValue;
           }
         }
       }
@@ -514,6 +523,7 @@ void Terrain::makeIslands(
   glm::ivec3 currentChunkCoord = worldToChunkCoord(
     glm::vec3(start.x, seaLevel, start.y));
   Chunk *currentChunk = getChunk(currentChunkCoord);
+  markChunkForUpdate(currentChunk);
 
   int32_t minHeight = (int32_t)seaLevel - 5;
 
@@ -557,6 +567,8 @@ void Terrain::makeIslands(
           currentChunk = getChunk(c);
           currentChunkCoord = c;
 
+          markChunkForUpdate(currentChunk);
+
           chunkOriginDiff = position -
             currentChunkCoord * (int32_t)CHUNK_DIM;
 
@@ -568,6 +580,45 @@ void Terrain::makeIslands(
   }
 
   mUpdated = true;
+}
+
+void Terrain::paint(
+  glm::vec3 position,
+  glm::vec3 direction,
+  float radius,
+  float strength) {
+  position /= (float)mTerrainScale;
+
+  glm::vec3 step = glm::normalize(direction) * 2.0f;
+
+  const uint32_t MAX_STEP_COUNT = 50;
+
+  bool outside = true;
+
+  for (int i = 0; i < MAX_STEP_COUNT; ++i) {
+    position += step;
+    glm::ivec3 chunkCoord = worldToChunkCoord(position);
+    Chunk *c = at(chunkCoord);
+
+    if (c) {
+      glm::ivec3 chunkOriginDiff = (glm::ivec3)position -
+        c->chunkCoord * (int32_t)CHUNK_DIM;
+      uint32_t voxelIndex = getVoxelIndex(chunkOriginDiff);
+
+      if (c->voxels[voxelIndex].density > SURFACE_DENSITY && outside) {
+        step /= -2.0f;
+        outside = false;
+      }
+      else if (c->voxels[voxelIndex].density < SURFACE_DENSITY && !outside) {
+        step /= -2.0f;
+        outside = true;
+      }
+    }
+  }
+
+  if (!outside) {
+    makeSphere(radius, position * (float)mTerrainScale, strength);
+  }
 }
 
 void Terrain::prepareForRender(VulkanContext &graphicsContext) {
@@ -667,8 +718,9 @@ void Terrain::setVoxelNormal(
 }
 
 void Terrain::generateVoxelNormals() {
-  for (int i = 0; i < mLoadedChunks.size; ++i) {
-    Chunk *chunk = mLoadedChunks[i];
+  for (int i = 0; i < mUpdatedChunks.size; ++i) {
+    uint32_t chunkIndex = mUpdatedChunks[i];
+    Chunk *chunk = mLoadedChunks[chunkIndex];
 
     auto density = [chunk, this](const glm::ivec3 &coord) {
       return chunk->voxels[getVoxelIndex(coord)].density;
@@ -778,6 +830,14 @@ void Terrain::generateVoxelNormals() {
         }
       }
     }
+  }
+}
+
+void Terrain::markChunkForUpdate(Chunk *chunk) {
+  if (!chunk->needsUpdating) {
+    chunk->needsUpdating = true;
+    mUpdatedChunks[mUpdatedChunks.size++] = *mChunkIndices.get(
+      hashChunkCoord(chunk->chunkCoord));
   }
 }
 
