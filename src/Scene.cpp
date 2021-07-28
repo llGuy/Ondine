@@ -46,7 +46,20 @@ void Scene::submit(
     renderMethod.submit(frame);
   }
 
-  terrainRenderer.render(camera, planet, clipping, terrain, frame);
+  terrainRenderer.render(
+    camera, planet, clipping, terrain, frame);
+}
+
+void Scene::submitDebug(
+  const Camera &camera,
+  const PlanetRenderer &planet,
+  const Clipping &clipping,
+  TerrainRenderer &terrainRenderer,
+  VulkanFrame &frame) {
+  if (debug.renderChunkOutlines) {
+    terrainRenderer.renderChunkOutlines(
+      camera, planet, clipping, terrain, frame);
+  }
 }
 
 SceneObjectHandle Scene::createSceneObject(const char *renderMethod) {

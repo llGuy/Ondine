@@ -29,6 +29,8 @@ EditorView::EditorView(
   windowName(EditorWindow::Viewport) = "Viewport";
   windowName(EditorWindow::Console) = "Console";
   windowName(EditorWindow::GameState) = "Game State";
+  windowName(EditorWindow::Tools) = "Tools";
+  windowName(EditorWindow::Terrain) = "Terrain";
   windowName(EditorWindow::General) = "General";
   windowName(EditorWindow::None) = "None";
   mChangedFocusToViewport = false;
@@ -132,6 +134,8 @@ void EditorView::render(ViewRenderParams &params) {
       ImGui::DockBuilderDockWindow(windowName(EditorWindow::Viewport), viewport);
       ImGui::DockBuilderDockWindow(windowName(EditorWindow::Console), console);
       ImGui::DockBuilderDockWindow(windowName(EditorWindow::GameState), game);
+      ImGui::DockBuilderDockWindow(windowName(EditorWindow::Terrain), game);
+      ImGui::DockBuilderDockWindow(windowName(EditorWindow::Tools), game);
       ImGui::DockBuilderDockWindow(windowName(EditorWindow::General), general);
     }
 
@@ -183,7 +187,15 @@ void EditorView::render(ViewRenderParams &params) {
   }
 
   renderConsoleWindow();
-  renderGameStateWindow();
+
+  if (mBoundViewport == ViewportType::GameEditor) {
+    renderGameStateWindow();
+  }
+  else {
+    renderTerrainWindow();
+    renderToolsWindow();
+  }
+
   renderGeneralWindow();
 
   params.graphicsContext.imgui().endRender(params.frame);
@@ -510,6 +522,40 @@ void EditorView::renderGameStateWindow() {
     if (ImGui::IsWindowFocused()) {
       mFocusedWindow = EditorWindow::GameState;
     }
+  }
+
+  ImGui::End();
+}
+
+void EditorView::renderTerrainWindow() {
+  if (ImGui::Begin(
+    windowName(EditorWindow::Terrain), nullptr,
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+
+    if (ImGui::IsWindowFocused()) {
+      mFocusedWindow = EditorWindow::Terrain;
+    }
+  }
+
+  ImGui::End();
+}
+
+void EditorView::renderToolsWindow() {
+  if (ImGui::Begin(
+    windowName(EditorWindow::Tools), nullptr,
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
+
+    if (ImGui::IsWindowFocused()) {
+      mFocusedWindow = EditorWindow::Tools;
+    }
+
+    auto *boundScene = mRenderer3D.mBoundScene;
+
+    bool renderChunkOutlines = boundScene->debug.renderChunkOutlines;
+    if (ImGui::Checkbox(
+          "Render Chunk Outlines",
+          &renderChunkOutlines));
+    boundScene->debug.renderChunkOutlines = renderChunkOutlines;
   }
 
   ImGui::End();

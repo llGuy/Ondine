@@ -152,8 +152,25 @@ void VulkanArenaAllocator::free(VulkanArenaSlot &slot) {
 }
 
 void VulkanArenaAllocator::debugLogState() {
-  FreeBlock *prevBlock = &mFirstFreeBlock;
+  uint32_t totalFreeBlockCount = 0;
+  uint32_t freeSectionsCount = 0;
 
+  FreeBlock *freeBlock = getBlock(mFirstFreeBlock.next);
+  
+  while (freeBlock) {
+    totalFreeBlockCount += freeBlock->blockCount;
+    freeSectionsCount++;
+    freeBlock = getBlock(freeBlock->next);
+  }
+
+  LOG_INFOV(
+    "There are %u free blocks left (%u bytes out of %u) in %u contiguous segments\n",
+    totalFreeBlockCount,
+    totalFreeBlockCount * POOL_BLOCK_SIZE,
+    mAllocatedSize,
+    freeSectionsCount);
+
+  /*
   printf("\n");
   LOG_INFO("--- LOGGING ARENA ALLOCATOR STATE ---\n");
   LOG_INFOV(
@@ -175,6 +192,7 @@ void VulkanArenaAllocator::debugLogState() {
     printf("%d -> ", block->blockCount);
     block = getBlock(block->next);
   }
+  */
 }
 
 void VulkanArenaAllocator::setRangeTo(

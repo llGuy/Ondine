@@ -16,6 +16,11 @@ namespace Ondine::Graphics {
 using SceneObjectHandle = int32_t;
 constexpr SceneObjectHandle SCENE_OBJECT_HANDLE_INVALID = 0xFFFFFFFF;
 
+struct SceneDebug {
+  uint32_t renderChunkOutlines : 1;
+  uint32_t bits : 31;
+};
+
 class Scene {
 public:
   Scene(ModelManager &modelManager, RenderMethodEntries &renderMethods);
@@ -31,6 +36,13 @@ public:
     TerrainRenderer &terrainRenderer,
     VulkanFrame &frame);
 
+  void submitDebug(
+    const Camera &camera,
+    const PlanetRenderer &planet,
+    const Clipping &clipping,
+    TerrainRenderer &terrainRenderer,
+    VulkanFrame &frame);
+
   SceneObjectHandle createSceneObject(const char *renderMethodName);
   void destroySceneObject(SceneObjectHandle handle);
 
@@ -40,6 +52,7 @@ public:
   CameraProperties camera;
   LightingProperties lighting;
   Terrain terrain;
+  SceneDebug debug;
 
 private:
   static constexpr uint32_t MAX_SCENE_OBJECTS_COUNT = 5000;

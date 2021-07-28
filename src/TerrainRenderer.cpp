@@ -43,6 +43,22 @@ void TerrainRenderer::init(
     5000,
     (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer,
     graphicsContext);
+
+  VulkanPipelineConfig lineConfig(
+    {gbuffer.renderPass(), 0},
+    VulkanShader{graphicsContext.device(), "res/spv/Line.vert.spv"},
+    VulkanShader{graphicsContext.device(), "res/spv/Line.frag.spv"});
+
+  lineConfig.enableDepthTesting();
+  lineConfig.configurePipelineLayout(
+    sizeof(glm::vec4) + sizeof(glm::vec4) * 2 + sizeof(glm::vec4),
+    VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
+  lineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
+
+  mRenderLine.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorLayouts(),
+    lineConfig);
 }
 
 void TerrainRenderer::render(
@@ -65,6 +81,95 @@ void TerrainRenderer::render(
         glm::translate(terrain.chunkCoordToWorld(chunk->chunkCoord));
       commandBuffer.pushConstants(sizeof(translate), &translate[0][0]);
       commandBuffer.draw(chunk->vertexCount, 1, 0, 0);
+    }
+  }
+}
+
+void TerrainRenderer::renderChunkOutlines(
+  const Camera &camera,
+  const PlanetRenderer &planet,
+  const Clipping &clipping,
+  Terrain &terrain,
+  VulkanFrame &frame) {
+  auto &commandBuffer = frame.primaryCommandBuffer;
+
+  commandBuffer.bindPipeline(mRenderLine);
+  commandBuffer.bindUniforms(camera.uniform());
+
+  static const glm::vec4 CUBE_POSITIONS[8] = {
+    glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+    glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+    glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
+    glm::vec4(0.0f, 1.0f, 1.0f, 1.0f),
+
+    glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
+    glm::vec4(1.0f, 0.0f, 1.0f, 1.0f),
+    glm::vec4(1.0f, 1.0f, 0.0f, 1.0f),
+    glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
+  };
+
+  struct {
+    glm::vec4 transform;
+    glm::vec4 positions[2];
+    glm::vec4 color;
+  } pushConstant;
+
+  auto renderLine = [&commandBuffer, &pushConstant]() {
+    commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
+    commandBuffer.draw(2, 1, 0, 0);
+  };
+
+  pushConstant.color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+  for (int i = 0; i < terrain.mLoadedChunks.size; ++i) {
+    const Chunk *chunk = terrain.mLoadedChunks[i];
+    if (chunk->verticesMemory.size()) {
+      float scale = (float)terrain.mTerrainScale * (float)CHUNK_DIM;
+        
+      pushConstant.transform = glm::vec4(
+        (float)chunk->chunkCoord.x,
+        (float)chunk->chunkCoord.y,
+        (float)chunk->chunkCoord.z,
+        scale);
+
+      pushConstant.positions[0] = CUBE_POSITIONS[0];
+      pushConstant.positions[1] = CUBE_POSITIONS[4];
+      renderLine();
+      pushConstant.positions[0] = CUBE_POSITIONS[1];
+      pushConstant.positions[1] = CUBE_POSITIONS[5];
+      renderLine();
+      pushConstant.positions[0] = CUBE_POSITIONS[2];
+      pushConstant.positions[1] = CUBE_POSITIONS[6];
+      renderLine();
+      pushConstant.positions[0] = CUBE_POSITIONS[3];
+      pushConstant.positions[1] = CUBE_POSITIONS[7];
+      renderLine();
+
+      pushConstant.positions[0] = CUBE_POSITIONS[0];
+      pushConstant.positions[1] = CUBE_POSITIONS[1];
+      renderLine();
+      pushConstant.positions[0] = CUBE_POSITIONS[0];
+      pushConstant.positions[1] = CUBE_POSITIONS[2];
+      renderLine();
+      pushConstant.positions[0] = CUBE_POSITIONS[1];
+      pushConstant.positions[1] = CUBE_POSITIONS[3];
+      renderLine();
+      pushConstant.positions[0] = CUBE_POSITIONS[2];
+      pushConstant.positions[1] = CUBE_POSITIONS[3];
+      renderLine();
+
+      pushConstant.positions[0] = CUBE_POSITIONS[4];
+      pushConstant.positions[1] = CUBE_POSITIONS[5];
+      renderLine();
+      pushConstant.positions[0] = CUBE_POSITIONS[4];
+      pushConstant.positions[1] = CUBE_POSITIONS[6];
+      renderLine();
+      pushConstant.positions[0] = CUBE_POSITIONS[5];
+      pushConstant.positions[1] = CUBE_POSITIONS[7];
+      renderLine();
+      pushConstant.positions[0] = CUBE_POSITIONS[6];
+      pushConstant.positions[1] = CUBE_POSITIONS[7];
+      renderLine();
     }
   }
 }
@@ -93,7 +198,6 @@ void TerrainRenderer::sync(
       if (chunk->verticesMemory.size()) {
         // This chunk already has allocated memory
         mGPUVerticesAllocator.free(chunk->verticesMemory);
-        LOG_INFO("Freed a chunk\n");
       }
 
       if (vertexCount) {
@@ -109,9 +213,11 @@ void TerrainRenderer::sync(
       }
     }
 
-    LOG_INFOV("Total size: %u\n", (uint32_t)(totalCount * sizeof(ChunkVertex)));
+    // LOG_INFOV("Total size: %u\n", (uint32_t)(totalCount * sizeof(ChunkVertex)));
 
     terrain.mUpdatedChunks.size = 0;
+
+    mGPUVerticesAllocator.debugLogState();
   }
 }
 

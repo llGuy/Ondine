@@ -19,6 +19,8 @@ enum class EditorWindow {
   Viewport,
   Console,
   GameState,
+  Tools,
+  Terrain,
   General,
   None,
   Count
@@ -60,6 +62,8 @@ private:
   void tickMenuBar();
   void renderGeneralWindow();
   void renderGameStateWindow();
+  void renderTerrainWindow();
+  void renderToolsWindow();
   void renderConsoleWindow();
 
   void processInputEvent(Core::Event *ev, ViewProcessEventsParams &params);

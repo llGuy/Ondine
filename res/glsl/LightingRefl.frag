@@ -467,127 +467,132 @@ void main() {
     texture(uPosition, inUVs),
     texture(uAlbedo, inUVs));
 
-  vec3 viewRay = normalize(inViewRay);
+  if (gbuffer.wNormal.w >= -0.1) {
+    vec3 viewRay = normalize(inViewRay);
 
-  /* Light contribution from the surface */
-  float pointAlpha = 0.0;
-  vec3 pointRadiance = vec3(0.0);
+    /* Light contribution from the surface */
+    float pointAlpha = 0.0;
+    vec3 pointRadiance = vec3(0.0);
 
-  RayIntersection oceanIntersection = raySphereIntersection(
-    viewRay, uSky.sky.wPlanetCenter, uSky.sky.bottomRadius + OCEAN_HEIGHT);
+    RayIntersection oceanIntersection = raySphereIntersection(
+      viewRay, uSky.sky.wPlanetCenter, uSky.sky.bottomRadius + OCEAN_HEIGHT);
 
-  GBufferData oceanGBuffer = GBufferData(
-    vec4(oceanIntersection.wNormal, 1.0),
-    0.0,
-    vec4(oceanIntersection.wIntersectionPoint, 1.0),
-    vec4(0.0));
+    GBufferData oceanGBuffer = GBufferData(
+      vec4(oceanIntersection.wNormal, 1.0),
+      0.0,
+      vec4(oceanIntersection.wIntersectionPoint, 1.0),
+      vec4(0.0));
 
-  float oceanAlpha = 0.0;
-  vec3 oceanRadiance = vec3(0.0);
+    float oceanAlpha = 0.0;
+    vec3 oceanRadiance = vec3(0.0);
 
-  vec3 radianceBaseColor = vec3(0.0);
+    vec3 radianceBaseColor = vec3(0.0);
 
-  if (gbuffer.wPosition.a == 1.0) {
-    // Check if this point is further away than the ocean
-    vec4 vPosition = uCamera.camera.view * vec4(
-      gbuffer.wPosition.xyz / 1000.0, 1.0);
-    vec4 vOceanPosition = uCamera.camera.view * vec4(
-      oceanIntersection.wIntersectionPoint, 1.0);
+    if (gbuffer.wPosition.a == 1.0) {
+      // Check if this point is further away than the ocean
+      vec4 vPosition = uCamera.camera.view * vec4(
+        gbuffer.wPosition.xyz / 1000.0, 1.0);
+      vec4 vOceanPosition = uCamera.camera.view * vec4(
+        oceanIntersection.wIntersectionPoint, 1.0);
 
-    // This is a rendered object
-    vec4 rasterizedRadiance = getPointRadianceBRDF(0.8, 0.0, gbuffer);
-    gbuffer.albedo = rasterizedRadiance;
+      // This is a rendered object
+      vec4 rasterizedRadiance = getPointRadianceBRDF(0.8, 0.0, gbuffer);
+      gbuffer.albedo = rasterizedRadiance;
 
-    if (vPosition.z < vOceanPosition.z && oceanIntersection.didIntersect) {
-      // This is the ocean
-      // Need to do refraction in this case
+      if (vPosition.z < vOceanPosition.z && oceanIntersection.didIntersect) {
+        // This is the ocean
+        // Need to do refraction in this case
 
+        oceanGBuffer.wPosition *= 1000.0;
+
+        pointAlpha = 0.0;
+        pointRadiance = vec3(0.0);
+
+        oceanAlpha = 1.0;
+        oceanGBuffer.wNormal =
+          vec4(getOceanNormal(oceanGBuffer.wPosition.xyz), 1.0);
+        oceanGBuffer.albedo = vec4(uLighting.lighting.waterSurfaceColor, 1.0);
+        vec3 reflectionColor = getOceanReflectionColor(
+          oceanGBuffer.wPosition.xyz,
+          oceanGBuffer.wNormal.xyz).rgb;
+
+        oceanRadiance = getReflectivePointRadiancePseudoBRDF(
+          uLighting.lighting.waterRoughness, uLighting.lighting.waterMetal,
+          reflectionColor, gbuffer, oceanGBuffer).rgb;
+      }
+      else {
+        pointRadiance = rasterizedRadiance.rgb;
+        pointAlpha = rasterizedRadiance.a;
+      }
+    }
+    else if (oceanIntersection.didIntersect) {
       oceanGBuffer.wPosition *= 1000.0;
 
-      pointAlpha = 0.0;
-      pointRadiance = vec3(0.0);
-
       oceanAlpha = 1.0;
+
       oceanGBuffer.wNormal =
         vec4(getOceanNormal(oceanGBuffer.wPosition.xyz), 1.0);
       oceanGBuffer.albedo = vec4(uLighting.lighting.waterSurfaceColor, 1.0);
+
       vec3 reflectionColor = getOceanReflectionColor(
         oceanGBuffer.wPosition.xyz,
         oceanGBuffer.wNormal.xyz).rgb;
+
+      RayIntersection planetIntersection = raySphereIntersection(
+        viewRay, uSky.sky.wPlanetCenter, uSky.sky.bottomRadius);
+      gbuffer.wPosition = vec4(planetIntersection.wIntersectionPoint, 1.0);
+      gbuffer.wNormal = vec4(0.0, 1.0, 0.0, 1.0);
+      gbuffer.depth = 0.0;
+      gbuffer.albedo = vec4(0.0);
 
       oceanRadiance = getReflectivePointRadiancePseudoBRDF(
         uLighting.lighting.waterRoughness, uLighting.lighting.waterMetal,
         reflectionColor, gbuffer, oceanGBuffer).rgb;
     }
     else {
-      pointRadiance = rasterizedRadiance.rgb;
-      pointAlpha = rasterizedRadiance.a;
+      radianceBaseColor = gbuffer.albedo.rgb;
     }
-  }
-  else if (oceanIntersection.didIntersect) {
-    oceanGBuffer.wPosition *= 1000.0;
 
-    oceanAlpha = 1.0;
+    /* Light contribution from sky */
+    vec3 transmittance;
+    vec3 radiance = getSkyRadiance(
+      uSky.sky, uTransmittanceTexture,
+      uScatteringTexture, uSingleMieScatteringTexture,
+      (uCamera.camera.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter),
+      viewRay, 0.0, uLighting.lighting.sunDirection,
+      transmittance) + radianceBaseColor;
 
-    oceanGBuffer.wNormal =
-      vec4(getOceanNormal(oceanGBuffer.wPosition.xyz), 1.0);
-    oceanGBuffer.albedo = vec4(uLighting.lighting.waterSurfaceColor, 1.0);
+    if (dot(viewRay, uLighting.lighting.sunDirection) >
+        uLighting.lighting.sunSize.y) {
+      radiance = radiance + transmittance * getSolarRadiance(uSky.sky);
+    }
 
-    vec3 reflectionColor = getOceanReflectionColor(
-      oceanGBuffer.wPosition.xyz,
-      oceanGBuffer.wNormal.xyz).rgb;
+    radiance += getSkyRadiance(
+      uSky.sky, uTransmittanceTexture,
+      uScatteringTexture, uSingleMieScatteringTexture,
+      (uCamera.camera.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter),
+      viewRay, 0.0, uLighting.lighting.moonDirection,
+      transmittance) * uLighting.lighting.moonStrength * 5.0;
 
-    RayIntersection planetIntersection = raySphereIntersection(
-      viewRay, uSky.sky.wPlanetCenter, uSky.sky.bottomRadius);
-    gbuffer.wPosition = vec4(planetIntersection.wIntersectionPoint, 1.0);
-    gbuffer.wNormal = vec4(0.0, 1.0, 0.0, 1.0);
-    gbuffer.depth = 0.0;
-    gbuffer.albedo = vec4(0.0);
+    if (dot(viewRay, uLighting.lighting.moonDirection) >
+        uLighting.lighting.sunSize.y * 0.9999) {
+      radiance = radiance + (transmittance * getSolarRadiance(uSky.sky));
+    }
 
-    oceanRadiance = getReflectivePointRadiancePseudoBRDF(
-      uLighting.lighting.waterRoughness, uLighting.lighting.waterMetal,
-      reflectionColor, gbuffer, oceanGBuffer).rgb;
+    radiance = mix(radiance, pointRadiance, pointAlpha);
+    radiance = mix(radiance, oceanRadiance, oceanAlpha);
+
+    vec3 one = vec3(1.0);
+    vec3 expValue =
+      exp(-radiance / uLighting.lighting.white * uLighting.lighting.exposure);
+    vec3 diff = one - expValue;
+    vec3 gamma = vec3(1.0 / 2.2);
+
+    outColor.rgb = pow(diff, gamma);
+
+    outColor.a = texture(uBRDFLutTexture, vec2(0.0)).r;
   }
   else {
-    radianceBaseColor = gbuffer.albedo.rgb;
+    outColor = vec4(gbuffer.albedo.rgb, 1.0);
   }
-
-  /* Light contribution from sky */
-  vec3 transmittance;
-  vec3 radiance = getSkyRadiance(
-    uSky.sky, uTransmittanceTexture,
-    uScatteringTexture, uSingleMieScatteringTexture,
-    (uCamera.camera.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter),
-    viewRay, 0.0, uLighting.lighting.sunDirection,
-    transmittance) + radianceBaseColor;
-
-  if (dot(viewRay, uLighting.lighting.sunDirection) >
-      uLighting.lighting.sunSize.y) {
-    radiance = radiance + transmittance * getSolarRadiance(uSky.sky);
-  }
-
-  radiance += getSkyRadiance(
-    uSky.sky, uTransmittanceTexture,
-    uScatteringTexture, uSingleMieScatteringTexture,
-    (uCamera.camera.wPosition.xyz / 1000.0 - uSky.sky.wPlanetCenter),
-    viewRay, 0.0, uLighting.lighting.moonDirection,
-    transmittance) * uLighting.lighting.moonStrength * 5.0;
-
-  if (dot(viewRay, uLighting.lighting.moonDirection) >
-      uLighting.lighting.sunSize.y * 0.9999) {
-    radiance = radiance + (transmittance * getSolarRadiance(uSky.sky));
-  }
-
-  radiance = mix(radiance, pointRadiance, pointAlpha);
-  radiance = mix(radiance, oceanRadiance, oceanAlpha);
-
-  vec3 one = vec3(1.0);
-  vec3 expValue =
-    exp(-radiance / uLighting.lighting.white * uLighting.lighting.exposure);
-  vec3 diff = one - expValue;
-  vec3 gamma = vec3(1.0 / 2.2);
-
-  outColor.rgb = pow(diff, gamma);
-
-  outColor.a = texture(uBRDFLutTexture, vec2(0.0)).r;
 }

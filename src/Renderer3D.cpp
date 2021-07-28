@@ -233,6 +233,8 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
   { // Render 3D scene
     mBoundScene->submit(
       mCamera, mPlanetRenderer, mClipping, mTerrainRenderer, frame);
+    mBoundScene->submitDebug(
+      mCamera, mPlanetRenderer, mClipping, mTerrainRenderer, frame);
     mStarRenderer.render(3.0f, mCamera, frame);
   }
   mGBuffer.endRender(frame);
@@ -280,7 +282,9 @@ const RenderStage &Renderer3D::mainRenderStage() const {
 }
 
 Scene *Renderer3D::createScene() {
-  return new Scene(mModelManager, mRenderMethods);
+  Scene *ret = new Scene(mModelManager, mRenderMethods);
+  ret->init(mGBuffer, mGraphicsContext);
+  return ret;
 }
 
 void Renderer3D::bindScene(Scene *scene) {
