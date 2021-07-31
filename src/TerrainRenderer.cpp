@@ -180,7 +180,19 @@ void TerrainRenderer::renderQuadTree(
   const Clipping &clipping,
   Terrain &terrain,
   VulkanFrame &frame) {
-  
+  auto &commandBuffer = frame.primaryCommandBuffer;
+
+  commandBuffer.bindPipeline(mRenderLine);
+  commandBuffer.bindUniforms(camera.uniform());
+
+  renderQuadTreeNode(
+    terrain.mQuadTree.mRoot,
+    glm::ivec2(0),
+    camera,
+    planet,
+    clipping,
+    terrain,
+    frame);
 }
 
 void TerrainRenderer::renderQuadTreeNode(
@@ -191,11 +203,69 @@ void TerrainRenderer::renderQuadTreeNode(
   const Clipping &clipping,
   Terrain &terrain,
   VulkanFrame &frame) {
-  glm::ivec2 wOffset = terrain.quadTreeCoordsToWorld(offset);
-  int width = pow(2, terrain.mQuadTree.mMaxLOD - node->level);
+  auto &commandBuffer = frame.primaryCommandBuffer;
 
-  for (int i = 0; i < 4; ++i) {
-    
+  static const glm::vec4 POSITIONS[4] = {
+    glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+    glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+    glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
+    glm::vec4(1.0f, 0.0f, 1.0f, 1.0f),
+  };
+
+  struct {
+    glm::vec4 transform;
+    glm::vec4 positions[2];
+    glm::vec4 color;
+  } pushConstant;
+
+  auto renderLine = [&commandBuffer, &pushConstant]() {
+    commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
+    commandBuffer.draw(2, 1, 0, 0);
+  };
+
+  pushConstant.color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+  pushConstant.transform = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+  glm::ivec2 wOffset = terrain.quadTreeCoordsToWorld(offset);
+  float width = (float)(pow(2, terrain.mQuadTree.mMaxLOD - node->level) *
+    CHUNK_DIM * terrain.mTerrainScale);
+
+  glm::vec4 realOffset = glm::vec4(wOffset.x, 100.0f, wOffset.y, 0.0f);
+
+  pushConstant.positions[0] = POSITIONS[0] * width + realOffset;
+  pushConstant.positions[1] = POSITIONS[1] * width + realOffset;
+  renderLine();
+  pushConstant.positions[0] = POSITIONS[0] * width + realOffset;
+  pushConstant.positions[1] = POSITIONS[2] * width + realOffset;
+  renderLine();
+  pushConstant.positions[0] = POSITIONS[1] * width + realOffset;
+  pushConstant.positions[1] = POSITIONS[3] * width + realOffset;
+  renderLine();
+  pushConstant.positions[0] = POSITIONS[2] * width + realOffset;
+  pushConstant.positions[1] = POSITIONS[3] * width + realOffset;
+  renderLine();
+
+  if (node->level < terrain.mQuadTree.mMaxLOD) {
+    int widthUnder = pow(2, terrain.mQuadTree.mMaxLOD - node->level - 1);
+    glm::ivec2 offsets[4] = {
+      offset,
+      offset + glm::ivec2(widthUnder, 0),
+      offset + glm::ivec2(0, widthUnder),
+      offset + glm::ivec2(widthUnder),
+    };
+
+    for (int i = 0; i < 4; ++i) {
+      if (node->children[i]) {
+        renderQuadTreeNode(
+          node->children[i],
+          offsets[i],
+          camera,
+          planet,
+          clipping,
+          terrain,
+          frame);
+      }
+    }
   }
 }
 

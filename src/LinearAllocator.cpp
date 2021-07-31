@@ -21,8 +21,8 @@ void LinearAllocator::init() {
 
 void *LinearAllocator::alloc(size_t size) {
   void *p = mCurrent;
-  mCurrent = (void *)((uint8_t *)(mCurrent) + size);
   assert(mCurrent < (uint8_t *)mStart + mMaxSize);
+  mCurrent = (void *)((uint8_t *)(mCurrent) + size);
   return p;
 }
 

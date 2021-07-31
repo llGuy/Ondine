@@ -60,6 +60,11 @@ void Scene::submitDebug(
     terrainRenderer.renderChunkOutlines(
       camera, planet, clipping, terrain, frame);
   }
+
+  if (debug.renderQuadTree) {
+    terrainRenderer.renderQuadTree(
+      camera, planet, clipping, terrain, frame);
+  }
 }
 
 SceneObjectHandle Scene::createSceneObject(const char *renderMethod) {

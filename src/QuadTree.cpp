@@ -13,7 +13,7 @@ void QuadTree::init(uint16_t maxLOD) {
     nodeCount += pow(4, i);
   }
   
-  mNodeAllocator.init(nodeCount, sizeof(Node));
+  mNodeAllocator.init(nodeCount * sizeof(Node), sizeof(Node));
   mRoot = createNode(0, 0);
 }
 

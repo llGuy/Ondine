@@ -556,6 +556,12 @@ void EditorView::renderToolsWindow() {
           "Render Chunk Outlines",
           &renderChunkOutlines));
     boundScene->debug.renderChunkOutlines = renderChunkOutlines;
+
+    bool renderQuadTree = boundScene->debug.renderQuadTree;
+    if (ImGui::Checkbox(
+          "Render Quad Tree",
+          &renderQuadTree));
+    boundScene->debug.renderQuadTree = renderQuadTree;
   }
 
   ImGui::End();

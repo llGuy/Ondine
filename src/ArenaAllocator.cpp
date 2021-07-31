@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
+#include "Utils.hpp"
 #include "ArenaAllocator.hpp"
 
 namespace Ondine {
@@ -7,6 +8,8 @@ namespace Ondine {
 ArenaAllocator::ArenaAllocator(uint32_t maxSize, uint32_t allocSize)
   : mMaxSize(maxSize), mAllocSize(allocSize) {
   mStart = malloc(mMaxSize);
+  mEnd = (void *)((uint8_t *)mStart + mMaxSize);
+  zeroMemory(mStart, maxSize);
   mHead = (ArenaHeader *)mStart;
   mHead->next = nullptr;
 }
@@ -19,6 +22,8 @@ void ArenaAllocator::init(uint32_t maxSize, uint32_t allocSize) {
   mMaxSize = maxSize;
   mAllocSize = allocSize;
   mStart = malloc(mMaxSize);
+  mEnd = (void *)((uint8_t *)mStart + mMaxSize);
+  zeroMemory(mStart, maxSize);
   mHead = (ArenaHeader *)mStart;
   mHead->next = nullptr;
 }
@@ -33,10 +38,8 @@ void *ArenaAllocator::alloc() {
   }
   else {
     uint8_t *current = (uint8_t *)header;
-    current += mAllocSize;
-
     assert(current < (uint8_t *)mStart + mMaxSize);
-
+    current += mAllocSize;
     mHead = (ArenaHeader *)current;
   }
 

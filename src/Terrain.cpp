@@ -45,8 +45,8 @@ void Terrain::init() {
   mMaxVoxelDensity = (float)0xFFFF;
   mUpdated = false;
 
-  mQuadTree.init(6);
-  mQuadTree.setInitialState(2);
+  mQuadTree.init(5);
+  mQuadTree.setInitialState(3);
 }
 
 Chunk *Terrain::getChunk(const glm::ivec3 &coord) {

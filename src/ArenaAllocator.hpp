@@ -21,6 +21,7 @@ private:
   };
 
   void *mStart;
+  void *mEnd;
   ArenaHeader *mHead;
   uint32_t mMaxSize;
   uint32_t mAllocSize;
