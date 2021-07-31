@@ -2,6 +2,7 @@
 
 ## July
 
+- FIX BUG WITH ARENA ALLOCATOR - infinite loop
 - Terrain system
 - Foliage
 - Trees (work out Blender stuff)

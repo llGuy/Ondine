@@ -155,11 +155,18 @@ void VulkanArenaAllocator::debugLogState() {
   uint32_t totalFreeBlockCount = 0;
   uint32_t freeSectionsCount = 0;
 
+  uint32_t index = mFirstFreeBlock.next;
   FreeBlock *freeBlock = getBlock(mFirstFreeBlock.next);
   
   while (freeBlock) {
+    LOG_INFOV(
+      "%d free blocks blocks at %p\n",
+      freeBlock->blockCount, (void *)index);
+
     totalFreeBlockCount += freeBlock->blockCount;
     freeSectionsCount++;
+
+    index = freeBlock->next;
     freeBlock = getBlock(freeBlock->next);
   }
 

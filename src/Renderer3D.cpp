@@ -79,7 +79,7 @@ void Renderer3D::init() {
   mDeferredLighting.init(
     mGraphicsContext,
     {pipelineViewport.width, pipelineViewport.height});
-  mClipping.init(mGraphicsContext, 1.0f, mPlanetProperties.bottomRadius);
+  mClipping.init(mGraphicsContext, 0.0f, mPlanetProperties.bottomRadius);
 
   { // Prepare scene resources
     /* Create model */

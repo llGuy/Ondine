@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/glm.hpp>
+#include "QuadTree.hpp"
 #include "VulkanPipeline.hpp"
 #include "VulkanArenaAllocator.hpp"
 
@@ -33,9 +35,26 @@ public:
     Terrain &terrain,
     VulkanFrame &frame);
 
+  void renderQuadTree(
+    const Camera &camera,
+    const PlanetRenderer &planet,
+    const Clipping &clipping,
+    Terrain &terrain,
+    VulkanFrame &frame);
+
   void sync(
     Terrain &terrain,
     const VulkanCommandBuffer &commandBuffer);
+
+private:
+  void renderQuadTreeNode(
+    QuadTree::Node *node,
+    const glm::ivec2 &offset,
+    const Camera &camera,
+    const PlanetRenderer &planet,
+    const Clipping &clipping,
+    Terrain &terrain,
+    VulkanFrame &frame);
 
 private:
   VulkanPipeline mPipeline;

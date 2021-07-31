@@ -40,7 +40,7 @@ void TerrainRenderer::init(
     pipelineConfig);
 
   mGPUVerticesAllocator.init(
-    5000,
+    10000,
     (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer,
     graphicsContext);
 
@@ -171,6 +171,31 @@ void TerrainRenderer::renderChunkOutlines(
       pushConstant.positions[1] = CUBE_POSITIONS[7];
       renderLine();
     }
+  }
+}
+
+void TerrainRenderer::renderQuadTree(
+  const Camera &camera,
+  const PlanetRenderer &planet,
+  const Clipping &clipping,
+  Terrain &terrain,
+  VulkanFrame &frame) {
+  
+}
+
+void TerrainRenderer::renderQuadTreeNode(
+  QuadTree::Node *node,
+  const glm::ivec2 &offset,
+  const Camera &camera,
+  const PlanetRenderer &planet,
+  const Clipping &clipping,
+  Terrain &terrain,
+  VulkanFrame &frame) {
+  glm::ivec2 wOffset = terrain.quadTreeCoordsToWorld(offset);
+  int width = pow(2, terrain.mQuadTree.mMaxLOD - node->level);
+
+  for (int i = 0; i < 4; ++i) {
+    
   }
 }
 

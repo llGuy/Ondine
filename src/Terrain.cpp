@@ -44,6 +44,9 @@ void Terrain::init() {
   mTemporaryVertices = flAllocv<ChunkVertex>(CHUNK_MAX_VERTICES);
   mMaxVoxelDensity = (float)0xFFFF;
   mUpdated = false;
+
+  mQuadTree.init(6);
+  mQuadTree.setInitialState(2);
 }
 
 Chunk *Terrain::getChunk(const glm::ivec3 &coord) {
@@ -839,6 +842,13 @@ void Terrain::markChunkForUpdate(Chunk *chunk) {
     mUpdatedChunks[mUpdatedChunks.size++] = *mChunkIndices.get(
       hashChunkCoord(chunk->chunkCoord));
   }
+}
+
+// One unit in offset = chunk coord. The origin of the quadtree is at 0,0
+glm::ivec2 Terrain::quadTreeCoordsToWorld(glm::ivec2 offset) {
+  offset -= glm::ivec2(pow(2, mQuadTree.maxLOD() - 1));
+  offset *= CHUNK_DIM * mTerrainScale;
+  return offset;
 }
 
 }

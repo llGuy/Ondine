@@ -18,7 +18,8 @@ constexpr SceneObjectHandle SCENE_OBJECT_HANDLE_INVALID = 0xFFFFFFFF;
 
 struct SceneDebug {
   uint32_t renderChunkOutlines : 1;
-  uint32_t bits : 31;
+  uint32_t renderQuadTree: 1;
+  uint32_t bits : 30;
 };
 
 class Scene {

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include "LinearAllocator.hpp"
 
@@ -21,6 +22,7 @@ void LinearAllocator::init() {
 void *LinearAllocator::alloc(size_t size) {
   void *p = mCurrent;
   mCurrent = (void *)((uint8_t *)(mCurrent) + size);
+  assert(mCurrent < (uint8_t *)mStart + mMaxSize);
   return p;
 }
 
