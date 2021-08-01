@@ -115,6 +115,7 @@ private:
 
   // One unit in offset = chunk coord. The origin of the quadtree is at 0,0
   glm::ivec2 quadTreeCoordsToWorld(glm::ivec2 offset);
+  glm::vec2 worldToQuadTreeCoords(glm::vec2 offset);
 
 private:
   static constexpr uint32_t MAX_DENSITY = 0xFFFF;

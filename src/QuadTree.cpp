@@ -25,6 +25,12 @@ uint32_t QuadTree::maxLOD() const {
   return mMaxLOD;
 }
 
+void QuadTree::setFocalPoint(const glm::vec2 &position) {
+  // Clear
+  mNodeAllocator.clear();
+  populate(mRoot, glm::vec2(0.0f), position);
+}
+
 QuadTree::Node *QuadTree::createNode(uint16_t level, uint16_t index) {
   Node *newNode = (Node *)mNodeAllocator.alloc();
   zeroMemory(newNode, sizeof(Node));
@@ -54,6 +60,28 @@ void QuadTree::populate(Node *node, uint16_t maxLevel) {
     for (int i = 0; i < 4; ++i) {
       node->children[i] = createNode(node->level + 1, i);
       populate(node->children[i], maxLevel);
+    }
+  }
+}
+
+void QuadTree::populate(
+  Node *node,
+  const glm::vec2 &offset,
+  const glm::vec2 &position) {
+  if (node->level < mMaxLOD) {
+    float scale = glm::pow(2.0f, (float)(mMaxLOD - node->level));
+    glm::vec2 center = offset + glm::vec2(scale / 2.0f);
+
+    float maxDist = 2.0f * scale;
+    glm::vec2 diff = position - center;
+
+    if (glm::dot(diff, diff) <= maxDist * maxDist) {
+      // Split the node
+      for (int i = 0; i < 4; ++i) {
+        node->children[i] = createNode(node->level + 1, i);
+        glm::vec2 childOffset = offset + Node::INDEX_TO_OFFSET[i] * scale / 2.0f;
+        populate(node->children[i], childOffset, position);
+      }
     }
   }
 }

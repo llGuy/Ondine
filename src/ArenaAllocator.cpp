@@ -68,4 +68,10 @@ void ArenaAllocator::free(void *ptr) {
   }
 }
 
+void ArenaAllocator::clear() {
+  zeroMemory(mStart, mMaxSize);
+  mHead = (ArenaHeader *)mStart;
+  mHead->next = nullptr;
+}
+
 }

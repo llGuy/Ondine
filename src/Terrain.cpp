@@ -46,7 +46,8 @@ void Terrain::init() {
   mUpdated = false;
 
   mQuadTree.init(5);
-  mQuadTree.setInitialState(3);
+  // mQuadTree.setInitialState(5);
+  mQuadTree.setFocalPoint(worldToQuadTreeCoords(glm::vec2(0.0f)));
 }
 
 Chunk *Terrain::getChunk(const glm::ivec3 &coord) {
@@ -848,6 +849,12 @@ void Terrain::markChunkForUpdate(Chunk *chunk) {
 glm::ivec2 Terrain::quadTreeCoordsToWorld(glm::ivec2 offset) {
   offset -= glm::ivec2(pow(2, mQuadTree.maxLOD() - 1));
   offset *= CHUNK_DIM * mTerrainScale;
+  return offset;
+}
+
+glm::vec2 Terrain::worldToQuadTreeCoords(glm::vec2 offset) {
+  offset /= (CHUNK_DIM * mTerrainScale);
+  offset += glm::vec2(glm::pow(2.0f, mQuadTree.maxLOD() - 1));
   return offset;
 }
 

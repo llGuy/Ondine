@@ -14,6 +14,7 @@ public:
   void init(uint32_t maxSize, uint32_t allocSize);
   void *alloc();
   void free(void *ptr);
+  void clear();
 
 private:
   struct ArenaHeader {
