@@ -1,7 +1,9 @@
 #include <math.h>
+#include "Log.hpp"
 #include <assert.h>
 #include "Utils.hpp"
 #include "QuadTree.hpp"
+#include <glm/gtx/string_cast.hpp>
 
 namespace Ondine::Graphics {
 
@@ -28,6 +30,7 @@ uint32_t QuadTree::maxLOD() const {
 void QuadTree::setFocalPoint(const glm::vec2 &position) {
   // Clear
   mNodeAllocator.clear();
+  mRoot = createNode(0, 0);
   populate(mRoot, glm::vec2(0.0f), position);
 }
 
@@ -72,10 +75,18 @@ void QuadTree::populate(
     float scale = glm::pow(2.0f, (float)(mMaxLOD - node->level));
     glm::vec2 center = offset + glm::vec2(scale / 2.0f);
 
-    float maxDist = 2.0f * scale;
+    float half = scale / 2.0f;
+    float maxDist2 = half * half * 2.0f;
     glm::vec2 diff = position - center;
+    float dist2 = glm::dot(diff, diff);
 
-    if (glm::dot(diff, diff) <= maxDist * maxDist) {
+    if (dist2 <= maxDist2) {
+      LOG_INFOV(
+        "Split node at %s, level %d, centrer at %s, distance to focal point is %f over %f\n",
+        glm::to_string(offset).c_str(), node->level,
+        glm::to_string(center).c_str(), sqrt(dist2),
+        sqrt(maxDist2));
+
       // Split the node
       for (int i = 0; i < 4; ++i) {
         node->children[i] = createNode(node->level + 1, i);

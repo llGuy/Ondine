@@ -233,16 +233,24 @@ void TerrainRenderer::renderQuadTreeNode(
   glm::vec4 realOffset = glm::vec4(wOffset.x, 100.0f, wOffset.y, 0.0f);
 
   pushConstant.positions[0] = POSITIONS[0] * width + realOffset;
+  pushConstant.positions[0].w = 1.0f;
   pushConstant.positions[1] = POSITIONS[1] * width + realOffset;
+  pushConstant.positions[1].w = 1.0f;
   renderLine();
   pushConstant.positions[0] = POSITIONS[0] * width + realOffset;
+  pushConstant.positions[0].w = 1.0f;
   pushConstant.positions[1] = POSITIONS[2] * width + realOffset;
+  pushConstant.positions[1].w = 1.0f;
   renderLine();
   pushConstant.positions[0] = POSITIONS[1] * width + realOffset;
+  pushConstant.positions[0].w = 1.0f;
   pushConstant.positions[1] = POSITIONS[3] * width + realOffset;
+  pushConstant.positions[1].w = 1.0f;
   renderLine();
   pushConstant.positions[0] = POSITIONS[2] * width + realOffset;
+  pushConstant.positions[0].w = 1.0f;
   pushConstant.positions[1] = POSITIONS[3] * width + realOffset;
+  pushConstant.positions[1].w = 1.0f;
   renderLine();
 
   if (node->level < terrain.mQuadTree.mMaxLOD) {

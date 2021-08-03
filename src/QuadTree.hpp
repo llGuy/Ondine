@@ -19,9 +19,9 @@ private:
   struct Node {
     static constexpr glm::vec2 INDEX_TO_OFFSET[4] = {
       glm::vec2(0.0f, 0.0f),
-      glm::vec2(0.0f, 0.0f),
+      glm::vec2(0.0f, 1.0f),
       glm::vec2(1.0f, 0.0f),
-      glm::vec2(1.0f, 0.0f)
+      glm::vec2(1.0f, 1.0f)
     };
 
     uint16_t level;
