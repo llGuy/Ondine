@@ -9,6 +9,7 @@ namespace Ondine::Graphics {
 
 void QuadTree::init(uint16_t maxLOD) {
   mMaxLOD = maxLOD;
+  mAllocatedNodeCount = 0;
 
   uint32_t nodeCount = 0;
   for (int i = 0; i <= mMaxLOD; ++i) {
@@ -30,8 +31,20 @@ uint32_t QuadTree::maxLOD() const {
 void QuadTree::setFocalPoint(const glm::vec2 &position) {
   // Clear
   mNodeAllocator.clear();
+  mAllocatedNodeCount = 0;
   mRoot = createNode(0, 0);
   populate(mRoot, glm::vec2(0.0f), position);
+}
+
+QuadTree::NodeInfo QuadTree::getNodeInfo(const glm::vec2 &position) {
+  NodeInfo nodeInfo = {};
+  Node *deepestNode = getDeepestNode(position, &nodeInfo.offset);
+
+  nodeInfo.level = deepestNode->level;
+  nodeInfo.index = deepestNode->index;
+  nodeInfo.size = glm::vec2(glm::pow(2.0f, (float)(mMaxLOD - nodeInfo.level)));
+
+  return nodeInfo;
 }
 
 QuadTree::Node *QuadTree::createNode(uint16_t level, uint16_t index) {
@@ -39,6 +52,9 @@ QuadTree::Node *QuadTree::createNode(uint16_t level, uint16_t index) {
   zeroMemory(newNode, sizeof(Node));
   newNode->level = level;
   newNode->index = index;
+
+  ++mAllocatedNodeCount;
+
   return newNode;
 }
 
@@ -49,6 +65,8 @@ void QuadTree::freeNode(Node *node) {
   }
 
   mNodeAllocator.free(node);
+
+  --mAllocatedNodeCount;
 }
 
 void QuadTree::populateChildren(Node *node) {
@@ -81,12 +99,6 @@ void QuadTree::populate(
     float dist2 = glm::dot(diff, diff);
 
     if (dist2 <= maxDist2) {
-      LOG_INFOV(
-        "Split node at %s, level %d, centrer at %s, distance to focal point is %f over %f\n",
-        glm::to_string(offset).c_str(), node->level,
-        glm::to_string(center).c_str(), sqrt(dist2),
-        sqrt(maxDist2));
-
       // Split the node
       for (int i = 0; i < 4; ++i) {
         node->children[i] = createNode(node->level + 1, i);
@@ -95,6 +107,47 @@ void QuadTree::populate(
       }
     }
   }
+}
+
+QuadTree::Node *QuadTree::getDeepestNode(
+  const glm::vec2 &position,
+  glm::vec2 *offsetOut) {
+  Node *current = mRoot;
+  glm::vec2 offset = glm::vec2(0);
+
+  while (current->children[0]) {
+    float size = glm::pow(2.0f, (float)(mMaxLOD - current->level));
+    float innerBoundary = size / 2.0f;
+
+    glm::vec2 diff = position - offset;
+
+    if (diff.x < innerBoundary) {
+      if (diff.y < innerBoundary) {
+        current = current->children[0];
+        offset = offset + Node::INDEX_TO_OFFSET[0] * innerBoundary;
+      }
+      else {
+        current = current->children[1];
+        offset = offset + Node::INDEX_TO_OFFSET[1] * innerBoundary;
+      }
+    }
+    else {
+      if (diff.y < innerBoundary) {
+        current = current->children[2];
+        offset = offset + Node::INDEX_TO_OFFSET[2] * innerBoundary;
+      }
+      else {
+        current = current->children[3];
+        offset = offset + Node::INDEX_TO_OFFSET[3] * innerBoundary;
+      }
+    }
+  }
+
+  if (offsetOut) {
+    *offsetOut = offset;
+  }
+
+  return current;
 }
 
 }

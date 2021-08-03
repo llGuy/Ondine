@@ -6,6 +6,12 @@
 #include "QuadTree.hpp"
 #include "VulkanArenaAllocator.hpp"
 
+namespace Ondine::View {
+
+class EditorView;
+
+}
+
 /* 
    For now everything linked to the terrain is in graphics module
    and also, everything is implemented very badly
@@ -139,6 +145,7 @@ private:
   QuadTree mQuadTree;
 
   friend class TerrainRenderer;
+  friend class View::EditorView;
 };
 
 }

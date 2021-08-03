@@ -551,17 +551,41 @@ void EditorView::renderToolsWindow() {
 
     auto *boundScene = mRenderer3D.mBoundScene;
 
-    bool renderChunkOutlines = boundScene->debug.renderChunkOutlines;
-    if (ImGui::Checkbox(
-          "Render Chunk Outlines",
-          &renderChunkOutlines));
-    boundScene->debug.renderChunkOutlines = renderChunkOutlines;
+    if (ImGui::TreeNodeEx(
+          "Quad Tree",
+          ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen)) {
+      ImGui::Text(
+        "Allocated %d nodes",
+        boundScene->terrain.mQuadTree.mAllocatedNodeCount);
 
-    bool renderQuadTree = boundScene->debug.renderQuadTree;
-    if (ImGui::Checkbox(
-          "Render Quad Tree",
-          &renderQuadTree));
-    boundScene->debug.renderQuadTree = renderQuadTree;
+      auto *node = boundScene->terrain.mQuadTree.getDeepestNode(
+        boundScene->terrain.worldToQuadTreeCoords(
+          glm::vec2(
+            boundScene->camera.wPosition.x,
+            boundScene->camera.wPosition.z)));
+
+      ImGui::Separator();
+      ImGui::Text("Inside child node: %d", node->index);
+      ImGui::Text("Node level: %d", node->level);
+
+      ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNodeEx("Visual Debug", ImGuiTreeNodeFlags_SpanFullWidth)) {
+      bool renderChunkOutlines = boundScene->debug.renderChunkOutlines;
+      if (ImGui::Checkbox(
+            "Render Chunk Outlines",
+            &renderChunkOutlines));
+      boundScene->debug.renderChunkOutlines = renderChunkOutlines;
+
+      bool renderQuadTree = boundScene->debug.renderQuadTree;
+      if (ImGui::Checkbox(
+            "Render Quad Tree",
+            &renderQuadTree));
+      boundScene->debug.renderQuadTree = renderQuadTree;
+
+      ImGui::TreePop();
+    }
   }
 
   ImGui::End();
