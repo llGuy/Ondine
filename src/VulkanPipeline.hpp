@@ -93,6 +93,7 @@ public:
     uint32_t location, uint32_t binding, VkFormat format, uint32_t offset);
 
   void setTopology(VkPrimitiveTopology topology);
+  void setToWireframe();
 
 private:
   void setDefaultValues();

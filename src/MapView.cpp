@@ -17,11 +17,13 @@ MapView::MapView(
 
   mMapScene = renderer.createScene();
   mMapScene->terrain.init();
-  // mMapScene->terrain.makeSphere(150.0f, glm::vec3(121.0f, 40.0f, 194.0f));
+  mMapScene->terrain.makeSphere(250.0f, glm::vec3(-350.0f, 300.0f, 0.0f));
+  /*
   mMapScene->terrain.makeIslands(
     50, 4, 0.1f, 1.4f, 20.0f, 1.0f,
     glm::ivec2(-250, -250) * 12,
     glm::ivec2(250, 250) * 12);
+  */
   mMapScene->terrain.prepareForRender(renderer.mGraphicsContext);
 
   renderer.bindScene(mMapScene);

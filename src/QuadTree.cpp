@@ -15,9 +15,14 @@ void QuadTree::init(uint16_t maxLOD) {
   for (int i = 0; i <= mMaxLOD; ++i) {
     nodeCount += pow(4, i);
   }
+
+  mArea = pow(2, mMaxLOD);
+  mArea *= mArea;
   
   mNodeAllocator.init(nodeCount * sizeof(Node), sizeof(Node));
   mRoot = createNode(0, 0);
+  mDeepestNodes.init(mArea);
+  mDeepestNodes.size = 0;
 }
 
 void QuadTree::setInitialState(uint16_t minLevel) {
@@ -31,7 +36,9 @@ uint32_t QuadTree::maxLOD() const {
 void QuadTree::setFocalPoint(const glm::vec2 &position) {
   // Clear
   mNodeAllocator.clear();
+  mDeepestNodes.size = 0;
   mAllocatedNodeCount = 0;
+
   mRoot = createNode(0, 0);
   populate(mRoot, glm::vec2(0.0f), position);
 }
@@ -89,6 +96,9 @@ void QuadTree::populate(
   Node *node,
   const glm::vec2 &offset,
   const glm::vec2 &position) {
+  node->offsetx = offset.x;
+  node->offsety = offset.y;
+
   if (node->level < mMaxLOD) {
     float scale = glm::pow(2.0f, (float)(mMaxLOD - node->level));
     glm::vec2 center = offset + glm::vec2(scale / 2.0f);
@@ -106,6 +116,12 @@ void QuadTree::populate(
         populate(node->children[i], childOffset, position);
       }
     }
+    else {
+      mDeepestNodes[mDeepestNodes.size++] = node;
+    }
+  }
+  else {
+    mDeepestNodes[mDeepestNodes.size++] = node;
   }
 }
 

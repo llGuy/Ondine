@@ -584,6 +584,12 @@ void EditorView::renderToolsWindow() {
             &renderQuadTree));
       boundScene->debug.renderQuadTree = renderQuadTree;
 
+      bool wireframeMode = boundScene->debug.wireframeTerrain;
+      if (ImGui::Checkbox(
+            "Wireframe Terrain",
+            &wireframeMode));
+      boundScene->debug.wireframeTerrain = wireframeMode;
+
       ImGui::TreePop();
     }
   }

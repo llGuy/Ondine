@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Buffer.hpp"
 #include <glm/glm.hpp>
 #include "ArenaAllocator.hpp"
 
@@ -44,6 +45,8 @@ private:
     // Index into the children array
     uint16_t index;
     Node *children[4];
+
+    uint16_t offsetx, offsety;
   };
 
   Node *createNode(uint16_t level, uint16_t index);
@@ -58,6 +61,7 @@ private:
   uint32_t mArea;
   uint16_t mMaxLOD;
   uint32_t mDimensions;
+  Array<Node *> mDeepestNodes;
   uint32_t mAllocatedNodeCount;
   ArenaAllocator mNodeAllocator;
 

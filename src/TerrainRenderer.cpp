@@ -39,6 +39,13 @@ void TerrainRenderer::init(
     graphicsContext.descriptorLayouts(),
     pipelineConfig);
 
+  pipelineConfig.setToWireframe();
+
+  mPipelineWireframe.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorLayouts(),
+    pipelineConfig);
+
   mGPUVerticesAllocator.init(
     10000,
     (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer,
@@ -70,6 +77,30 @@ void TerrainRenderer::render(
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.bindPipeline(mPipeline);
+  commandBuffer.bindUniforms(
+    camera.uniform(), planet.uniform(), clipping.uniform);
+
+  for (int i = 0; i < terrain.mLoadedChunks.size; ++i) {
+    const Chunk *chunk = terrain.mLoadedChunks[i];
+    if (chunk->verticesMemory.size()) {
+      commandBuffer.bindVertexBuffersArena(chunk->verticesMemory);
+      glm::mat4 translate = glm::scale(glm::vec3(terrain.mTerrainScale)) *
+        glm::translate(terrain.chunkCoordToWorld(chunk->chunkCoord));
+      commandBuffer.pushConstants(sizeof(translate), &translate[0][0]);
+      commandBuffer.draw(chunk->vertexCount, 1, 0, 0);
+    }
+  }
+}
+
+void TerrainRenderer::renderWireframe(
+  const Camera &camera,
+  const PlanetRenderer &planet,
+  const Clipping &clipping,
+  Terrain &terrain,
+  VulkanFrame &frame) {
+  auto &commandBuffer = frame.primaryCommandBuffer;
+
+  commandBuffer.bindPipeline(mPipelineWireframe);
   commandBuffer.bindUniforms(
     camera.uniform(), planet.uniform(), clipping.uniform);
 
@@ -185,6 +216,62 @@ void TerrainRenderer::renderQuadTree(
   commandBuffer.bindPipeline(mRenderLine);
   commandBuffer.bindUniforms(camera.uniform());
 
+  for (int i = 0; i < terrain.mQuadTree.mDeepestNodes.size; ++i) {
+    QuadTree::Node *node = terrain.mQuadTree.mDeepestNodes[i];
+
+    static const glm::vec4 POSITIONS[4] = {
+      glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+      glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+      glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
+      glm::vec4(1.0f, 0.0f, 1.0f, 1.0f),
+    };
+
+    struct {
+      glm::vec4 transform;
+      glm::vec4 positions[2];
+      glm::vec4 color;
+    } pushConstant;
+
+    auto renderLine = [&commandBuffer, &pushConstant]() {
+      commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
+      commandBuffer.draw(2, 1, 0, 0);
+    };
+
+    pushConstant.color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+    pushConstant.transform = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+    // glm::ivec2 wOffset = terrain.quadTreeCoordsToWorld(offset);
+    glm::ivec2 wOffset = terrain.quadTreeCoordsToWorld(
+      glm::ivec2(node->offsetx, node->offsety));
+ 
+    float width = (float)(pow(2, terrain.mQuadTree.mMaxLOD - node->level) *
+                          CHUNK_DIM * terrain.mTerrainScale);
+
+    glm::vec4 realOffset = glm::vec4(wOffset.x, 100.0f, wOffset.y, 0.0f);
+
+    pushConstant.positions[0] = POSITIONS[0] * width + realOffset;
+    pushConstant.positions[0].w = 1.0f;
+    pushConstant.positions[1] = POSITIONS[1] * width + realOffset;
+    pushConstant.positions[1].w = 1.0f;
+    renderLine();
+    pushConstant.positions[0] = POSITIONS[0] * width + realOffset;
+    pushConstant.positions[0].w = 1.0f;
+    pushConstant.positions[1] = POSITIONS[2] * width + realOffset;
+    pushConstant.positions[1].w = 1.0f;
+    renderLine();
+    pushConstant.positions[0] = POSITIONS[1] * width + realOffset;
+    pushConstant.positions[0].w = 1.0f;
+    pushConstant.positions[1] = POSITIONS[3] * width + realOffset;
+    pushConstant.positions[1].w = 1.0f;
+    renderLine();
+    pushConstant.positions[0] = POSITIONS[2] * width + realOffset;
+    pushConstant.positions[0].w = 1.0f;
+    pushConstant.positions[1] = POSITIONS[3] * width + realOffset;
+    pushConstant.positions[1].w = 1.0f;
+    renderLine();
+  }
+
+  /*
   renderQuadTreeNode(
     terrain.mQuadTree.mRoot,
     glm::ivec2(0),
@@ -193,6 +280,7 @@ void TerrainRenderer::renderQuadTree(
     clipping,
     terrain,
     frame);
+  */
 }
 
 void TerrainRenderer::renderQuadTreeNode(
@@ -226,7 +314,10 @@ void TerrainRenderer::renderQuadTreeNode(
   pushConstant.color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
   pushConstant.transform = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-  glm::ivec2 wOffset = terrain.quadTreeCoordsToWorld(offset);
+  // glm::ivec2 wOffset = terrain.quadTreeCoordsToWorld(offset);
+  glm::ivec2 wOffset = terrain.quadTreeCoordsToWorld(
+    glm::ivec2(node->offsetx, node->offsety));
+ 
   float width = (float)(pow(2, terrain.mQuadTree.mMaxLOD - node->level) *
     CHUNK_DIM * terrain.mTerrainScale);
 

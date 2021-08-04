@@ -46,8 +46,14 @@ void Scene::submit(
     renderMethod.submit(frame);
   }
 
-  terrainRenderer.render(
-    camera, planet, clipping, terrain, frame);
+  if (debug.wireframeTerrain) {
+    terrainRenderer.renderWireframe(
+      camera, planet, clipping, terrain, frame);
+  }
+  else {
+    terrainRenderer.render(
+      camera, planet, clipping, terrain, frame);
+  }
 }
 
 void Scene::submitDebug(

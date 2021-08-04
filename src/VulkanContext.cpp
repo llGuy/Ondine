@@ -33,6 +33,7 @@ void VulkanContext::initContext(const Core::WindowContextInfo &surfaceInfo) {
   requiredFeatures.count = 1;
   requiredFeatures.features.geometryShader = VK_TRUE;
   requiredFeatures.features.independentBlend = VK_TRUE;
+  requiredFeatures.features.fillModeNonSolid = VK_TRUE;
   mDevice.init(DeviceType::Any, mInstance, mSurface, requiredFeatures);
 
   // Swapchain

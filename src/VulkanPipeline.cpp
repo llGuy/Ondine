@@ -116,6 +116,10 @@ void VulkanPipelineConfig::setBindingAttribute(
   attribute.offset = offset;
 }
 
+void VulkanPipelineConfig::setToWireframe() {
+  mRasterization.polygonMode = VK_POLYGON_MODE_LINE;
+}
+
 void VulkanPipelineConfig::setDefaultValues() {
   /* Blend states */
   const auto &renderPass = mTarget.renderPass;

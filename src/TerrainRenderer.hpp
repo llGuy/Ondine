@@ -28,6 +28,13 @@ public:
     Terrain &terrain,
     VulkanFrame &frame);
 
+  void renderWireframe(
+    const Camera &camera,
+    const PlanetRenderer &planet,
+    const Clipping &clipping,
+    Terrain &terrain,
+    VulkanFrame &frame);
+
   void renderChunkOutlines(
     const Camera &camera,
     const PlanetRenderer &planet,
@@ -58,6 +65,7 @@ private:
 
 private:
   VulkanPipeline mPipeline;
+  VulkanPipeline mPipelineWireframe;
   VulkanArenaAllocator mGPUVerticesAllocator;
   // For debugging purposes
   VulkanPipeline mRenderLine;

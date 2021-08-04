@@ -45,9 +45,10 @@ void Terrain::init() {
   mMaxVoxelDensity = (float)0xFFFF;
   mUpdated = false;
 
-  mQuadTree.init(5);
+  mQuadTree.init(2);
   // mQuadTree.setInitialState(5);
-  mQuadTree.setFocalPoint(worldToQuadTreeCoords(glm::vec3(0)));
+  // mQuadTree.setFocalPoint(worldToQuadTreeCoords(glm::vec3(0)));
+  mQuadTree.setFocalPoint(glm::vec3(0));
 }
 
 Chunk *Terrain::getChunk(const glm::ivec3 &coord) {
