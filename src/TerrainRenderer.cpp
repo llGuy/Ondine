@@ -74,6 +74,7 @@ void TerrainRenderer::render(
   const Clipping &clipping,
   Terrain &terrain,
   VulkanFrame &frame) {
+  /*
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.bindPipeline(mPipeline);
@@ -90,6 +91,7 @@ void TerrainRenderer::render(
       commandBuffer.draw(chunk->vertexCount, 1, 0, 0);
     }
   }
+  */
 }
 
 void TerrainRenderer::renderWireframe(
@@ -98,6 +100,7 @@ void TerrainRenderer::renderWireframe(
   const Clipping &clipping,
   Terrain &terrain,
   VulkanFrame &frame) {
+  /*
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.bindPipeline(mPipelineWireframe);
@@ -114,6 +117,7 @@ void TerrainRenderer::renderWireframe(
       commandBuffer.draw(chunk->vertexCount, 1, 0, 0);
     }
   }
+  */
 }
 
 void TerrainRenderer::renderChunkOutlines(
@@ -122,6 +126,7 @@ void TerrainRenderer::renderChunkOutlines(
   const Clipping &clipping,
   Terrain &terrain,
   VulkanFrame &frame) {
+  #if 0
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.bindPipeline(mRenderLine);
@@ -203,6 +208,7 @@ void TerrainRenderer::renderChunkOutlines(
       renderLine();
     }
   }
+  #endif
 }
 
 void TerrainRenderer::renderQuadTree(
@@ -374,6 +380,49 @@ void TerrainRenderer::sync(
   if (terrain.mUpdatedChunks.size) {
     terrain.generateVoxelNormals();
 
+    /* 
+       Trying the naive way first
+       Goal is to generate the voxel data for each ChunkGroup
+       After the voxel information for each ChunkGroup is created, we
+       can then proceed to generating the mesh for each ChunkGroup
+    */
+    for (int i = 0; i < terrain.mQuadTree.nodeCount(); ++i) {
+      QuadTree::Node *node = terrain.mQuadTree.mDeepestNodes[i];
+      glm::ivec2 offset = terrain.quadTreeCoordsToChunk(
+        glm::ivec2(node->offsetx, node->offsety));
+      int width = pow(2, terrain.mQuadTree.mMaxLOD - node->level);
+
+      // Generate chunk groups
+      for (int z = offset.y; z < offset.y + width; ++z) {
+        for (int x = offset.x; x < offset.x + width; ++x) {
+          Chunk *current = terrain.getFirstFlatChunk(glm::ivec2(x, z));
+
+          while (current) {
+            glm::ivec3 groupCoord = getChunkGroupCoord(
+              terrain, current->chunkCoord);
+
+            ChunkGroup *group = getChunkGroup(groupCoord);
+
+            int stride = (int)pow(2, terrain.mQuadTree.mMaxLOD - node->level);
+            float width = (int)stride;
+            
+            glm::vec3 chunkCoordOffset = (glm::vec3)(
+              current->chunkCoord - groupCoord);
+
+            glm::vec3 start = (float)CHUNK_DIM * (chunkCoordOffset / width);
+
+            if (current->next == INVALID_CHUNK_INDEX) {
+              current = nullptr;
+            }
+            else {
+              current = terrain.mLoadedChunks[current->next];
+            }
+          }
+        }
+      }
+    }
+
+#if 0
     uint32_t totalCount = 0;
 
     // Later change this to just the updated chunks
@@ -412,6 +461,66 @@ void TerrainRenderer::sync(
     terrain.mUpdatedChunks.size = 0;
 
     mGPUVerticesAllocator.debugLogState();
+#endif
+  }
+}
+
+uint32_t TerrainRenderer::hashChunkGroupCoord(const glm::ivec3 &coord) const {
+  struct {
+    union {
+      struct {
+        uint32_t padding: 2;
+        uint32_t x: 10;
+        uint32_t y: 10;
+        uint32_t z: 10;
+      };
+      uint32_t value;
+    };
+  } hasher;
+
+  hasher.value = 0;
+
+  hasher.x = *(uint32_t *)(&coord.x);
+  hasher.y = *(uint32_t *)(&coord.y);
+  hasher.z = *(uint32_t *)(&coord.z);
+
+  return (uint32_t)hasher.value;
+}
+
+glm::ivec3 TerrainRenderer::getChunkGroupCoord(
+  const Terrain &terrain,
+  const glm::ivec3 &chunkCoord) const {
+  QuadTree::NodeInfo node =
+    terrain.mQuadTree.getNodeInfo(glm::ivec2(chunkCoord.x, chunkCoord.z));
+
+  node.offset -= glm::vec2(glm::pow(2.0f, terrain.mQuadTree.maxLOD() - 1));
+  glm::ivec3 coord = glm::ivec3(node.offset.x, chunkCoord.y, node.offset.y);
+  // Round down the nearest 2^node.level
+  coord.y -= coord.y % (int)pow(2, node.level);
+
+  return coord;
+}
+
+ChunkGroup *TerrainRenderer::getChunkGroup(const glm::ivec3 &coord) {
+  uint32_t hash = hashChunkGroupCoord(coord);
+  uint32_t *index = mChunkGroupIndices.get(hash);
+    
+  if (index) {
+    // Chunk was already added
+    return mChunkGroups[*index];
+  }
+  else {
+    ChunkGroup *group = flAlloc<ChunkGroup>();
+
+    auto key = mChunkGroups.add(group);
+
+    zeroMemory(group);
+    group->coord = coord;
+    group->key = *index;
+
+    mChunkGroupIndices.insert(hash, key);
+
+    return group;
   }
 }
 

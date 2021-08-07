@@ -1,7 +1,10 @@
 #pragma once
 
+#include "Chunk.hpp"
 #include <glm/glm.hpp>
+#include "FastMap.hpp"
 #include "QuadTree.hpp"
+#include "NumericMap.hpp"
 #include "VulkanPipeline.hpp"
 #include "VulkanArenaAllocator.hpp"
 
@@ -54,6 +57,15 @@ public:
     const VulkanCommandBuffer &commandBuffer);
 
 private:
+  glm::ivec3 getChunkGroupCoord(
+    const Terrain &terrain,
+    const glm::ivec3 &chunkCoord) const;
+  uint32_t hashChunkGroupCoord(
+    const glm::ivec3 &coord) const;
+
+  ChunkGroup *getChunkGroup(const glm::ivec3 &coord);
+
+private:
   void renderQuadTreeNode(
     QuadTree::Node *node,
     const glm::ivec2 &offset,
@@ -69,6 +81,9 @@ private:
   VulkanArenaAllocator mGPUVerticesAllocator;
   // For debugging purposes
   VulkanPipeline mRenderLine;
+
+  NumericMap<ChunkGroup *> mChunkGroups;
+  FastMap<uint32_t, 1000, 30, 10> mChunkGroupIndices;
 };
 
 }

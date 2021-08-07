@@ -53,6 +53,11 @@ inline void zeroMemory(void *ptr, uint32_t size) {
   memset(ptr, 0, size);
 }
 
+template <typename T>
+inline void zeroMemory(T *ptr, uint32_t count = 1) {
+  memset(ptr, 0, sizeof(T) * count);
+}
+
 struct ImagePixels {
   void *data;
   int width;

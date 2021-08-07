@@ -30,7 +30,11 @@ public:
   };
 
   // In quadtree space
-  NodeInfo getNodeInfo(const glm::vec2 &position);
+  NodeInfo getNodeInfo(const glm::vec2 &position) const;
+
+  // Deepest nodes
+  uint32_t nodeCount() const;
+  NodeInfo getNodeInfo(uint32_t index) const;
 
 private:
   struct Node {
@@ -54,7 +58,8 @@ private:
   void populateChildren(Node *node);
   void populate(Node *node, uint16_t maxLevel);
   void populate(Node *node, const glm::vec2 &offset, const glm::vec2 &position);
-  Node *getDeepestNode(const glm::vec2 &position, glm::vec2 *offset = nullptr);
+  Node *getDeepestNode(
+    const glm::vec2 &position, glm::vec2 *offset = nullptr) const;
 
 private:
   Node *mRoot;
@@ -65,6 +70,7 @@ private:
   uint32_t mAllocatedNodeCount;
   ArenaAllocator mNodeAllocator;
 
+  friend class Terrain;
   friend class TerrainRenderer;
   friend class View::EditorView;
 };

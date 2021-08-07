@@ -442,7 +442,7 @@ vec3 getOceanNormal(in vec3 pointPosition) {
 #endif
 
   float distToPoint = length(pointPosition - uCamera.camera.wPosition);
-  distToPoint = clamp(distToPoint / 550.0, 0.0, 0.9);
+  distToPoint = clamp(distToPoint / 550.0, 0.0, 0.7);
 
   float progress = dot(
     vec3(0.0, 1.0, 0.0),

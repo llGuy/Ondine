@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 #include <glm/glm.hpp>
+#include "QuadTree.hpp"
+#include "NumericMap.hpp"
 #include "VulkanArenaSlot.hpp"
 
 namespace Ondine::Graphics {
@@ -18,6 +20,7 @@ struct Voxel {
 extern const int8_t VOXEL_EDGE_CONNECT[256][16];
 
 constexpr uint32_t CHUNK_DIM = 16;
+constexpr int32_t INVALID_CHUNK_INDEX = -1;
 constexpr uint32_t CHUNK_VOLUME = CHUNK_DIM * CHUNK_DIM * CHUNK_DIM;
 
 struct ChunkVertex {
@@ -27,12 +30,32 @@ struct ChunkVertex {
 
 struct Chunk {
   Voxel voxels[CHUNK_VOLUME];
-  VulkanArenaSlot verticesMemory;
+
   uint32_t chunkStackIndex;
-  uint32_t vertexCount;
-  bool needsUpdating;
+  bool wasUpdated;
+
+  // Index of the next chunk in vertical chunk linked list
+  int32_t next;
+
   glm::ivec3 chunkCoord;
+
+  struct ChunkGroup *group;
+};
+
+// This is what actually gets rendered - generated with the help of a quadtree
+struct ChunkGroup {
+  Voxel voxels[CHUNK_VOLUME];
+
+  VulkanArenaSlot verticesMemory;
+  uint32_t vertexCount;
+
+  glm::ivec3 coord;
+  NumericMapKey key;
+  bool needsUpdate;
+
   glm::mat4 transform;
+
+  QuadTree::NodeInfo nodeInfo;
 };
 
 }

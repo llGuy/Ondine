@@ -54,6 +54,8 @@ public:
 
     if (mFirstFree == INVALID_NUMERIC_MAP_KEY) {
       // Need to extend the used capacity
+      assert(mUsedCapacity < mNodes.capacity);
+
       key = mUsedCapacity++;
       Node *newNodeSpace = &mNodes[key];
       new(&newNodeSpace->value) T(element);
@@ -112,6 +114,14 @@ public:
 
       mFirstFree = key;
     }
+  }
+
+  T &operator[](uint32_t index) {
+    return mNodes[index].value;
+  }
+
+  const T &operator[](uint32_t index) const {
+    return mNodes[index].value;
   }
 
 public:

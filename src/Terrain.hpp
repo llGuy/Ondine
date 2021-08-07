@@ -58,10 +58,13 @@ public:
   glm::ivec3 worldToChunkCoord(const glm::vec3 &wPosition) const;
   glm::vec3 chunkCoordToWorld(const glm::ivec3 &chunkCoord) const;
   uint32_t hashChunkCoord(const glm::ivec3 &coord) const;
+  uint32_t hashFlatChunkCoord(const glm::ivec2 &coord) const;
   uint32_t getVoxelIndex(const glm::ivec3 &coord) const;
   uint32_t getVoxelIndex(int x, int y, int z) const;
 
 private:
+  void generateChunkGroups();
+
   uint32_t generateChunkVertices(
     const Chunk &chunk,
     Voxel surfaceDensity,
@@ -120,8 +123,12 @@ private:
   void markChunkForUpdate(Chunk *chunk);
 
   // One unit in offset = chunk coord. The origin of the quadtree is at 0,0
-  glm::ivec2 quadTreeCoordsToWorld(glm::ivec2 offset);
-  glm::vec2 worldToQuadTreeCoords(glm::vec2 offset);
+  glm::ivec2 quadTreeCoordsToChunk(glm::ivec2 offset) const;
+  glm::ivec2 quadTreeCoordsToWorld(glm::ivec2 offset) const;
+  glm::vec2 worldToQuadTreeCoords(glm::vec2 offset) const;
+
+  void addToFlatChunkIndices(Chunk *chunk);
+  Chunk *getFirstFlatChunk(glm::ivec2 flatCoord);
 
 private:
   static constexpr uint32_t MAX_DENSITY = 0xFFFF;
@@ -140,6 +147,9 @@ private:
   Array<uint32_t> mUpdatedChunks;
   // Maps 3-D chunk coord to the chunk's index in the mLoadedChunks array
   FastMap<uint32_t, MAX_CHUNKS, 30, 10> mChunkIndices;
+  // Points to a linked list of chunks all of which are at a certain x-z
+  FastMap<uint32_t, MAX_CHUNKS / 2, 30, 10> mFlatChunkIndices;
+
   ChunkVertex *mTemporaryVertices;
   bool mUpdated;
   QuadTree mQuadTree;

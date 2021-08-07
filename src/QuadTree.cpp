@@ -43,12 +43,29 @@ void QuadTree::setFocalPoint(const glm::vec2 &position) {
   populate(mRoot, glm::vec2(0.0f), position);
 }
 
-QuadTree::NodeInfo QuadTree::getNodeInfo(const glm::vec2 &position) {
+QuadTree::NodeInfo QuadTree::getNodeInfo(const glm::vec2 &position) const {
   NodeInfo nodeInfo = {};
   Node *deepestNode = getDeepestNode(position, &nodeInfo.offset);
 
   nodeInfo.level = deepestNode->level;
   nodeInfo.index = deepestNode->index;
+  nodeInfo.offset = glm::vec2(deepestNode->offsetx, deepestNode->offsety);
+  nodeInfo.size = glm::vec2(glm::pow(2.0f, (float)(mMaxLOD - nodeInfo.level)));
+
+  return nodeInfo;
+}
+
+uint32_t QuadTree::nodeCount() const {
+  return mDeepestNodes.size;
+}
+
+QuadTree::NodeInfo QuadTree::getNodeInfo(uint32_t index) const {
+  NodeInfo nodeInfo = {};
+  const Node *deepestNode = mDeepestNodes[index];
+
+  nodeInfo.level = deepestNode->level;
+  nodeInfo.index = deepestNode->index;
+  nodeInfo.offset = glm::vec2(deepestNode->offsetx, deepestNode->offsety);
   nodeInfo.size = glm::vec2(glm::pow(2.0f, (float)(mMaxLOD - nodeInfo.level)));
 
   return nodeInfo;
@@ -127,7 +144,7 @@ void QuadTree::populate(
 
 QuadTree::Node *QuadTree::getDeepestNode(
   const glm::vec2 &position,
-  glm::vec2 *offsetOut) {
+  glm::vec2 *offsetOut) const {
   Node *current = mRoot;
   glm::vec2 offset = glm::vec2(0);
 
