@@ -21,14 +21,6 @@ int entry(int argc, char **argv) {
 
 }
 
-#include <string>
-#include <iostream>
-#include "NumericMap.hpp"
-
 int main(int argc, char **argv) {
-  Ondine::NumericMap<std::string> map;
-
-  map.add("Hello");
-
-  // return Ondine::entry(argc, argv);
+  return Ondine::entry(argc, argv);
 }

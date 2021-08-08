@@ -59,8 +59,6 @@ public:
   glm::vec3 chunkCoordToWorld(const glm::ivec3 &chunkCoord) const;
   uint32_t hashChunkCoord(const glm::ivec3 &coord) const;
   uint32_t hashFlatChunkCoord(const glm::ivec2 &coord) const;
-  uint32_t getVoxelIndex(const glm::ivec3 &coord) const;
-  uint32_t getVoxelIndex(int x, int y, int z) const;
 
 private:
   void generateChunkGroups();

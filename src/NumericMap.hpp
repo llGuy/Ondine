@@ -42,7 +42,6 @@ public:
 
   void init(uint32_t maxNodes) {
     mNodes.init(maxNodes);
-    zeroMemory(mNodes.data, sizeof(Node) * maxNodes);
     mFirstOccupied = INVALID_NUMERIC_MAP_KEY;
     mLastOccupied = INVALID_NUMERIC_MAP_KEY;
     mFirstFree = INVALID_NUMERIC_MAP_KEY;

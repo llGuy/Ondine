@@ -153,15 +153,6 @@ uint32_t Terrain::hashFlatChunkCoord(const glm::ivec2 &coord) const {
   return (uint32_t)hasher.value;
 }
 
-uint32_t Terrain::getVoxelIndex(int x, int y, int z) const {
-  return z * (CHUNK_DIM * CHUNK_DIM) + y * CHUNK_DIM + x;
-}
-
-uint32_t Terrain::getVoxelIndex(const glm::ivec3 &coord) const {
-  return coord.z * (CHUNK_DIM * CHUNK_DIM) +
-    coord.y * CHUNK_DIM + coord.x;
-}
-
 void Terrain::generateChunkGroups() {
   ChunkGroup *groups = flAllocv<ChunkGroup>(mQuadTree.mAllocatedNodeCount);
   zeroMemory(groups, sizeof(ChunkGroup) * mQuadTree.mAllocatedNodeCount);
@@ -868,13 +859,11 @@ void Terrain::generateVoxelNormals() {
 }
 
 void Terrain::markChunkForUpdate(Chunk *chunk) {
-#if 0
   if (!chunk->needsUpdating) {
     chunk->needsUpdating = true;
     mUpdatedChunks[mUpdatedChunks.size++] = *mChunkIndices.get(
       hashChunkCoord(chunk->chunkCoord));
   }
-#endif
 }
 
 glm::ivec2 Terrain::quadTreeCoordsToChunk(glm::ivec2 offset) const {
@@ -899,14 +888,14 @@ void Terrain::addToFlatChunkIndices(Chunk *chunk) {
   uint32_t hash = hashFlatChunkCoord(glm::ivec2(x, z));
   uint32_t *index = mFlatChunkIndices.get(hash);
 
-  if (!index) {
-    *index = chunk->chunkStackIndex;
-    chunk->next = INVALID_CHUNK_INDEX;
-  }
-  else {
+  if (index) {
     Chunk *head = mLoadedChunks[*index];
     chunk->next = head->chunkStackIndex;
     *index = chunk->chunkStackIndex;
+  }
+  else {
+    mFlatChunkIndices.insert(hash, chunk->chunkStackIndex);
+    chunk->next = INVALID_CHUNK_INDEX;
   }
 }
 

@@ -54,8 +54,8 @@ inline void zeroMemory(void *ptr, uint32_t size) {
 }
 
 template <typename T>
-inline void zeroMemory(T *ptr, uint32_t count = 1) {
-  memset(ptr, 0, sizeof(T) * count);
+inline void zeroMemory(T *ptr) {
+  memset(ptr, 0, sizeof(T));
 }
 
 struct ImagePixels {

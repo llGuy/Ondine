@@ -32,7 +32,7 @@ struct Chunk {
   Voxel voxels[CHUNK_VOLUME];
 
   uint32_t chunkStackIndex;
-  bool wasUpdated;
+  bool needsUpdating;
 
   // Index of the next chunk in vertical chunk linked list
   int32_t next;
@@ -57,5 +57,14 @@ struct ChunkGroup {
 
   QuadTree::NodeInfo nodeInfo;
 };
+
+inline uint32_t getVoxelIndex(int x, int y, int z) {
+  return z * (CHUNK_DIM * CHUNK_DIM) + y * CHUNK_DIM + x;
+}
+
+inline uint32_t getVoxelIndex(const glm::ivec3 &coord) {
+  return coord.z * (CHUNK_DIM * CHUNK_DIM) +
+    coord.y * CHUNK_DIM + coord.x;
+}
 
 }
