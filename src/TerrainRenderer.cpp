@@ -1,3 +1,4 @@
+#include "Math.hpp"
 #include "Camera.hpp"
 #include "GBuffer.hpp"
 #include "Terrain.hpp"
@@ -7,6 +8,28 @@
 #include "TerrainRenderer.hpp"
 
 namespace Ondine::Graphics {
+
+const glm::vec3 TerrainRenderer::NORMALIZED_CUBE_VERTICES[8] = {
+  glm::vec3(-0.5f, -0.5f, -0.5f),
+  glm::vec3(+0.5f, -0.5f, -0.5f),
+  glm::vec3(+0.5f, -0.5f, +0.5f),
+  glm::vec3(-0.5f, -0.5f, +0.5f),
+  glm::vec3(-0.5f, +0.5f, -0.5f),
+  glm::vec3(+0.5f, +0.5f, -0.5f),
+  glm::vec3(+0.5f, +0.5f, +0.5f),
+  glm::vec3(-0.5f, +0.5f, +0.5f)
+};
+
+const glm::ivec3 TerrainRenderer::NORMALIZED_CUBE_VERTEX_INDICES[8] = {
+  glm::ivec3(0, 0, 0),
+  glm::ivec3(1, 0, 0),
+  glm::ivec3(1, 0, 1),
+  glm::ivec3(0, 0, 1),
+  glm::ivec3(0, 1, 0),
+  glm::ivec3(1, 1, 0),
+  glm::ivec3(1, 1, 1),
+  glm::ivec3(0, 1, 1)
+};
 
 void TerrainRenderer::init(
   VulkanContext &graphicsContext,
@@ -69,6 +92,8 @@ void TerrainRenderer::init(
 
   mChunkGroups.init(1000);
   mChunkGroupIndices.init();
+  mTemporaryVertices = flAllocv<ChunkVertex>(
+    10 * CHUNK_DIM * CHUNK_DIM * CHUNK_DIM);
 }
 
 void TerrainRenderer::render(
@@ -77,24 +102,27 @@ void TerrainRenderer::render(
   const Clipping &clipping,
   Terrain &terrain,
   VulkanFrame &frame) {
-  /*
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.bindPipeline(mPipeline);
   commandBuffer.bindUniforms(
     camera.uniform(), planet.uniform(), clipping.uniform);
 
-  for (int i = 0; i < terrain.mLoadedChunks.size; ++i) {
-    const Chunk *chunk = terrain.mLoadedChunks[i];
-    if (chunk->verticesMemory.size()) {
-      commandBuffer.bindVertexBuffersArena(chunk->verticesMemory);
-      glm::mat4 translate = glm::scale(glm::vec3(terrain.mTerrainScale)) *
-        glm::translate(terrain.chunkCoordToWorld(chunk->chunkCoord));
+  for (auto group : mChunkGroups) {
+    if (group->verticesMemory.size()) {
+      commandBuffer.bindVertexBuffersArena(group->verticesMemory);
+
+      float lodScale = glm::pow(2.0f, terrain.mQuadTree.mMaxLOD - group->level);
+      glm::vec3 scale = glm::vec3(terrain.mTerrainScale) * lodScale;
+      glm::vec3 tran = (glm::vec3)terrain.chunkCoordToWorld(group->coord) *
+        (float)terrain.mTerrainScale;
+
+      glm::mat4 translate = glm::translate(tran) * glm::scale(scale);
+
       commandBuffer.pushConstants(sizeof(translate), &translate[0][0]);
-      commandBuffer.draw(chunk->vertexCount, 1, 0, 0);
+      commandBuffer.draw(group->vertexCount, 1, 0, 0);
     }
   }
-  */
 }
 
 void TerrainRenderer::renderWireframe(
@@ -103,24 +131,27 @@ void TerrainRenderer::renderWireframe(
   const Clipping &clipping,
   Terrain &terrain,
   VulkanFrame &frame) {
-  /*
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.bindPipeline(mPipelineWireframe);
   commandBuffer.bindUniforms(
     camera.uniform(), planet.uniform(), clipping.uniform);
 
-  for (int i = 0; i < terrain.mLoadedChunks.size; ++i) {
-    const Chunk *chunk = terrain.mLoadedChunks[i];
-    if (chunk->verticesMemory.size()) {
-      commandBuffer.bindVertexBuffersArena(chunk->verticesMemory);
-      glm::mat4 translate = glm::scale(glm::vec3(terrain.mTerrainScale)) *
-        glm::translate(terrain.chunkCoordToWorld(chunk->chunkCoord));
+  for (auto group : mChunkGroups) {
+    if (group->verticesMemory.size()) {
+      commandBuffer.bindVertexBuffersArena(group->verticesMemory);
+
+      float lodScale = glm::pow(2.0f, terrain.mQuadTree.mMaxLOD - group->level);
+      glm::vec3 scale = glm::vec3(terrain.mTerrainScale) * lodScale;
+      glm::vec3 tran = (glm::vec3)terrain.chunkCoordToWorld(group->coord) *
+        (float)terrain.mTerrainScale;
+
+      glm::mat4 translate = glm::translate(tran) * glm::scale(scale);
+
       commandBuffer.pushConstants(sizeof(translate), &translate[0][0]);
-      commandBuffer.draw(chunk->vertexCount, 1, 0, 0);
+      commandBuffer.draw(group->vertexCount, 1, 0, 0);
     }
   }
-  */
 }
 
 void TerrainRenderer::renderChunkOutlines(
@@ -129,7 +160,6 @@ void TerrainRenderer::renderChunkOutlines(
   const Clipping &clipping,
   Terrain &terrain,
   VulkanFrame &frame) {
-  #if 0
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.bindPipeline(mRenderLine);
@@ -160,58 +190,58 @@ void TerrainRenderer::renderChunkOutlines(
 
   pushConstant.color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 
-  for (int i = 0; i < terrain.mLoadedChunks.size; ++i) {
-    const Chunk *chunk = terrain.mLoadedChunks[i];
-    if (chunk->verticesMemory.size()) {
+  for (auto group : mChunkGroups) {
+    if (group->verticesMemory.size()) {
       float scale = (float)terrain.mTerrainScale * (float)CHUNK_DIM;
         
       pushConstant.transform = glm::vec4(
-        (float)chunk->chunkCoord.x,
-        (float)chunk->chunkCoord.y,
-        (float)chunk->chunkCoord.z,
+        (float)group->coord.x,
+        (float)group->coord.y,
+        (float)group->coord.z,
         scale);
 
-      pushConstant.positions[0] = CUBE_POSITIONS[0];
-      pushConstant.positions[1] = CUBE_POSITIONS[4];
+      float stretch = glm::pow(2.0f, terrain.mQuadTree.mMaxLOD - group->level);
+
+      pushConstant.positions[0] = CUBE_POSITIONS[0] * stretch;
+      pushConstant.positions[1] = CUBE_POSITIONS[4] * stretch;
       renderLine();
-      pushConstant.positions[0] = CUBE_POSITIONS[1];
-      pushConstant.positions[1] = CUBE_POSITIONS[5];
+      pushConstant.positions[0] = CUBE_POSITIONS[1] * stretch;
+      pushConstant.positions[1] = CUBE_POSITIONS[5] * stretch;
       renderLine();
-      pushConstant.positions[0] = CUBE_POSITIONS[2];
-      pushConstant.positions[1] = CUBE_POSITIONS[6];
+      pushConstant.positions[0] = CUBE_POSITIONS[2] * stretch;
+      pushConstant.positions[1] = CUBE_POSITIONS[6] * stretch;
       renderLine();
-      pushConstant.positions[0] = CUBE_POSITIONS[3];
-      pushConstant.positions[1] = CUBE_POSITIONS[7];
+      pushConstant.positions[0] = CUBE_POSITIONS[3] * stretch;
+      pushConstant.positions[1] = CUBE_POSITIONS[7] * stretch;
       renderLine();
 
-      pushConstant.positions[0] = CUBE_POSITIONS[0];
-      pushConstant.positions[1] = CUBE_POSITIONS[1];
+      pushConstant.positions[0] = CUBE_POSITIONS[0] * stretch;
+      pushConstant.positions[1] = CUBE_POSITIONS[1] * stretch;
       renderLine();
-      pushConstant.positions[0] = CUBE_POSITIONS[0];
-      pushConstant.positions[1] = CUBE_POSITIONS[2];
+      pushConstant.positions[0] = CUBE_POSITIONS[0] * stretch;
+      pushConstant.positions[1] = CUBE_POSITIONS[2] * stretch;
       renderLine();
-      pushConstant.positions[0] = CUBE_POSITIONS[1];
-      pushConstant.positions[1] = CUBE_POSITIONS[3];
+      pushConstant.positions[0] = CUBE_POSITIONS[1] * stretch;
+      pushConstant.positions[1] = CUBE_POSITIONS[3] * stretch;
       renderLine();
-      pushConstant.positions[0] = CUBE_POSITIONS[2];
-      pushConstant.positions[1] = CUBE_POSITIONS[3];
+      pushConstant.positions[0] = CUBE_POSITIONS[2] * stretch;
+      pushConstant.positions[1] = CUBE_POSITIONS[3] * stretch;
       renderLine();
 
-      pushConstant.positions[0] = CUBE_POSITIONS[4];
-      pushConstant.positions[1] = CUBE_POSITIONS[5];
+      pushConstant.positions[0] = CUBE_POSITIONS[4] * stretch;
+      pushConstant.positions[1] = CUBE_POSITIONS[5] * stretch;
       renderLine();
-      pushConstant.positions[0] = CUBE_POSITIONS[4];
-      pushConstant.positions[1] = CUBE_POSITIONS[6];
+      pushConstant.positions[0] = CUBE_POSITIONS[4] * stretch;
+      pushConstant.positions[1] = CUBE_POSITIONS[6] * stretch;
       renderLine();
-      pushConstant.positions[0] = CUBE_POSITIONS[5];
-      pushConstant.positions[1] = CUBE_POSITIONS[7];
+      pushConstant.positions[0] = CUBE_POSITIONS[5] * stretch;
+      pushConstant.positions[1] = CUBE_POSITIONS[7] * stretch;
       renderLine();
-      pushConstant.positions[0] = CUBE_POSITIONS[6];
-      pushConstant.positions[1] = CUBE_POSITIONS[7];
+      pushConstant.positions[0] = CUBE_POSITIONS[6] * stretch;
+      pushConstant.positions[1] = CUBE_POSITIONS[7] * stretch;
       renderLine();
     }
   }
-  #endif
 }
 
 void TerrainRenderer::renderQuadTree(
@@ -382,6 +412,7 @@ void TerrainRenderer::sync(
   const VulkanCommandBuffer &commandBuffer) {
   if (terrain.mUpdatedChunks.size) {
     terrain.generateVoxelNormals();
+    terrain.mUpdatedChunks.size = 0;
 
     /* 
        Trying the naive way first
@@ -405,9 +436,11 @@ void TerrainRenderer::sync(
               terrain, current->chunkCoord);
 
             ChunkGroup *group = getChunkGroup(groupCoord);
+            group->level = node->level;
+            current->chunkGroupKey = group->key;
 
             int stride = (int)pow(2, terrain.mQuadTree.mMaxLOD - node->level);
-            float width = (int)stride;
+            float width = stride;
             
             glm::vec3 chunkCoordOffset = (glm::vec3)(
               current->chunkCoord - groupCoord);
@@ -437,46 +470,214 @@ void TerrainRenderer::sync(
       }
     }
 
-#if 0
+    // Generate the vertices now
     uint32_t totalCount = 0;
 
     // Later change this to just the updated chunks
-    for (int i = 0; i < terrain.mUpdatedChunks.size; ++i) {
-      uint32_t chunkIndex = terrain.mUpdatedChunks[i];
-      Chunk *chunk = terrain.mLoadedChunks[chunkIndex];
-      chunk->needsUpdating = false;
-      
-      uint32_t vertexCount = 0;
-      ChunkVertex *vertices = terrain.createChunkVertices(*chunk, &vertexCount);
+    for (auto group : mChunkGroups) {
+      Voxel surfaceDensity = {(uint16_t)30000};
+      uint32_t vertexCount = generateVertices(
+        *group, surfaceDensity, mTemporaryVertices);
 
-      chunk->vertexCount = vertexCount;
+      group->vertexCount = vertexCount;
 
       totalCount += vertexCount;
 
-      if (chunk->verticesMemory.size()) {
+      if (group->verticesMemory.size()) {
         // This chunk already has allocated memory
-        mGPUVerticesAllocator.free(chunk->verticesMemory);
+        mGPUVerticesAllocator.free(group->verticesMemory);
       }
 
       if (vertexCount) {
         auto slot = mGPUVerticesAllocator.allocate(
           sizeof(ChunkVertex) * vertexCount);
 
-        slot.write(commandBuffer, vertices, sizeof(ChunkVertex) * vertexCount);
+        slot.write(
+          commandBuffer,
+          mTemporaryVertices,
+          sizeof(ChunkVertex) * vertexCount);
 
-        chunk->verticesMemory = slot;
+        group->verticesMemory = slot;
       }
       else {
-        chunk->verticesMemory = {};
+        group->verticesMemory = {};
       }
     }
 
-    // LOG_INFOV("Total size: %u\n", (uint32_t)(totalCount * sizeof(ChunkVertex)));
-
-    terrain.mUpdatedChunks.size = 0;
-
     mGPUVerticesAllocator.debugLogState();
-#endif
+  }
+}
+
+uint32_t TerrainRenderer::generateVertices(
+  const ChunkGroup &group,
+  Voxel surfaceDensity,
+  ChunkVertex *meshVertices) {
+  uint32_t vertexCount = 0;
+
+  for (uint32_t z = 0; z < CHUNK_DIM - 1; ++z) {
+    for (uint32_t y = 0; y < CHUNK_DIM - 1; ++y) {
+      for (uint32_t x = 0; x < CHUNK_DIM - 1; ++x) {
+        Voxel voxelValues[8] = {
+          group.voxels[getVoxelIndex(x, y, z)],
+          group.voxels[getVoxelIndex(x + 1, y, z)],
+          group.voxels[getVoxelIndex(x + 1, y, z + 1)],
+          group.voxels[getVoxelIndex(x, y, z + 1)],
+                    
+          group.voxels[getVoxelIndex(x, y + 1, z)],
+          group.voxels[getVoxelIndex(x + 1, y + 1, z)],
+          group.voxels[getVoxelIndex(x + 1, y + 1, z + 1)],
+          group.voxels[getVoxelIndex(x, y + 1, z + 1)]
+        };
+
+        updateVoxelCube(
+          voxelValues, glm::ivec3(x, y, z), surfaceDensity,
+          meshVertices, vertexCount);
+      }
+    }
+  }
+
+  return vertexCount;
+}
+
+void TerrainRenderer::pushVertexToTriangleList(
+  uint32_t v0, uint32_t v1,
+  glm::vec3 *vertices, Voxel *voxels,
+  Voxel surfaceDensity,
+  ChunkVertex *meshVertices, uint32_t &vertexCount) {
+  float surfaceLevelF = (float)surfaceDensity.density;
+  float voxelValue0 = (float)voxels[v0].density;
+  float voxelValue1 = (float)voxels[v1].density;
+
+  if (voxelValue0 > voxelValue1) {
+    float tmp = voxelValue0;
+    voxelValue0 = voxelValue1;
+    voxelValue1 = tmp;
+
+    uint8_t tmpV = v0;
+    v0 = v1;
+    v1 = tmpV;
+  }
+
+  float interpolatedVoxelValues = lerp(voxelValue0, voxelValue1, surfaceLevelF);
+    
+  glm::vec3 vertex = interpolate(
+    vertices[v0], vertices[v1], interpolatedVoxelValues);
+
+  glm::vec3 normal0 = glm::vec3(
+    voxels[v0].normalX, voxels[v0].normalY, voxels[v0].normalZ) / 1000.0f;
+  glm::vec3 normal1 = glm::vec3(
+    voxels[v1].normalX, voxels[v1].normalY, voxels[v1].normalZ) / 1000.0f;
+
+  glm::vec3 normal = interpolate(
+    normal0, normal1, interpolatedVoxelValues);
+
+  meshVertices[vertexCount] = {vertex, normal};
+
+  ++vertexCount;
+}
+
+void TerrainRenderer::updateVoxelCube(
+  Voxel *voxels,
+  const glm::ivec3 &coord,
+  Voxel surfaceDensity,
+  ChunkVertex *meshVertices,
+  uint32_t &vertexCount) {
+  uint8_t bitCombination = 0;
+  for (uint32_t i = 0; i < 8; ++i) {
+    bool isOverSurface = (voxels[i].density > surfaceDensity.density);
+    bitCombination |= isOverSurface << i;
+  }
+
+  const int8_t *triangleEntry = &VOXEL_EDGE_CONNECT[bitCombination][0];
+
+  uint32_t edge = 0;
+
+  int8_t edgePair[3] = {};
+
+  while(triangleEntry[edge] != -1) {
+    int8_t edgeIndex = triangleEntry[edge];
+    edgePair[edge % 3] = edgeIndex;
+
+    if (edge % 3 == 2) {
+      uint32_t dominantVoxel = 0;
+
+      glm::vec3 vertices[8] = {};
+      for (uint32_t i = 0; i < 8; ++i) {
+        vertices[i] = NORMALIZED_CUBE_VERTICES[i] +
+          glm::vec3(0.5f) + glm::vec3(coord);
+
+        if (voxels[i].density > voxels[dominantVoxel].density) {
+          dominantVoxel = i;
+        }
+      }
+
+      for (uint32_t i = 0; i < 3; ++i) {
+        switch(edgePair[i]) {
+        case 0: {
+          pushVertexToTriangleList(
+            0, 1, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
+        } break;
+
+        case 1: {
+          pushVertexToTriangleList(
+            1, 2, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
+        } break;
+
+        case 2: {
+          pushVertexToTriangleList(
+            2, 3, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
+        } break;
+
+        case 3: {
+          pushVertexToTriangleList(
+            3, 0, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
+        } break;
+
+        case 4: {
+          pushVertexToTriangleList(
+            4, 5, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
+        } break;
+
+        case 5: {
+          pushVertexToTriangleList(
+            5, 6, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
+        } break;
+
+        case 6: {
+          pushVertexToTriangleList(
+            6, 7, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
+        } break;
+
+        case 7: {
+          pushVertexToTriangleList(
+            7, 4, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
+        } break;
+
+        case 8: {
+          pushVertexToTriangleList(
+            0, 4, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
+        } break;
+
+        case 9: {
+          pushVertexToTriangleList(
+            1, 5, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
+        } break;
+
+        case 10: {
+          pushVertexToTriangleList(
+            2, 6, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
+        } break;
+
+        case 11: {
+          pushVertexToTriangleList(
+            3, 7, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
+        } break;
+
+        }
+      }
+    }
+
+    ++edge;
   }
 }
 

@@ -39,7 +39,7 @@ struct Chunk {
 
   glm::ivec3 chunkCoord;
 
-  struct ChunkGroup *group;
+  NumericMapKey chunkGroupKey;
 };
 
 // This is what actually gets rendered - generated with the help of a quadtree
@@ -50,6 +50,7 @@ struct ChunkGroup {
   uint32_t vertexCount;
 
   glm::ivec3 coord;
+  uint16_t level;
   NumericMapKey key;
   bool needsUpdate;
 

@@ -146,7 +146,7 @@ private:
   // Maps 3-D chunk coord to the chunk's index in the mLoadedChunks array
   FastMap<uint32_t, MAX_CHUNKS, 30, 10> mChunkIndices;
   // Points to a linked list of chunks all of which are at a certain x-z
-  FastMap<uint32_t, MAX_CHUNKS / 2, 30, 10> mFlatChunkIndices;
+  FastMap<uint32_t, MAX_CHUNKS, 30, 10> mFlatChunkIndices;
 
   ChunkVertex *mTemporaryVertices;
   bool mUpdated;

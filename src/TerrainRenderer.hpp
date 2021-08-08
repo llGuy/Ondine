@@ -65,6 +65,24 @@ private:
 
   ChunkGroup *getChunkGroup(const glm::ivec3 &coord);
 
+  uint32_t generateVertices(
+    const ChunkGroup &group,
+    Voxel surfaceDensity,
+    ChunkVertex *meshVertices);
+
+  void pushVertexToTriangleList(
+    uint32_t v0, uint32_t v1,
+    glm::vec3 *vertices, Voxel *voxels,
+    Voxel surfaceDensity,
+    ChunkVertex *meshVertices, uint32_t &vertexCount);
+
+  void updateVoxelCube(
+    Voxel *voxels,
+    const glm::ivec3 &coord,
+    Voxel surfaceDensity,
+    ChunkVertex *meshVertices,
+    uint32_t &vertexCount);
+
 private:
   void renderQuadTreeNode(
     QuadTree::Node *node,
@@ -76,6 +94,9 @@ private:
     VulkanFrame &frame);
 
 private:
+  static const glm::vec3 NORMALIZED_CUBE_VERTICES[8];
+  static const glm::ivec3 NORMALIZED_CUBE_VERTEX_INDICES[8];
+
   VulkanPipeline mPipeline;
   VulkanPipeline mPipelineWireframe;
   VulkanArenaAllocator mGPUVerticesAllocator;
@@ -84,6 +105,8 @@ private:
 
   NumericMap<ChunkGroup *> mChunkGroups;
   FastMap<uint32_t, 1000, 30, 10> mChunkGroupIndices;
+
+  ChunkVertex *mTemporaryVertices;
 };
 
 }

@@ -138,7 +138,8 @@ uint32_t Terrain::hashFlatChunkCoord(const glm::ivec2 &coord) const {
   struct {
     union {
       struct {
-        uint32_t x: 16;
+        uint32_t p: 1;
+        uint32_t x: 15;
         uint32_t z: 16;
       };
       uint32_t value;
