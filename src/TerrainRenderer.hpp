@@ -76,7 +76,7 @@ private:
     Voxel surfaceDensity,
     ChunkVertex *meshVertices, uint32_t &vertexCount);
 
-  void updateVoxelCube(
+  void updateVoxelCell(
     Voxel *voxels,
     const glm::ivec3 &coord,
     Voxel surfaceDensity,

@@ -12,23 +12,23 @@ namespace Ondine::Graphics {
 const glm::vec3 TerrainRenderer::NORMALIZED_CUBE_VERTICES[8] = {
   glm::vec3(-0.5f, -0.5f, -0.5f),
   glm::vec3(+0.5f, -0.5f, -0.5f),
-  glm::vec3(+0.5f, -0.5f, +0.5f),
-  glm::vec3(-0.5f, -0.5f, +0.5f),
   glm::vec3(-0.5f, +0.5f, -0.5f),
   glm::vec3(+0.5f, +0.5f, -0.5f),
+  glm::vec3(-0.5f, -0.5f, +0.5f),
+  glm::vec3(+0.5f, -0.5f, +0.5f),
+  glm::vec3(-0.5f, +0.5f, +0.5f),
   glm::vec3(+0.5f, +0.5f, +0.5f),
-  glm::vec3(-0.5f, +0.5f, +0.5f)
 };
 
 const glm::ivec3 TerrainRenderer::NORMALIZED_CUBE_VERTEX_INDICES[8] = {
   glm::ivec3(0, 0, 0),
   glm::ivec3(1, 0, 0),
-  glm::ivec3(1, 0, 1),
-  glm::ivec3(0, 0, 1),
   glm::ivec3(0, 1, 0),
   glm::ivec3(1, 1, 0),
+  glm::ivec3(0, 0, 1),
+  glm::ivec3(1, 0, 1),
+  glm::ivec3(0, 1, 1),
   glm::ivec3(1, 1, 1),
-  glm::ivec3(0, 1, 1)
 };
 
 void TerrainRenderer::init(
@@ -518,18 +518,18 @@ uint32_t TerrainRenderer::generateVertices(
     for (uint32_t y = 0; y < CHUNK_DIM - 1; ++y) {
       for (uint32_t x = 0; x < CHUNK_DIM - 1; ++x) {
         Voxel voxelValues[8] = {
-          group.voxels[getVoxelIndex(x, y, z)],
-          group.voxels[getVoxelIndex(x + 1, y, z)],
-          group.voxels[getVoxelIndex(x + 1, y, z + 1)],
-          group.voxels[getVoxelIndex(x, y, z + 1)],
-                    
-          group.voxels[getVoxelIndex(x, y + 1, z)],
+          group.voxels[getVoxelIndex(x,     y,     z)],
+          group.voxels[getVoxelIndex(x + 1, y,     z)],
+          group.voxels[getVoxelIndex(x,     y + 1, z)],
           group.voxels[getVoxelIndex(x + 1, y + 1, z)],
+
+          group.voxels[getVoxelIndex(x,     y,     z + 1)],
+          group.voxels[getVoxelIndex(x + 1, y,     z + 1)],
+          group.voxels[getVoxelIndex(x,     y + 1, z + 1)],
           group.voxels[getVoxelIndex(x + 1, y + 1, z + 1)],
-          group.voxels[getVoxelIndex(x, y + 1, z + 1)]
         };
 
-        updateVoxelCube(
+        updateVoxelCell(
           voxelValues, glm::ivec3(x, y, z), surfaceDensity,
           meshVertices, vertexCount);
       }
@@ -538,6 +538,8 @@ uint32_t TerrainRenderer::generateVertices(
 
   return vertexCount;
 }
+
+#include "Transvoxel.inc"
 
 void TerrainRenderer::pushVertexToTriangleList(
   uint32_t v0, uint32_t v1,
@@ -576,7 +578,7 @@ void TerrainRenderer::pushVertexToTriangleList(
   ++vertexCount;
 }
 
-void TerrainRenderer::updateVoxelCube(
+void TerrainRenderer::updateVoxelCell(
   Voxel *voxels,
   const glm::ivec3 &coord,
   Voxel surfaceDensity,
@@ -588,96 +590,65 @@ void TerrainRenderer::updateVoxelCube(
     bitCombination |= isOverSurface << i;
   }
 
-  const int8_t *triangleEntry = &VOXEL_EDGE_CONNECT[bitCombination][0];
+  if (bitCombination == 0 || bitCombination == 0xFF) {
+    return;
+  }
 
-  uint32_t edge = 0;
+  uint8_t cellClassIdx = regularCellClass[bitCombination];
+  const RegularCellData &cellData = regularCellData[cellClassIdx];
 
-  int8_t edgePair[3] = {};
+  glm::vec3 vertices[8] = {};
+  for (uint32_t i = 0; i < 8; ++i) {
+    vertices[i] = NORMALIZED_CUBE_VERTICES[i] +
+      glm::vec3(0.5f) + glm::vec3(coord);
+  }
 
-  while(triangleEntry[edge] != -1) {
-    int8_t edgeIndex = triangleEntry[edge];
-    edgePair[edge % 3] = edgeIndex;
+  ChunkVertex *verts = STACK_ALLOC(ChunkVertex, cellData.GetVertexCount());
 
-    if (edge % 3 == 2) {
-      uint32_t dominantVoxel = 0;
+  for (int i = 0; i < cellData.GetVertexCount(); ++i) {
+    uint16_t nibbles = regularVertexData[bitCombination][i];
 
-      glm::vec3 vertices[8] = {};
-      for (uint32_t i = 0; i < 8; ++i) {
-        vertices[i] = NORMALIZED_CUBE_VERTICES[i] +
-          glm::vec3(0.5f) + glm::vec3(coord);
-
-        if (voxels[i].density > voxels[dominantVoxel].density) {
-          dominantVoxel = i;
-        }
-      }
-
-      for (uint32_t i = 0; i < 3; ++i) {
-        switch(edgePair[i]) {
-        case 0: {
-          pushVertexToTriangleList(
-            0, 1, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
-        } break;
-
-        case 1: {
-          pushVertexToTriangleList(
-            1, 2, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
-        } break;
-
-        case 2: {
-          pushVertexToTriangleList(
-            2, 3, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
-        } break;
-
-        case 3: {
-          pushVertexToTriangleList(
-            3, 0, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
-        } break;
-
-        case 4: {
-          pushVertexToTriangleList(
-            4, 5, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
-        } break;
-
-        case 5: {
-          pushVertexToTriangleList(
-            5, 6, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
-        } break;
-
-        case 6: {
-          pushVertexToTriangleList(
-            6, 7, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
-        } break;
-
-        case 7: {
-          pushVertexToTriangleList(
-            7, 4, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
-        } break;
-
-        case 8: {
-          pushVertexToTriangleList(
-            0, 4, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
-        } break;
-
-        case 9: {
-          pushVertexToTriangleList(
-            1, 5, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
-        } break;
-
-        case 10: {
-          pushVertexToTriangleList(
-            2, 6, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
-        } break;
-
-        case 11: {
-          pushVertexToTriangleList(
-            3, 7, vertices, voxels, surfaceDensity, meshVertices, vertexCount);
-        } break;
-
-        }
-      }
+    if (nibbles == 0x0) {
+      // Finished
+      break;
     }
 
-    ++edge;
+    uint8_t v0 = (nibbles >> 4) & 0xF;
+    uint8_t v1 = nibbles & 0xF;
+
+    float surfaceLevelF = (float)surfaceDensity.density;
+    float voxelValue0 = (float)voxels[v0].density;
+    float voxelValue1 = (float)voxels[v1].density;
+
+    if (voxelValue0 > voxelValue1) {
+      float tmp = voxelValue0;
+      voxelValue0 = voxelValue1;
+      voxelValue1 = tmp;
+
+      uint8_t tmpV = v0;
+      v0 = v1;
+      v1 = tmpV;
+    }
+
+    float interpolatedVoxelValues = lerp(voxelValue0, voxelValue1, surfaceLevelF);
+    
+    glm::vec3 vertex = interpolate(
+      vertices[v0], vertices[v1], interpolatedVoxelValues);
+
+    glm::vec3 normal0 = glm::vec3(
+      voxels[v0].normalX, voxels[v0].normalY, voxels[v0].normalZ) / 1000.0f;
+    glm::vec3 normal1 = glm::vec3(
+      voxels[v1].normalX, voxels[v1].normalY, voxels[v1].normalZ) / 1000.0f;
+
+    glm::vec3 normal = interpolate(
+      normal0, normal1, interpolatedVoxelValues);
+
+    verts[i] = {vertex, normal};
+  }
+
+  for (int i = 0; i < cellData.GetTriangleCount() * 3; ++i) {
+    int vertexIndex = cellData.vertexIndex[i];
+    meshVertices[vertexCount++] = verts[vertexIndex];
   }
 }
 
