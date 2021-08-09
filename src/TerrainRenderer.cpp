@@ -473,11 +473,14 @@ void TerrainRenderer::sync(
     // Generate the vertices now
     uint32_t totalCount = 0;
 
+    mNullChunkGroup = (ChunkGroup *)lnAlloc(sizeof(ChunkGroup));
+    memset(mNullChunkGroup, 0, sizeof(ChunkGroup));
+
     // Later change this to just the updated chunks
     for (auto group : mChunkGroups) {
       Voxel surfaceDensity = {(uint16_t)30000};
       uint32_t vertexCount = generateVertices(
-        *group, surfaceDensity, mTemporaryVertices);
+        terrain, *group, surfaceDensity, mTemporaryVertices);
 
       group->vertexCount = vertexCount;
 
@@ -509,6 +512,7 @@ void TerrainRenderer::sync(
 }
 
 uint32_t TerrainRenderer::generateVertices(
+  const Terrain &terrain,
   const ChunkGroup &group,
   Voxel surfaceDensity,
   ChunkVertex *meshVertices) {
@@ -532,6 +536,31 @@ uint32_t TerrainRenderer::generateVertices(
         updateVoxelCell(
           voxelValues, glm::ivec3(x, y, z), surfaceDensity,
           meshVertices, vertexCount);
+      }
+    }
+  }
+
+  int size = pow(2, terrain.mQuadTree.mMaxLOD - group.level);
+  glm::ivec3 groupCoord = group.coord + glm::ivec3(
+    pow(2, terrain.mQuadTree.mMaxLOD - 1));
+  glm::ivec3 posZ = groupCoord + glm::ivec3(0, 0, 1) * size;
+
+  QuadTree::NodeInfo posZNode = terrain.mQuadTree.getNodeInfo((glm::vec3)posZ);
+
+  if (posZNode.level < group.level) {
+    ChunkGroup *posZGroup = getChunkGroup(posZ);
+    if (!posZGroup) {
+      posZGroup = mNullChunkGroup;
+    }
+
+    // Testing positive-z transition cells
+    uint32_t z = CHUNK_DIM - 1;
+    for (uint32_t y = 0; y < CHUNK_DIM - 1; y += 2) {
+      for (uint32_t x = 0; x < CHUNK_DIM - 1; x += 2) {
+        // These need to be constructed "from the perspective" of the lower LOD
+        Voxel regularValues[8] = {
+          
+        };
       }
     }
   }

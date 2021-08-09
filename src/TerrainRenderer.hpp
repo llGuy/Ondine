@@ -66,6 +66,7 @@ private:
   ChunkGroup *getChunkGroup(const glm::ivec3 &coord);
 
   uint32_t generateVertices(
+    const Terrain &terrain,
     const ChunkGroup &group,
     Voxel surfaceDensity,
     ChunkVertex *meshVertices);
@@ -107,6 +108,7 @@ private:
   FastMap<uint32_t, 1000, 30, 10> mChunkGroupIndices;
 
   ChunkVertex *mTemporaryVertices;
+  ChunkGroup *mNullChunkGroup;
 };
 
 }
