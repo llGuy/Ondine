@@ -564,7 +564,8 @@ uint32_t TerrainRenderer::generateVertices(
     pow(2, terrain.mQuadTree.mMaxLOD - 1));
 
   glm::ivec3 posZ = groupCoord + glm::ivec3(0, 0, 1) * groupSize;
-  QuadTree::NodeInfo posZNode = terrain.mQuadTree.getNodeInfo((glm::vec3)posZ);
+  QuadTree::NodeInfo posZNode = terrain.mQuadTree.getNodeInfo(
+    glm::vec2(posZ.x, posZ.z));
 
   if (posZNode.level <= group.level) {
     uint32_t z = CHUNK_DIM - 1;
@@ -594,7 +595,8 @@ uint32_t TerrainRenderer::generateVertices(
   }
 
   glm::ivec3 negZ = groupCoord + glm::ivec3(0, 0, -1);
-  QuadTree::NodeInfo negZNode = terrain.mQuadTree.getNodeInfo((glm::vec3)negZ);
+  QuadTree::NodeInfo negZNode = terrain.mQuadTree.getNodeInfo(
+    glm::vec2(negZ.x, negZ.z));
 
   if (negZNode.level <= group.level) {
 #if 0
@@ -791,77 +793,97 @@ void TerrainRenderer::updateTransVoxelCell(
   uint32_t &vertexCount) {
   const float percentTrans = 0.125f;
 
-  uint8_t bitCombination = 0;
-  for (uint32_t i = 0; i < 8; ++i) {
-    bool isOverSurface = (voxels[i].density > surfaceDensity.density);
-    bitCombination |= isOverSurface << i;
-  }
+  { // Normal mesh creation
+    uint8_t bitCombination = 0;
+    for (uint32_t i = 0; i < 8; ++i) {
+      bool isOverSurface = (voxels[i].density > surfaceDensity.density);
+      bitCombination |= isOverSurface << i;
+    }
 
-  if (bitCombination == 0 || bitCombination == 0xFF) {
-    return;
-  }
+    if (bitCombination == 0 || bitCombination == 0xFF) {
+      return;
+    }
 
-  uint8_t cellClassIdx = regularCellClass[bitCombination];
-  const RegularCellData &cellData = regularCellData[cellClassIdx];
+    uint8_t cellClassIdx = regularCellClass[bitCombination];
+    const RegularCellData &cellData = regularCellData[cellClassIdx];
 
-  glm::vec3 vertices[8] = {};
-  for (uint32_t i = 0; i < 8; ++i) {
-    vertices[i] = NORMALIZED_CUBE_VERTICES[i] +
-      glm::vec3(0.5f) + glm::vec3(coord);
+    glm::vec3 vertices[8] = {};
+    for (uint32_t i = 0; i < 8; ++i) {
+      vertices[i] = NORMALIZED_CUBE_VERTICES[i] +
+        glm::vec3(0.5f) + glm::vec3(coord);
 
-    if (NORMALIZED_CUBE_VERTICES[i].z == 0.0f) {
-      if (axis.z == -1) {
-        vertices[i].z += percentTrans;
+      if (NORMALIZED_CUBE_VERTICES[i].z + 0.5f == 0.0f) {
+        if (axis.z == -1) {
+          vertices[i].z += percentTrans;
+        }
       }
     }
-  }
 
-  ChunkVertex *verts = STACK_ALLOC(ChunkVertex, cellData.GetVertexCount());
+    ChunkVertex *verts = STACK_ALLOC(ChunkVertex, cellData.GetVertexCount());
 
-  for (int i = 0; i < cellData.GetVertexCount(); ++i) {
-    uint16_t nibbles = regularVertexData[bitCombination][i];
+    for (int i = 0; i < cellData.GetVertexCount(); ++i) {
+      uint16_t nibbles = regularVertexData[bitCombination][i];
 
-    if (nibbles == 0x0) {
-      // Finished
-      break;
-    }
+      if (nibbles == 0x0) {
+        // Finished
+        break;
+      }
 
-    uint8_t v0 = (nibbles >> 4) & 0xF;
-    uint8_t v1 = nibbles & 0xF;
+      uint8_t v0 = (nibbles >> 4) & 0xF;
+      uint8_t v1 = nibbles & 0xF;
 
-    float surfaceLevelF = (float)surfaceDensity.density;
-    float voxelValue0 = (float)voxels[v0].density;
-    float voxelValue1 = (float)voxels[v1].density;
+      float surfaceLevelF = (float)surfaceDensity.density;
+      float voxelValue0 = (float)voxels[v0].density;
+      float voxelValue1 = (float)voxels[v1].density;
 
-    if (voxelValue0 > voxelValue1) {
-      float tmp = voxelValue0;
-      voxelValue0 = voxelValue1;
-      voxelValue1 = tmp;
+      if (voxelValue0 > voxelValue1) {
+        float tmp = voxelValue0;
+        voxelValue0 = voxelValue1;
+        voxelValue1 = tmp;
 
-      uint8_t tmpV = v0;
-      v0 = v1;
-      v1 = tmpV;
-    }
+        uint8_t tmpV = v0;
+        v0 = v1;
+        v1 = tmpV;
+      }
 
-    float interpolatedVoxelValues = lerp(voxelValue0, voxelValue1, surfaceLevelF);
+      float interpolatedVoxelValues = lerp(voxelValue0, voxelValue1, surfaceLevelF);
     
-    glm::vec3 vertex = interpolate(
-      vertices[v0], vertices[v1], interpolatedVoxelValues);
+      glm::vec3 vertex = interpolate(
+        vertices[v0], vertices[v1], interpolatedVoxelValues);
 
-    glm::vec3 normal0 = glm::vec3(
-      voxels[v0].normalX, voxels[v0].normalY, voxels[v0].normalZ) / 1000.0f;
-    glm::vec3 normal1 = glm::vec3(
-      voxels[v1].normalX, voxels[v1].normalY, voxels[v1].normalZ) / 1000.0f;
+      glm::vec3 normal0 = glm::vec3(
+        voxels[v0].normalX, voxels[v0].normalY, voxels[v0].normalZ) / 1000.0f;
+      glm::vec3 normal1 = glm::vec3(
+        voxels[v1].normalX, voxels[v1].normalY, voxels[v1].normalZ) / 1000.0f;
 
-    glm::vec3 normal = interpolate(
-      normal0, normal1, interpolatedVoxelValues);
+      glm::vec3 normal = interpolate(
+        normal0, normal1, interpolatedVoxelValues);
 
-    verts[i] = {vertex, normal};
+      verts[i] = {vertex, normal};
+    }
+
+    for (int i = 0; i < cellData.GetTriangleCount() * 3; ++i) {
+      int vertexIndex = cellData.vertexIndex[i];
+      meshVertices[vertexCount++] = verts[vertexIndex];
+    }
   }
 
-  for (int i = 0; i < cellData.GetTriangleCount() * 3; ++i) {
-    int vertexIndex = cellData.vertexIndex[i];
-    meshVertices[vertexCount++] = verts[vertexIndex];
+  { // Transvoxel mesh creation
+    uint32_t bitCombination = 0;
+
+    for (uint32_t i = 0; i < 9; ++i) {
+      bool isOverSurface = (transVoxels[i].density > surfaceDensity.density);
+      bitCombination |= isOverSurface << i;
+    }
+
+    if (bitCombination == 0 || bitCombination == 511) {
+      return;
+    }
+
+    uint8_t cellClassIdx = transitionCellClass[bitCombination];
+    const TransitionCellData &cellData = transitionCellData[cellClassIdx & 0x7F];
+
+    uint16_t 
   }
 }
 
