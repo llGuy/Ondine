@@ -517,6 +517,7 @@ uint32_t TerrainRenderer::generateVertices(
   Voxel surfaceDensity,
   ChunkVertex *meshVertices) {
   int groupSize = pow(2, terrain.mQuadTree.mMaxLOD - group.level);
+  int stride = groupSize;
   // glm::ivec3 groupCoord = group.coord + glm::ivec3(
   // pow(2, terrain.mQuadTree.mMaxLOD - 1));
   glm::ivec3 groupStart = group.coord * (int)CHUNK_DIM;
@@ -524,6 +525,15 @@ uint32_t TerrainRenderer::generateVertices(
   auto getVoxel = [&terrain, &groupSize, &groupStart](
     uint32_t x, uint32_t y, uint32_t z) {
     return terrain.getVoxel(groupStart + glm::ivec3(x, y, z) * groupSize);
+  };
+
+  auto getVoxelLOD = [&terrain, &groupSize, &groupStart, &stride](
+    uint32_t x, uint32_t y, uint32_t z,
+    // Offset
+    uint32_t ox, uint32_t oy, uint32_t oz) {
+    return terrain.getVoxel(
+      groupStart + glm::ivec3(x, y, z) * groupSize +
+      glm::ivec3(ox, oy, oz) * stride / 2);
   };
 
   uint32_t vertexCount = 0;
@@ -552,8 +562,8 @@ uint32_t TerrainRenderer::generateVertices(
 
   glm::ivec3 groupCoord = group.coord + glm::ivec3(
     pow(2, terrain.mQuadTree.mMaxLOD - 1));
-  glm::ivec3 posZ = groupCoord + glm::ivec3(0, 0, 1) * groupSize;
 
+  glm::ivec3 posZ = groupCoord + glm::ivec3(0, 0, 1) * groupSize;
   QuadTree::NodeInfo posZNode = terrain.mQuadTree.getNodeInfo((glm::vec3)posZ);
 
   if (posZNode.level <= group.level) {
@@ -579,8 +589,81 @@ uint32_t TerrainRenderer::generateVertices(
       }
     }
   }
+  else {
+    // Do the LOD thing
+  }
 
-  
+  glm::ivec3 negZ = groupCoord + glm::ivec3(0, 0, -1);
+  QuadTree::NodeInfo negZNode = terrain.mQuadTree.getNodeInfo((glm::vec3)negZ);
+
+  if (negZNode.level <= group.level) {
+#if 0
+    uint32_t z = CHUNK_DIM - 1;
+    for (uint32_t y = 1; y < CHUNK_DIM - 1; ++y) {
+      for (uint32_t x = 1; x < CHUNK_DIM - 1; ++x) {
+
+        Voxel voxelValues[8] = {
+          group.voxels[getVoxelIndex(x,     y,     z)],
+          group.voxels[getVoxelIndex(x + 1, y,     z)],
+          group.voxels[getVoxelIndex(x,     y + 1, z)],
+          group.voxels[getVoxelIndex(x + 1, y + 1, z)],
+
+          getVoxel(x,     y,     z + 1),
+          getVoxel(x + 1, y,     z + 1),
+          getVoxel(x,     y + 1, z + 1),
+          getVoxel(x + 1, y + 1, z + 1)
+        };
+
+        updateVoxelCell(
+          voxelValues, glm::ivec3(x, y, z), surfaceDensity,
+          meshVertices, vertexCount);
+      }
+    }
+#endif
+  }
+  else {
+    uint32_t z = 0;
+    for (uint32_t y = 1; y < CHUNK_DIM - 1; ++y) {
+      for (uint32_t x = 1; x < CHUNK_DIM - 1; ++x) {
+        Voxel voxelValues[8] = {
+          group.voxels[getVoxelIndex(x,     y,     z)],
+          group.voxels[getVoxelIndex(x + 1, y,     z)],
+          group.voxels[getVoxelIndex(x,     y + 1, z)],
+          group.voxels[getVoxelIndex(x + 1, y + 1, z)],
+
+          group.voxels[getVoxelIndex(x,     y,     z + 1)],
+          group.voxels[getVoxelIndex(x + 1, y,     z + 1)],
+          group.voxels[getVoxelIndex(x,     y + 1, z + 1)],
+          group.voxels[getVoxelIndex(x + 1, y + 1, z + 1)],
+        };
+
+        Voxel transVoxels[13] = {
+          getVoxelLOD(x,     y,     z, 0, 0, 0),
+          getVoxelLOD(x,     y,     z, 1, 0, 0),
+          getVoxelLOD(x + 1, y,     z, 0, 0, 0),
+
+          getVoxelLOD(x,     y,     z, 0, 1, 0),
+          getVoxelLOD(x,     y,     z, 1, 1, 0),
+          getVoxelLOD(x + 1, y,     z, 0, 1, 0),
+
+          getVoxelLOD(x,     y + 1, z, 0, 0, 0),
+          getVoxelLOD(x,     y + 1, z, 1, 0, 0),
+          getVoxelLOD(x + 1, y + 1, z, 0, 0, 0),
+
+          group.voxels[getVoxelIndex(x,     y,     z)],
+          group.voxels[getVoxelIndex(x + 1, y,     z)],
+          group.voxels[getVoxelIndex(x,     y + 1, z)],
+          group.voxels[getVoxelIndex(x + 1, y + 1, z)],
+        };
+
+        updateTransVoxelCell(
+          voxelValues, transVoxels,
+          glm::ivec3(0, 0, -1), glm::ivec3(x, y, z),
+          surfaceDensity,
+          meshVertices, vertexCount);
+      }
+    }
+  }
 
   return vertexCount;
 }
@@ -647,6 +730,90 @@ void TerrainRenderer::updateVoxelCell(
   for (uint32_t i = 0; i < 8; ++i) {
     vertices[i] = NORMALIZED_CUBE_VERTICES[i] +
       glm::vec3(0.5f) + glm::vec3(coord);
+  }
+
+  ChunkVertex *verts = STACK_ALLOC(ChunkVertex, cellData.GetVertexCount());
+
+  for (int i = 0; i < cellData.GetVertexCount(); ++i) {
+    uint16_t nibbles = regularVertexData[bitCombination][i];
+
+    if (nibbles == 0x0) {
+      // Finished
+      break;
+    }
+
+    uint8_t v0 = (nibbles >> 4) & 0xF;
+    uint8_t v1 = nibbles & 0xF;
+
+    float surfaceLevelF = (float)surfaceDensity.density;
+    float voxelValue0 = (float)voxels[v0].density;
+    float voxelValue1 = (float)voxels[v1].density;
+
+    if (voxelValue0 > voxelValue1) {
+      float tmp = voxelValue0;
+      voxelValue0 = voxelValue1;
+      voxelValue1 = tmp;
+
+      uint8_t tmpV = v0;
+      v0 = v1;
+      v1 = tmpV;
+    }
+
+    float interpolatedVoxelValues = lerp(voxelValue0, voxelValue1, surfaceLevelF);
+    
+    glm::vec3 vertex = interpolate(
+      vertices[v0], vertices[v1], interpolatedVoxelValues);
+
+    glm::vec3 normal0 = glm::vec3(
+      voxels[v0].normalX, voxels[v0].normalY, voxels[v0].normalZ) / 1000.0f;
+    glm::vec3 normal1 = glm::vec3(
+      voxels[v1].normalX, voxels[v1].normalY, voxels[v1].normalZ) / 1000.0f;
+
+    glm::vec3 normal = interpolate(
+      normal0, normal1, interpolatedVoxelValues);
+
+    verts[i] = {vertex, normal};
+  }
+
+  for (int i = 0; i < cellData.GetTriangleCount() * 3; ++i) {
+    int vertexIndex = cellData.vertexIndex[i];
+    meshVertices[vertexCount++] = verts[vertexIndex];
+  }
+}
+
+void TerrainRenderer::updateTransVoxelCell(
+  Voxel *voxels,
+  Voxel *transVoxels,
+  const glm::ivec3 &axis,
+  const glm::ivec3 &coord,
+  Voxel surfaceDensity,
+  ChunkVertex *meshVertices,
+  uint32_t &vertexCount) {
+  const float percentTrans = 0.125f;
+
+  uint8_t bitCombination = 0;
+  for (uint32_t i = 0; i < 8; ++i) {
+    bool isOverSurface = (voxels[i].density > surfaceDensity.density);
+    bitCombination |= isOverSurface << i;
+  }
+
+  if (bitCombination == 0 || bitCombination == 0xFF) {
+    return;
+  }
+
+  uint8_t cellClassIdx = regularCellClass[bitCombination];
+  const RegularCellData &cellData = regularCellData[cellClassIdx];
+
+  glm::vec3 vertices[8] = {};
+  for (uint32_t i = 0; i < 8; ++i) {
+    vertices[i] = NORMALIZED_CUBE_VERTICES[i] +
+      glm::vec3(0.5f) + glm::vec3(coord);
+
+    if (NORMALIZED_CUBE_VERTICES[i].z == 0.0f) {
+      if (axis.z == -1) {
+        vertices[i].z += percentTrans;
+      }
+    }
   }
 
   ChunkVertex *verts = STACK_ALLOC(ChunkVertex, cellData.GetVertexCount());

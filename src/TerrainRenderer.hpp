@@ -84,6 +84,15 @@ private:
     ChunkVertex *meshVertices,
     uint32_t &vertexCount);
 
+  void updateTransVoxelCell(
+    Voxel *voxels,
+    Voxel *transVoxels,
+    const glm::ivec3 &axis,
+    const glm::ivec3 &coord,
+    Voxel surfaceDensity,
+    ChunkVertex *meshVertices,
+    uint32_t &vertexCount);
+
 private:
   void renderQuadTreeNode(
     QuadTree::Node *node,

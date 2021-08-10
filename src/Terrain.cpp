@@ -920,7 +920,13 @@ const Voxel &Terrain::getVoxel(const glm::vec3 &position) const {
 
   const Chunk *chunk = at(chunkCoord);
 
-  return chunk->voxels[getVoxelIndex(iposition)];
+  if (chunk) {
+    return chunk->voxels[getVoxelIndex(iposition)];
+  }
+  else {
+    static Voxel nullVoxel = {};
+    return nullVoxel;
+  }
 }
 
 }
