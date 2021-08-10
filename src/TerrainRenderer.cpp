@@ -516,11 +516,21 @@ uint32_t TerrainRenderer::generateVertices(
   const ChunkGroup &group,
   Voxel surfaceDensity,
   ChunkVertex *meshVertices) {
+  int groupSize = pow(2, terrain.mQuadTree.mMaxLOD - group.level);
+  // glm::ivec3 groupCoord = group.coord + glm::ivec3(
+  // pow(2, terrain.mQuadTree.mMaxLOD - 1));
+  glm::ivec3 groupStart = group.coord * (int)CHUNK_DIM;
+
+  auto getVoxel = [&terrain, &groupSize, &groupStart](
+    uint32_t x, uint32_t y, uint32_t z) {
+    return terrain.getVoxel(groupStart + glm::ivec3(x, y, z) * groupSize);
+  };
+
   uint32_t vertexCount = 0;
 
-  for (uint32_t z = 0; z < CHUNK_DIM - 1; ++z) {
-    for (uint32_t y = 0; y < CHUNK_DIM - 1; ++y) {
-      for (uint32_t x = 0; x < CHUNK_DIM - 1; ++x) {
+  for (uint32_t z = 1; z < CHUNK_DIM - 1; ++z) {
+    for (uint32_t y = 1; y < CHUNK_DIM - 1; ++y) {
+      for (uint32_t x = 1; x < CHUNK_DIM - 1; ++x) {
         Voxel voxelValues[8] = {
           group.voxels[getVoxelIndex(x,     y,     z)],
           group.voxels[getVoxelIndex(x + 1, y,     z)],
@@ -540,30 +550,37 @@ uint32_t TerrainRenderer::generateVertices(
     }
   }
 
-  int size = pow(2, terrain.mQuadTree.mMaxLOD - group.level);
   glm::ivec3 groupCoord = group.coord + glm::ivec3(
     pow(2, terrain.mQuadTree.mMaxLOD - 1));
-  glm::ivec3 posZ = groupCoord + glm::ivec3(0, 0, 1) * size;
+  glm::ivec3 posZ = groupCoord + glm::ivec3(0, 0, 1) * groupSize;
 
   QuadTree::NodeInfo posZNode = terrain.mQuadTree.getNodeInfo((glm::vec3)posZ);
 
-  if (posZNode.level < group.level) {
-    ChunkGroup *posZGroup = getChunkGroup(posZ);
-    if (!posZGroup) {
-      posZGroup = mNullChunkGroup;
-    }
-
-    // Testing positive-z transition cells
+  if (posZNode.level <= group.level) {
     uint32_t z = CHUNK_DIM - 1;
-    for (uint32_t y = 0; y < CHUNK_DIM - 1; y += 2) {
-      for (uint32_t x = 0; x < CHUNK_DIM - 1; x += 2) {
-        // These need to be constructed "from the perspective" of the lower LOD
-        Voxel regularValues[8] = {
-          
+    for (uint32_t y = 1; y < CHUNK_DIM - 1; ++y) {
+      for (uint32_t x = 1; x < CHUNK_DIM - 1; ++x) {
+
+        Voxel voxelValues[8] = {
+          group.voxels[getVoxelIndex(x,     y,     z)],
+          group.voxels[getVoxelIndex(x + 1, y,     z)],
+          group.voxels[getVoxelIndex(x,     y + 1, z)],
+          group.voxels[getVoxelIndex(x + 1, y + 1, z)],
+
+          getVoxel(x,     y,     z + 1),
+          getVoxel(x + 1, y,     z + 1),
+          getVoxel(x,     y + 1, z + 1),
+          getVoxel(x + 1, y + 1, z + 1)
         };
+
+        updateVoxelCell(
+          voxelValues, glm::ivec3(x, y, z), surfaceDensity,
+          meshVertices, vertexCount);
       }
     }
   }
+
+  
 
   return vertexCount;
 }

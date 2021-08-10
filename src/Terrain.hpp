@@ -60,6 +60,9 @@ public:
   uint32_t hashChunkCoord(const glm::ivec3 &coord) const;
   uint32_t hashFlatChunkCoord(const glm::ivec2 &coord) const;
 
+  // position isn't scaled by mTerrainScale
+  const Voxel &getVoxel(const glm::vec3 &position) const;
+
 private:
   void generateChunkGroups();
 

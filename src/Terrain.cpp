@@ -912,4 +912,15 @@ Chunk *Terrain::getFirstFlatChunk(glm::ivec2 flatCoord) {
   }
 }
 
+const Voxel &Terrain::getVoxel(const glm::vec3 &position) const {
+  glm::ivec3 chunkCoord = worldToChunkCoord(position);
+  glm::ivec3 iposition = (glm::ivec3)position;
+
+  iposition -= chunkCoord * (int)CHUNK_DIM;
+
+  const Chunk *chunk = at(chunkCoord);
+
+  return chunk->voxels[getVoxelIndex(iposition)];
+}
+
 }
