@@ -880,10 +880,131 @@ void TerrainRenderer::updateTransVoxelCell(
       return;
     }
 
+    int detailed0, detailed1, nonDetailed, nonDetailedBit;
+    if (axis.z == -1) {
+      detailed0 = 0, detailed1 = 1, nonDetailed = 2, nonDetailedBit = 0;
+    }
+
+    glm::vec3 vertices[13] = {};
+    uint32_t counter = 0;
+
+    for (int d1 = 0; d1 < 3; ++d1) {
+      for (int d0 = 0; d0 < 3; ++d0) {
+        vertices[counter][detailed0] = (float)d0 * 0.5f;
+        vertices[counter][detailed1] = (float)d1 * 0.5f;
+        vertices[counter][nonDetailed] = (float)nonDetailedBit;
+
+        if (vertices[counter][nonDetailed] == 1.0f) {
+          if (axis[nonDetailed] == -1) {
+            vertices[counter][nonDetailed] -= (1.0f - percentTrans);
+          }
+        }
+
+        vertices[counter] += glm::vec3(coord);
+        ++counter;
+      }
+    }
+
+    for (int d1 = 0; d1 < 2; ++d1) {
+      for (int d0 = 0; d0 < 2; ++d0) {
+        vertices[counter][detailed0] = (float)d0;
+        vertices[counter][detailed1] = (float)d1;
+        vertices[counter][nonDetailed] = (float)(nonDetailedBit ^ 1);
+
+        if (vertices[counter][nonDetailed] == 1.0f) {
+          if (axis[nonDetailed] == -1) {
+            vertices[counter][nonDetailed] -= (1.0f - percentTrans);
+          }
+        }
+
+        vertices[counter] += glm::vec3(coord);
+        ++counter;
+      }
+    }
+
     uint8_t cellClassIdx = transitionCellClass[bitCombination];
     const TransitionCellData &cellData = transitionCellData[cellClassIdx & 0x7F];
 
-    uint16_t 
+    ChunkVertex *verts = STACK_ALLOC(ChunkVertex, cellData.GetVertexCount());
+
+    for (int i = 0; i < cellData.GetVertexCount(); ++i) {
+      uint16_t nibbles = transitionVertexData[bitCombination][i];
+
+      if (nibbles == 0x0) {
+        break;
+      }
+
+      uint8_t v0 = (nibbles >> 4) & 0xF;
+      uint8_t v1 = nibbles & 0xF;
+
+      float surfaceLevelF = (float)surfaceDensity.density;
+      float voxelValue0 = (float)transVoxels[v0].density;
+      float voxelValue1 = (float)transVoxels[v1].density;
+
+      if (voxelValue0 > voxelValue1) {
+        float tmp = voxelValue0;
+        voxelValue0 = voxelValue1;
+        voxelValue1 = tmp;
+
+        uint8_t tmpV = v0;
+        v0 = v1;
+        v1 = tmpV;
+      }
+
+      float interpolatedVoxelValues = lerp(voxelValue0, voxelValue1, surfaceLevelF);
+    
+      glm::vec3 vertex = interpolate(
+        vertices[v0], vertices[v1], interpolatedVoxelValues);
+
+      glm::vec3 normal0 = glm::vec3(
+        voxels[v0].normalX, voxels[v0].normalY, voxels[v0].normalZ) / 1000.0f;
+      glm::vec3 normal1 = glm::vec3(
+        voxels[v1].normalX, voxels[v1].normalY, voxels[v1].normalZ) / 1000.0f;
+
+      glm::vec3 normal = interpolate(
+        normal0, normal1, interpolatedVoxelValues);
+
+      glm::vec3 diff = vertex - (glm::vec3)coord;
+
+      if (diff.x < 0.0f || diff.x > 1.0f ||
+          diff.y < 0.0f || diff.y > 1.0f ||
+          diff.z < 0.0f || diff.z > 1.0f) {
+        printf("BUG\n");
+      }
+
+      verts[i] = {vertex, normal};
+    }
+
+    if (cellClassIdx & 0x80) {
+      for (int i = cellData.GetTriangleCount() * 3 - 1; i >= 0; --i) {
+        int vertexIndex = cellData.vertexIndex[i];
+
+        glm::vec3 diff = verts[vertexIndex].position - (glm::vec3)coord;
+
+        if (diff.x < 0.0f || diff.x > 1.0f ||
+            diff.y < 0.0f || diff.y > 1.0f ||
+            diff.z < 0.0f || diff.z > 1.0f) {
+          printf("BUG\n");
+        }
+
+        meshVertices[vertexCount++] = verts[vertexIndex];
+      }
+    }
+    else {
+      for (int i = 0; i < cellData.GetTriangleCount() * 3; ++i) {
+        int vertexIndex = cellData.vertexIndex[i];
+
+        glm::vec3 diff = verts[vertexIndex].position - (glm::vec3)coord;
+
+        if (diff.x < 0.0f || diff.x > 1.0f ||
+            diff.y < 0.0f || diff.y > 1.0f ||
+            diff.z < 0.0f || diff.z > 1.0f) {
+          printf("BUG\n");
+        }
+
+        meshVertices[vertexCount++] = verts[vertexIndex];
+      }
+    }
   }
 }
 

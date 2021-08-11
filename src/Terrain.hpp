@@ -38,6 +38,7 @@ public:
     float persistance, float lacunarity,
     float baseAmplitude, float baseFrequency,
     glm::vec2 s, glm::vec2 e);
+  void makePlane(float radius, glm::vec3 center, float intensity = 1.0f);
   void paint(
     glm::vec3 position,
     glm::vec3 direction,

@@ -532,6 +532,71 @@ void Terrain::makeSphere(float radius, glm::vec3 center, float intensity) {
   }
 }
 
+void Terrain::makePlane(float radius, glm::vec3 center, float intensity) {
+  radius /= mTerrainScale;
+  center /= mTerrainScale;
+
+  glm::ivec3 start = (glm::ivec3)center - glm::ivec3((int32_t)radius);
+  float radius2 = radius * radius;
+  int32_t diameter = (int32_t)radius * 2 + 1;
+
+  glm::ivec3 currentChunkCoord = worldToChunkCoord(center);
+  Chunk *currentChunk = getChunk(currentChunkCoord);
+  markChunkForUpdate(currentChunk);
+
+  int32_t y = (int)center.y;
+
+  for (int32_t z = start.z; z < start.z + diameter; ++z) {
+    for (int32_t x = start.x; x < start.x + diameter; ++x) {
+      glm::ivec3 position = glm::ivec3(x, y, z);
+      glm::vec3 posFloat = (glm::vec3)position;
+      glm::vec3 diff = posFloat - center;
+
+      float distance2 = glm::dot(diff, diff);
+
+      if (distance2 <= radius2) {
+        glm::ivec3 chunkOriginDiff = position -
+          currentChunkCoord * (int32_t)CHUNK_DIM;
+
+        if (chunkOriginDiff.x >= 0 && chunkOriginDiff.x < CHUNK_DIM &&
+            chunkOriginDiff.y >= 0 && chunkOriginDiff.y < CHUNK_DIM &&
+            chunkOriginDiff.z >= 0 && chunkOriginDiff.z < CHUNK_DIM) {
+          // Is within current chunk boundaries
+          float proportion = (1.0f - (distance2 / radius2)) * intensity;
+
+          glm::ivec3 voxelCoord = chunkOriginDiff;
+
+          Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
+          uint16_t addedValue = (uint32_t)((proportion) * mMaxVoxelDensity);
+
+          uint32_t finalValue = (uint32_t)addedValue + (uint32_t)v->density;
+          finalValue = glm::min(finalValue, MAX_DENSITY);
+            
+          v->density = finalValue;
+        }
+        else {
+          glm::ivec3 c = worldToChunkCoord(position);
+
+          currentChunk = getChunk(c);
+          currentChunkCoord = c;
+          markChunkForUpdate(currentChunk);
+
+          float proportion = (1.0f - (distance2 / radius2)) * intensity;
+
+          glm::ivec3 voxelCoord = position -
+            currentChunkCoord * (int32_t)CHUNK_DIM;
+
+          Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
+          uint16_t addedValue = (uint32_t)((proportion) * mMaxVoxelDensity);
+          uint32_t finalValue = (uint32_t)addedValue + (uint32_t)v->density;
+          finalValue = glm::min(finalValue, MAX_DENSITY);
+          v->density = finalValue;
+        }
+      }
+    }
+  }
+}
+
 void Terrain::makeIslands(
   float seaLevel, uint32_t octaveCount,
   float persistance, float lacunarity,
