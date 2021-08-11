@@ -17,7 +17,7 @@ MapView::MapView(
 
   mMapScene = renderer.createScene();
   mMapScene->terrain.init();
-  mMapScene->terrain.makePlane(250.0f, glm::vec3(-350.0f, 350.0f, 0.0f));
+  mMapScene->terrain.makeSphere(250.0f, glm::vec3(-350.0f, 350.0f, 0.0f));
   /*
   mMapScene->terrain.makeIslands(
     50, 4, 0.1f, 1.4f, 20.0f, 1.0f,

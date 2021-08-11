@@ -871,10 +871,15 @@ void TerrainRenderer::updateTransVoxelCell(
   { // Transvoxel mesh creation
     uint32_t bitCombination = 0;
 
-    for (uint32_t i = 0; i < 9; ++i) {
-      bool isOverSurface = (transVoxels[i].density > surfaceDensity.density);
-      bitCombination |= isOverSurface << i;
-    }
+    bitCombination |= (transVoxels[0].density > surfaceDensity.density) << 0;
+    bitCombination |= (transVoxels[1].density > surfaceDensity.density) << 1;
+    bitCombination |= (transVoxels[2].density > surfaceDensity.density) << 2;
+    bitCombination |= (transVoxels[3].density > surfaceDensity.density) << 7;
+    bitCombination |= (transVoxels[4].density > surfaceDensity.density) << 8;
+    bitCombination |= (transVoxels[5].density > surfaceDensity.density) << 3;
+    bitCombination |= (transVoxels[6].density > surfaceDensity.density) << 6;
+    bitCombination |= (transVoxels[7].density > surfaceDensity.density) << 5;
+    bitCombination |= (transVoxels[8].density > surfaceDensity.density) << 4;
 
     if (bitCombination == 0 || bitCombination == 511) {
       return;
