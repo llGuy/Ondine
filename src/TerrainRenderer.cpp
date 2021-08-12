@@ -658,6 +658,15 @@ uint32_t TerrainRenderer::generateVertices(
           group.voxels[getVoxelIndex(x + 1, y + 1, z)],
         };
 
+        for (int i = 0; i < 4; ++i) {
+          transVoxels[i + 9].normalX = transVoxels[i + 9].normalX * 0.875 + voxelValues[i + 4].normalX * 0.125;
+          transVoxels[i + 9].normalY = transVoxels[i + 9].normalY * 0.875 + voxelValues[i + 4].normalY * 0.125;
+          transVoxels[i + 9].normalZ = transVoxels[i + 9].normalZ * 0.875 + voxelValues[i + 4].normalZ * 0.125;
+          voxelValues[i].normalX = transVoxels[i + 9].normalX;
+          voxelValues[i].normalY = transVoxels[i + 9].normalY;
+          voxelValues[i].normalZ = transVoxels[i + 9].normalZ;
+        }
+
         updateTransVoxelCell(
           voxelValues, transVoxels,
           glm::ivec3(0, 0, -1), glm::ivec3(x, y, z),
@@ -962,9 +971,14 @@ void TerrainRenderer::updateTransVoxelCell(
         vertices[v0], vertices[v1], interpolatedVoxelValues);
 
       glm::vec3 normal0 = glm::vec3(
-        voxels[v0].normalX, voxels[v0].normalY, voxels[v0].normalZ) / 1000.0f;
+        transVoxels[v0].normalX,
+        transVoxels[v0].normalY,
+        transVoxels[v0].normalZ) / 1000.0f;
+
       glm::vec3 normal1 = glm::vec3(
-        voxels[v1].normalX, voxels[v1].normalY, voxels[v1].normalZ) / 1000.0f;
+        transVoxels[v1].normalX,
+        transVoxels[v1].normalY,
+        transVoxels[v1].normalZ) / 1000.0f;
 
       glm::vec3 normal = interpolate(
         normal0, normal1, interpolatedVoxelValues);
