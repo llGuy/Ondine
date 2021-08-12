@@ -71,6 +71,14 @@ private:
     Voxel surfaceDensity,
     ChunkVertex *meshVertices);
 
+  void updateChunkFace(
+    const Terrain &terrain,
+    const ChunkGroup &group,
+    Voxel surfaceDensity,
+    uint32_t primaryAxis, uint32_t secondAxis,
+    uint32_t faceAxis, uint32_t side,
+    ChunkVertex *meshVertices, uint32_t &vertexCount);
+
   void pushVertexToTriangleList(
     uint32_t v0, uint32_t v1,
     glm::vec3 *vertices, Voxel *voxels,
