@@ -49,7 +49,7 @@ void Terrain::init() {
   mQuadTree.init(2);
   // mQuadTree.setInitialState(5);
   // mQuadTree.setFocalPoint(worldToQuadTreeCoords(glm::vec3(0)));
-  mQuadTree.setFocalPoint(glm::vec2(0, 4));
+  mQuadTree.setFocalPoint(glm::vec2(4, 4));
 }
 
 Chunk *Terrain::getChunk(const glm::ivec3 &coord) {
