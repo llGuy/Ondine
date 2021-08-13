@@ -565,8 +565,10 @@ void EditorView::renderToolsWindow() {
             boundScene->camera.wPosition.z)));
 
       ImGui::Separator();
-      ImGui::Text("Inside child node: %d", node->index);
-      ImGui::Text("Node level: %d", node->level);
+      if (node) {
+        ImGui::Text("Inside child node: %d", node->index);
+        ImGui::Text("Node level: %d", node->level);
+      }
 
       ImGui::TreePop();
     }

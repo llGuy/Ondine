@@ -552,8 +552,13 @@ uint32_t TerrainRenderer::generateVertices(
   glm::ivec3 groupCoord = group.coord + glm::ivec3(
     pow(2, terrain.mQuadTree.mMaxLOD - 1));
 
-  // updateChunkFace(terrain, group, surfaceDensity, 0, 1, 2, 1, meshVertices, vertexCount);
-
+#if 1
+  updateChunkFace(
+    terrain, group, surfaceDensity,
+    0, 1, // Inner axis is X, outer axis is Y
+    2, 1, // We are updating the positive Z face
+    meshVertices, vertexCount);
+#else
   glm::ivec3 posZ = groupCoord + glm::ivec3(0, 0, 1) * groupSize;
   QuadTree::NodeInfo posZNode = terrain.mQuadTree.getNodeInfo(
     glm::vec2(posZ.x, posZ.z));
@@ -582,19 +587,9 @@ uint32_t TerrainRenderer::generateVertices(
     }
   }
   else {
-    // Do the LOD thing
-  }
-
-  glm::ivec3 negZ = groupCoord + glm::ivec3(0, 0, -1);
-  QuadTree::NodeInfo negZNode = terrain.mQuadTree.getNodeInfo(
-    glm::vec2(negZ.x, negZ.z));
-
-  if (negZNode.level <= group.level) {
-#if 0
     uint32_t z = CHUNK_DIM - 1;
     for (uint32_t y = 1; y < CHUNK_DIM - 1; ++y) {
       for (uint32_t x = 1; x < CHUNK_DIM - 1; ++x) {
-
         Voxel voxelValues[8] = {
           group.voxels[getVoxelIndex(x,     y,     z)],
           group.voxels[getVoxelIndex(x + 1, y,     z)],
@@ -607,65 +602,49 @@ uint32_t TerrainRenderer::generateVertices(
           getVoxel(x + 1, y + 1, z + 1)
         };
 
-        updateVoxelCell(
-          voxelValues, glm::ivec3(x, y, z), surfaceDensity,
-          meshVertices, vertexCount);
-      }
-    }
-#endif
-  }
-  else {
-    uint32_t z = 0;
-    for (uint32_t y = 1; y < CHUNK_DIM - 1; ++y) {
-      for (uint32_t x = 1; x < CHUNK_DIM - 1; ++x) {
-        Voxel voxelValues[8] = {
-          group.voxels[getVoxelIndex(x,     y,     z)],
-          group.voxels[getVoxelIndex(x + 1, y,     z)],
-          group.voxels[getVoxelIndex(x,     y + 1, z)],
-          group.voxels[getVoxelIndex(x + 1, y + 1, z)],
-
-          group.voxels[getVoxelIndex(x,     y,     z + 1)],
-          group.voxels[getVoxelIndex(x + 1, y,     z + 1)],
-          group.voxels[getVoxelIndex(x,     y + 1, z + 1)],
-          group.voxels[getVoxelIndex(x + 1, y + 1, z + 1)],
-        };
-
         Voxel transVoxels[13] = {
-          getVoxelLOD(x,     y,     z, 0, 0, 0),
-          getVoxelLOD(x,     y,     z, 1, 0, 0),
-          getVoxelLOD(x + 1, y,     z, 0, 0, 0),
+          getVoxelLOD(x,     y,     z + 1, 0, 0, 0),
+          getVoxelLOD(x,     y,     z + 1, 1, 0, 0),
+          getVoxelLOD(x + 1, y,     z + 1, 0, 0, 0),
 
-          getVoxelLOD(x,     y,     z, 0, 1, 0),
-          getVoxelLOD(x,     y,     z, 1, 1, 0),
-          getVoxelLOD(x + 1, y,     z, 0, 1, 0),
+          getVoxelLOD(x,     y,     z + 1, 0, 1, 0),
+          getVoxelLOD(x,     y,     z + 1, 1, 1, 0),
+          getVoxelLOD(x + 1, y,     z + 1, 0, 1, 0),
 
-          getVoxelLOD(x,     y + 1, z, 0, 0, 0),
-          getVoxelLOD(x,     y + 1, z, 1, 0, 0),
-          getVoxelLOD(x + 1, y + 1, z, 0, 0, 0),
+          getVoxelLOD(x,     y + 1, z + 1, 0, 0, 0),
+          getVoxelLOD(x,     y + 1, z + 1, 1, 0, 0),
+          getVoxelLOD(x + 1, y + 1, z + 1, 0, 0, 0),
 
-          group.voxels[getVoxelIndex(x,     y,     z)],
-          group.voxels[getVoxelIndex(x + 1, y,     z)],
-          group.voxels[getVoxelIndex(x,     y + 1, z)],
-          group.voxels[getVoxelIndex(x + 1, y + 1, z)],
+          getVoxel(x,     y,     z + 1),
+          getVoxel(x + 1, y,     z + 1),
+          getVoxel(x,     y + 1, z + 1),
+          getVoxel(x + 1, y + 1, z + 1)
         };
 
         for (int i = 0; i < 4; ++i) {
-          transVoxels[i + 9].normalX = transVoxels[i + 9].normalX * 0.875 + voxelValues[i + 4].normalX * 0.125;
-          transVoxels[i + 9].normalY = transVoxels[i + 9].normalY * 0.875 + voxelValues[i + 4].normalY * 0.125;
-          transVoxels[i + 9].normalZ = transVoxels[i + 9].normalZ * 0.875 + voxelValues[i + 4].normalZ * 0.125;
-          voxelValues[i].normalX = transVoxels[i + 9].normalX;
-          voxelValues[i].normalY = transVoxels[i + 9].normalY;
-          voxelValues[i].normalZ = transVoxels[i + 9].normalZ;
+          transVoxels[i + 9].normalX = transVoxels[i + 9].normalX * 0.875 + voxelValues[i].normalX * 0.125;
+          transVoxels[i + 9].normalY = transVoxels[i + 9].normalY * 0.875 + voxelValues[i].normalY * 0.125;
+          transVoxels[i + 9].normalZ = transVoxels[i + 9].normalZ * 0.875 + voxelValues[i].normalZ * 0.125;
+          voxelValues[i + 4].normalX = transVoxels[i + 9].normalX;
+          voxelValues[i + 4].normalY = transVoxels[i + 9].normalY;
+          voxelValues[i + 4].normalZ = transVoxels[i + 9].normalZ;
         }
 
         updateTransVoxelCell(
           voxelValues, transVoxels,
-          glm::ivec3(0, 0, -1), glm::ivec3(x, y, z),
+          glm::ivec3(0, 0, 1), glm::ivec3(x, y, z),
           surfaceDensity,
           meshVertices, vertexCount);
       }
     }
   }
+#endif
+
+  updateChunkFace(
+    terrain, group, surfaceDensity,
+    0, 1, // Inner axis is X, outer axis is Y
+    2, 0, // We are updating the negative Z face
+    meshVertices, vertexCount);
 
   return vertexCount;
 }
@@ -677,125 +656,138 @@ void TerrainRenderer::updateChunkFace(
   uint32_t primaryAxis, uint32_t secondAxis,
   uint32_t faceAxis, uint32_t side,
   ChunkVertex *meshVertices, uint32_t &vertexCount) {
-  glm::ivec3 groupCoordOffset = glm::ivec3(0);
-  groupCoordOffset[faceAxis] = (int)side * 2 - 1;
-
-  QuadTree::NodeInfo adjacentNode = terrain.mQuadTree.getNodeInfo(
-    glm::vec2(groupCoordOffset.x, groupCoordOffset.z));
-
-  static const glm::ivec3 offsets[8] = {
-    {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 0},
-    {0, 0, 1}, {1, 0, 1}, {0, 1, 1}, {1, 1, 1},
-  };
-
   int groupSize = pow(2, terrain.mQuadTree.mMaxLOD - group.level);
   glm::ivec3 groupStart = group.coord * (int)CHUNK_DIM;
   int stride = groupSize;
 
-  auto getVoxel = [&terrain, &groupSize, &groupStart](
-    uint32_t x, uint32_t y, uint32_t z) {
-    return terrain.getVoxel(groupStart + glm::ivec3(x, y, z) * groupSize);
-  };
-
-  auto getVoxelLOD = [&terrain, &groupSize, &groupStart, &stride](
-    uint32_t x, uint32_t y, uint32_t z,
-    // Offset
-    uint32_t ox, uint32_t oy, uint32_t oz) {
-    return terrain.getVoxel(
-      groupStart + glm::ivec3(x, y, z) * groupSize +
-      glm::ivec3(ox, oy, oz) * stride / 2);
-  };
-
-  if (adjacentNode.level <= group.level) {
-    uint32_t d2 = (CHUNK_DIM - 1) * side;
-    for (uint32_t d1 = 1; d1 < CHUNK_DIM - 1; ++d1) {
-      for (uint32_t d0 = 1; d0 < CHUNK_DIM - 1; ++d0) {
-        Voxel voxelValues[8] = {};
-
-        for (int i = 0; i < 8; ++i) {
-          glm::ivec3 voxelCoord = {};
-          voxelCoord[primaryAxis] = d0 + offsets[i].x;
-          voxelCoord[secondAxis] = d1 + offsets[i].y;
-          voxelCoord[faceAxis] = d2 + offsets[i].z;
-          
-          voxelValues[i] = getVoxel(voxelCoord.x, voxelCoord.y, voxelCoord.z);
-        }
-
-        glm::ivec3 coord = {};
-        coord[primaryAxis] = d0;
-        coord[secondAxis] = d1;
-        coord[faceAxis] = d2;
-
-        updateVoxelCell(
-          voxelValues, coord, surfaceDensity,
-          meshVertices, vertexCount);
-      }
-    }
+  glm::ivec3 groupCoordOffset = glm::ivec3(0);
+  groupCoordOffset[faceAxis] = (int)side * 2 - 1;
+  glm::ivec3 adjacentCoord = group.coord + glm::ivec3(
+    pow(2, terrain.mQuadTree.mMaxLOD - 1));
+  if (side == 1) {
+    adjacentCoord += groupCoordOffset * groupSize;
   }
   else {
-    static const glm::ivec4 transOffsets[9] = {
-      {0,0,0,0}, {0,0,1,0}, {1,0,0,0}, {0,0,0,1}, {0,0,1,1}, {1,0,0,1},
-      {0,1,0,0}, {0,1,1,0}, {1,1,0,0}
+    adjacentCoord += groupCoordOffset;
+  }
+
+  QuadTree::NodeInfo adjacentNode = terrain.mQuadTree.getNodeInfo(
+    glm::vec2(adjacentCoord.x, adjacentCoord.z));
+
+  if (adjacentNode.exists) {
+    static const glm::ivec3 offsets[8] = {
+      {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 0},
+      {0, 0, 1}, {1, 0, 1}, {0, 1, 1}, {1, 1, 1},
     };
 
-    uint32_t d2 = (CHUNK_DIM - 1) * side;
-    for (uint32_t d1 = 1; d1 < CHUNK_DIM - 1; ++d1) {
-      for (uint32_t d0 = 1; d0 < CHUNK_DIM - 1; ++d0) {
-        Voxel voxelValues[8] = {};
-        for (int i = 0; i < 8; ++i) {
-          glm::ivec3 voxelCoord = {};
-          voxelCoord[primaryAxis] = d0 + offsets[i][0];
-          voxelCoord[secondAxis] = d1 + offsets[i][1];
-          voxelCoord[faceAxis] = d2 + offsets[i][2];
+    auto getVoxel = [&terrain, &groupSize, &groupStart](
+      uint32_t x, uint32_t y, uint32_t z) {
+      return terrain.getVoxel(groupStart + glm::ivec3(x, y, z) * groupSize);
+    };
 
-          voxelValues[i] = group.voxels[getVoxelIndex(voxelCoord)];
+    auto getVoxelLOD = [&terrain, &groupSize, &groupStart, &stride](
+      uint32_t x, uint32_t y, uint32_t z,
+      // Offset
+      uint32_t ox, uint32_t oy, uint32_t oz) {
+      return terrain.getVoxel(
+        groupStart + glm::ivec3(x, y, z) * groupSize +
+        glm::ivec3(ox, oy, oz) * stride / 2);
+    };
+
+    if (adjacentNode.level <= group.level) {
+      uint32_t d2 = (CHUNK_DIM - 1) * side;
+      for (uint32_t d1 = 1; d1 < CHUNK_DIM - 1; ++d1) {
+        for (uint32_t d0 = 1; d0 < CHUNK_DIM - 1; ++d0) {
+          Voxel voxelValues[8] = {};
+
+          for (int i = 0; i < 8; ++i) {
+            glm::ivec3 voxelCoord = {};
+            voxelCoord[primaryAxis] = d0 + offsets[i].x;
+            voxelCoord[secondAxis] = d1 + offsets[i].y;
+            voxelCoord[faceAxis] = d2 + offsets[i].z;
+          
+            voxelValues[i] = getVoxel(voxelCoord.x, voxelCoord.y, voxelCoord.z);
+          }
+
+          glm::ivec3 coord = {};
+          coord[primaryAxis] = d0;
+          coord[secondAxis] = d1;
+          coord[faceAxis] = d2;
+
+          updateVoxelCell(
+            voxelValues, coord, surfaceDensity,
+            meshVertices, vertexCount);
         }
+      }
+    }
+    else {
+      static const glm::ivec4 transOffsets[9] = {
+        {0,0,0,0}, {0,0,1,0}, {1,0,0,0}, {0,0,0,1}, {0,0,1,1}, {1,0,0,1},
+        {0,1,0,0}, {0,1,1,0}, {1,1,0,0}
+      };
 
-        Voxel transVoxels[13] = {};
+      uint32_t d2 = (CHUNK_DIM - 1) * side;
+      for (uint32_t d1 = 1; d1 < CHUNK_DIM - 1; ++d1) {
+        for (uint32_t d0 = 1; d0 < CHUNK_DIM - 1; ++d0) {
+          Voxel voxelValues[8] = {};
+          for (int i = 0; i < 8; ++i) {
+            glm::ivec3 voxelCoord = {};
+            voxelCoord[primaryAxis] = d0 + offsets[i][0];
+            voxelCoord[secondAxis] = d1 + offsets[i][1];
+            voxelCoord[faceAxis] = d2 + offsets[i][2];
 
-        for (int i = 0; i < 9; ++i) {
-          glm::ivec3 voxelCoord = {};
-          voxelCoord[primaryAxis] = d0 + transOffsets[i][0];
-          voxelCoord[secondAxis] = d1 + transOffsets[i][1];
-          voxelCoord[faceAxis] = d2;
+            voxelValues[i] = getVoxel(voxelCoord.x, voxelCoord.y, voxelCoord.z);
+          }
 
-          glm::ivec3 halfCoord = {};
-          halfCoord[primaryAxis] = transOffsets[i][2];
-          halfCoord[secondAxis] = transOffsets[i][3];
+          Voxel transVoxels[13] = {};
 
-          transVoxels[i] = getVoxelLOD(
-            voxelCoord.x, voxelCoord.y, voxelCoord.z,
-            halfCoord.x, halfCoord.y, halfCoord.z);
+          for (int i = 0; i < 9; ++i) {
+            glm::ivec3 voxelCoord = {};
+            voxelCoord[primaryAxis] = d0 + transOffsets[i][0];
+            voxelCoord[secondAxis] = d1 + transOffsets[i][1];
+            voxelCoord[faceAxis] = d2 + side;
+
+            glm::ivec3 halfCoord = {};
+            halfCoord[primaryAxis] = transOffsets[i][2];
+            halfCoord[secondAxis] = transOffsets[i][3];
+
+            transVoxels[i] = getVoxelLOD(
+              voxelCoord.x, voxelCoord.y, voxelCoord.z,
+              halfCoord.x, halfCoord.y, halfCoord.z);
+          }
+
+          for (int i = 0; i < 4; ++i) {
+            glm::ivec3 voxelCoord = {};
+            voxelCoord[primaryAxis] = d0 + offsets[i][0];
+            voxelCoord[secondAxis] = d1 + offsets[i][1];
+            voxelCoord[faceAxis] = d2 + side;
+
+            transVoxels[i + 9] = getVoxel(voxelCoord.x, voxelCoord.y, voxelCoord.z);
+          }
+
+          for (int i = 0; i < 4; ++i) {
+            transVoxels[i + 9].normalX = transVoxels[i + 9].normalX * 0.875 + voxelValues[i + 4 * (1 - side)].normalX * 0.125;
+            transVoxels[i + 9].normalY = transVoxels[i + 9].normalY * 0.875 + voxelValues[i + 4 * (1 - side)].normalY * 0.125;
+            transVoxels[i + 9].normalZ = transVoxels[i + 9].normalZ * 0.875 + voxelValues[i + 4 * (1 - side)].normalZ * 0.125;
+            voxelValues[i + 4 * side].normalX = transVoxels[i + 9].normalX;
+            voxelValues[i + 4 * side].normalY = transVoxels[i + 9].normalY;
+            voxelValues[i + 4 * side].normalZ = transVoxels[i + 9].normalZ;
+          }
+
+          glm::ivec3 coord = {};
+          coord[primaryAxis] = d0;
+          coord[secondAxis] = d1;
+          coord[faceAxis] = d2;
+
+          glm::ivec3 axis = {};
+          axis[faceAxis] = side * 2 - 1;
+
+          updateTransVoxelCell(
+            voxelValues, transVoxels,
+            axis, coord,
+            surfaceDensity,
+            meshVertices, vertexCount);
         }
-
-        for (int i = 0; i < 4; ++i) {
-          glm::ivec3 voxelCoord = {};
-          voxelCoord[primaryAxis] = d0 + offsets[i][0];
-          voxelCoord[secondAxis] = d1 + offsets[i][1];
-          voxelCoord[faceAxis] = d2;
-
-          transVoxels[i + 9] = group.voxels[getVoxelIndex(voxelCoord)];
-        }
-
-        for (int i = 0; i < 4; ++i) {
-          transVoxels[i + 9].normalX = transVoxels[i + 9].normalX * 0.875 + voxelValues[i + 4].normalX * 0.125;
-          transVoxels[i + 9].normalY = transVoxels[i + 9].normalY * 0.875 + voxelValues[i + 4].normalY * 0.125;
-          transVoxels[i + 9].normalZ = transVoxels[i + 9].normalZ * 0.875 + voxelValues[i + 4].normalZ * 0.125;
-          voxelValues[i].normalX = transVoxels[i + 9].normalX;
-          voxelValues[i].normalY = transVoxels[i + 9].normalY;
-          voxelValues[i].normalZ = transVoxels[i + 9].normalZ;
-        }
-
-        glm::ivec3 coord = {};
-        coord[primaryAxis] = d0;
-        coord[secondAxis] = d1;
-        coord[faceAxis] = d2;
-
-        updateTransVoxelCell(
-          voxelValues, transVoxels,
-          glm::ivec3(0, 0, -1), coord,
-          surfaceDensity,
-          meshVertices, vertexCount);
       }
     }
   }
@@ -942,12 +934,19 @@ void TerrainRenderer::updateTransVoxelCell(
     for (uint32_t i = 0; i < 8; ++i) {
       vertices[i] = NORMALIZED_CUBE_VERTICES[i] +
         glm::vec3(0.5f) + glm::vec3(coord);
+    }
 
-      if (NORMALIZED_CUBE_VERTICES[i].z + 0.5f == 0.0f) {
-        if (axis.z == -1) {
-          vertices[i].z += percentTrans;
-        }
-      }
+    if (axis.z == -1) {
+      vertices[0].z += percentTrans;
+      vertices[1].z += percentTrans;
+      vertices[2].z += percentTrans;
+      vertices[3].z += percentTrans;
+    }
+    else if (axis.z == 1) {
+      vertices[4].z -= percentTrans;
+      vertices[5].z -= percentTrans;
+      vertices[6].z -= percentTrans;
+      vertices[7].z -= percentTrans;
     }
 
     ChunkVertex *verts = STACK_ALLOC(ChunkVertex, cellData.GetVertexCount());
@@ -999,7 +998,7 @@ void TerrainRenderer::updateTransVoxelCell(
     }
   }
 
-  { // Transvoxel mesh creation
+  if (1) { // Transvoxel mesh creation
     uint32_t bitCombination = 0;
 
     bitCombination |= (transVoxels[0].density > surfaceDensity.density) << 0;
@@ -1020,6 +1019,9 @@ void TerrainRenderer::updateTransVoxelCell(
     if (axis.z == -1) {
       detailed0 = 0, detailed1 = 1, nonDetailed = 2, nonDetailedBit = 0;
     }
+    else if (axis.z == 1) {
+      detailed0 = 0, detailed1 = 1, nonDetailed = 2, nonDetailedBit = 1;
+    }
 
     glm::vec3 vertices[13] = {};
     uint32_t counter = 0;
@@ -1029,12 +1031,6 @@ void TerrainRenderer::updateTransVoxelCell(
         vertices[counter][detailed0] = (float)d0 * 0.5f;
         vertices[counter][detailed1] = (float)d1 * 0.5f;
         vertices[counter][nonDetailed] = (float)nonDetailedBit;
-
-        if (vertices[counter][nonDetailed] == 1.0f) {
-          if (axis[nonDetailed] == -1) {
-            vertices[counter][nonDetailed] -= (1.0f - percentTrans);
-          }
-        }
 
         vertices[counter] += glm::vec3(coord);
         ++counter;
@@ -1047,14 +1043,23 @@ void TerrainRenderer::updateTransVoxelCell(
         vertices[counter][detailed1] = (float)d1;
         vertices[counter][nonDetailed] = (float)(nonDetailedBit ^ 1);
 
-        if (vertices[counter][nonDetailed] == 1.0f) {
-          if (axis[nonDetailed] == -1) {
-            vertices[counter][nonDetailed] -= (1.0f - percentTrans);
-          }
-        }
-
         vertices[counter] += glm::vec3(coord);
         ++counter;
+      }
+    }
+
+    if (nonDetailedBit) {
+      if (axis[nonDetailed] == 1) {
+        for (int i = 9; i < 13; ++i) {
+          vertices[i][nonDetailed] += (1.0f - percentTrans);
+        }
+      }
+    }
+    else {
+      if (axis[nonDetailed] == -1) {
+        for (int i = 9; i < 13; ++i) {
+          vertices[i][nonDetailed] -= (1.0f - percentTrans);
+        }
       }
     }
 

@@ -16,7 +16,7 @@ void QuadTree::init(uint16_t maxLOD) {
     nodeCount += pow(4, i);
   }
 
-  mArea = pow(2, mMaxLOD);
+  mDimensions = mArea = pow(2, mMaxLOD);
   mArea *= mArea;
   
   mNodeAllocator.init(nodeCount * sizeof(Node), sizeof(Node));
@@ -47,10 +47,13 @@ QuadTree::NodeInfo QuadTree::getNodeInfo(const glm::vec2 &position) const {
   NodeInfo nodeInfo = {};
   Node *deepestNode = getDeepestNode(position, &nodeInfo.offset);
 
-  nodeInfo.level = deepestNode->level;
-  nodeInfo.index = deepestNode->index;
-  nodeInfo.offset = glm::vec2(deepestNode->offsetx, deepestNode->offsety);
-  nodeInfo.size = glm::vec2(glm::pow(2.0f, (float)(mMaxLOD - nodeInfo.level)));
+  if (deepestNode) {
+    nodeInfo.exists = true;
+    nodeInfo.level = deepestNode->level;
+    nodeInfo.index = deepestNode->index;
+    nodeInfo.offset = glm::vec2(deepestNode->offsetx, deepestNode->offsety);
+    nodeInfo.size = glm::vec2(glm::pow(2.0f, (float)(mMaxLOD - nodeInfo.level)));
+  }
 
   return nodeInfo;
 }
@@ -63,10 +66,13 @@ QuadTree::NodeInfo QuadTree::getNodeInfo(uint32_t index) const {
   NodeInfo nodeInfo = {};
   const Node *deepestNode = mDeepestNodes[index];
 
-  nodeInfo.level = deepestNode->level;
-  nodeInfo.index = deepestNode->index;
-  nodeInfo.offset = glm::vec2(deepestNode->offsetx, deepestNode->offsety);
-  nodeInfo.size = glm::vec2(glm::pow(2.0f, (float)(mMaxLOD - nodeInfo.level)));
+  if (deepestNode) {
+    nodeInfo.exists = true;
+    nodeInfo.level = deepestNode->level;
+    nodeInfo.index = deepestNode->index;
+    nodeInfo.offset = glm::vec2(deepestNode->offsetx, deepestNode->offsety);
+    nodeInfo.size = glm::vec2(glm::pow(2.0f, (float)(mMaxLOD - nodeInfo.level)));
+  }
 
   return nodeInfo;
 }
@@ -145,42 +151,47 @@ void QuadTree::populate(
 QuadTree::Node *QuadTree::getDeepestNode(
   const glm::vec2 &position,
   glm::vec2 *offsetOut) const {
-  Node *current = mRoot;
-  glm::vec2 offset = glm::vec2(0);
+  if (position.x < (float)mDimensions && position.y < (float)mDimensions) {
+    Node *current = mRoot;
+    glm::vec2 offset = glm::vec2(0);
 
-  while (current->children[0]) {
-    float size = glm::pow(2.0f, (float)(mMaxLOD - current->level));
-    float innerBoundary = size / 2.0f;
+    while (current->children[0]) {
+      float size = glm::pow(2.0f, (float)(mMaxLOD - current->level));
+      float innerBoundary = size / 2.0f;
 
-    glm::vec2 diff = position - offset;
+      glm::vec2 diff = position - offset;
 
-    if (diff.x < innerBoundary) {
-      if (diff.y < innerBoundary) {
-        current = current->children[0];
-        offset = offset + Node::INDEX_TO_OFFSET[0] * innerBoundary;
+      if (diff.x < innerBoundary) {
+        if (diff.y < innerBoundary) {
+          current = current->children[0];
+          offset = offset + Node::INDEX_TO_OFFSET[0] * innerBoundary;
+        }
+        else {
+          current = current->children[1];
+          offset = offset + Node::INDEX_TO_OFFSET[1] * innerBoundary;
+        }
       }
       else {
-        current = current->children[1];
-        offset = offset + Node::INDEX_TO_OFFSET[1] * innerBoundary;
+        if (diff.y < innerBoundary) {
+          current = current->children[2];
+          offset = offset + Node::INDEX_TO_OFFSET[2] * innerBoundary;
+        }
+        else {
+          current = current->children[3];
+          offset = offset + Node::INDEX_TO_OFFSET[3] * innerBoundary;
+        }
       }
     }
-    else {
-      if (diff.y < innerBoundary) {
-        current = current->children[2];
-        offset = offset + Node::INDEX_TO_OFFSET[2] * innerBoundary;
-      }
-      else {
-        current = current->children[3];
-        offset = offset + Node::INDEX_TO_OFFSET[3] * innerBoundary;
-      }
+
+    if (offsetOut) {
+      *offsetOut = offset;
     }
-  }
 
-  if (offsetOut) {
-    *offsetOut = offset;
+    return current;
   }
-
-  return current;
+  else {
+    return nullptr;
+  }
 }
 
 }

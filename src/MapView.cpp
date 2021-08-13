@@ -16,8 +16,11 @@ MapView::MapView(
   mOnEvent(cursorChange);
 
   mMapScene = renderer.createScene();
+  mMapScene->debug.renderChunkOutlines = 1;
+  mMapScene->debug.wireframeTerrain = 1;
+  mMapScene->debug.renderQuadTree = 1;
   mMapScene->terrain.init();
-  mMapScene->terrain.makeSphere(250.0f, glm::vec3(-350.0f, 350.0f, 0.0f));
+  mMapScene->terrain.makeSphere(250.0f, glm::vec3(-350.0f, 380.0f, 0.0f));
   /*
   mMapScene->terrain.makeIslands(
     50, 4, 0.1f, 1.4f, 20.0f, 1.0f,

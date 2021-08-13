@@ -23,6 +23,7 @@ public:
   void setFocalPoint(const glm::vec2 &position);
 
   struct NodeInfo {
+    bool exists;
     uint16_t level;
     uint16_t index;
     glm::vec2 offset;
