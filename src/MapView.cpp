@@ -21,13 +21,15 @@ MapView::MapView(
   mMapScene->debug.renderQuadTree = 1;
   mMapScene->terrain.init();
   mMapScene->terrain.makeSphere(500.0f, glm::vec3(000.0f, 580.0f, 100.0f));
-  // mMapScene->terrain.makeSphere(250.0f, glm::vec3(-350.0f, 380.0f, 0.0f));
+  mMapScene->terrain.makeSphere(250.0f, glm::vec3(-350.0f, 380.0f, 0.0f));
+
   /*
   mMapScene->terrain.makeIslands(
     50, 4, 0.1f, 1.4f, 20.0f, 1.0f,
-    glm::ivec2(-250, -250) * 12,
-    glm::ivec2(250, 250) * 12);
+    glm::ivec2(-100, -100),
+    glm::ivec2(100, 100));
   */
+
   mMapScene->terrain.prepareForRender(renderer.mGraphicsContext);
 
   renderer.bindScene(mMapScene);
