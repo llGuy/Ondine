@@ -20,7 +20,7 @@ MapView::MapView(
   mMapScene->debug.wireframeTerrain = 1;
   mMapScene->debug.renderQuadTree = 1;
   mMapScene->terrain.init();
-  mMapScene->terrain.makeSphere(250.0f, glm::vec3(0.0f, 380.0f, 290.0f));
+  mMapScene->terrain.makeSphere(500.0f, glm::vec3(000.0f, 580.0f, 100.0f));
   // mMapScene->terrain.makeSphere(250.0f, glm::vec3(-350.0f, 380.0f, 0.0f));
   /*
   mMapScene->terrain.makeIslands(

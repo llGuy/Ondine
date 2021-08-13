@@ -45,11 +45,6 @@ public:
     float radius,
     float strength);
 
-  // TODO: Get buffers from a pool
-  ChunkVertex *createChunkVertices(
-    const Chunk &chunk,
-    uint32_t *vertexCount);
-
   // Creates a chunk if it doesn't exist
   Chunk *getChunk(const glm::ivec3 &coord);
   // Doesn't create a chunk if it doesn't exist
@@ -65,32 +60,7 @@ public:
   const Voxel &getVoxel(const glm::vec3 &position) const;
 
 private:
-  void generateChunkGroups();
-
-  uint32_t generateChunkVertices(
-    const Chunk &chunk,
-    Voxel surfaceDensity,
-    ChunkVertex *meshVertices);
-
   void generateVoxelNormals();
-
-  Voxel getChunkEdgeVoxel(
-    int x, int y, int z,
-    bool *doesntExist,
-    const glm::ivec3 &chunkCoord) const;
-
-  void pushVertexToTriangleList(
-    uint32_t v0, uint32_t v1,
-    glm::vec3 *vertices, Voxel *voxels,
-    Voxel surfaceDensity,
-    ChunkVertex *meshVertices, uint32_t &vertexCount);
-
-  void updateVoxelCube(
-    Voxel *voxels,
-    const glm::ivec3 &coord,
-    Voxel surfaceDensity,
-    ChunkVertex *meshVertices,
-    uint32_t &vertexCount);
 
   template <typename Proc>
   void apply3D(int start, int end, Proc applyProc) {

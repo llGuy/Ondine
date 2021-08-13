@@ -443,6 +443,7 @@ void TerrainRenderer::sync(
 
                   uint32_t dstVIndex = getVoxelIndex(coord + (glm::ivec3)start);
                   uint32_t srcVIndex = getVoxelIndex(coord * stride);
+
                   group->voxels[dstVIndex] = current->voxels[srcVIndex];
                 }
               }
@@ -566,14 +567,26 @@ uint32_t TerrainRenderer::generateVertices(
 
   updateChunkFace(
     terrain, group, surfaceDensity,
-    1, 2, // Inner axis is X, outer axis is Y
-    0, 0, // We are updating the positive Z face
+    1, 2, // Inner axis is Y, outer axis is Z
+    0, 1, // We are updating the positive X face
     meshVertices, vertexCount);
 
   updateChunkFace(
     terrain, group, surfaceDensity,
-    1, 2, // Inner axis is X, outer axis is Y
-    0, 1, // We are updating the positive Z face
+    1, 2, // Inner axis is Y, outer axis is Z
+    0, 0, // We are updating the negative X face
+    meshVertices, vertexCount);
+
+  updateChunkFace(
+    terrain, group, surfaceDensity,
+    0, 2, // Inner axis is Y, outer axis is Z
+    1, 1, // We are updating the positive X face
+    meshVertices, vertexCount);
+
+  updateChunkFace(
+    terrain, group, surfaceDensity,
+    0, 2, // Inner axis is Y, outer axis is Z
+    1, 0, // We are updating the negative X face
     meshVertices, vertexCount);
 
   return vertexCount;
@@ -626,8 +639,8 @@ void TerrainRenderer::updateChunkFace(
 
     if (adjacentNode.level <= group.level) {
       uint32_t d2 = (CHUNK_DIM - 1) * side;
-      for (uint32_t d1 = 1; d1 < CHUNK_DIM - 1; ++d1) {
-        for (uint32_t d0 = 1; d0 < CHUNK_DIM - 1; ++d0) {
+      for (uint32_t d1 = 0; d1 < CHUNK_DIM; ++d1) {
+        for (uint32_t d0 = 0; d0 < CHUNK_DIM; ++d0) {
           Voxel voxelValues[8] = {};
 
           for (int i = 0; i < 8; ++i) {
@@ -657,8 +670,8 @@ void TerrainRenderer::updateChunkFace(
       };
 
       uint32_t d2 = (CHUNK_DIM - 1) * side;
-      for (uint32_t d1 = 1; d1 < CHUNK_DIM - 1; ++d1) {
-        for (uint32_t d0 = 1; d0 < CHUNK_DIM - 1; ++d0) {
+      for (uint32_t d1 = 0; d1 < CHUNK_DIM; ++d1) {
+        for (uint32_t d0 = 0; d0 < CHUNK_DIM; ++d0) {
           Voxel voxelValues[8] = {};
 
           for (int i = 0; i < 8; ++i) {
@@ -1144,7 +1157,7 @@ glm::ivec3 TerrainRenderer::getChunkGroupCoord(
   node.offset -= glm::vec2(glm::pow(2.0f, terrain.mQuadTree.maxLOD() - 1));
   glm::ivec3 coord = glm::ivec3(node.offset.x, chunkCoord.y, node.offset.y);
   // Round down the nearest 2^node.level
-  coord.y -= coord.y % (int)pow(2, node.level);
+  coord.y -= coord.y % (int)pow(2, terrain.mQuadTree.maxLOD() - node.level);
 
   return coord;
 }
