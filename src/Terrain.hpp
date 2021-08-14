@@ -9,6 +9,7 @@
 namespace Ondine::View {
 
 class EditorView;
+class MapView;
 
 }
 
@@ -128,6 +129,7 @@ private:
 
   friend class TerrainRenderer;
   friend class View::EditorView;
+  friend class View::MapView;
 };
 
 }

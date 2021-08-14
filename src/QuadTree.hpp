@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Stack.hpp"
 #include "Buffer.hpp"
 #include <glm/glm.hpp>
 #include "ArenaAllocator.hpp"
@@ -54,6 +55,16 @@ private:
     uint16_t offsetx, offsety;
   };
 
+  enum class DiffOpType {
+    Deepen, // QuadTree node gets children allocated
+    Deepest // QuadTree node stops here - children get removed
+  };
+
+  struct DiffOp {
+    DiffOpType type;
+    Node *node;
+  };
+
   Node *createNode(uint16_t level, uint16_t index);
   void freeNode(Node *node);
   void populateChildren(Node *node);
@@ -61,6 +72,9 @@ private:
   void populate(Node *node, const glm::vec2 &offset, const glm::vec2 &position);
   Node *getDeepestNode(
     const glm::vec2 &position, glm::vec2 *offset = nullptr) const;
+
+  void populateDiff(
+    Node *node, const glm::vec2 &offset, const glm::vec2 &position);
 
 private:
   Node *mRoot;
@@ -70,6 +84,11 @@ private:
   Array<Node *> mDeepestNodes;
   uint32_t mAllocatedNodeCount;
   ArenaAllocator mNodeAllocator;
+
+  glm::ivec2 mFocalPoint;
+
+  // Diff
+  Stack<DiffOp> mDiff;
 
   friend class Terrain;
   friend class TerrainRenderer;

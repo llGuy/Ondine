@@ -23,6 +23,8 @@ void QuadTree::init(uint16_t maxLOD) {
   mRoot = createNode(0, 0);
   mDeepestNodes.init(mArea);
   mDeepestNodes.size = 0;
+
+  mDiff.init(maxLOD * maxLOD);
 }
 
 void QuadTree::setInitialState(uint16_t minLevel) {
@@ -34,13 +36,27 @@ uint32_t QuadTree::maxLOD() const {
 }
 
 void QuadTree::setFocalPoint(const glm::vec2 &position) {
-  // Clear
-  mNodeAllocator.clear();
-  mDeepestNodes.size = 0;
-  mAllocatedNodeCount = 0;
+  mDiff.clear();
 
-  mRoot = createNode(0, 0);
-  populate(mRoot, glm::vec2(0.0f), position);
+  mDeepestNodes.size = 0;
+
+  populateDiff(mRoot, glm::vec2(0.0f), position);
+
+  for (auto diff : mDiff) {
+    switch (diff.type) {
+    case DiffOpType::Deepen: {
+      printf(
+        "Deepened level %d node at (%d, %d)\n",
+        diff.node->level, diff.node->offsetx, diff.node->offsety);
+    } break;
+
+    case DiffOpType::Deepest: {
+      printf(
+        "Deleted children of level %d node at (%d, %d)\n",
+        diff.node->level, diff.node->offsetx, diff.node->offsety);
+    } break;
+    }
+  }
 }
 
 QuadTree::NodeInfo QuadTree::getNodeInfo(const glm::vec2 &position) const {
@@ -140,6 +156,59 @@ void QuadTree::populate(
       }
     }
     else {
+      mDeepestNodes[mDeepestNodes.size++] = node;
+    }
+  }
+  else {
+    mDeepestNodes[mDeepestNodes.size++] = node;
+  }
+}
+
+void QuadTree::populateDiff(
+  Node *node, const glm::vec2 &offset, const glm::vec2 &position) {
+  node->offsetx = offset.x;
+  node->offsety = offset.y;
+
+  if (node->level < mMaxLOD) {
+    float scale = glm::pow(2.0f, (float)(mMaxLOD - node->level));
+    glm::vec2 center = offset + glm::vec2(scale / 2.0f);
+
+    float half = scale / 2.0f;
+    float maxDist2 = half * half * 2.0f;
+    glm::vec2 diff = position - center;
+    float dist2 = glm::dot(diff, diff);
+
+    if (dist2 <= maxDist2) {
+      // Does this node have children?
+      if (node->children[0]) {
+        // Don't add this to the list of diff
+        for (int i = 0; i < 4; ++i) {
+          glm::vec2 childOffset = offset + Node::INDEX_TO_OFFSET[i] * scale / 2.0f;
+          populateDiff(node->children[i], childOffset, position);
+        }
+      }
+      else {
+        // Add this operation to the list of diff
+        mDiff.push({DiffOpType::Deepen, node});
+
+        // Split the node
+        for (int i = 0; i < 4; ++i) {
+          node->children[i] = createNode(node->level + 1, i);
+          glm::vec2 childOffset = offset + Node::INDEX_TO_OFFSET[i] * scale / 2.0f;
+          populate(node->children[i], childOffset, position);
+        }
+      }
+    }
+    else {
+      if (node->children[0]) {
+        mDiff.push({DiffOpType::Deepest, node});
+
+        for (int i = 0; i < 4; ++i) {
+          freeNode(node->children[i]);
+          node->children[i] = nullptr;
+        }
+      }
+
       mDeepestNodes[mDeepestNodes.size++] = node;
     }
   }

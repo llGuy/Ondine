@@ -2,6 +2,7 @@
 #include "MapView.hpp"
 #include "Renderer3D.hpp"
 #include "GraphicsEvent.hpp"
+#include <glm/gtx/string_cast.hpp>
 
 namespace Ondine::View {
 
@@ -213,6 +214,10 @@ void MapView::processGameInput(
       100.0f,
       0.1f);
   }
+
+  glm::vec2 pos = mMapScene->terrain.worldToQuadTreeCoords(
+    glm::vec2(mMapScene->camera.wPosition.x, mMapScene->camera.wPosition.z));
+  mMapScene->terrain.mQuadTree.setFocalPoint(pos);
 }
 
 }

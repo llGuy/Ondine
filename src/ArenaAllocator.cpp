@@ -60,6 +60,8 @@ void ArenaAllocator::free(void *ptr) {
       if (ptr < current->next) {
         newHeader->next = current->next;
         current->next = newHeader;
+
+        return;
       }
     }
 
