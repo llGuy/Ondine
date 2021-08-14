@@ -31,8 +31,6 @@ MapView::MapView(
     glm::ivec2(100, 100));
   */
 
-  mMapScene->terrain.prepareForRender(renderer.mGraphicsContext);
-
   renderer.bindScene(mMapScene);
 
   { // Set lighting properties
@@ -214,10 +212,6 @@ void MapView::processGameInput(
       100.0f,
       0.1f);
   }
-
-  glm::vec2 pos = mMapScene->terrain.worldToQuadTreeCoords(
-    glm::vec2(mMapScene->camera.wPosition.x, mMapScene->camera.wPosition.z));
-  mMapScene->terrain.mQuadTree.setFocalPoint(pos);
 }
 
 }

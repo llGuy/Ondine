@@ -8,6 +8,13 @@
 #include "VulkanPipeline.hpp"
 #include "VulkanArenaAllocator.hpp"
 
+namespace Ondine::View {
+
+class EditorView;
+class MapView;
+
+}
+
 namespace Ondine::Graphics {
 
 class GBuffer;
@@ -17,6 +24,7 @@ class Clipping;
 class Terrain;
 class VulkanContext;
 struct VulkanFrame;
+struct CameraProperties;
 
 class TerrainRenderer {
 public:
@@ -54,6 +62,7 @@ public:
 
   void sync(
     Terrain &terrain,
+    const CameraProperties &camera,
     const VulkanCommandBuffer &commandBuffer);
 
 private:
@@ -77,12 +86,6 @@ private:
     Voxel surfaceDensity,
     uint32_t primaryAxis, uint32_t secondAxis,
     uint32_t faceAxis, uint32_t side,
-    ChunkVertex *meshVertices, uint32_t &vertexCount);
-
-  void pushVertexToTriangleList(
-    uint32_t v0, uint32_t v1,
-    glm::vec3 *vertices, Voxel *voxels,
-    Voxel surfaceDensity,
     ChunkVertex *meshVertices, uint32_t &vertexCount);
 
   void updateVoxelCell(
@@ -111,6 +114,14 @@ private:
     Terrain &terrain,
     VulkanFrame &frame);
 
+  // One unit in offset = chunk coord. The origin of the quadtree is at 0,0
+  glm::ivec2 quadTreeCoordsToChunk(glm::ivec2 offset) const;
+  glm::ivec2 quadTreeCoordsToWorld(const Terrain &, glm::ivec2 offset) const;
+  glm::vec2 worldToQuadTreeCoords(const Terrain &, glm::vec2 offset) const;
+
+  void addToFlatChunkGroupIndices(ChunkGroup *chunkGroup);
+  ChunkGroup *getFirstFlatChunkGroup(glm::ivec2 flatCoord);
+
 private:
   static const glm::vec3 NORMALIZED_CUBE_VERTICES[8];
   static const glm::ivec3 NORMALIZED_CUBE_VERTEX_INDICES[8];
@@ -123,9 +134,15 @@ private:
 
   NumericMap<ChunkGroup *> mChunkGroups;
   FastMap<uint32_t, 1000, 30, 10> mChunkGroupIndices;
+  FastMap<uint32_t, 500, 30, 10> mFlatChunkGroupIndices;
 
   ChunkVertex *mTemporaryVertices;
   ChunkGroup *mNullChunkGroup;
+  
+  QuadTree mQuadTree;
+
+  friend class View::EditorView;
+  friend class View::MapView;
 };
 
 }

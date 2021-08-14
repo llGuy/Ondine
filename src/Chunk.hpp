@@ -54,6 +54,8 @@ struct ChunkGroup {
   NumericMapKey key;
   bool needsUpdate;
 
+  int32_t next;
+
   glm::mat4 transform;
 
   QuadTree::NodeInfo nodeInfo;
@@ -66,6 +68,48 @@ inline uint32_t getVoxelIndex(int x, int y, int z) {
 inline uint32_t getVoxelIndex(const glm::ivec3 &coord) {
   return coord.z * (CHUNK_DIM * CHUNK_DIM) +
     coord.y * CHUNK_DIM + coord.x;
+}
+
+inline uint32_t hashFlatChunkCoord(const glm::ivec2 &coord) {
+  struct {
+    union {
+      struct {
+        uint32_t p: 1;
+        uint32_t x: 15;
+        uint32_t z: 16;
+      };
+      uint32_t value;
+    };
+  } hasher;
+
+  hasher.value = 0;
+
+  hasher.x = *(uint32_t *)(&coord.x);
+  hasher.z = *(uint32_t *)(&coord.y);
+
+  return (uint32_t)hasher.value;
+}
+
+inline int32_t hashChunkCoord(const glm::ivec3 &coord) {
+  struct {
+    union {
+      struct {
+        uint32_t padding: 2;
+        uint32_t x: 10;
+        uint32_t y: 10;
+        uint32_t z: 10;
+      };
+      uint32_t value;
+    };
+  } hasher;
+
+  hasher.value = 0;
+
+  hasher.x = *(uint32_t *)(&coord.x);
+  hasher.y = *(uint32_t *)(&coord.y);
+  hasher.z = *(uint32_t *)(&coord.z);
+
+  return (uint32_t)hasher.value;
 }
 
 }

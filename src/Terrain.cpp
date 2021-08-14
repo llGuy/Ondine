@@ -9,28 +9,6 @@
 
 namespace Ondine::Graphics {
 
-const glm::vec3 Terrain::NORMALIZED_CUBE_VERTICES[8] = {
-  glm::vec3(-0.5f, -0.5f, -0.5f),
-  glm::vec3(+0.5f, -0.5f, -0.5f),
-  glm::vec3(+0.5f, -0.5f, +0.5f),
-  glm::vec3(-0.5f, -0.5f, +0.5f),
-  glm::vec3(-0.5f, +0.5f, -0.5f),
-  glm::vec3(+0.5f, +0.5f, -0.5f),
-  glm::vec3(+0.5f, +0.5f, +0.5f),
-  glm::vec3(-0.5f, +0.5f, +0.5f)
-};
-
-const glm::ivec3 Terrain::NORMALIZED_CUBE_VERTEX_INDICES[8] = {
-  glm::ivec3(0, 0, 0),
-  glm::ivec3(1, 0, 0),
-  glm::ivec3(1, 0, 1),
-  glm::ivec3(0, 0, 1),
-  glm::ivec3(0, 1, 0),
-  glm::ivec3(1, 1, 0),
-  glm::ivec3(1, 1, 1),
-  glm::ivec3(0, 1, 1)
-};
-
 void Terrain::init() {
   mTerrainScale = 40;
   mChunkWidth = mTerrainScale * (float)CHUNK_DIM;
@@ -42,14 +20,8 @@ void Terrain::init() {
   mNullChunk = flAlloc<Chunk>();
   memset(mNullChunk, 0, sizeof(Chunk));
 
-  mTemporaryVertices = flAllocv<ChunkVertex>(CHUNK_MAX_VERTICES);
   mMaxVoxelDensity = (float)0xFFFF;
   mUpdated = false;
-
-  mQuadTree.init(2);
-  // mQuadTree.setInitialState(5);
-  // mQuadTree.setFocalPoint(worldToQuadTreeCoords(glm::vec3(0)));
-  mQuadTree.setFocalPoint(glm::vec2(0));
 }
 
 Chunk *Terrain::getChunk(const glm::ivec3 &coord) {
@@ -110,48 +82,6 @@ glm::vec3 Terrain::chunkCoordToWorld(const glm::ivec3 &chunkCoord) const {
   glm::vec3 scaled = glm::floor(
     (glm::vec3)chunkCoord * (float)(CHUNK_DIM));
   return scaled;
-}
-
-uint32_t Terrain::hashChunkCoord(const glm::ivec3 &coord) const {
-  struct {
-    union {
-      struct {
-        uint32_t padding: 2;
-        uint32_t x: 10;
-        uint32_t y: 10;
-        uint32_t z: 10;
-      };
-      uint32_t value;
-    };
-  } hasher;
-
-  hasher.value = 0;
-
-  hasher.x = *(uint32_t *)(&coord.x);
-  hasher.y = *(uint32_t *)(&coord.y);
-  hasher.z = *(uint32_t *)(&coord.z);
-
-  return (uint32_t)hasher.value;
-}
-
-uint32_t Terrain::hashFlatChunkCoord(const glm::ivec2 &coord) const {
-  struct {
-    union {
-      struct {
-        uint32_t p: 1;
-        uint32_t x: 15;
-        uint32_t z: 16;
-      };
-      uint32_t value;
-    };
-  } hasher;
-
-  hasher.value = 0;
-
-  hasher.x = *(uint32_t *)(&coord.x);
-  hasher.z = *(uint32_t *)(&coord.y);
-
-  return (uint32_t)hasher.value;
 }
 
 void Terrain::makeSphere(float radius, glm::vec3 center, float intensity) {
@@ -399,20 +329,6 @@ void Terrain::paint(
   }
 }
 
-void Terrain::prepareForRender(VulkanContext &graphicsContext) {
-  LOG_INFOV("Loaded %d chunks\n", (int)mLoadedChunks.size);
-
-#if 0
-  generateVoxelNormals();
-
-  for (int i = 0; i < mLoadedChunks.size; ++i) {
-    Chunk *chunk = mLoadedChunks[i];
-    // Don't worry, this will be thoroughly redone
-    chunk->vertices = createChunkVertices(*chunk, graphicsContext);
-  }
-#endif
-}
-
 void Terrain::generateChunkFaceNormals(
   Chunk *chunk,
   Chunk *p, Chunk *n,
@@ -617,23 +533,6 @@ void Terrain::markChunkForUpdate(Chunk *chunk) {
     mUpdatedChunks[mUpdatedChunks.size++] = *mChunkIndices.get(
       hashChunkCoord(chunk->chunkCoord));
   }
-}
-
-glm::ivec2 Terrain::quadTreeCoordsToChunk(glm::ivec2 offset) const {
-  return offset - glm::ivec2(pow(2, mQuadTree.maxLOD() - 1));
-}
-
-// One unit in offset = chunk coord. The origin of the quadtree is at 0,0
-glm::ivec2 Terrain::quadTreeCoordsToWorld(glm::ivec2 offset) const {
-  offset -= glm::ivec2(pow(2, mQuadTree.maxLOD() - 1));
-  offset *= CHUNK_DIM * mTerrainScale;
-  return offset;
-}
-
-glm::vec2 Terrain::worldToQuadTreeCoords(glm::vec2 offset) const {
-  offset /= (CHUNK_DIM * mTerrainScale);
-  offset += glm::vec2(glm::pow(2.0f, mQuadTree.maxLOD() - 1));
-  return offset;
 }
 
 void Terrain::addToFlatChunkIndices(Chunk *chunk) {

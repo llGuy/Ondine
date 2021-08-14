@@ -550,16 +550,18 @@ void EditorView::renderToolsWindow() {
     }
 
     auto *boundScene = mRenderer3D.mBoundScene;
+    auto &terrainRenderer = mRenderer3D.mTerrainRenderer;
 
     if (ImGui::TreeNodeEx(
           "Quad Tree",
           ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen)) {
       ImGui::Text(
         "Allocated %d nodes",
-        boundScene->terrain.mQuadTree.mAllocatedNodeCount);
+        terrainRenderer.mQuadTree.mAllocatedNodeCount);
 
-      auto *node = boundScene->terrain.mQuadTree.getDeepestNode(
-        boundScene->terrain.worldToQuadTreeCoords(
+      auto *node = terrainRenderer.mQuadTree.getDeepestNode(
+        terrainRenderer.worldToQuadTreeCoords(
+          boundScene->terrain,
           glm::vec2(
             boundScene->camera.wPosition.x,
             boundScene->camera.wPosition.z)));

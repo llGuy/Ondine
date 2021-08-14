@@ -24,7 +24,8 @@ void QuadTree::init(uint16_t maxLOD) {
   mDeepestNodes.init(mArea);
   mDeepestNodes.size = 0;
 
-  mDiff.init(maxLOD * maxLOD);
+  mDiffDelete.init(maxLOD * maxLOD / 2);
+  mDiffAdd.init(maxLOD * maxLOD / 2);
 }
 
 void QuadTree::setInitialState(uint16_t minLevel) {
@@ -36,12 +37,18 @@ uint32_t QuadTree::maxLOD() const {
 }
 
 void QuadTree::setFocalPoint(const glm::vec2 &position) {
-  mDiff.clear();
-
+  // Clear the diff
+  mDiffDelete.clear();
+  mDiffAdd.clear();
   mDeepestNodes.size = 0;
 
+  // Create the new nodes and push the modifications to the diff list
   populateDiff(mRoot, glm::vec2(0.0f), position);
 
+  // Sort the diff list such that deletions come first and additions come next
+
+
+  /*
   for (auto diff : mDiff) {
     switch (diff.type) {
     case DiffOpType::Deepen: {
@@ -57,6 +64,7 @@ void QuadTree::setFocalPoint(const glm::vec2 &position) {
     } break;
     }
   }
+  */
 }
 
 QuadTree::NodeInfo QuadTree::getNodeInfo(const glm::vec2 &position) const {
@@ -189,7 +197,7 @@ void QuadTree::populateDiff(
       }
       else {
         // Add this operation to the list of diff
-        mDiff.push({DiffOpType::Deepen, node});
+        mDiffAdd.push({DiffOpType::Deepen, node});
 
         // Split the node
         for (int i = 0; i < 4; ++i) {
@@ -201,7 +209,7 @@ void QuadTree::populateDiff(
     }
     else {
       if (node->children[0]) {
-        mDiff.push({DiffOpType::Deepest, node});
+        mDiffDelete.push({DiffOpType::Deepest, node});
 
         for (int i = 0; i < 4; ++i) {
           freeNode(node->children[i]);

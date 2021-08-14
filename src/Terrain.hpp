@@ -6,13 +6,6 @@
 #include "QuadTree.hpp"
 #include "VulkanArenaAllocator.hpp"
 
-namespace Ondine::View {
-
-class EditorView;
-class MapView;
-
-}
-
 /* 
    For now everything linked to the terrain is in graphics module
    and also, everything is implemented very badly
@@ -30,8 +23,6 @@ public:
   Terrain() = default;
 
   void init();
-
-  void prepareForRender(VulkanContext &graphicsContext);
 
   void makeSphere(float radius, glm::vec3 center, float intensity = 1.0f);
   void makeIslands(
@@ -54,8 +45,6 @@ public:
 
   glm::ivec3 worldToChunkCoord(const glm::vec3 &wPosition) const;
   glm::vec3 chunkCoordToWorld(const glm::ivec3 &chunkCoord) const;
-  uint32_t hashChunkCoord(const glm::ivec3 &coord) const;
-  uint32_t hashFlatChunkCoord(const glm::ivec2 &coord) const;
 
   // position isn't scaled by mTerrainScale
   const Voxel &getVoxel(const glm::vec3 &position) const;
@@ -95,22 +84,13 @@ private:
 
   void markChunkForUpdate(Chunk *chunk);
 
-  // One unit in offset = chunk coord. The origin of the quadtree is at 0,0
-  glm::ivec2 quadTreeCoordsToChunk(glm::ivec2 offset) const;
-  glm::ivec2 quadTreeCoordsToWorld(glm::ivec2 offset) const;
-  glm::vec2 worldToQuadTreeCoords(glm::vec2 offset) const;
-
   void addToFlatChunkIndices(Chunk *chunk);
   Chunk *getFirstFlatChunk(glm::ivec2 flatCoord);
 
 private:
   static constexpr uint32_t MAX_DENSITY = 0xFFFF;
   static constexpr uint32_t MAX_CHUNKS = 3000;
-  static constexpr uint32_t CHUNK_MAX_VERTICES =
-    10 * (CHUNK_DIM) * (CHUNK_DIM) * (CHUNK_DIM);
   static constexpr uint32_t SURFACE_DENSITY = 30000;
-  static const glm::vec3 NORMALIZED_CUBE_VERTICES[8];
-  static const glm::ivec3 NORMALIZED_CUBE_VERTEX_INDICES[8];
 
   int mTerrainScale;
   float mChunkWidth;
@@ -123,13 +103,9 @@ private:
   // Points to a linked list of chunks all of which are at a certain x-z
   FastMap<uint32_t, MAX_CHUNKS, 30, 10> mFlatChunkIndices;
 
-  ChunkVertex *mTemporaryVertices;
   bool mUpdated;
-  QuadTree mQuadTree;
 
   friend class TerrainRenderer;
-  friend class View::EditorView;
-  friend class View::MapView;
 };
 
 }

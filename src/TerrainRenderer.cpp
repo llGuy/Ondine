@@ -94,6 +94,11 @@ void TerrainRenderer::init(
   mChunkGroupIndices.init();
   mTemporaryVertices = flAllocv<ChunkVertex>(
     10 * CHUNK_DIM * CHUNK_DIM * CHUNK_DIM);
+
+  mQuadTree.init(2);
+  // mQuadTree.setInitialState(5);
+  // mQuadTree.setFocalPoint(worldToQuadTreeCoords(glm::vec3(0)));
+  mQuadTree.setFocalPoint(glm::vec2(0));
 }
 
 void TerrainRenderer::render(
@@ -112,7 +117,7 @@ void TerrainRenderer::render(
     if (group->verticesMemory.size()) {
       commandBuffer.bindVertexBuffersArena(group->verticesMemory);
 
-      float lodScale = glm::pow(2.0f, terrain.mQuadTree.mMaxLOD - group->level);
+      float lodScale = glm::pow(2.0f, mQuadTree.mMaxLOD - group->level);
       glm::vec3 scale = glm::vec3(terrain.mTerrainScale) * lodScale;
       glm::vec3 tran = (glm::vec3)terrain.chunkCoordToWorld(group->coord) *
         (float)terrain.mTerrainScale;
@@ -141,7 +146,7 @@ void TerrainRenderer::renderWireframe(
     if (group->verticesMemory.size()) {
       commandBuffer.bindVertexBuffersArena(group->verticesMemory);
 
-      float lodScale = glm::pow(2.0f, terrain.mQuadTree.mMaxLOD - group->level);
+      float lodScale = glm::pow(2.0f, mQuadTree.mMaxLOD - group->level);
       glm::vec3 scale = glm::vec3(terrain.mTerrainScale) * lodScale;
       glm::vec3 tran = (glm::vec3)terrain.chunkCoordToWorld(group->coord) *
         (float)terrain.mTerrainScale;
@@ -200,7 +205,7 @@ void TerrainRenderer::renderChunkOutlines(
         (float)group->coord.z,
         scale);
 
-      float stretch = glm::pow(2.0f, terrain.mQuadTree.mMaxLOD - group->level);
+      float stretch = glm::pow(2.0f, mQuadTree.mMaxLOD - group->level);
 
       pushConstant.positions[0] = CUBE_POSITIONS[0] * stretch;
       pushConstant.positions[1] = CUBE_POSITIONS[4] * stretch;
@@ -255,8 +260,8 @@ void TerrainRenderer::renderQuadTree(
   commandBuffer.bindPipeline(mRenderLine);
   commandBuffer.bindUniforms(camera.uniform());
 
-  for (int i = 0; i < terrain.mQuadTree.mDeepestNodes.size; ++i) {
-    QuadTree::Node *node = terrain.mQuadTree.mDeepestNodes[i];
+  for (int i = 0; i < mQuadTree.mDeepestNodes.size; ++i) {
+    QuadTree::Node *node = mQuadTree.mDeepestNodes[i];
 
     static const glm::vec4 POSITIONS[4] = {
       glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
@@ -280,10 +285,11 @@ void TerrainRenderer::renderQuadTree(
     pushConstant.transform = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
     // glm::ivec2 wOffset = terrain.quadTreeCoordsToWorld(offset);
-    glm::ivec2 wOffset = terrain.quadTreeCoordsToWorld(
+    glm::ivec2 wOffset = quadTreeCoordsToWorld(
+      terrain,
       glm::ivec2(node->offsetx, node->offsety));
  
-    float width = (float)(pow(2, terrain.mQuadTree.mMaxLOD - node->level) *
+    float width = (float)(pow(2, mQuadTree.mMaxLOD - node->level) *
                           CHUNK_DIM * terrain.mTerrainScale);
 
     glm::vec4 realOffset = glm::vec4(wOffset.x, 100.0f, wOffset.y, 0.0f);
@@ -343,10 +349,11 @@ void TerrainRenderer::renderQuadTreeNode(
   pushConstant.transform = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
   // glm::ivec2 wOffset = terrain.quadTreeCoordsToWorld(offset);
-  glm::ivec2 wOffset = terrain.quadTreeCoordsToWorld(
+  glm::ivec2 wOffset = quadTreeCoordsToWorld(
+    terrain,
     glm::ivec2(node->offsetx, node->offsety));
  
-  float width = (float)(pow(2, terrain.mQuadTree.mMaxLOD - node->level) *
+  float width = (float)(pow(2, mQuadTree.mMaxLOD - node->level) *
     CHUNK_DIM * terrain.mTerrainScale);
 
   glm::vec4 realOffset = glm::vec4(wOffset.x, 100.0f, wOffset.y, 0.0f);
@@ -372,8 +379,8 @@ void TerrainRenderer::renderQuadTreeNode(
   pushConstant.positions[1].w = 1.0f;
   renderLine();
 
-  if (node->level < terrain.mQuadTree.mMaxLOD) {
-    int widthUnder = pow(2, terrain.mQuadTree.mMaxLOD - node->level - 1);
+  if (node->level < mQuadTree.mMaxLOD) {
+    int widthUnder = pow(2, mQuadTree.mMaxLOD - node->level - 1);
     glm::ivec2 offsets[4] = {
       offset,
       offset + glm::ivec2(widthUnder, 0),
@@ -398,7 +405,27 @@ void TerrainRenderer::renderQuadTreeNode(
 
 void TerrainRenderer::sync(
   Terrain &terrain,
+  const CameraProperties &camera,
   const VulkanCommandBuffer &commandBuffer) {
+  glm::vec2 pos = worldToQuadTreeCoords(
+    terrain,
+    glm::vec2(camera.wPosition.x, camera.wPosition.z));
+
+  mQuadTree.setFocalPoint(pos);
+
+  // Step #1: Figure out which chunk groups to delete and to create
+  // Step #2: Figure out which chunk groups to update the meshes for
+  // Step #3: Update those damn chunk groups
+  // (BONUS) Make step #2 distinguish between chunk groups which require
+  //         just mesh transitions or everything to be updated
+
+  // Here it goes
+  { // Step #1
+    for (auto deletion : mQuadTree.mDiffDelete) {
+      
+    }
+  }
+
   if (terrain.mUpdatedChunks.size) {
     terrain.generateVoxelNormals();
     terrain.mUpdatedChunks.size = 0;
@@ -409,11 +436,11 @@ void TerrainRenderer::sync(
        After the voxel information for each ChunkGroup is created, we
        can then proceed to generating the mesh for each ChunkGroup
     */
-    for (int i = 0; i < terrain.mQuadTree.nodeCount(); ++i) {
-      QuadTree::Node *node = terrain.mQuadTree.mDeepestNodes[i];
-      glm::ivec2 offset = terrain.quadTreeCoordsToChunk(
+    for (int i = 0; i < mQuadTree.nodeCount(); ++i) {
+      QuadTree::Node *node = mQuadTree.mDeepestNodes[i];
+      glm::ivec2 offset = quadTreeCoordsToChunk(
         glm::ivec2(node->offsetx, node->offsety));
-      int width = pow(2, terrain.mQuadTree.mMaxLOD - node->level);
+      int width = pow(2, mQuadTree.mMaxLOD - node->level);
 
       // Generate chunk groups
       for (int z = offset.y; z < offset.y + width; ++z) {
@@ -428,7 +455,7 @@ void TerrainRenderer::sync(
             group->level = node->level;
             current->chunkGroupKey = group->key;
 
-            int stride = (int)pow(2, terrain.mQuadTree.mMaxLOD - node->level);
+            int stride = (int)pow(2, mQuadTree.mMaxLOD - node->level);
             float width = stride;
             
             glm::vec3 chunkCoordOffset = (glm::vec3)(
@@ -506,10 +533,10 @@ uint32_t TerrainRenderer::generateVertices(
   const ChunkGroup &group,
   Voxel surfaceDensity,
   ChunkVertex *meshVertices) {
-  int groupSize = pow(2, terrain.mQuadTree.mMaxLOD - group.level);
+  int groupSize = pow(2, mQuadTree.mMaxLOD - group.level);
   int stride = groupSize;
   // glm::ivec3 groupCoord = group.coord + glm::ivec3(
-  // pow(2, terrain.mQuadTree.mMaxLOD - 1));
+  // pow(2, mQuadTree.mMaxLOD - 1));
   glm::ivec3 groupStart = group.coord * (int)CHUNK_DIM;
 
   auto getVoxel = [&terrain, &groupSize, &groupStart](
@@ -551,7 +578,7 @@ uint32_t TerrainRenderer::generateVertices(
   }
 
   glm::ivec3 groupCoord = group.coord + glm::ivec3(
-    pow(2, terrain.mQuadTree.mMaxLOD - 1));
+    pow(2, mQuadTree.mMaxLOD - 1));
 
   updateChunkFace(
     terrain, group, surfaceDensity,
@@ -599,14 +626,14 @@ void TerrainRenderer::updateChunkFace(
   uint32_t primaryAxis, uint32_t secondAxis,
   uint32_t faceAxis, uint32_t side,
   ChunkVertex *meshVertices, uint32_t &vertexCount) {
-  int groupSize = pow(2, terrain.mQuadTree.mMaxLOD - group.level);
+  int groupSize = pow(2, mQuadTree.mMaxLOD - group.level);
   glm::ivec3 groupStart = group.coord * (int)CHUNK_DIM;
   int stride = groupSize;
 
   glm::ivec3 groupCoordOffset = glm::ivec3(0);
   groupCoordOffset[faceAxis] = (int)side * 2 - 1;
   glm::ivec3 adjacentCoord = group.coord + glm::ivec3(
-    pow(2, terrain.mQuadTree.mMaxLOD - 1));
+    pow(2, mQuadTree.mMaxLOD - 1));
   if (side == 1) {
     adjacentCoord += groupCoordOffset * groupSize;
   }
@@ -614,7 +641,7 @@ void TerrainRenderer::updateChunkFace(
     adjacentCoord += groupCoordOffset;
   }
 
-  QuadTree::NodeInfo adjacentNode = terrain.mQuadTree.getNodeInfo(
+  QuadTree::NodeInfo adjacentNode = mQuadTree.getNodeInfo(
     glm::vec2(adjacentCoord.x, adjacentCoord.z));
 
   if (adjacentNode.exists) {
@@ -744,43 +771,6 @@ void TerrainRenderer::updateChunkFace(
 }
 
 #include "Transvoxel.inc"
-
-void TerrainRenderer::pushVertexToTriangleList(
-  uint32_t v0, uint32_t v1,
-  glm::vec3 *vertices, Voxel *voxels,
-  Voxel surfaceDensity,
-  ChunkVertex *meshVertices, uint32_t &vertexCount) {
-  float surfaceLevelF = (float)surfaceDensity.density;
-  float voxelValue0 = (float)voxels[v0].density;
-  float voxelValue1 = (float)voxels[v1].density;
-
-  if (voxelValue0 > voxelValue1) {
-    float tmp = voxelValue0;
-    voxelValue0 = voxelValue1;
-    voxelValue1 = tmp;
-
-    uint8_t tmpV = v0;
-    v0 = v1;
-    v1 = tmpV;
-  }
-
-  float interpolatedVoxelValues = lerp(voxelValue0, voxelValue1, surfaceLevelF);
-    
-  glm::vec3 vertex = interpolate(
-    vertices[v0], vertices[v1], interpolatedVoxelValues);
-
-  glm::vec3 normal0 = glm::vec3(
-    voxels[v0].normalX, voxels[v0].normalY, voxels[v0].normalZ) / 1000.0f;
-  glm::vec3 normal1 = glm::vec3(
-    voxels[v1].normalX, voxels[v1].normalY, voxels[v1].normalZ) / 1000.0f;
-
-  glm::vec3 normal = interpolate(
-    normal0, normal1, interpolatedVoxelValues);
-
-  meshVertices[vertexCount] = {vertex, normal};
-
-  ++vertexCount;
-}
 
 void TerrainRenderer::updateVoxelCell(
   Voxel *voxels,
@@ -1150,14 +1140,14 @@ glm::ivec3 TerrainRenderer::getChunkGroupCoord(
   const Terrain &terrain,
   const glm::ivec3 &chunkCoord) const {
   glm::ivec2 quadTreeCoord = glm::ivec2(chunkCoord.x, chunkCoord.z) +
-    glm::ivec2(glm::pow(2, terrain.mQuadTree.maxLOD() - 1));
+    glm::ivec2(glm::pow(2, mQuadTree.maxLOD() - 1));
 
-  QuadTree::NodeInfo node = terrain.mQuadTree.getNodeInfo(quadTreeCoord);
+  QuadTree::NodeInfo node = mQuadTree.getNodeInfo(quadTreeCoord);
 
-  node.offset -= glm::vec2(glm::pow(2.0f, terrain.mQuadTree.maxLOD() - 1));
+  node.offset -= glm::vec2(glm::pow(2.0f, mQuadTree.maxLOD() - 1));
   glm::ivec3 coord = glm::ivec3(node.offset.x, chunkCoord.y, node.offset.y);
   // Round down the nearest 2^node.level
-  coord.y -= coord.y % (int)pow(2, terrain.mQuadTree.maxLOD() - node.level);
+  coord.y -= coord.y % (int)pow(2, mQuadTree.maxLOD() - node.level);
 
   return coord;
 }
@@ -1183,6 +1173,49 @@ ChunkGroup *TerrainRenderer::getChunkGroup(const glm::ivec3 &coord) {
 
     return group;
   }
+}
+
+glm::ivec2 TerrainRenderer::quadTreeCoordsToChunk(glm::ivec2 offset) const {
+  return offset - glm::ivec2(pow(2, mQuadTree.maxLOD() - 1));
+}
+
+// One unit in offset = chunk coord. The origin of the quadtree is at 0,0
+glm::ivec2 TerrainRenderer::quadTreeCoordsToWorld(
+  const Terrain &terrain,
+  glm::ivec2 offset) const {
+  offset -= glm::ivec2(pow(2, mQuadTree.maxLOD() - 1));
+  offset *= CHUNK_DIM * terrain.mTerrainScale;
+  return offset;
+}
+
+glm::vec2 TerrainRenderer::worldToQuadTreeCoords(
+  const Terrain &terrain,
+  glm::vec2 offset) const {
+  offset /= (CHUNK_DIM * terrain.mTerrainScale);
+  offset += glm::vec2(glm::pow(2.0f, mQuadTree.maxLOD() - 1));
+  return offset;
+}
+
+void TerrainRenderer::addToFlatChunkGroupIndices(ChunkGroup *group) {
+  /*
+  int x = group->coord.x, z = group->coord.z;
+  uint32_t hash = hashFlatChunkCoord(glm::ivec2(x, z));
+  uint32_t *index = mFlatChunkIndices.get(hash);
+
+  if (index) {
+    Chunk *head = mLoadedChunks[*index];
+    chunk->next = head->chunkStackIndex;
+    *index = chunk->chunkStackIndex;
+  }
+  else {
+    mFlatChunkIndices.insert(hash, chunk->chunkStackIndex);
+    chunk->next = INVALID_CHUNK_INDEX;
+  }
+  */
+}
+
+ChunkGroup *TerrainRenderer::getFirstFlatChunkGroup(glm::ivec2 flatCoord) {
+  return nullptr;
 }
 
 }

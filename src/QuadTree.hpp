@@ -88,7 +88,8 @@ private:
   glm::ivec2 mFocalPoint;
 
   // Diff
-  Stack<DiffOp> mDiff;
+  Stack<DiffOp> mDiffDelete;
+  Stack<DiffOp> mDiffAdd;
 
   friend class Terrain;
   friend class TerrainRenderer;
