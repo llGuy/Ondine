@@ -38,8 +38,7 @@ uint32_t QuadTree::maxLOD() const {
 
 void QuadTree::setFocalPoint(const glm::vec2 &position) {
   // Clear the diff
-  mDiffDelete.clear();
-  mDiffAdd.clear();
+  clearDiff();
   mDeepestNodes.size = 0;
 
   // Create the new nodes and push the modifications to the diff list
@@ -65,6 +64,11 @@ void QuadTree::setFocalPoint(const glm::vec2 &position) {
     }
   }
   */
+}
+
+void QuadTree::clearDiff() {
+  mDiffDelete.clear();
+  mDiffAdd.clear();
 }
 
 QuadTree::NodeInfo QuadTree::getNodeInfo(const glm::vec2 &position) const {
@@ -197,7 +201,7 @@ void QuadTree::populateDiff(
       }
       else {
         // Add this operation to the list of diff
-        mDiffAdd.push({DiffOpType::Deepen, node});
+        mDiffAdd.push({DiffOpType::Add, node});
 
         // Split the node
         for (int i = 0; i < 4; ++i) {
@@ -209,7 +213,8 @@ void QuadTree::populateDiff(
     }
     else {
       if (node->children[0]) {
-        mDiffDelete.push({DiffOpType::Deepest, node});
+        mDiffDelete.push({DiffOpType::Delete, node});
+        mDiffAdd.push({DiffOpType::Add, node});
 
         for (int i = 0; i < 4; ++i) {
           freeNode(node->children[i]);
@@ -271,11 +276,11 @@ QuadTree::Node *QuadTree::getDeepestNode(
   }
 }
 
-Array<QuadTree::NodeInfo, AllocationType::Linear> QuadTree::getDeepestNodesUnder(
+Stack<QuadTree::NodeInfo, AllocationType::Linear> QuadTree::getDeepestNodesUnder(
   Node *node) {
   int width = pow(2, mMaxLOD - node->level);
 
-  Array<QuadTree::NodeInfo, AllocationType::Linear> list = {};
+  Stack<QuadTree::NodeInfo, AllocationType::Linear> list = {};
   list.init(width * width); // Theoretically the max amount of deep nodes
 
   getDeepestNodesUnderImpl(node, &list);
@@ -284,16 +289,16 @@ Array<QuadTree::NodeInfo, AllocationType::Linear> QuadTree::getDeepestNodesUnder
 }
 
 void QuadTree::getDeepestNodesUnderImpl(
-  Node *node, Array<QuadTree::NodeInfo, AllocationType::Linear> *list) {
+  Node *node, Stack<QuadTree::NodeInfo, AllocationType::Linear> *list) {
   int width = pow(2, mMaxLOD - node->level);
 
   if (!node->children[0]) {
     // This node doesn't have any children - it's the deepest
-    list->data[list->size++] = {
+    list->push({
       true, node->level, node->index,
       {node->offsetx, node->offsety},
       {width, width}
-    };
+    });
   }
   else {
     for (int i = 0; i < 4; ++i) {

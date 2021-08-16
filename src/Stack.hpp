@@ -8,7 +8,7 @@
 
 namespace Ondine {
 
-template <typename T>
+template <typename T, AllocationType A = AllocationType::Freelist>
 class Stack {
 public:
   void init(uint32_t maxItems) {
@@ -33,6 +33,10 @@ public:
     return mItems[mCurrent--];
   }
 
+  uint32_t size() const {
+    return mCurrent;
+  }
+
 public:
   class iterator {
   public:
@@ -43,7 +47,7 @@ public:
     using difference_type = int;
     using iterator_category = std::forward_iterator_tag;
 
-    iterator(Stack<T> *container, uint32_t index)
+    iterator(Stack<T, A> *container, uint32_t index)
       : mContainer(container), mIndex(index) {
       
     }
@@ -65,7 +69,7 @@ public:
     bool operator!=(const self_type &rhs) {return this->mIndex != rhs.mIndex;}
 
   private:
-    Stack<T> *mContainer;
+    Stack<T, A> *mContainer;
     uint32_t mIndex;
   };
 
@@ -78,7 +82,7 @@ public:
     using difference_type = int;
     using iterator_category = std::forward_iterator_tag;
 
-    const_iterator(const Stack<T> *container, uint32_t index)
+    const_iterator(const Stack<T, A> *container, uint32_t index)
       : mContainer(container), mIndex(index) {
       
     }
@@ -100,7 +104,7 @@ public:
     bool operator!=(const self_type &rhs) {return this->mIndex != rhs.mIndex;}
 
   private:
-    Stack<T> *mContainer;
+    Stack<T, A> *mContainer;
     uint32_t mIndex;
   };
 
@@ -121,7 +125,7 @@ public:
   }
 
 private:
-  Array<T> mItems;
+  Array<T, A> mItems;
   uint32_t mCurrent;
   uint32_t mMax;
 };

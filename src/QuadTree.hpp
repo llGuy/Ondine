@@ -38,6 +38,8 @@ public:
   uint32_t nodeCount() const;
   NodeInfo getNodeInfo(uint32_t index) const;
 
+  void clearDiff();
+
 private:
   struct Node {
     static constexpr glm::vec2 INDEX_TO_OFFSET[4] = {
@@ -56,8 +58,8 @@ private:
   };
 
   enum class DiffOpType {
-    Deepen, // QuadTree node gets children allocated
-    Deepest // QuadTree node stops here - children get removed
+    Add, // Need to process new chunk groups
+    Delete // Need to remove chunk groups
   };
 
   struct DiffOp {
@@ -73,9 +75,9 @@ private:
   Node *getDeepestNode(
     const glm::vec2 &position, glm::vec2 *offset = nullptr) const;
 
-  Array<NodeInfo, AllocationType::Linear> getDeepestNodesUnder(Node *node);
+  Stack<NodeInfo, AllocationType::Linear> getDeepestNodesUnder(Node *node);
   void getDeepestNodesUnderImpl(
-    Node *node, Array<NodeInfo, AllocationType::Linear> *list = nullptr);
+    Node *node, Stack<NodeInfo, AllocationType::Linear> *list = nullptr);
 
   void populateDiff(
     Node *node, const glm::vec2 &offset, const glm::vec2 &position);

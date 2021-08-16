@@ -419,6 +419,9 @@ void TerrainRenderer::sync(
   // (BONUS) Make step #2 distinguish between chunk groups which require
   //         just mesh transitions or everything to be updated
 
+  Stack<ChunkGroup *, AllocationType::Linear> fullUpdates;
+  fullUpdates.init(mQuadTree.mDimensions * mQuadTree.mDimensions * 2);
+
   // Here it goes
   { // Step #1
     for (auto deletion : mQuadTree.mDiffDelete) {
@@ -431,7 +434,7 @@ void TerrainRenderer::sync(
       for (int z = offset.y; z < offset.y + width; ++z) {
         for (int x = offset.x; x < offset.x + width; ++x) {
           ChunkGroup *lowest = getFirstFlatChunkGroup({x, z});
-          for (;;) {
+          while (lowest) {
             // Delete the chunk group
             auto nextKey = lowest->next;
             freeChunkGroup(lowest);
@@ -449,9 +452,108 @@ void TerrainRenderer::sync(
   }
 
   { // Step #2
-    
+    for (auto addition : mQuadTree.mDiffAdd) {
+      QuadTree::Node *node = addition.node;
+      auto deepestNodes = mQuadTree.getDeepestNodesUnder(node);
+
+      for (auto nodeInfo : deepestNodes) {
+        glm::ivec2 offset = quadTreeCoordsToChunk(nodeInfo.offset);
+        int width = pow(2, mQuadTree.mMaxLOD - nodeInfo.level);
+
+        // Generate chunk groups
+        for (int z = offset.y; z < offset.y + width; ++z) {
+          for (int x = offset.x; x < offset.x + width; ++x) {
+            Chunk *current = terrain.getFirstFlatChunk(glm::ivec2(x, z));
+
+            while (current) {
+              glm::ivec3 groupCoord = getChunkGroupCoord(
+                terrain, current->chunkCoord);
+
+              ChunkGroup *group = getChunkGroup(groupCoord);
+              group->level = nodeInfo.level;
+              current->chunkGroupKey = group->key;
+
+              int stride = (int)pow(2, mQuadTree.mMaxLOD - nodeInfo.level);
+              float width = stride;
+            
+              glm::vec3 chunkCoordOffset = (glm::vec3)(
+                current->chunkCoord - groupCoord);
+
+              glm::vec3 start = (float)CHUNK_DIM * (chunkCoordOffset / width);
+
+              for (int z = 0 ; z < CHUNK_DIM / stride; ++z) {
+                for (int y = 0 ; y < CHUNK_DIM / stride; ++y) {
+                  for (int x = 0 ; x < CHUNK_DIM / stride; ++x) {
+                    glm::ivec3 coord = glm::ivec3(x, y, z);
+
+                    uint32_t dstVIndex = getVoxelIndex(coord + (glm::ivec3)start);
+                    uint32_t srcVIndex = getVoxelIndex(coord * stride);
+
+                    group->voxels[dstVIndex] = current->voxels[srcVIndex];
+                  }
+                }
+              }
+
+              // Need to add transition updates for neighbouring chunk groups
+              fullUpdates.push(group);
+
+              if (current->next == INVALID_CHUNK_INDEX) {
+                current = nullptr;
+              }
+              else {
+                current = terrain.mLoadedChunks[current->next];
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
+  if (fullUpdates.size()) {
+    // Generate the vertices now
+    uint32_t totalCount = 0;
+
+    mNullChunkGroup = (ChunkGroup *)lnAlloc(sizeof(ChunkGroup));
+    memset(mNullChunkGroup, 0, sizeof(ChunkGroup));
+
+    // Later change this to just the updated chunks
+    for (auto group : fullUpdates) {
+      Voxel surfaceDensity = {(uint16_t)30000};
+      uint32_t vertexCount = generateVertices(
+        terrain, *group, surfaceDensity, mTemporaryVertices);
+
+      group->vertexCount = vertexCount;
+
+      totalCount += vertexCount;
+
+      if (group->verticesMemory.size()) {
+        // This chunk already has allocated memory
+        mGPUVerticesAllocator.free(group->verticesMemory);
+      }
+
+      if (vertexCount) {
+        auto slot = mGPUVerticesAllocator.allocate(
+          sizeof(ChunkVertex) * vertexCount);
+
+        slot.write(
+          commandBuffer,
+          mTemporaryVertices,
+          sizeof(ChunkVertex) * vertexCount);
+
+        group->verticesMemory = slot;
+      }
+      else {
+        group->verticesMemory = {};
+      }
+    }
+
+    mGPUVerticesAllocator.debugLogState();
+  }
+
+  mQuadTree.clearDiff();
+
+  #if 0
   if (terrain.mUpdatedChunks.size) {
     terrain.generateVoxelNormals();
     terrain.mUpdatedChunks.size = 0;
@@ -552,6 +654,7 @@ void TerrainRenderer::sync(
 
     mGPUVerticesAllocator.debugLogState();
   }
+  #endif
 }
 
 uint32_t TerrainRenderer::generateVertices(
@@ -632,14 +735,14 @@ uint32_t TerrainRenderer::generateVertices(
 
   updateChunkFace(
     terrain, group, surfaceDensity,
-    0, 2, // Inner axis is Y, outer axis is Z
-    1, 1, // We are updating the positive X face
+    0, 2, // Inner axis is x, outer axis is Z
+    1, 1, // We are updating the positive Y face
     meshVertices, vertexCount);
 
   updateChunkFace(
     terrain, group, surfaceDensity,
-    0, 2, // Inner axis is Y, outer axis is Z
-    1, 0, // We are updating the negative X face
+    0, 2, // Inner axis is X, outer axis is Z
+    1, 0, // We are updating the negative Y face
     meshVertices, vertexCount);
 
   return vertexCount;
@@ -1211,6 +1314,8 @@ ChunkGroup *TerrainRenderer::getChunkGroup(const glm::ivec3 &coord) {
 void TerrainRenderer::freeChunkGroup(ChunkGroup *group) {
   uint32_t hash = hashChunkGroupCoord(group->coord);
   mChunkGroupIndices.remove(hash);
+
+  mGPUVerticesAllocator.free(group->verticesMemory);
 
   // This is temporary - TODO: Add pre-allocated space for chunk groups
   flFree(group);

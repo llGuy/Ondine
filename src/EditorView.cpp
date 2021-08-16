@@ -594,6 +594,15 @@ void EditorView::renderToolsWindow() {
             &wireframeMode));
       boundScene->debug.wireframeTerrain = wireframeMode;
 
+      if (ImGui::Button("Update Quad Tree")) {
+        terrainRenderer.mQuadTree.setFocalPoint(
+          terrainRenderer.worldToQuadTreeCoords(
+            boundScene->terrain,
+            boundScene->camera.wPosition));
+
+        // mQuadTree.setFocalPoint(worldToQuadTreeCoords(glm::vec3(0)));
+      }
+
       ImGui::TreePop();
     }
   }
