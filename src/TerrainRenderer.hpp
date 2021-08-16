@@ -73,6 +73,7 @@ private:
     const glm::ivec3 &coord) const;
 
   ChunkGroup *getChunkGroup(const glm::ivec3 &coord);
+  void freeChunkGroup(ChunkGroup *group);
 
   uint32_t generateVertices(
     const Terrain &terrain,

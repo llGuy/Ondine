@@ -411,7 +411,7 @@ void TerrainRenderer::sync(
     terrain,
     glm::vec2(camera.wPosition.x, camera.wPosition.z));
 
-  mQuadTree.setFocalPoint(pos);
+  // mQuadTree.setFocalPoint(pos);
 
   // Step #1: Figure out which chunk groups to delete and to create
   // Step #2: Figure out which chunk groups to update the meshes for
@@ -422,8 +422,34 @@ void TerrainRenderer::sync(
   // Here it goes
   { // Step #1
     for (auto deletion : mQuadTree.mDiffDelete) {
-      
+      QuadTree::Node *node = deletion.node;
+
+      glm::ivec2 offset = {node->offsetx, node->offsety};
+      // How many chunks does this node encompass
+      int width = pow(2, mQuadTree.mMaxLOD - node->level);
+
+      for (int z = offset.y; z < offset.y + width; ++z) {
+        for (int x = offset.x; x < offset.x + width; ++x) {
+          ChunkGroup *lowest = getFirstFlatChunkGroup({x, z});
+          for (;;) {
+            // Delete the chunk group
+            auto nextKey = lowest->next;
+            freeChunkGroup(lowest);
+
+            if (nextKey == INVALID_CHUNK_INDEX) {
+              break;
+            }
+            else {
+              lowest = mChunkGroups[nextKey];
+            }
+          }
+        }
+      }
     }
+  }
+
+  { // Step #2
+    
   }
 
   if (terrain.mUpdatedChunks.size) {
@@ -856,7 +882,7 @@ void TerrainRenderer::updateTransVoxelCell(
   uint32_t &vertexCount) {
   const float percentTrans = 0.125f;
 
-  if (1) { // Normal mesh creation
+  { // Normal mesh creation
     uint8_t bitCombination = 0;
     for (uint32_t i = 0; i < 8; ++i) {
       bool isOverSurface = (voxels[i].density > surfaceDensity.density);
@@ -950,7 +976,7 @@ void TerrainRenderer::updateTransVoxelCell(
     }
   }
 
-  if (1) { // Transvoxel mesh creation
+  { // Transvoxel mesh creation
     uint32_t bitCombination = 0;
 
     bitCombination |= (transVoxels[0].density > surfaceDensity.density) << 0;
@@ -1072,11 +1098,13 @@ void TerrainRenderer::updateTransVoxelCell(
 
       glm::vec3 diff = vertex - (glm::vec3)coord;
 
+#if 0
       if (diff.x < 0.0f || diff.x > 1.0f ||
           diff.y < 0.0f || diff.y > 1.0f ||
           diff.z < 0.0f || diff.z > 1.0f) {
         printf("BUG\n");
       }
+#endif
 
       verts[i] = {vertex, normal};
     }
@@ -1087,11 +1115,13 @@ void TerrainRenderer::updateTransVoxelCell(
 
         glm::vec3 diff = verts[vertexIndex].position - (glm::vec3)coord;
 
+#if 0
         if (diff.x < 0.0f || diff.x > 1.0f ||
             diff.y < 0.0f || diff.y > 1.0f ||
             diff.z < 0.0f || diff.z > 1.0f) {
           printf("BUG\n");
         }
+#endif
 
         meshVertices[vertexCount++] = verts[vertexIndex];
       }
@@ -1102,11 +1132,13 @@ void TerrainRenderer::updateTransVoxelCell(
 
         glm::vec3 diff = verts[vertexIndex].position - (glm::vec3)coord;
 
+#if 0
         if (diff.x < 0.0f || diff.x > 1.0f ||
             diff.y < 0.0f || diff.y > 1.0f ||
             diff.z < 0.0f || diff.z > 1.0f) {
           printf("BUG\n");
         }
+#endif
 
         meshVertices[vertexCount++] = verts[vertexIndex];
       }
@@ -1170,9 +1202,18 @@ ChunkGroup *TerrainRenderer::getChunkGroup(const glm::ivec3 &coord) {
     group->key = key;
 
     mChunkGroupIndices.insert(hash, key);
+    addToFlatChunkGroupIndices(group);
 
     return group;
   }
+}
+
+void TerrainRenderer::freeChunkGroup(ChunkGroup *group) {
+  uint32_t hash = hashChunkGroupCoord(group->coord);
+  mChunkGroupIndices.remove(hash);
+
+  // This is temporary - TODO: Add pre-allocated space for chunk groups
+  flFree(group);
 }
 
 glm::ivec2 TerrainRenderer::quadTreeCoordsToChunk(glm::ivec2 offset) const {
@@ -1197,25 +1238,31 @@ glm::vec2 TerrainRenderer::worldToQuadTreeCoords(
 }
 
 void TerrainRenderer::addToFlatChunkGroupIndices(ChunkGroup *group) {
-  /*
   int x = group->coord.x, z = group->coord.z;
   uint32_t hash = hashFlatChunkCoord(glm::ivec2(x, z));
-  uint32_t *index = mFlatChunkIndices.get(hash);
+  uint32_t *index = mFlatChunkGroupIndices.get(hash);
 
   if (index) {
-    Chunk *head = mLoadedChunks[*index];
-    chunk->next = head->chunkStackIndex;
-    *index = chunk->chunkStackIndex;
+    ChunkGroup *head = mChunkGroups[*index];
+    group->next = head->key;
+    *index = group->key;
   }
   else {
-    mFlatChunkIndices.insert(hash, chunk->chunkStackIndex);
-    chunk->next = INVALID_CHUNK_INDEX;
+    mFlatChunkGroupIndices.insert(hash, group->key);
+    group->next = INVALID_CHUNK_INDEX;
   }
-  */
 }
 
 ChunkGroup *TerrainRenderer::getFirstFlatChunkGroup(glm::ivec2 flatCoord) {
-  return nullptr;
+  uint32_t hash = hashFlatChunkCoord(flatCoord);
+  uint32_t *index = mFlatChunkGroupIndices.get(hash);
+
+  if (index) {
+    return mChunkGroups[*index];
+  }
+  else {
+    return nullptr;
+  }
 }
 
 }

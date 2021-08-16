@@ -73,6 +73,10 @@ private:
   Node *getDeepestNode(
     const glm::vec2 &position, glm::vec2 *offset = nullptr) const;
 
+  Array<NodeInfo, AllocationType::Linear> getDeepestNodesUnder(Node *node);
+  void getDeepestNodesUnderImpl(
+    Node *node, Array<NodeInfo, AllocationType::Linear> *list = nullptr);
+
   void populateDiff(
     Node *node, const glm::vec2 &offset, const glm::vec2 &position);
 

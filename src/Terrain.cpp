@@ -42,7 +42,6 @@ Chunk *Terrain::getChunk(const glm::ivec3 &coord) {
     chunk->chunkStackIndex = i;
 
     mChunkIndices.insert(hash, i);
-
     addToFlatChunkIndices(chunk);
 
     return chunk;

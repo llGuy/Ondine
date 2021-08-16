@@ -271,4 +271,35 @@ QuadTree::Node *QuadTree::getDeepestNode(
   }
 }
 
+Array<QuadTree::NodeInfo, AllocationType::Linear> QuadTree::getDeepestNodesUnder(
+  Node *node) {
+  int width = pow(2, mMaxLOD - node->level);
+
+  Array<QuadTree::NodeInfo, AllocationType::Linear> list = {};
+  list.init(width * width); // Theoretically the max amount of deep nodes
+
+  getDeepestNodesUnderImpl(node, &list);
+
+  return list;
+}
+
+void QuadTree::getDeepestNodesUnderImpl(
+  Node *node, Array<QuadTree::NodeInfo, AllocationType::Linear> *list) {
+  int width = pow(2, mMaxLOD - node->level);
+
+  if (!node->children[0]) {
+    // This node doesn't have any children - it's the deepest
+    list->data[list->size++] = {
+      true, node->level, node->index,
+      {node->offsetx, node->offsety},
+      {width, width}
+    };
+  }
+  else {
+    for (int i = 0; i < 4; ++i) {
+      getDeepestNodesUnderImpl(node->children[i], list);
+    }
+  }
+}
+
 }
