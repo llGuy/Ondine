@@ -6,6 +6,7 @@
 #include "VulkanContext.hpp"
 #include "PlanetRenderer.hpp"
 #include "TerrainRenderer.hpp"
+#include <glm/gtx/string_cast.hpp>
 
 namespace Ondine::Graphics {
 
@@ -419,6 +420,7 @@ void TerrainRenderer::sync(
   // (BONUS) Make step #2 distinguish between chunk groups which require
   //         just mesh transitions or everything to be updated
 
+  #if 1
   Stack<ChunkGroup *, AllocationType::Linear> fullUpdates;
   fullUpdates.init(mQuadTree.mDimensions * mQuadTree.mDimensions * 2);
 
@@ -449,6 +451,10 @@ void TerrainRenderer::sync(
         }
       }
     }
+  }
+
+  if (mQuadTree.mDiffAdd.size()) { // Temporary
+    terrain.generateVoxelNormals();
   }
 
   { // Step #2
@@ -495,7 +501,10 @@ void TerrainRenderer::sync(
               }
 
               // Need to add transition updates for neighbouring chunk groups
-              fullUpdates.push(group);
+              if (!group->pushedToFullUpdates) {
+                fullUpdates.push(group);
+                group->pushedToFullUpdates = 1;
+              }
 
               if (current->next == INVALID_CHUNK_INDEX) {
                 current = nullptr;
@@ -519,6 +528,8 @@ void TerrainRenderer::sync(
 
     // Later change this to just the updated chunks
     for (auto group : fullUpdates) {
+      group->pushedToFullUpdates = 0;
+
       Voxel surfaceDensity = {(uint16_t)30000};
       uint32_t vertexCount = generateVertices(
         terrain, *group, surfaceDensity, mTemporaryVertices);
@@ -553,7 +564,7 @@ void TerrainRenderer::sync(
 
   mQuadTree.clearDiff();
 
-  #if 0
+  #else
   if (terrain.mUpdatedChunks.size) {
     terrain.generateVoxelNormals();
     terrain.mUpdatedChunks.size = 0;
@@ -623,6 +634,8 @@ void TerrainRenderer::sync(
 
     // Later change this to just the updated chunks
     for (auto group : mChunkGroups) {
+      printf("Updated group at %s\n", glm::to_string(group->coord).c_str());
+
       Voxel surfaceDensity = {(uint16_t)30000};
       uint32_t vertexCount = generateVertices(
         terrain, *group, surfaceDensity, mTemporaryVertices);

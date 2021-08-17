@@ -52,7 +52,16 @@ struct ChunkGroup {
   glm::ivec3 coord;
   uint16_t level;
   NumericMapKey key;
-  bool needsUpdate;
+
+  union {
+    struct {
+      uint8_t needsUpdate : 1;
+      uint8_t pushedToFullUpdates : 1;
+      uint8_t pad : 6;
+    };
+
+    uint8_t bits;
+  };
 
   int32_t next;
 
