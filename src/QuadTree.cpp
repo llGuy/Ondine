@@ -202,6 +202,7 @@ void QuadTree::populateDiff(
       else {
         // Add this operation to the list of diff
         mDiffAdd.push({DiffOpType::Add, node});
+        mDiffDelete.push({DiffOpType::Delete, node});
 
         // Split the node
         for (int i = 0; i < 4; ++i) {

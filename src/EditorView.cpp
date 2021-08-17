@@ -570,7 +570,13 @@ void EditorView::renderToolsWindow() {
       if (node) {
         ImGui::Text("Inside child node: %d", node->index);
         ImGui::Text("Node level: %d", node->level);
+
+        ImGui::Separator();
       }
+
+      ImGui::Text(
+        "Allocated %d chunk groups\n",
+        terrainRenderer.mChunkGroups.size());
 
       ImGui::TreePop();
     }
@@ -598,7 +604,7 @@ void EditorView::renderToolsWindow() {
         terrainRenderer.mQuadTree.setFocalPoint(
           terrainRenderer.worldToQuadTreeCoords(
             boundScene->terrain,
-            boundScene->camera.wPosition));
+            {boundScene->camera.wPosition.x, boundScene->camera.wPosition.z}));
 
         // mQuadTree.setFocalPoint(worldToQuadTreeCoords(glm::vec3(0)));
       }

@@ -46,10 +46,13 @@ public:
     mLastOccupied = INVALID_NUMERIC_MAP_KEY;
     mFirstFree = INVALID_NUMERIC_MAP_KEY;
     mUsedCapacity = 0;
+    mAllocationCount = 0;
   }
 
   NumericMapKey add(const T &element) {
     int key = INVALID_NUMERIC_MAP_KEY;
+
+    ++mAllocationCount;
 
     if (mFirstFree == INVALID_NUMERIC_MAP_KEY) {
       // Need to extend the used capacity
@@ -85,6 +88,8 @@ public:
   }
 
   void remove(NumericMapKey key) {
+    --mAllocationCount;
+
     Node *node = getNode(key);
 
     if (key == mFirstOccupied) {
@@ -121,6 +126,10 @@ public:
 
   const T &operator[](uint32_t index) const {
     return mNodes[index].value;
+  }
+
+  size_t size() const {
+    return mAllocationCount;
   }
 
 public:
@@ -251,6 +260,7 @@ private:
   uint32_t mUsedCapacity;
   Array<Node> mNodes;
   Node mNullNode;
+  size_t mAllocationCount;
 
   friend class iterator;
 };

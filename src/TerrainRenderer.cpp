@@ -435,17 +435,23 @@ void TerrainRenderer::sync(
 
       for (int z = offset.y; z < offset.y + width; ++z) {
         for (int x = offset.x; x < offset.x + width; ++x) {
-          ChunkGroup *lowest = getFirstFlatChunkGroup({x, z});
-          while (lowest) {
-            // Delete the chunk group
-            auto nextKey = lowest->next;
-            freeChunkGroup(lowest);
+          glm::ivec2 offset = quadTreeCoordsToChunk({x, z});
+          ChunkGroup *lowest = getFirstFlatChunkGroup(offset);
 
-            if (nextKey == INVALID_CHUNK_INDEX) {
-              break;
-            }
-            else {
-              lowest = mChunkGroups[nextKey];
+          if (lowest) {
+            mFlatChunkGroupIndices.remove(hashFlatChunkCoord(offset));
+
+            while (lowest) {
+              // Delete the chunk group
+              auto nextKey = lowest->next;
+              freeChunkGroup(lowest);
+
+              if (nextKey == INVALID_CHUNK_INDEX) {
+                break;
+              }
+              else {
+                lowest = mChunkGroups[nextKey];
+              }
             }
           }
         }
@@ -1329,6 +1335,7 @@ void TerrainRenderer::freeChunkGroup(ChunkGroup *group) {
   mChunkGroupIndices.remove(hash);
 
   mGPUVerticesAllocator.free(group->verticesMemory);
+  mChunkGroups.remove(group->key);
 
   // This is temporary - TODO: Add pre-allocated space for chunk groups
   flFree(group);
