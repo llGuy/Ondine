@@ -24,8 +24,8 @@ void QuadTree::init(uint16_t maxLOD) {
   mDeepestNodes.init(mArea);
   mDeepestNodes.size = 0;
 
-  mDiffDelete.init(maxLOD * maxLOD / 2);
-  mDiffAdd.init(maxLOD * maxLOD / 2);
+  mDiffDelete.init(maxLOD * maxLOD);
+  mDiffAdd.init(maxLOD * maxLOD);
 }
 
 void QuadTree::setInitialState(uint16_t minLevel) {
