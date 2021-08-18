@@ -412,7 +412,7 @@ void TerrainRenderer::sync(
     terrain,
     glm::vec2(camera.wPosition.x, camera.wPosition.z));
 
-  mQuadTree.setFocalPoint(pos);
+  // mQuadTree.setFocalPoint(pos);
 
   // Step #1: Figure out which chunk groups to delete and to create
   // Step #2: Figure out which chunk groups to update the meshes for
