@@ -555,6 +555,41 @@ void EditorView::renderToolsWindow() {
     if (ImGui::TreeNodeEx(
           "Quad Tree",
           ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen)) {
+      auto &arena = terrainRenderer.mGPUVerticesAllocator;
+
+      uint32_t totalFreeBlockCount = 0;
+      uint32_t freeSectionsCount = 0;
+
+      uint32_t index = arena.mFirstFreeBlock.next;
+      auto *freeBlock = arena.getBlock(arena.mFirstFreeBlock.next);
+  
+      while (freeBlock) {
+        ImGui::Text(
+          "%d free blocks blocks at %p\n",
+          freeBlock->blockCount, (void *)index);
+
+        totalFreeBlockCount += freeBlock->blockCount;
+        freeSectionsCount++;
+
+        index = freeBlock->next;
+        freeBlock = arena.getBlock(freeBlock->next);
+      }
+
+      ImGui::Separator();
+
+      ImGui::Text("Blocks free: %u", totalFreeBlockCount);
+      auto bytesFree =
+        totalFreeBlockCount * Graphics::VulkanArenaAllocator::POOL_BLOCK_SIZE;
+      auto kilobytesFree = bytesFree / 1024u;
+      auto megabytesFree = kilobytesFree / 1024u;
+
+      ImGui::Text("Bytes free: %u", bytesFree);
+      ImGui::Text("Kilobytes free: %u", kilobytesFree);
+      ImGui::Text("Megabytes free: %u", megabytesFree);
+      ImGui::Text("Number of contiguous free segments: %u", freeSectionsCount);
+
+      ImGui::Separator();
+
       ImGui::Text(
         "Allocated %d nodes",
         terrainRenderer.mQuadTree.mAllocatedNodeCount);

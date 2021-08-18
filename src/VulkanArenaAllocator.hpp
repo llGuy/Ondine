@@ -6,6 +6,12 @@
 #include "VulkanBuffer.hpp"
 #include "VulkanArenaSlot.hpp"
 
+namespace Ondine::View {
+
+class EditorView;
+
+}
+
 namespace Ondine::Graphics {
 
 class VulkanContext;
@@ -83,6 +89,8 @@ private:
   // Index to the block whose nextFreeBlock member is equal to 0xFFFF
   uint16_t mLastFreeBlock;
   Array<FreeBlock> mBlocks;
+
+  friend class View::EditorView;
 };
 
 }
