@@ -25,6 +25,8 @@ public:
 
   struct NodeInfo {
     bool exists;
+    bool wasDiffed;
+    
     uint16_t level;
     uint16_t index;
     glm::vec2 offset;
@@ -51,7 +53,8 @@ private:
 
     uint16_t level;
     // Index into the children array
-    uint16_t index;
+    uint8_t index;
+    uint8_t wasDiffed;
     Node *children[4];
 
     uint16_t offsetx, offsety;

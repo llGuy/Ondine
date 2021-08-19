@@ -67,6 +67,10 @@ void QuadTree::setFocalPoint(const glm::vec2 &position) {
 }
 
 void QuadTree::clearDiff() {
+  for (auto add : mDiffAdd) {
+    add.node->wasDiffed = 0;
+  }
+
   mDiffDelete.clear();
   mDiffAdd.clear();
 }
@@ -77,6 +81,7 @@ QuadTree::NodeInfo QuadTree::getNodeInfo(const glm::vec2 &position) const {
 
   if (deepestNode) {
     nodeInfo.exists = true;
+    nodeInfo.wasDiffed = deepestNode->wasDiffed;
     nodeInfo.level = deepestNode->level;
     nodeInfo.index = deepestNode->index;
     nodeInfo.offset = glm::vec2(deepestNode->offsetx, deepestNode->offsety);
@@ -96,6 +101,7 @@ QuadTree::NodeInfo QuadTree::getNodeInfo(uint32_t index) const {
 
   if (deepestNode) {
     nodeInfo.exists = true;
+    nodeInfo.wasDiffed = deepestNode->wasDiffed;
     nodeInfo.level = deepestNode->level;
     nodeInfo.index = deepestNode->index;
     nodeInfo.offset = glm::vec2(deepestNode->offsetx, deepestNode->offsety);
@@ -203,6 +209,7 @@ void QuadTree::populateDiff(
         // Add this operation to the list of diff
         mDiffAdd.push({DiffOpType::Add, node});
         mDiffDelete.push({DiffOpType::Delete, node});
+        node->wasDiffed = 1;
 
         // Split the node
         for (int i = 0; i < 4; ++i) {
@@ -216,6 +223,7 @@ void QuadTree::populateDiff(
       if (node->children[0]) {
         mDiffDelete.push({DiffOpType::Delete, node});
         mDiffAdd.push({DiffOpType::Add, node});
+        node->wasDiffed = 1;
 
         for (int i = 0; i < 4; ++i) {
           freeNode(node->children[i]);
@@ -296,7 +304,7 @@ void QuadTree::getDeepestNodesUnderImpl(
   if (!node->children[0]) {
     // This node doesn't have any children - it's the deepest
     list->push({
-      true, node->level, node->index,
+      true, node->wasDiffed, node->level, node->index,
       {node->offsetx, node->offsety},
       {width, width}
     });

@@ -57,7 +57,8 @@ struct ChunkGroup {
     struct {
       uint8_t needsUpdate : 1;
       uint8_t pushedToFullUpdates : 1;
-      uint8_t pad : 6;
+      uint8_t pushedToTransitionUpdates : 1;
+      uint8_t pad : 5;
     };
 
     uint8_t bits;

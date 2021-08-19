@@ -11,7 +11,7 @@
 namespace Ondine::Graphics {
 
 const glm::vec3 TerrainRenderer::NORMALIZED_CUBE_VERTICES[8] = {
-  glm::vec3(-0.5f, -0.5f, -0.5f),
+ glm::vec3(-0.5f, -0.5f, -0.5f),
   glm::vec3(+0.5f, -0.5f, -0.5f),
   glm::vec3(-0.5f, +0.5f, -0.5f),
   glm::vec3(+0.5f, +0.5f, -0.5f),
@@ -424,6 +424,9 @@ void TerrainRenderer::sync(
   Stack<ChunkGroup *, AllocationType::Linear> fullUpdates;
   fullUpdates.init(mQuadTree.mDimensions * mQuadTree.mDimensions * 2);
 
+  Stack<ChunkGroup *, AllocationType::Linear> transitionUpdates;
+  transitionUpdates.init(mQuadTree.mDimensions * mQuadTree.mDimensions * 2);
+
   // Here it goes
   { // Step #1
     for (auto deletion : mQuadTree.mDiffDelete) {
@@ -459,6 +462,7 @@ void TerrainRenderer::sync(
     }
   }
 
+  // Only regenerate for chunks which have been modified and neighbouring chunks
   if (mQuadTree.mDiffAdd.size()) { // Temporary
     terrain.generateVoxelNormals();
   }
@@ -519,6 +523,68 @@ void TerrainRenderer::sync(
                 current = terrain.mLoadedChunks[current->next];
               }
             }
+          }
+        }
+      }
+    }
+
+    for (auto addition : mQuadTree.mDiffAdd) {
+      QuadTree::Node *node = addition.node;
+      int width = pow(2, mQuadTree.mMaxLOD - node->level);
+      glm::ivec2 qtCoord = {node->offsetx, node->offsety};
+      glm::ivec2 chunkCoord = quadTreeCoordsToChunk(qtCoord);
+
+      int components[] = {
+        // Z, Z, X, X
+        2, 2, 0, 0
+      };
+
+      glm::ivec2 offsets[] = {
+        {-1, 0}, {width, 0}, {0, -1}, {0, width}
+      };
+
+      glm::ivec2 nav[] = {
+        {0, 1}, {0, 1}, {1, 0}, {1, 0}
+      };
+
+      // Check neighbouring chunk groups
+      for (int i = 0; i < 4; ++i) {
+        glm::ivec2 adjNodeCoord = qtCoord + offsets[i];
+        auto adjNodeInfo = mQuadTree.getNodeInfo((glm::vec2)adjNodeCoord);
+
+        if (adjNodeInfo.exists && !adjNodeInfo.wasDiffed) {
+          // (hmmm?) Transitions only need to be done for nodes with lower LOD
+          glm::ivec2 adjChunkCoord = quadTreeCoordsToChunk(adjNodeInfo.offset);
+
+          int comp3D = components[i];
+          int comp2D = comp3D / 2;
+
+          while (
+            adjChunkCoord[comp2D] < chunkCoord[comp2D] + width &&
+            adjNodeInfo.exists) {
+            int adjWidth = pow(2, mQuadTree.mMaxLOD - adjNodeInfo.level);
+
+            // Do something
+            ChunkGroup *lowest = getFirstFlatChunkGroup(adjChunkCoord);
+            while (lowest) {
+              if (!lowest->pushedToFullUpdates) {
+                lowest->pushedToTransitionUpdates = 1;
+                transitionUpdates.push(lowest);
+              }
+              
+              auto nextKey = lowest->next;
+
+              if (nextKey == INVALID_CHUNK_INDEX) {
+                break;
+              }
+              else {
+                lowest = mChunkGroups[nextKey];
+              }
+            }
+
+            adjChunkCoord[comp2D] += adjWidth;
+            adjNodeCoord[comp2D] += adjWidth;
+            adjNodeInfo = mQuadTree.getNodeInfo((glm::vec2)adjNodeCoord);
           }
         }
       }
