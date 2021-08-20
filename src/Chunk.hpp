@@ -46,8 +46,11 @@ struct Chunk {
 struct ChunkGroup {
   Voxel voxels[CHUNK_VOLUME];
 
-  VulkanArenaSlot verticesMemory;
+  VulkanArenaSlot vertices;
   uint32_t vertexCount;
+
+  VulkanArenaSlot transVoxelVertices;
+  uint32_t transVoxelVertexCount;
 
   glm::ivec3 coord;
   uint16_t level;
