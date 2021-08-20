@@ -666,6 +666,43 @@ void TerrainRenderer::sync(
     mGPUVerticesAllocator.debugLogState();
   }
 
+  if (transitionUpdates.size()) {
+    // Generate the vertices now
+    mNullChunkGroup = (ChunkGroup *)lnAlloc(sizeof(ChunkGroup));
+    memset(mNullChunkGroup, 0, sizeof(ChunkGroup));
+
+    for (auto group : transitionUpdates) {
+      group->pushedToFullUpdates = 0;
+      group->pushedToTransitionUpdates = 0;
+
+      uint32_t transVertexCount = generateTransVoxelVertices(
+        terrain, *group, surfaceDensity, mTemporaryTransVertices);
+      group->transVoxelVertexCount = transVertexCount;
+
+      if (group->transVoxelVertices.size()) {
+        // This chunk already has allocated memory
+        mGPUVerticesAllocator.free(group->transVoxelVertices);
+      }
+
+      if (transVertexCount) {
+        auto slot = mGPUVerticesAllocator.allocate(
+          sizeof(ChunkVertex) * transVertexCount);
+
+        slot.write(
+          commandBuffer,
+          mTemporaryTransVertices,
+          sizeof(ChunkVertex) * transVertexCount);
+
+        group->transVoxelVertices = slot;
+      }
+      else {
+        group->transVoxelVertices = {};
+      }
+    }
+
+    mGPUVerticesAllocator.debugLogState();
+  }
+
   mQuadTree.clearDiff();
 }
 
@@ -1338,6 +1375,7 @@ void TerrainRenderer::freeChunkGroup(ChunkGroup *group) {
   mChunkGroupIndices.remove(hash);
 
   mGPUVerticesAllocator.free(group->vertices);
+  mGPUVerticesAllocator.free(group->transVoxelVertices);
   mChunkGroups.remove(group->key);
 
   // This is temporary - TODO: Add pre-allocated space for chunk groups
