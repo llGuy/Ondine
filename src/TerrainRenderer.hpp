@@ -81,6 +81,12 @@ private:
     Voxel surfaceDensity,
     ChunkVertex *meshVertices);
 
+  uint32_t generateTransVoxelVertices(
+    const Terrain &terrain,
+    const ChunkGroup &group,
+    Voxel surfaceDensity,
+    ChunkVertex *meshVertices);
+
   void updateChunkFace(
     const Terrain &terrain,
     const ChunkGroup &group,
@@ -138,6 +144,7 @@ private:
   FastMap<uint32_t, 500, 30, 10> mFlatChunkGroupIndices;
 
   ChunkVertex *mTemporaryVertices;
+  ChunkVertex *mTemporaryTransVertices;
   ChunkGroup *mNullChunkGroup;
   
   QuadTree mQuadTree;

@@ -613,6 +613,14 @@ void EditorView::renderToolsWindow() {
         "Allocated %d chunk groups\n",
         terrainRenderer.mChunkGroups.size());
 
+      glm::vec2 camPos = terrainRenderer.worldToQuadTreeCoords(
+        boundScene->terrain,
+        glm::vec2(boundScene->camera.wPosition.x,
+                  boundScene->camera.wPosition.z));
+
+      ImGui::Text(
+        "In node at %s", glm::to_string(camPos).c_str());
+
       ImGui::TreePop();
     }
 

@@ -87,11 +87,11 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
     */
     if (oldFreeInfo.next == INVALID_BLOCK_INDEX) {
       /* If the next pointer is invalid, this is the last free block */
-      mLastFreeBlock = prevBlockIndex;
+      mLastFreeBlock = oldFreeInfo.prev;
     }
     else {
       /* Set the next block's prev pointer to the previous block of old block */
-      getBlock(prevBlock->next)->prev = prevBlockIndex;
+      getBlock(prevBlock->next)->prev = oldFreeInfo.prev;
     }
   }
   else {
@@ -115,7 +115,7 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
 
     /* Update the next block */
     if (newBlock->next == INVALID_BLOCK_INDEX) {
-      mLastFreeBlock = prevBlock->next;
+      mLastFreeBlock = prevBlock->next; // newBlockIndex
     }
     else {
       getBlock(newBlock->next)->prev = newBlockIndex;

@@ -49,6 +49,9 @@ struct ChunkGroup {
   VulkanArenaSlot verticesMemory;
   uint32_t vertexCount;
 
+  VulkanArenaSlot transVoxelVertices;
+  uint32_t transVoxelVertexCount;
+
   glm::ivec3 coord;
   uint16_t level;
   NumericMapKey key;
