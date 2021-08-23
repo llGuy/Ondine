@@ -102,7 +102,7 @@ void TerrainRenderer::init(
   mQuadTree.init(2);
   // mQuadTree.setInitialState(5);
   // mQuadTree.setFocalPoint(worldToQuadTreeCoords(glm::vec3(0)));
-  mQuadTree.setFocalPoint(glm::vec2(0));
+  // mQuadTree.setFocalPoint(glm::vec2(0));
 
   mGenerationJob = Core::gThreadPool->createJob(generateMeshes);
   mGenerationVertexPool = (ChunkVertex *)malloc(
@@ -113,8 +113,6 @@ void TerrainRenderer::init(
   mTransitionUpdates = new ChunkGroup *[maxUpdateCount];
   mFullUpdateCount = 0;
   mTransitionUpdateCount = 0;
-
-  mUpdateQuadTree = false;
 
   mParams = new GenerateMeshParams;
 }
@@ -443,8 +441,6 @@ void TerrainRenderer::sync(
     terrain,
     glm::vec2(camera.wPosition.x, camera.wPosition.z));
 
-  // mQuadTree.setFocalPoint(pos);
-
   if (Core::gThreadPool->isJobFinished(mGenerationJob)) {
     /*
        If we were waiting on a new snapshot of chunk groups, we need to make
@@ -460,13 +456,16 @@ void TerrainRenderer::sync(
        If the job has been finished, and we need to update the quad tree
        queue the job again.
     */
-    if (mUpdateQuadTree) {
-      mUpdateQuadTree = false;
-      mIsWaitingForSnapshots = true;
+    /* if (mUpdateQuadTree) */ {
+      mQuadTree.setFocalPoint(pos);
 
-      mParams->trnd = this;
-      mParams->terrain = &terrain;
-      Core::gThreadPool->startJob(mGenerationJob, mParams);
+      if (mQuadTree.mDiffAdd.size()) {
+        mUpdateQuadTree = false;
+        mIsWaitingForSnapshots = true;
+        mParams->trnd = this;
+        mParams->terrain = &terrain;
+        Core::gThreadPool->startJob(mGenerationJob, mParams);
+      }
     }
   }
 }
@@ -508,6 +507,8 @@ void TerrainRenderer::updateChunkGroupsSnapshots(
       else {
         group->vertices = {};
       }
+
+      LOG_INFOV("Chunk has %d bytes allocated\n", group->vertices.size());
 
       if (group->transVoxelVertexCount) {
         auto slot = mGPUVerticesAllocator.allocate(
@@ -1395,6 +1396,7 @@ int TerrainRenderer::generateMeshes(void *data) {
             // Need to add transition updates for neighbouring chunk groups
             if (!group->pushedToFullUpdates) {
               trnd->mFullUpdates[trnd->mFullUpdateCount++] = group;
+              LOG_INFOV("Pushed group %d\n", trnd->mFullUpdateCount);
               group->pushedToFullUpdates = 1;
             }
 
@@ -1479,6 +1481,7 @@ int TerrainRenderer::generateMeshes(void *data) {
 
   uint32_t vertexCounter = 0;
 
+  LOG_INFOV("%d\n", trnd->mFullUpdateCount);
   for (int i = 0; i < trnd->mFullUpdateCount; ++i) {
     ChunkGroup *group = trnd->mFullUpdates[i];
 
@@ -1488,6 +1491,17 @@ int TerrainRenderer::generateMeshes(void *data) {
 
     group->vertexCount = groupVertexCount;
     group->verticesMem = trnd->mGenerationVertexPool + vertexCounter;
+
+    vertexCounter += groupVertexCount;
+
+    groupVertexCount = trnd->generateTransVoxelVertices(
+      *terrain, *group, surfaceDensity,
+      trnd->mGenerationVertexPool + vertexCounter);
+
+    group->transVoxelVertexCount = groupVertexCount;
+    group->transVerticesMem = trnd->mGenerationVertexPool + vertexCounter;
+
+    LOG_INFOV("Chunk has %d trans vertices\n", group->transVoxelVertexCount);
 
     vertexCounter += groupVertexCount;
   }
@@ -1501,6 +1515,8 @@ int TerrainRenderer::generateMeshes(void *data) {
 
     group->transVoxelVertexCount = groupVertexCount;
     group->transVerticesMem = trnd->mGenerationVertexPool + vertexCounter;
+
+    LOG_INFOV("Chunk has %d trans vertices\n", group->transVoxelVertexCount);
 
     vertexCounter += groupVertexCount;
   }

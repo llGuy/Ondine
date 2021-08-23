@@ -18,7 +18,7 @@ void ThreadPool::init() {
 
 void ThreadPool::tick() {
   for (int i = 0; i < mWorkers.size; ++i) {
-    if (mWorkers[i].isFinished()) {
+    if (mWorkers[i].isFinished() && mWorkers[i].getJobID() != -1) {
       mJobs[mWorkers[i].getJobID()].isRunning = false;
     }
   }

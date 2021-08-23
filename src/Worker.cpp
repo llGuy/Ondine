@@ -6,6 +6,7 @@ void Worker::init(int id) {
   mID = id;
   mJobRequested = false;
   mThread = std::thread([this] () {runtime();});
+  mJob.id = -1;
 }
 
 void Worker::runtime() {
