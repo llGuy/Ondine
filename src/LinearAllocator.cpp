@@ -15,6 +15,11 @@ LinearAllocator::~LinearAllocator() {
   free(mStart);
 }
 
+void LinearAllocator::init(uint32_t maxSize) {
+  mMaxSize = maxSize;
+  mStart = mCurrent = malloc(mMaxSize);
+}
+
 void LinearAllocator::init() {
   mStart = mCurrent = malloc(mMaxSize);
 }

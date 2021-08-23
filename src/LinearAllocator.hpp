@@ -8,11 +8,13 @@ namespace Ondine::Core {
 /* There will be a global instance */
 class LinearAllocator {
 public:
+  LinearAllocator() = default;
   LinearAllocator(uint32_t maxSize);
   ~LinearAllocator();
 
   /* Gives possibility to control when the bulk gets allocated */
   void init();
+  void init(uint32_t maxSize);
 
   void *alloc(size_t size);
   void clear();

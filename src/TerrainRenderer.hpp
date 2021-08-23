@@ -5,6 +5,7 @@
 #include "FastMap.hpp"
 #include "QuadTree.hpp"
 #include "NumericMap.hpp"
+#include "ThreadPool.hpp"
 #include "VulkanPipeline.hpp"
 #include "VulkanArenaAllocator.hpp"
 
@@ -31,6 +32,9 @@ public:
   void init(
     VulkanContext &graphicsContext,
     const GBuffer &gbuffer);
+
+  // Temporary
+  void queueQuadTreeUpdate();
 
   void render(
     const Camera &camera,
@@ -66,6 +70,8 @@ public:
     const VulkanCommandBuffer &commandBuffer);
 
 private:
+  void updateChunkGroupsSnapshots(const VulkanCommandBuffer &commandBuffer);
+
   glm::ivec3 getChunkGroupCoord(
     const Terrain &terrain,
     const glm::ivec3 &chunkCoord) const;
@@ -111,6 +117,13 @@ private:
     ChunkVertex *meshVertices,
     uint32_t &vertexCount);
 
+  struct GenerateMeshParams {
+    TerrainRenderer *trnd;
+    Terrain *terrain;
+  };
+
+  static int generateMeshes(void *data);
+
 private:
   void renderQuadTreeNode(
     QuadTree::Node *node,
@@ -143,11 +156,26 @@ private:
   FastMap<uint32_t, 1000, 30, 10> mChunkGroupIndices;
   FastMap<uint32_t, 500, 30, 10> mFlatChunkGroupIndices;
 
+  Stack<ChunkGroupSnapshot> mSnapshots;
+
   ChunkVertex *mTemporaryVertices;
   ChunkVertex *mTemporaryTransVertices;
   ChunkGroup *mNullChunkGroup;
   
   QuadTree mQuadTree;
+  Core::JobID mGenerationJob;
+  ChunkVertex *mGenerationVertexPool;
+  uint32_t mFullUpdateCount;
+  ChunkGroup **mFullUpdates;
+  uint32_t mTransitionUpdateCount;
+  ChunkGroup **mTransitionUpdates;
+
+  GenerateMeshParams *mParams;
+
+  // Temporary
+  bool mUpdateQuadTree;
+
+  bool mIsWaitingForSnapshots;
 
   friend class View::EditorView;
   friend class View::MapView;

@@ -7,6 +7,7 @@
 #include "FileSystem.hpp"
 #include "EditorView.hpp"
 #include "DebugEvent.hpp"
+#include "ThreadPool.hpp"
 #include "Application.hpp"
 
 namespace Ondine::Core {
@@ -68,6 +69,7 @@ void Application::run() {
 
     mWindow.pollInput();
     gFileSystem->trackFiles(evProc);
+    gThreadPool->tick();
 
     /* 
        Go through the core events (window resize, etc...), then offload 

@@ -644,10 +644,13 @@ void EditorView::renderToolsWindow() {
       boundScene->debug.wireframeTerrain = wireframeMode;
 
       if (ImGui::Button("Update Quad Tree")) {
+        terrainRenderer.queueQuadTreeUpdate();
+        /*
         terrainRenderer.mQuadTree.setFocalPoint(
           terrainRenderer.worldToQuadTreeCoords(
             boundScene->terrain,
             {boundScene->camera.wPosition.x, boundScene->camera.wPosition.z}));
+        */
 
         // mQuadTree.setFocalPoint(worldToQuadTreeCoords(glm::vec3(0)));
       }

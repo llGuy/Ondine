@@ -49,9 +49,9 @@ public:
   // position isn't scaled by mTerrainScale
   const Voxel &getVoxel(const glm::vec3 &position) const;
 
-private:
   void generateVoxelNormals();
 
+private:
   template <typename Proc>
   void apply3D(int start, int end, Proc applyProc) {
     for (int z = start; z < end; ++z) {

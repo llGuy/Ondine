@@ -48,9 +48,11 @@ struct ChunkGroup {
 
   VulkanArenaSlot vertices;
   uint32_t vertexCount;
+  ChunkVertex *verticesMem;
 
   VulkanArenaSlot transVoxelVertices;
   uint32_t transVoxelVertexCount;
+  ChunkVertex *transVerticesMem;
 
   glm::ivec3 coord;
   uint16_t level;
@@ -72,6 +74,14 @@ struct ChunkGroup {
   glm::mat4 transform;
 
   QuadTree::NodeInfo nodeInfo;
+};
+
+// This gets fed to the GPU
+struct ChunkGroupSnapshot {
+  glm::ivec3 coord;
+  uint16_t level;
+  uint32_t vertexCount, transVertexCount;
+  VulkanArenaSlot vertices, transVertices;
 };
 
 inline uint32_t getVoxelIndex(int x, int y, int z) {

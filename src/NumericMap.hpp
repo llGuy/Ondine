@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <iterator>
 #include "Buffer.hpp"
+#include <assert.h>
 
 namespace Ondine {
 

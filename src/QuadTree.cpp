@@ -43,27 +43,6 @@ void QuadTree::setFocalPoint(const glm::vec2 &position) {
 
   // Create the new nodes and push the modifications to the diff list
   populateDiff(mRoot, glm::vec2(0.0f), position);
-
-  // Sort the diff list such that deletions come first and additions come next
-
-
-  /*
-  for (auto diff : mDiff) {
-    switch (diff.type) {
-    case DiffOpType::Deepen: {
-      printf(
-        "Deepened level %d node at (%d, %d)\n",
-        diff.node->level, diff.node->offsetx, diff.node->offsety);
-    } break;
-
-    case DiffOpType::Deepest: {
-      printf(
-        "Deleted children of level %d node at (%d, %d)\n",
-        diff.node->level, diff.node->offsetx, diff.node->offsety);
-    } break;
-    }
-  }
-  */
 }
 
 void QuadTree::clearDiff() {
