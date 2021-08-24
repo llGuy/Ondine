@@ -550,9 +550,9 @@ void Terrain::addToFlatChunkIndices(Chunk *chunk) {
   }
 }
 
-Chunk *Terrain::getFirstFlatChunk(glm::ivec2 flatCoord) {
+Chunk *Terrain::getFirstFlatChunk(glm::ivec2 flatCoord) const {
   uint32_t hash = hashFlatChunkCoord(flatCoord);
-  uint32_t *index = mFlatChunkIndices.get(hash);
+  const uint32_t *index = mFlatChunkIndices.get(hash);
 
   if (index) {
     return mLoadedChunks[*index];

@@ -85,7 +85,7 @@ private:
   void markChunkForUpdate(Chunk *chunk);
 
   void addToFlatChunkIndices(Chunk *chunk);
-  Chunk *getFirstFlatChunk(glm::ivec2 flatCoord);
+  Chunk *getFirstFlatChunk(glm::ivec2 flatCoord) const;
 
 private:
   static constexpr uint32_t MAX_DENSITY = 0xFFFF;
@@ -106,6 +106,7 @@ private:
   bool mUpdated;
 
   friend class TerrainRenderer;
+  friend class Isosurface;
 };
 
 }

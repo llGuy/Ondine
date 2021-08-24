@@ -6,8 +6,8 @@
 #include "QuadTree.hpp"
 #include "NumericMap.hpp"
 #include "ThreadPool.hpp"
+#include "Isosurface.hpp"
 #include "VulkanPipeline.hpp"
-#include "VulkanArenaAllocator.hpp"
 
 namespace Ondine::View {
 
@@ -72,57 +72,13 @@ public:
 private:
   void updateChunkGroupsSnapshots(const VulkanCommandBuffer &commandBuffer);
 
-  glm::ivec3 getChunkGroupCoord(
-    const Terrain &terrain,
-    const glm::ivec3 &chunkCoord) const;
-  uint32_t hashChunkGroupCoord(
-    const glm::ivec3 &coord) const;
-
-  ChunkGroup *getChunkGroup(const glm::ivec3 &coord);
-  void freeChunkGroup(ChunkGroup *group);
-
-  uint32_t generateVertices(
-    const Terrain &terrain,
-    const ChunkGroup &group,
-    Voxel surfaceDensity,
-    ChunkVertex *meshVertices);
-
-  uint32_t generateTransVoxelVertices(
-    const Terrain &terrain,
-    const ChunkGroup &group,
-    Voxel surfaceDensity,
-    ChunkVertex *meshVertices);
-
-  void updateChunkFace(
-    const Terrain &terrain,
-    const ChunkGroup &group,
-    Voxel surfaceDensity,
-    uint32_t primaryAxis, uint32_t secondAxis,
-    uint32_t faceAxis, uint32_t side,
-    ChunkVertex *meshVertices, uint32_t &vertexCount);
-
-  void updateVoxelCell(
-    Voxel *voxels,
-    const glm::ivec3 &coord,
-    Voxel surfaceDensity,
-    ChunkVertex *meshVertices,
-    uint32_t &vertexCount);
-
-  void updateTransVoxelCell(
-    Voxel *voxels,
-    Voxel *transVoxels,
-    const glm::ivec3 &axis,
-    const glm::ivec3 &coord,
-    Voxel surfaceDensity,
-    ChunkVertex *meshVertices,
-    uint32_t &vertexCount);
-
   struct GenerateMeshParams {
-    TerrainRenderer *trnd;
+    TerrainRenderer *terrainRenderer;
+    QuadTree *quadTree;
     Terrain *terrain;
   };
 
-  static int generateMeshes(void *data);
+  static int runIsosurfaceExtraction(void *data);
 
 private:
   void renderQuadTreeNode(
@@ -134,41 +90,17 @@ private:
     Terrain &terrain,
     VulkanFrame &frame);
 
-  // One unit in offset = chunk coord. The origin of the quadtree is at 0,0
-  glm::ivec2 quadTreeCoordsToChunk(glm::ivec2 offset) const;
-  glm::ivec2 quadTreeCoordsToWorld(const Terrain &, glm::ivec2 offset) const;
-  glm::vec2 worldToQuadTreeCoords(const Terrain &, glm::vec2 offset) const;
-
-  void addToFlatChunkGroupIndices(ChunkGroup *chunkGroup);
-  ChunkGroup *getFirstFlatChunkGroup(glm::ivec2 flatCoord);
-
 private:
-  static const glm::vec3 NORMALIZED_CUBE_VERTICES[8];
-  static const glm::ivec3 NORMALIZED_CUBE_VERTEX_INDICES[8];
-
   VulkanPipeline mPipeline;
   VulkanPipeline mPipelineWireframe;
-  VulkanArenaAllocator mGPUVerticesAllocator;
   // For debugging purposes
   VulkanPipeline mRenderLine;
 
-  NumericMap<ChunkGroup *> mChunkGroups;
-  FastMap<uint32_t, 1000, 30, 10> mChunkGroupIndices;
-  FastMap<uint32_t, 500, 30, 10> mFlatChunkGroupIndices;
+  Isosurface mIsosurface;
+  Stack<IsoGroupSnapshot> mSnapshots;
 
-  Stack<ChunkGroupSnapshot> mSnapshots;
-
-  ChunkVertex *mTemporaryVertices;
-  ChunkVertex *mTemporaryTransVertices;
-  ChunkGroup *mNullChunkGroup;
-  
   QuadTree mQuadTree;
   Core::JobID mGenerationJob;
-  ChunkVertex *mGenerationVertexPool;
-  uint32_t mFullUpdateCount;
-  ChunkGroup **mFullUpdates;
-  uint32_t mTransitionUpdateCount;
-  ChunkGroup **mTransitionUpdates;
 
   GenerateMeshParams *mParams;
 

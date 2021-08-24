@@ -23,9 +23,9 @@ public:
   struct Header {
     uint64_t isUsed : 1;
 
-    inline int next() {return (int)mNextNode - 1;}
+    inline int next() const {return (int)mNextNode - 1;}
     inline void setNext(int index) {mNextNode = (uint32_t)(index + 1);}
-    inline int prev() {return (int)mPrevNode - 1;}
+    inline int prev() const {return (int)mPrevNode - 1;}
     inline void setPrev(int index) {mPrevNode = (uint32_t)(index + 1);}
 
   private:
@@ -177,13 +177,14 @@ public:
   class const_iterator {
   public:
     using value_type = T;
-    using reference = T &;
+    using reference = const T &;
     using self_type = const_iterator;
-    using pointer = T *;
+    using pointer = const T *;
     using difference_type = int;
     using iterator_category = std::forward_iterator_tag;
 
-    const_iterator(NumericMap<T> *container, Node *element, NumericMapKey key)
+    const_iterator(
+      const NumericMap<T> *container, const Node *element, NumericMapKey key)
       : mContainer(container), mNode(element) {
       
     }
@@ -203,14 +204,14 @@ public:
       return *this;
     }
 
-    const reference operator*() {return mNode->value;}
-    const pointer operator->() {return &mNode->value;}
+    reference operator*() const {return mNode->value;}
+    pointer operator->() const {return &mNode->value;}
     bool operator==(const self_type &rhs) {return this->mKey == rhs.mKey;}
     bool operator!=(const self_type &rhs) {return this->mKey != rhs.mKey;}
 
   private:
-    NumericMap<T> *mContainer;
-    Node *mNode;
+    const NumericMap<T> *mContainer;
+    const Node *mNode;
     NumericMapKey mKey;
   };
 
@@ -223,7 +224,7 @@ public:
   }
 
   const_iterator begin() const {
-    return iterator(this, getNode(mFirstOccupied), mFirstOccupied);
+    return const_iterator(this, getNode(mFirstOccupied), mFirstOccupied);
   }
 
   const_iterator end() const {
@@ -246,6 +247,15 @@ private:
   }
 
   Node *getNode(int key) {
+    if (key == INVALID_NUMERIC_MAP_KEY) {
+      return nullptr;
+    }
+    else {
+      return &mNodes[key];
+    }
+  }
+
+  const Node *getNode(int key) const {
     if (key == INVALID_NUMERIC_MAP_KEY) {
       return nullptr;
     }

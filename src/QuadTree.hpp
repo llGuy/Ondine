@@ -102,6 +102,7 @@ private:
 
   friend class Terrain;
   friend class TerrainRenderer;
+  friend class Isosurface;
   friend class View::EditorView;
 };
 

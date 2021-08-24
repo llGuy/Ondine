@@ -555,7 +555,7 @@ void EditorView::renderToolsWindow() {
     if (ImGui::TreeNodeEx(
           "Quad Tree",
           ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen)) {
-      auto &arena = terrainRenderer.mGPUVerticesAllocator;
+      auto &arena = terrainRenderer.mIsosurface.mGPUVerticesAllocator;
 
       uint32_t totalFreeBlockCount = 0;
       uint32_t freeSectionsCount = 0;
@@ -595,8 +595,8 @@ void EditorView::renderToolsWindow() {
         terrainRenderer.mQuadTree.mAllocatedNodeCount);
 
       auto *node = terrainRenderer.mQuadTree.getDeepestNode(
-        terrainRenderer.worldToQuadTreeCoords(
-          boundScene->terrain,
+        terrainRenderer.mIsosurface.worldToQuadTreeCoords(
+          terrainRenderer.mQuadTree,
           glm::vec2(
             boundScene->camera.wPosition.x,
             boundScene->camera.wPosition.z)));
@@ -611,10 +611,10 @@ void EditorView::renderToolsWindow() {
 
       ImGui::Text(
         "Allocated %d chunk groups\n",
-        terrainRenderer.mChunkGroups.size());
+        terrainRenderer.mIsosurface.mIsoGroups.size());
 
-      glm::vec2 camPos = terrainRenderer.worldToQuadTreeCoords(
-        boundScene->terrain,
+      glm::vec2 camPos = terrainRenderer.mIsosurface.worldToQuadTreeCoords(
+        terrainRenderer.mQuadTree,
         glm::vec2(boundScene->camera.wPosition.x,
                   boundScene->camera.wPosition.z));
 

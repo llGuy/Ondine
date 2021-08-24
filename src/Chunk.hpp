@@ -23,11 +23,6 @@ constexpr uint32_t CHUNK_DIM = 16;
 constexpr int32_t INVALID_CHUNK_INDEX = -1;
 constexpr uint32_t CHUNK_VOLUME = CHUNK_DIM * CHUNK_DIM * CHUNK_DIM;
 
-struct ChunkVertex {
-  glm::vec3 position;
-  glm::vec3 normal;
-};
-
 struct Chunk {
   Voxel voxels[CHUNK_VOLUME];
 
@@ -40,48 +35,6 @@ struct Chunk {
   glm::ivec3 chunkCoord;
 
   NumericMapKey chunkGroupKey;
-};
-
-// This is what actually gets rendered - generated with the help of a quadtree
-struct ChunkGroup {
-  Voxel voxels[CHUNK_VOLUME];
-
-  VulkanArenaSlot vertices;
-  uint32_t vertexCount;
-  ChunkVertex *verticesMem;
-
-  VulkanArenaSlot transVoxelVertices;
-  uint32_t transVoxelVertexCount;
-  ChunkVertex *transVerticesMem;
-
-  glm::ivec3 coord;
-  uint16_t level;
-  NumericMapKey key;
-
-  union {
-    struct {
-      uint8_t needsUpdate : 1;
-      uint8_t pushedToFullUpdates : 1;
-      uint8_t pushedToTransitionUpdates : 1;
-      uint8_t pad : 5;
-    };
-
-    uint8_t bits;
-  };
-
-  int32_t next;
-
-  glm::mat4 transform;
-
-  QuadTree::NodeInfo nodeInfo;
-};
-
-// This gets fed to the GPU
-struct ChunkGroupSnapshot {
-  glm::ivec3 coord;
-  uint16_t level;
-  uint32_t vertexCount, transVertexCount;
-  VulkanArenaSlot vertices, transVertices;
 };
 
 inline uint32_t getVoxelIndex(int x, int y, int z) {
