@@ -383,7 +383,15 @@ glm::ivec3 Isosurface::getIsoGroupCoord(
   node.offset -= glm::vec2(glm::pow(2.0f, quadTree.maxLOD() - 1));
   glm::ivec3 coord = glm::ivec3(node.offset.x, chunkCoord.y, node.offset.y);
   // Round down the nearest 2^node.level
-  coord.y -= coord.y % (int)pow(2, quadTree.maxLOD() - node.level);
+
+  if (coord.y < 0 && node.level < 4) {
+    printf("Bug\n");
+  }
+
+  int width = pow(2, quadTree.maxLOD() - node.level);
+
+  coord.y = (int)(glm::floor(
+    (float)coord.y / (float)width)) * width;
 
   return coord;
 }
