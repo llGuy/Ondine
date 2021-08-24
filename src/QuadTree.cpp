@@ -26,6 +26,8 @@ void QuadTree::init(uint16_t maxLOD) {
 
   mDiffDelete.init(maxLOD * maxLOD);
   mDiffAdd.init(maxLOD * maxLOD);
+
+  mDivisionCutoff = 1.0f;
 }
 
 void QuadTree::setInitialState(uint16_t minLevel) {
@@ -139,7 +141,7 @@ void QuadTree::populate(
     float scale = glm::pow(2.0f, (float)(mMaxLOD - node->level));
     glm::vec2 center = offset + glm::vec2(scale / 2.0f);
 
-    float half = scale / 2.0f;
+    float half = scale * mDivisionCutoff;
     float maxDist2 = half * half * 2.0f;
     glm::vec2 diff = position - center;
     float dist2 = glm::dot(diff, diff);
@@ -170,7 +172,7 @@ void QuadTree::populateDiff(
     float scale = glm::pow(2.0f, (float)(mMaxLOD - node->level));
     glm::vec2 center = offset + glm::vec2(scale / 2.0f);
 
-    float half = scale / 2.0f;
+    float half = scale * mDivisionCutoff;
     float maxDist2 = half * half * 2.0f;
     glm::vec2 diff = position - center;
     float dist2 = glm::dot(diff, diff);

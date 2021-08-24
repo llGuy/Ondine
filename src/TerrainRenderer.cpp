@@ -66,7 +66,7 @@ void TerrainRenderer::init(
 
   mSnapshots.init(1000);
 
-  mQuadTree.init(2);
+  mQuadTree.init(4);
 
   mIsosurface.init(mQuadTree, graphicsContext);
 

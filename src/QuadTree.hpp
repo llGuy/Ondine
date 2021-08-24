@@ -94,6 +94,9 @@ private:
   uint32_t mAllocatedNodeCount;
   ArenaAllocator mNodeAllocator;
 
+  // Factor of the side of the node
+  float mDivisionCutoff;
+
   glm::ivec2 mFocalPoint;
 
   // Diff
