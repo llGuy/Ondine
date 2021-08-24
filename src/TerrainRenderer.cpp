@@ -537,7 +537,7 @@ void TerrainRenderer::updateChunkGroupsSnapshots(
     memset(mNullChunkGroup, 0, sizeof(ChunkGroup));
 
     for (int i = 0; i < mTransitionUpdateCount; ++i) {
-      ChunkGroup *group = mFullUpdates[i];
+      ChunkGroup *group = mTransitionUpdates[i];
       
       group->pushedToFullUpdates = 0;
       group->pushedToTransitionUpdates = 0;
@@ -1455,6 +1455,12 @@ int TerrainRenderer::generateMeshes(void *data) {
                 !lowest->pushedToTransitionUpdates) {
               lowest->pushedToTransitionUpdates = 1;
               trnd->mTransitionUpdates[trnd->mTransitionUpdateCount++] = lowest;
+
+              /*
+              trnd->mFullUpdates[trnd->mFullUpdateCount++] = lowest;
+              LOG_INFOV("Pushed group %d\n", trnd->mFullUpdateCount);
+              lowest->pushedToFullUpdates = 1;
+              */
             }
               
             auto nextKey = lowest->next;
@@ -1516,7 +1522,7 @@ int TerrainRenderer::generateMeshes(void *data) {
     group->transVoxelVertexCount = groupVertexCount;
     group->transVerticesMem = trnd->mGenerationVertexPool + vertexCounter;
 
-    LOG_INFOV("Chunk has %d trans vertices\n", group->transVoxelVertexCount);
+    LOG_INFOV("################################## Chunk has %d trans vertices\n", group->transVoxelVertexCount);
 
     vertexCounter += groupVertexCount;
   }
