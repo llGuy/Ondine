@@ -424,8 +424,12 @@ void Isosurface::freeIsoGroup(IsoGroup *group) {
   uint32_t hash = hashIsoGroupCoord(group->coord);
   mIsoGroupIndices.remove(hash);
 
-  mGPUVerticesAllocator.free(group->vertices);
-  mGPUVerticesAllocator.free(group->transVoxelVertices);
+  if (group->vertices.size()) {
+    mGPUVerticesAllocator.free(group->vertices);
+  }
+  if (group->transVoxelVertices.size()) {
+    mGPUVerticesAllocator.free(group->transVoxelVertices);
+  }
   mIsoGroups.remove(group->key);
 
   // This is temporary - TODO: Add pre-allocated space for chunk groups

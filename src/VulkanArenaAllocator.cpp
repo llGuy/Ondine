@@ -24,6 +24,17 @@ void VulkanArenaAllocator::init(
   setRangeTo(true, 0, maxBlockCount, 0);
 }
 
+#if 0
+#define DBG_CHECK_POINTER(blockIndex, block)            \
+  if (block) {                                          \
+    if (block->prev == 0 && block->base != 197) {       \
+      asm("int $3");                                    \
+    }                                                   \
+}
+#else
+#define DBG_CHECK_POINTER(b, b0)
+#endif
+
 VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
   uint32_t requiredBlocks = (uint32_t)glm::ceil(
     (float)size / (float)POOL_BLOCK_SIZE);
@@ -48,6 +59,12 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
 
   uint16_t allocationStart = prevBlock->next; // aka. current block
 
+  /*
+  if (allocationStart == 26) {
+    asm("int $3");
+  }
+  */
+
   /* The slot which gets returned back to the calling function */
   VulkanArenaSlot slot(
     mGPUPool,
@@ -57,6 +74,8 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
 
   /* This will no longer be a free block */
   auto *toOccupy = getBlock(allocationStart);
+
+  assert(toOccupy->isFree);
 
   /* Holds information about the free block which previously occupied the slot */
   FreeBlock oldFreeInfo = *toOccupy;
@@ -93,6 +112,8 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
       /* Set the next block's prev pointer to the previous block of old block */
       getBlock(prevBlock->next)->prev = oldFreeInfo.prev;
     }
+
+    DBG_CHECK_POINTER(prevBlockIndex, (prevBlock));
   }
   else {
     /* We need to create a new block */
@@ -121,6 +142,9 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
       getBlock(newBlock->next)->prev = newBlockIndex;
     }
 
+    DBG_CHECK_POINTER(prevBlockIndex, (prevBlock));
+    DBG_CHECK_POINTER(newBlockIndex, (newBlock));
+
     sortFrom(newBlockIndex);
   }
 
@@ -131,6 +155,14 @@ void VulkanArenaAllocator::free(VulkanArenaSlot &slot) {
   uint32_t blockIndex = slot.mOffset / POOL_BLOCK_SIZE;
   FreeBlock *newFreeBlock = &mBlocks[blockIndex];
 
+  assert(!newFreeBlock->isFree);
+
+  /*
+  if (blockIndex == 26) {
+    asm("int $3");
+  }
+  */
+
   bool createNewBlock = true;
 
   /* Is there a block before this new free one? */
@@ -140,6 +172,12 @@ void VulkanArenaAllocator::free(VulkanArenaSlot &slot) {
     /* Now is this block free? */
     if (prev->isFree) {
       uint16_t newBaseIndex = prev->base;
+
+      /*
+      if (newBaseIndex == 26) {
+        asm("int $3");
+      }
+      */
 
       /* Need to merge with the adjacent block before this one */
       setRangeTo(
@@ -176,6 +214,9 @@ void VulkanArenaAllocator::free(VulkanArenaSlot &slot) {
     newFreeBlock->isFree = true;
     newFreeBlock->base = blockIndex;
 
+    DBG_CHECK_POINTER(mLastFreeBlock, (last));
+    DBG_CHECK_POINTER(blockIndex, (newFreeBlock));
+
     mLastFreeBlock = blockIndex;
 
     sortFrom(blockIndex);
@@ -194,9 +235,11 @@ void VulkanArenaAllocator::debugLogState() {
   FreeBlock *freeBlock = getBlock(mFirstFreeBlock.next);
   
   while (freeBlock) {
+    /*
     LOG_INFOV(
       "%d free blocks blocks at %p\n",
       freeBlock->blockCount, (void *)index);
+    */
 
     totalFreeBlockCount += freeBlock->blockCount;
     freeSectionsCount++;
@@ -205,12 +248,14 @@ void VulkanArenaAllocator::debugLogState() {
     freeBlock = getBlock(freeBlock->next);
   }
 
+  /*
   LOG_INFOV(
     "There are %u free blocks left (%u bytes out of %u) in %u contiguous segments\n",
     totalFreeBlockCount,
     totalFreeBlockCount * POOL_BLOCK_SIZE,
     mAllocatedSize,
     freeSectionsCount);
+  */
 
   /*
   printf("\n");
@@ -271,12 +316,20 @@ void VulkanArenaAllocator::swapBlockOrder(uint16_t aIndex, uint16_t bIndex) {
   FreeBlock *after = getBlock(a->next);
   FreeBlock *before = getBlock(b->prev);
 
+  FreeBlock afterCopy;
+  FreeBlock beforeCopy;
+
   if (after) {
+    afterCopy = *after;
     after->prev = aIndex;
   }
   if (before) {
+    beforeCopy = *before;
     before->next = bIndex;
   }
+
+  DBG_CHECK_POINTER(a->next, (after));
+  DBG_CHECK_POINTER(b->prev, (before));
 }
 
 void VulkanArenaAllocator::sortFrom(uint16_t blockIndex) {
