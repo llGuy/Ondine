@@ -2,6 +2,7 @@
 #include "Camera.hpp"
 #include "Terrain.hpp"
 #include "Clipping.hpp"
+#include "ThreadPool.hpp"
 #include <glm/gtc/noise.hpp>
 #include "VulkanContext.hpp"
 #include "PlanetRenderer.hpp"
@@ -22,6 +23,9 @@ void Terrain::init() {
 
   mMaxVoxelDensity = (float)0xFFFF;
   mUpdated = false;
+
+  mModificationJob = Core::gThreadPool->createJob(runTerrainModification);
+  mModificationParams = new TerrainModificationParams;
 }
 
 Chunk *Terrain::getChunk(const glm::ivec3 &coord) {
@@ -225,6 +229,9 @@ void Terrain::makeIslands(
   glm::ivec2 start = (glm::ivec2)s;
   glm::ivec2 end = (glm::ivec2)e;
 
+  glm::ivec2 middle = (start + end) / 2;
+  float maxDist = glm::length((glm::vec2)middle - (glm::vec2)start);
+
   glm::vec2 range = (glm::vec2)(end - start);
 
   glm::ivec3 currentChunkCoord = worldToChunkCoord(
@@ -232,10 +239,12 @@ void Terrain::makeIslands(
   Chunk *currentChunk = getChunk(currentChunkCoord);
   markChunkForUpdate(currentChunk);
 
-  int32_t minHeight = (int32_t)seaLevel - 5;
+  int32_t minHeight = (int32_t)seaLevel - 2;
 
   for (int32_t z = start.y; z < end.y; ++z) {
     for (int32_t x = start.x; x < end.x; ++x) {
+      float dist = glm::length(glm::vec2(x, z) - (glm::vec2)middle) / maxDist;
+
       float height = seaLevel;
       float freq = baseFrequency;
       float amp = baseAmplitude;
@@ -245,14 +254,14 @@ void Terrain::makeIslands(
           float(x - start.x) / (float)range.x,
           float(z - start.y) / (float)range.y) * freq;
 
-        float noise = glm::perlin(perlinCoord);
+        float noise = glm::perlin(perlinCoord + glm::vec2(10));
         height += (noise * amp);
 
         amp += persistance;
         freq *= lacunarity;
       }
 
-      height = fmax(height, minHeight);
+      height = fmax(height, minHeight) * (1.0f - dist);
 
       for (int32_t y = (int32_t)minHeight; y < (int32_t)height; ++y) {
         glm::ivec3 position = glm::ivec3(x, y, z);
@@ -267,6 +276,17 @@ void Terrain::makeIslands(
             chunkOriginDiff.z >= 0 && chunkOriginDiff.z < CHUNK_DIM) {
           currentChunk->voxels[getVoxelIndex(chunkOriginDiff)].density = 
             (uint16_t)(mMaxVoxelDensity) * proportion;
+
+          /*
+          if (y < seaLevel + 4) {
+            currentChunk->voxels[getVoxelIndex(chunkOriginDiff)].color =
+              v3ColorToB8(glm::vec3(242.0f, 209.0f, 107.0f) / 255.0f);
+          }
+          else {
+            currentChunk->voxels[getVoxelIndex(chunkOriginDiff)].color =
+              v3ColorToB8(glm::vec3(0.2f, 0.9f, 0.3f));
+          }
+          */
         }
         else {
           glm::ivec3 c = worldToChunkCoord(position);
@@ -289,6 +309,27 @@ void Terrain::makeIslands(
   mUpdated = true;
 }
 
+void Terrain::queuePaint(
+  glm::vec3 position,
+  glm::vec3 direction,
+  float radius,
+  float strength) {
+  // position /= (float)mTerrainScale;
+
+  // For now, only allow 1 action to be queued
+  if (!mLockedActionQueue &&
+      Core::gThreadPool->isJobFinished(mModificationJob)) {
+    mModificationParams->terrain = this;
+    mModificationParams->type = TerrainModificationType::DensityPaint;
+    mModificationParams->dp.rayStart = position;
+    mModificationParams->dp.rayDirection = direction;
+    mModificationParams->dp.radius = radius;
+    mModificationParams->dp.strength = strength;
+
+    Core::gThreadPool->startJob(mModificationJob, mModificationParams);
+  }
+}
+
 void Terrain::paint(
   glm::vec3 position,
   glm::vec3 direction,
@@ -296,7 +337,7 @@ void Terrain::paint(
   float strength) {
   position /= (float)mTerrainScale;
 
-  glm::vec3 step = glm::normalize(direction) * 2.0f;
+  glm::vec3 step = glm::normalize(direction);
 
   const uint32_t MAX_STEP_COUNT = 50;
 
@@ -401,13 +442,21 @@ void Terrain::setVoxelNormal(
   Chunk *chunk,
   const glm::ivec3 &voxelCoord,
   const glm::vec3 &grad) {
-  glm::vec3 normal = -glm::normalize(grad);
-  chunk->voxels[getVoxelIndex(voxelCoord)].normalX =
-    (int)(normal.x * 1000.0f);
-  chunk->voxels[getVoxelIndex(voxelCoord)].normalY =
-    (int)(normal.y * 1000.0f);
-  chunk->voxels[getVoxelIndex(voxelCoord)].normalZ =
-    (int)(normal.z * 1000.0f);
+  if (glm::dot(grad, grad) == 0.0f) {
+    chunk->voxels[getVoxelIndex(voxelCoord)].normalX = 0;
+    chunk->voxels[getVoxelIndex(voxelCoord)].normalY = 0;
+    chunk->voxels[getVoxelIndex(voxelCoord)].normalZ = 0;
+  }
+  else {
+    glm::vec3 normal = -glm::normalize(grad);
+
+    chunk->voxels[getVoxelIndex(voxelCoord)].normalX =
+      (int)(normal.x * 1000.0f);
+    chunk->voxels[getVoxelIndex(voxelCoord)].normalY =
+      (int)(normal.y * 1000.0f);
+    chunk->voxels[getVoxelIndex(voxelCoord)].normalZ =
+      (int)(normal.z * 1000.0f);
+  }
 }
 
 void Terrain::generateVoxelNormals() {
@@ -577,6 +626,21 @@ const Voxel &Terrain::getVoxel(const glm::vec3 &position) const {
     static Voxel nullVoxel = {};
     return nullVoxel;
   }
+}
+
+int Terrain::runTerrainModification(void *data) {
+  auto *params = (TerrainModificationParams *)data;
+  Terrain *terrain = params->terrain;
+
+  // TODD: Add support for different types of operations
+  
+  terrain->paint(
+    params->dp.rayStart,
+    params->dp.rayDirection,
+    params->dp.radius,
+    params->dp.strength);
+
+  return 0;
 }
 
 }

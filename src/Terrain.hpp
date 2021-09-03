@@ -2,6 +2,7 @@
 
 #include "Chunk.hpp"
 #include "Buffer.hpp"
+#include "Worker.hpp"
 #include "FastMap.hpp"
 #include "QuadTree.hpp"
 #include "VulkanArenaAllocator.hpp"
@@ -31,7 +32,14 @@ public:
     float baseAmplitude, float baseFrequency,
     glm::vec2 s, glm::vec2 e);
   void makePlane(float radius, glm::vec3 center, float intensity = 1.0f);
+
   void paint(
+    glm::vec3 position,
+    glm::vec3 direction,
+    float radius,
+    float strength);
+
+  void queuePaint(
     glm::vec3 position,
     glm::vec3 direction,
     float radius,
@@ -83,9 +91,42 @@ private:
     const glm::vec3 &grad);
 
   void markChunkForUpdate(Chunk *chunk);
-
   void addToFlatChunkIndices(Chunk *chunk);
   Chunk *getFirstFlatChunk(glm::ivec2 flatCoord) const;
+
+  enum TerrainModificationType {
+    DensityPaint,
+    ColorPaint,
+    AddSphere
+    /* ... */
+  };
+
+  struct TerrainModificationParams {
+    Terrain *terrain;
+    TerrainModificationType type;
+
+    union {
+      struct {
+        glm::vec3 rayStart;
+        glm::vec3 rayDirection;
+        float radius;
+        float strength;
+      } dp;
+
+      struct {
+        glm::vec3 rayStart;
+        glm::vec3 rayDirection;
+      } cp;
+
+      struct {
+        glm::vec3 centre;
+        float radius;
+        // Color information
+      } as;
+    };
+  };
+
+  static int runTerrainModification(void *data);
 
 private:
   static constexpr uint32_t MAX_DENSITY = 0xFFFF;
@@ -103,7 +144,12 @@ private:
   // Points to a linked list of chunks all of which are at a certain x-z
   FastMap<uint32_t, MAX_CHUNKS, 30, 10> mFlatChunkIndices;
 
+  Core::JobID mModificationJob;
+  TerrainModificationParams *mModificationParams;
+
   bool mUpdated;
+  // The terrain renderer may toggle this if it decides to update isogroups
+  bool mLockedActionQueue;
 
   friend class TerrainRenderer;
   friend class Isosurface;

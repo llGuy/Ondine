@@ -40,8 +40,8 @@ void Renderer3D::init() {
 
     // Angular radius of the Sun (radians)
     mPlanetProperties.solarAngularRadius = 0.004695f;
-    mPlanetProperties.bottomRadius = 6360.0f / 6.0f;
-    mPlanetProperties.topRadius = 6420.0f / 6.0f;
+    mPlanetProperties.bottomRadius = 6360.0f / 2.0f;
+    mPlanetProperties.topRadius = 6420.0f / 2.0f;
 
     mPlanetProperties.rayleighDensity.layers[0] =
       DensityLayer { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
@@ -79,7 +79,10 @@ void Renderer3D::init() {
   mDeferredLighting.init(
     mGraphicsContext,
     {pipelineViewport.width, pipelineViewport.height});
-  mClipping.init(mGraphicsContext, 0.0f, mPlanetProperties.bottomRadius);
+  mClipping.init(
+    mGraphicsContext,
+    -1.0f,
+    mPlanetProperties.bottomRadius + 1.0f);
 
   { // Prepare scene resources
     /* Create model */

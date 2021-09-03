@@ -21,7 +21,7 @@ GameView::GameView(
   { // Set up scene objects
     auto handle1 = mGameScene->createSceneObject("TaurusModelRenderMethod"); 
     auto &sceneObj1 = mGameScene->getSceneObject(handle1);
-    sceneObj1.position = glm::vec3(0.0f, 80.0f, 0.0f);
+    sceneObj1.position = glm::vec3(0.0f, 140.0f, 0.0f);
     sceneObj1.scale = glm::vec3(10.0f);
     sceneObj1.rotation = glm::angleAxis(
       glm::radians(30.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
@@ -29,21 +29,21 @@ GameView::GameView(
 
     auto handle2 = mGameScene->createSceneObject("SphereModelRenderMethod"); 
     auto &sceneObj2 = mGameScene->getSceneObject(handle2);
-    sceneObj2.position = glm::vec3(30.0f, 100.0f, 0.0f);
+    sceneObj2.position = glm::vec3(30.0f, 150.0f, 0.0f);
     sceneObj2.scale = glm::vec3(5.0f);
     sceneObj2.rotation = glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
     sceneObj2.constructTransform();
 
     auto handle3 = mGameScene->createSceneObject("SphereModelRenderMethod"); 
     auto &sceneObj3 = mGameScene->getSceneObject(handle3);
-    sceneObj3.position = glm::vec3(0.0f, 55.0f, -30.0f);
+    sceneObj3.position = glm::vec3(0.0f, 105.0f, -30.0f);
     sceneObj3.scale = glm::vec3(5.0f);
     sceneObj3.rotation = glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
     sceneObj3.constructTransform();
 
     auto handle4 = mGameScene->createSceneObject("SphereModelRenderMethod"); 
     auto &sceneObj4 = mGameScene->getSceneObject(handle4);
-    sceneObj4.position = glm::vec3(-100.0f, 40.0f, 100.0f);
+    sceneObj4.position = glm::vec3(-100.0f, 90.0f, 100.0f);
     sceneObj4.scale = glm::vec3(20.0f);
     sceneObj4.rotation = glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
     sceneObj4.constructTransform();
@@ -75,7 +75,7 @@ GameView::GameView(
 
   { // Set camera properties
     mGameScene->camera.fov = glm::radians(50.0f);
-    mGameScene->camera.wPosition = glm::vec3(100.0f, 90.0f, -180.0f);
+    mGameScene->camera.wPosition = glm::vec3(100.0f, 140.0f, -180.0f);
     mGameScene->camera.wViewDirection =
       glm::normalize(glm::vec3(-0.3f, -0.1f, 1.0f));
     mGameScene->camera.wUp = glm::vec3(0.0f, 1.0f, 0.0f);

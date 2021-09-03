@@ -37,11 +37,37 @@ struct Chunk {
   NumericMapKey chunkGroupKey;
 };
 
-inline uint32_t getVoxelIndex(int x, int y, int z) {
+enum { B8_R_MAX = 0b111, B8_G_MAX = 0b111, B8_B_MAX = 0b11 };
+
+constexpr inline glm::vec3 b8ColorToV3(uint8_t color) {
+  uint8_t rb8 = color >> 5;
+  uint8_t gb8 = (color >> 2) & 0b111;
+  uint8_t bb8 = (color) & 0b11;
+
+  float rf32 = (float)(rb8) / (float)(B8_R_MAX);
+  float gf32 = (float)(gb8) / (float)(B8_G_MAX);
+  float bf32 = (float)(bb8) / (float)(B8_B_MAX);
+
+  return glm::vec3(rf32, gf32, bf32);
+}
+
+constexpr inline uint8_t v3ColorToB8(const glm::vec3 &color) {
+  float r = color.r * (float)(B8_R_MAX);
+  float g = color.g * (float)(B8_G_MAX);
+  float b = color.b * (float)(B8_B_MAX);
+
+  return ((uint8_t)r << 5) + ((uint8_t)g << 2) + ((uint8_t)b);
+}
+
+constexpr inline uint8_t b8vColorToB8(uint8_t r, uint8_t g, uint8_t b) {
+  return (r << 5) + (g << 2) + b;
+}
+
+constexpr inline uint32_t getVoxelIndex(int x, int y, int z) {
   return z * (CHUNK_DIM * CHUNK_DIM) + y * CHUNK_DIM + x;
 }
 
-inline uint32_t getVoxelIndex(const glm::ivec3 &coord) {
+constexpr inline uint32_t getVoxelIndex(const glm::ivec3 &coord) {
   return coord.z * (CHUNK_DIM * CHUNK_DIM) +
     coord.y * CHUNK_DIM + coord.x;
 }

@@ -39,4 +39,10 @@ vec3 readNormalFromMap(vec2 uvs, sampler2D normalMap) {
   return normalize(normal);
 }
 
+vec3 nanSafeNormalize(vec3 v3) {
+  float len = length(v3);
+
+  return (len == 0.0) ? vec3(0.0) : v3 / len;
+}
+
 #endif

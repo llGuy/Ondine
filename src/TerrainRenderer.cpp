@@ -401,14 +401,14 @@ void TerrainRenderer::sync(
     mQuadTree,
     glm::vec2(camera.wPosition.x, camera.wPosition.z));
 
-  if (Core::gThreadPool->isJobFinished(mGenerationJob)) {
+  if (Core::gThreadPool->isJobFinished(mGenerationJob) &&
+      Core::gThreadPool->isJobFinished(terrain.mModificationJob)) {
     /*
        If we were waiting on a new snapshot of chunk groups, we need to make
        sure to update the snapshots.
     */
     if (mIsWaitingForSnapshots) {
       mIsWaitingForSnapshots = false;
-      LOG_INFO("Got snapshots\n");
       updateChunkGroupsSnapshots(commandBuffer);
     }
 
@@ -426,6 +426,11 @@ void TerrainRenderer::sync(
         mParams->terrain = &terrain;
         mParams->quadTree = &mQuadTree;
         Core::gThreadPool->startJob(mGenerationJob, mParams);
+
+        terrain.mLockedActionQueue = true;
+      }
+      else {
+        terrain.mLockedActionQueue = false;
       }
     }
   }

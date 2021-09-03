@@ -17,16 +17,12 @@ void Worker::runtime() {
     mReady.wait(lock, [this] {return mJobRequested;});
     lock.unlock();
 
-    LOG_INFOV("Worker %d has started a job\n", mID);
-
     int returnCode = mJob.proc(mJob.parameters);
 
     lock.lock();
     mJobRequested = false;
     mReturnCode = returnCode;
     lock.unlock();
-
-    LOG_INFOV("Worker %d has finished a job\n", mID);
   }
 }
 

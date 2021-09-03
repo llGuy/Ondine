@@ -131,8 +131,11 @@ void main() {
 
   vec3 radianceBaseColor = vec3(0.0);
 
-  if (wPosition.a == 1.0) {
-    vec4 radiance = getPointRadianceBRDF(0.8, 0.0, gbuffer);
+  if (wPosition.a >= 1.0) {
+    float roughness = gbuffer.wNormal.w;
+    float metalness = gbuffer.wPosition.w - 1.0;
+
+    vec4 radiance = getPointRadianceBRDF(roughness, metalness, gbuffer);
     pointRadiance = radiance.rgb;
     pointAlpha = radiance.a;
 

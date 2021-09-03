@@ -384,10 +384,6 @@ glm::ivec3 Isosurface::getIsoGroupCoord(
   glm::ivec3 coord = glm::ivec3(node.offset.x, chunkCoord.y, node.offset.y);
   // Round down the nearest 2^node.level
 
-  if (coord.y < 0 && node.level < 4) {
-    printf("Bug\n");
-  }
-
   int width = pow(2, quadTree.maxLOD() - node.level);
 
   coord.y = (int)(glm::floor(
@@ -808,6 +804,10 @@ void Isosurface::updateVoxelCell(
     glm::vec3 normal = interpolate(
       normal0, normal1, interpolatedVoxelValues);
 
+    if (glm::dot(normal, normal) != 0.0f) {
+      normal = glm::normalize(normal);
+    }
+
     verts[i] = {vertex, normal};
   }
 
@@ -1040,7 +1040,9 @@ void Isosurface::updateTransVoxelCell(
       glm::vec3 normal = interpolate(
         normal0, normal1, interpolatedVoxelValues);
 
-      glm::vec3 diff = vertex - (glm::vec3)coord;
+      if (glm::dot(normal, normal) != 0.0f) {
+        normal = glm::normalize(normal);
+      }
 
       verts[i] = {vertex, normal};
     }

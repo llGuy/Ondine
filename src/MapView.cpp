@@ -17,20 +17,55 @@ MapView::MapView(
   mOnEvent(cursorChange);
 
   mMapScene = renderer.createScene();
-  mMapScene->debug.renderChunkOutlines = 1;
-  mMapScene->debug.wireframeTerrain = 1;
-  mMapScene->debug.renderQuadTree = 1;
+  mMapScene->debug.renderChunkOutlines = 0;
+  mMapScene->debug.wireframeTerrain = 0;
+  mMapScene->debug.renderQuadTree = 0;
   mMapScene->terrain.init();
 
+  /*
   mMapScene->terrain.makeSphere(500.0f, glm::vec3(000.0f, 580.0f, 100.0f));
   mMapScene->terrain.makeSphere(250.0f, glm::vec3(-350.0f, 380.0f, 0.0f));
 
+  mMapScene->terrain.makeSphere(500.0f, glm::vec3(1000.0f, 580.0f, 1100.0f));
+  */
+  
   mMapScene->terrain.makeIslands(
-    50, 4, 0.1f, 1.4f, 20.0f, 1.0f,
-    glm::ivec2(-250, -250) * 5,
-    glm::ivec2(250, 250) * 5);
+    100, 5, 0.1f, 1.4f, 20.0f, 0.8f,
+    glm::ivec2(-250, -250) * 7,
+    glm::ivec2(250, 250) * 7);
 
   mMapScene->terrain.generateVoxelNormals();
+
+  { // Set up scene objects
+    auto handle1 = mMapScene->createSceneObject("TaurusModelRenderMethod"); 
+    auto &sceneObj1 = mMapScene->getSceneObject(handle1);
+    sceneObj1.position = glm::vec3(1051.0f, 140.0f, 605.0f);
+    sceneObj1.scale = glm::vec3(10.0f);
+    sceneObj1.rotation = glm::angleAxis(
+      glm::radians(30.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+    sceneObj1.constructTransform();
+
+    auto handle2 = mMapScene->createSceneObject("SphereModelRenderMethod"); 
+    auto &sceneObj2 = mMapScene->getSceneObject(handle2);
+    sceneObj2.position = glm::vec3(1081.0f, 150.0f, 605.0f);
+    sceneObj2.scale = glm::vec3(5.0f);
+    sceneObj2.rotation = glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    sceneObj2.constructTransform();
+
+    auto handle3 = mMapScene->createSceneObject("SphereModelRenderMethod"); 
+    auto &sceneObj3 = mMapScene->getSceneObject(handle3);
+    sceneObj3.position = glm::vec3(1051.0f, 105.0f, 575.0f);
+    sceneObj3.scale = glm::vec3(5.0f);
+    sceneObj3.rotation = glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+    sceneObj3.constructTransform();
+
+    auto handle4 = mMapScene->createSceneObject("SphereModelRenderMethod"); 
+    auto &sceneObj4 = mMapScene->getSceneObject(handle4);
+    sceneObj4.position = glm::vec3(951.0f, 90.0f, 705.0f);
+    sceneObj4.scale = glm::vec3(20.0f);
+    sceneObj4.rotation = glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+    sceneObj4.constructTransform();
+  }
 
   renderer.bindScene(mMapScene);
 
@@ -61,9 +96,9 @@ MapView::MapView(
 
   { // Set camera properties
     mMapScene->camera.fov = glm::radians(50.0f);
-    mMapScene->camera.wPosition = glm::vec3(0.0f, 90.0f, 0.0f);
+    mMapScene->camera.wPosition = glm::vec3(1122.0f, 131.0f, 452.0f);
     mMapScene->camera.wViewDirection =
-      glm::normalize(glm::vec3(0.5f, -0.1f, 0.8f));
+      glm::normalize(glm::vec3(-0.428f, -0.11f, 0.897f));
     mMapScene->camera.wUp = glm::vec3(0.0f, 1.0f, 0.0f);
   }
 }
@@ -207,7 +242,7 @@ void MapView::processGameInput(
 
   if (inputTracker.mouseButton(Core::MouseButton::Right).isDown) {
     // mMapScene->terrain.makeSphere(100.0f, mMapScene->camera.wPosition);
-    mMapScene->terrain.paint(
+    mMapScene->terrain.queuePaint(
       mMapScene->camera.wPosition,
       mMapScene->camera.wViewDirection,
       100.0f,

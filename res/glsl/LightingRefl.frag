@@ -208,6 +208,7 @@ vec4 getReflectivePointRadiancePseudoBRDF(
   // Can avoid calling length by storing the lengths to points
   float diff = length(surfaceGBuffer.wPosition.xyz - gbuffer.wPosition.xyz);
   float murkiness = clamp(diff / 10.0, 0, 1);
+  // float murkiness = 1.0;
   // return vec4(vec3(murkiness), 1.0);
 
   return mix(surfaceGBuffer.albedo, vec4(pointRadiance, 1.0), murkiness);
@@ -389,7 +390,7 @@ RayIntersection raySphereIntersection(
   return intersection;
 }
 
-const float OCEAN_HEIGHT = 0.05;
+const float OCEAN_HEIGHT = 0.1;
 const float OCEAN_RADIANCE_FACTOR = 0.08;
 const float OCEAN_ROUGHNESS = 0.01;
 const float OCEAN_METAL = 0.7;
@@ -467,7 +468,7 @@ void main() {
     texture(uPosition, inUVs),
     texture(uAlbedo, inUVs));
 
-  if (gbuffer.wNormal.w >= -0.1) {
+  if (gbuffer.wNormal.w >= 0.0) {
     vec3 viewRay = normalize(inViewRay);
 
     /* Light contribution from the surface */
@@ -488,7 +489,11 @@ void main() {
 
     vec3 radianceBaseColor = vec3(0.0);
 
-    if (gbuffer.wPosition.a == 1.0) {
+    // Checking if this was a rasterized object
+    if (gbuffer.wPosition.a >= 1.0) {
+      float roughness = gbuffer.wNormal.w;
+      float metalness = gbuffer.wPosition.w - 1.0;
+
       // Check if this point is further away than the ocean
       vec4 vPosition = uCamera.camera.view * vec4(
         gbuffer.wPosition.xyz / 1000.0, 1.0);
@@ -496,7 +501,7 @@ void main() {
         oceanIntersection.wIntersectionPoint, 1.0);
 
       // This is a rendered object
-      vec4 rasterizedRadiance = getPointRadianceBRDF(0.8, 0.0, gbuffer);
+      vec4 rasterizedRadiance = getPointRadianceBRDF(roughness, metalness, gbuffer);
       gbuffer.albedo = rasterizedRadiance;
 
       if (vPosition.z < vOceanPosition.z && oceanIntersection.didIntersect) {
@@ -593,6 +598,6 @@ void main() {
     outColor.a = texture(uBRDFLutTexture, vec2(0.0)).r;
   }
   else {
-    outColor = vec4(gbuffer.albedo.rgb, 1.0);
+    outColor = gbuffer.albedo;
   }
 }

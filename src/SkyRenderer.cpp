@@ -70,8 +70,8 @@ void SkyRenderer::initSkyProperties(VulkanContext &graphicsContext) {
   mSkyProperties.solarIrradiance = glm::vec3(1.474f, 1.8504f, 1.91198f);
   // Angular radius of the Sun (radians)
   mSkyProperties.solarAngularRadius = 0.004675f;
-  mSkyProperties.bottomRadius = 6360.0f;
-  mSkyProperties.topRadius = 6420.0f;
+  mSkyProperties.bottomRadius = 6360.0f / 2.0f;
+  mSkyProperties.topRadius = 6420.0f / 2.0f;
 
   mSkyProperties.rayleighDensity.layers[0] =
     DensityLayer { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };

@@ -1,5 +1,6 @@
 #version 450
 
+#include "Utils.glsl"
 #include "Clipping.glsl"
 #include "CameraDef.glsl"
 #include "PlanetDef.glsl"
@@ -26,6 +27,9 @@ layout (set = 2, binding = 0) uniform ClippingUniform {
   Clipping clipping;
 } uClipping;
 
+const float ROUGHNESS = 0.8;
+const float METALNESS = 0.0;
+
 void main() {
   // Get distance from center of planet
   vec3 diff = inFS.wPosition.xyz / 1000.0 - uPlanet.planet.wPlanetCenter;
@@ -38,9 +42,9 @@ void main() {
     discard;
   }
   else {
-    outAlbedo = vec4(1.0, 1.0, 1.0, 0.0);
-    outNormal = vec4(normalize(inFS.wNormal.xyz), 1.0);
+    outAlbedo = vec4(0.8, 0.9, 0.85, 0.0);
+    outNormal = vec4(nanSafeNormalize(inFS.wNormal.xyz), ROUGHNESS);
     outPosition = inFS.wPosition;
-    outPosition.a = 1.0;
+    outPosition.a = 1.0 + METALNESS;
   }
 }

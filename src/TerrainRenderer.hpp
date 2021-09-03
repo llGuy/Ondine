@@ -106,7 +106,6 @@ private:
 
   // Temporary
   bool mUpdateQuadTree;
-
   bool mIsWaitingForSnapshots;
 
   friend class View::EditorView;

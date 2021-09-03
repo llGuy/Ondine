@@ -24,6 +24,11 @@ vec3 fresnelRoughness(float ndotv, vec3 base, float roughness) {
     pow(1.0f - ndotv, 5.0f);
 }
 
+// The W component of the normal vector is the roughness
+// The W component of the position vector indicates whether the pixel
+// was rasterized and needs lighting to be done on it.
+// In which case, the w = 1 + metalness
+// <=> metalness = w - 1
 struct GBufferData {
   vec4 wNormal;
   float depth;
