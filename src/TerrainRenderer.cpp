@@ -419,7 +419,7 @@ void TerrainRenderer::sync(
     /* if (mUpdateQuadTree) */ {
       mQuadTree.setFocalPoint(pos);
 
-      if (mQuadTree.mDiffAdd.size()) {
+      if (mQuadTree.mDiffAdd.size() || terrain.mUpdatedChunks.size) {
         mUpdateQuadTree = false;
         mIsWaitingForSnapshots = true;
         mParams->terrainRenderer = this;

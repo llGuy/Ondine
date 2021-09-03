@@ -53,10 +53,14 @@ void Isosurface::bindToTerrain(const Terrain &terrain) {
 void Isosurface::prepareForUpdate(QuadTree &quadTree, Terrain &terrain) {
   mScale = terrain.mTerrainScale;
 
+  // Generates normals for updated chunks only
+  terrain.generateVoxelNormals();
+
   /* 
      Step #1: Figure out which chunk groups to delete and to create
      Step #2: Figure out which chunk groups to update the meshes for
-     Step #3: Update those damn chunk groups
+     Step #3: Figure out which chunk groups contained modified chunks
+     Step #4: Update those damn chunk groups
      (BONUS) Make step #2 distinguish between chunk groups which require
      just mesh transitions or everything to be updated
   */
@@ -220,6 +224,51 @@ void Isosurface::prepareForUpdate(QuadTree &quadTree, Terrain &terrain) {
     }
   }
 
+  // For isogroups containing updated chunks, make sure to update voxel values
+  for (int i = 0; i < terrain.mUpdatedChunks.size; ++i) {
+    Chunk *chunk = terrain.mLoadedChunks[terrain.mUpdatedChunks[i]];
+
+    glm::ivec3 groupCoord = getIsoGroupCoord(
+      quadTree, chunk->chunkCoord);
+
+    IsoGroup *group = getIsoGroup(groupCoord);
+
+    if (!group->pushedToFullUpdates) {
+      mFullUpdates[mFullUpdateCount++] = group;
+      group->pushedToFullUpdates = 1;
+
+      glm::vec2 quadTreeCoord = glm::vec2(groupCoord.x, groupCoord.z) +
+        glm::vec2(glm::pow(2.0f, quadTree.mMaxLOD - 1));
+
+      auto nodeInfo = quadTree.getNodeInfo(quadTreeCoord);
+
+      group->level = nodeInfo.level;
+      chunk->chunkGroupKey = group->key;
+
+      int stride = (int)pow(2, quadTree.mMaxLOD - nodeInfo.level);
+      float width = stride;
+            
+      glm::vec3 chunkCoordOffset = (glm::vec3)(
+        chunk->chunkCoord - groupCoord);
+
+      glm::vec3 start = (float)CHUNK_DIM * (chunkCoordOffset / width);
+
+      for (int z = 0 ; z < CHUNK_DIM / stride; ++z) {
+        for (int y = 0 ; y < CHUNK_DIM / stride; ++y) {
+          for (int x = 0 ; x < CHUNK_DIM / stride; ++x) {
+            glm::ivec3 coord = glm::ivec3(x, y, z);
+
+            uint32_t dstVIndex = getVoxelIndex(coord + (glm::ivec3)start);
+            uint32_t srcVIndex = getVoxelIndex(coord * stride);
+
+            group->voxels[dstVIndex] = chunk->voxels[srcVIndex];
+          }
+        }
+      }
+    }
+  }
+
+  terrain.clearUpdatedChunks();
   quadTree.clearDiff();
 
   Voxel surfaceDensity = {(uint16_t)30000};

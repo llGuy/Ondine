@@ -460,6 +460,8 @@ void Terrain::setVoxelNormal(
 }
 
 void Terrain::generateVoxelNormals() {
+  LOG_INFOV("Generating normals for %d chunks\n", mUpdatedChunks.size);
+
   for (int i = 0; i < mUpdatedChunks.size; ++i) {
     uint32_t chunkIndex = mUpdatedChunks[i];
     Chunk *chunk = mLoadedChunks[chunkIndex];
@@ -581,6 +583,15 @@ void Terrain::markChunkForUpdate(Chunk *chunk) {
     mUpdatedChunks[mUpdatedChunks.size++] = *mChunkIndices.get(
       hashChunkCoord(chunk->chunkCoord));
   }
+}
+
+void Terrain::clearUpdatedChunks() {
+  for (int i = 0; i < mUpdatedChunks.size; ++i) {
+    Chunk *chunk = mLoadedChunks[mUpdatedChunks[i]];
+    chunk->needsUpdating = false;
+  }
+
+  mUpdatedChunks.size = 0;
 }
 
 void Terrain::addToFlatChunkIndices(Chunk *chunk) {

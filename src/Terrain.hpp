@@ -59,6 +59,8 @@ public:
 
   void generateVoxelNormals();
 
+  void clearUpdatedChunks();
+
 private:
   template <typename Proc>
   void apply3D(int start, int end, Proc applyProc) {

@@ -34,7 +34,7 @@ MapView::MapView(
     glm::ivec2(-250, -250) * 7,
     glm::ivec2(250, 250) * 7);
 
-  mMapScene->terrain.generateVoxelNormals();
+  // mMapScene->terrain.generateVoxelNormals();
 
   { // Set up scene objects
     auto handle1 = mMapScene->createSceneObject("TaurusModelRenderMethod"); 
@@ -245,7 +245,7 @@ void MapView::processGameInput(
     mMapScene->terrain.queuePaint(
       mMapScene->camera.wPosition,
       mMapScene->camera.wViewDirection,
-      100.0f,
+      180.0f,
       0.1f);
   }
 }
