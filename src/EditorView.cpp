@@ -22,7 +22,7 @@ EditorView::EditorView(
   : mIsDockLayoutInitialised(false),
     mViewportResolution{0, 0},
     mFocusedWindow(EditorWindow::None),
-    mBoundViewport(ViewportType::GameEditor),
+    mBoundViewport(ViewportType::MapEditor),
     mRenderer3D(renderer3D),
     mOnEvent(onEventProc) {
   windowName(EditorWindow::Graphics) = "Graphics";
