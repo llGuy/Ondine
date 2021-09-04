@@ -11,7 +11,8 @@ enum class EventCategory {
   Graphics,
   Gameplay,
   Debug,
-  File
+  File,
+  Editor
 };
 
 enum class EventType {
@@ -24,6 +25,7 @@ enum class EventType {
   Breakpoint,
   PathChanged,
   ViewHierarchyChange,
+  TerrainToolChange,
   Invalid
 };
 

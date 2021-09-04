@@ -39,6 +39,12 @@ public:
     float radius,
     float strength);
 
+  void paintColor(
+    glm::vec3 position,
+    glm::vec3 direction,
+    float radius,
+    const glm::vec3 &color);
+
   void queuePaint(
     glm::vec3 position,
     glm::vec3 direction,

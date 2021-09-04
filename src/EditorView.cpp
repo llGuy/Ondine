@@ -1,16 +1,17 @@
 #include <imgui.h>
-#include "Application.hpp"
 #include "Utils.hpp"
+#include "IOEvent.hpp"
+#include "FileSystem.hpp"
+#include "EditorView.hpp"
+#include "Application.hpp"
+#include "EditorEvent.hpp"
 #include <imgui_internal.h>
 #include "RendererDebug.hpp"
-#include "IOEvent.hpp"
+#include "GraphicsEvent.hpp"
+#include "VulkanContext.hpp"
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 #include <glm/gtx/string_cast.hpp>
-#include "FileSystem.hpp"
-#include "EditorView.hpp"
-#include "GraphicsEvent.hpp"
-#include "VulkanContext.hpp"
 
 namespace Ondine::View {
 
@@ -125,7 +126,7 @@ void EditorView::render(ViewRenderParams &params) {
 
       ImGuiID viewport;
       ImGuiID general = ImGui::DockBuilderSplitNode(
-        top, ImGuiDir_Left, 0.3f, NULL, &viewport);
+        top, ImGuiDir_Right, 0.3f, NULL, &viewport);
 
       ImGuiID game = ImGui::DockBuilderSplitNode(
         general, ImGuiDir_Down, 0.5f, NULL, &general);
@@ -546,7 +547,9 @@ void EditorView::renderTerrainWindow() {
 
     if (ImGui::Combo(
           "Tool", &currentItem, options, sizeof(options) / sizeof(options[0]))) {
-      
+      auto *toolChange = lnEmplaceAlloc<Core::EventTerrainToolChange>();
+      toolChange->terrainTool = (Core::TerrainTool)currentItem;
+      mOnEvent(toolChange);
     }
 
     static glm::vec3 paintColor = glm::vec3(0.0f);
@@ -592,21 +595,21 @@ void EditorView::renderToolsWindow() {
 
       ImGui::Separator();
 
-      ImGui::Text("Blocks free: %u", totalFreeBlockCount);
+      ImGui::LabelText("Blocks free", "%u", totalFreeBlockCount);
       auto bytesFree =
         totalFreeBlockCount * Graphics::VulkanArenaAllocator::POOL_BLOCK_SIZE;
       auto kilobytesFree = bytesFree / 1024u;
       auto megabytesFree = kilobytesFree / 1024u;
 
-      ImGui::Text("Bytes free: %u", bytesFree);
-      ImGui::Text("Kilobytes free: %u", kilobytesFree);
-      ImGui::Text("Megabytes free: %u", megabytesFree);
-      ImGui::Text("Number of contiguous free segments: %u", freeSectionsCount);
+      ImGui::LabelText("Bytes free", "%u", bytesFree);
+      ImGui::LabelText("Kilobytes free", "%u", kilobytesFree);
+      ImGui::LabelText("Megabytes free", "%u", megabytesFree);
+      ImGui::LabelText("Number of contiguous free segments", "%u", freeSectionsCount);
 
       ImGui::Separator();
 
-      ImGui::Text(
-        "Allocated %d nodes",
+      ImGui::LabelText(
+        "Allocated nodes", "%d",
         terrainRenderer.mQuadTree.mAllocatedNodeCount);
 
       auto *node = terrainRenderer.mQuadTree.getDeepestNode(
@@ -618,14 +621,14 @@ void EditorView::renderToolsWindow() {
 
       ImGui::Separator();
       if (node) {
-        ImGui::Text("Inside child node: %d", node->index);
-        ImGui::Text("Node level: %d", node->level);
+        ImGui::LabelText("Inside child node", "%d", node->index);
+        ImGui::LabelText("Node level", "%d", node->level);
 
         ImGui::Separator();
       }
 
-      ImGui::Text(
-        "Allocated %d chunk groups\n",
+      ImGui::LabelText(
+        "Allocated chunk groups", "%d",
         terrainRenderer.mIsosurface.mIsoGroups.size());
 
       glm::vec2 camPos = terrainRenderer.mIsosurface.worldToQuadTreeCoords(
@@ -633,8 +636,8 @@ void EditorView::renderToolsWindow() {
         glm::vec2(boundScene->camera.wPosition.x,
                   boundScene->camera.wPosition.z));
 
-      ImGui::Text(
-        "In node at %s", glm::to_string(camPos).c_str());
+      ImGui::LabelText(
+        "In node", "%s", glm::to_string(camPos).c_str());
 
       ImGui::TreePop();
     }

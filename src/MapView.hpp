@@ -4,6 +4,7 @@
 #include "Scene.hpp"
 #include "Delegate.hpp"
 #include "RenderStage.hpp"
+#include "EditorEvent.hpp"
 
 namespace Ondine::View {
 
@@ -28,6 +29,7 @@ public:
 
 private:
   void processGraphicsEvent(Core::Event *ev);
+  void processEditorEvent(Core::Event *ev);
   void processInputEvent(Core::Event *ev);
 
   // For now process game input directly in the game view
@@ -38,6 +40,7 @@ private:
   Graphics::Scene *mMapScene;
 
   const Graphics::RenderStage &mMainRenderStage;
+  Core::TerrainTool mTerrainTool;
 
   DelegateResize &mDelegateResize3D;
   Core::OnEventProc mOnEvent;

@@ -121,11 +121,9 @@ void Terrain::makeSphere(float radius, glm::vec3 center, float intensity) {
             glm::ivec3 voxelCoord = chunkOriginDiff;
 
             Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
-            uint16_t addedValue = (uint32_t)((proportion) * mMaxVoxelDensity);
-
-            uint32_t finalValue = (uint32_t)addedValue + (uint32_t)v->density;
-            finalValue = glm::min(finalValue, MAX_DENSITY);
-            
+            int32_t addedValue = (int32_t)((proportion) * mMaxVoxelDensity);
+            int32_t finalValue = addedValue + (int32_t)v->density;
+            finalValue = glm::clamp(finalValue, 0, (int32_t)MAX_DENSITY);
             v->density = finalValue;
           }
           else {
@@ -141,9 +139,9 @@ void Terrain::makeSphere(float radius, glm::vec3 center, float intensity) {
               currentChunkCoord * (int32_t)CHUNK_DIM;
 
             Voxel *v = &currentChunk->voxels[getVoxelIndex(voxelCoord)];
-            uint16_t addedValue = (uint32_t)((proportion) * mMaxVoxelDensity);
-            uint32_t finalValue = (uint32_t)addedValue + (uint32_t)v->density;
-            finalValue = glm::min(finalValue, MAX_DENSITY);
+            int32_t addedValue = (int32_t)((proportion) * mMaxVoxelDensity);
+            int32_t finalValue = addedValue + (int32_t)v->density;
+            finalValue = glm::clamp(finalValue, 0, (int32_t)MAX_DENSITY);
             v->density = finalValue;
           }
         }
@@ -369,6 +367,14 @@ void Terrain::paint(
   if (!outside) {
     makeSphere(radius, position * (float)mTerrainScale, strength);
   }
+}
+
+void Terrain::paintColor(
+  glm::vec3 position,
+  glm::vec3 direction,
+  float radius,
+  const glm::vec3 &color) {
+  
 }
 
 void Terrain::generateChunkFaceNormals(

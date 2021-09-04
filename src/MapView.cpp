@@ -1,6 +1,7 @@
 #include "IOEvent.hpp"
 #include "MapView.hpp"
 #include "Renderer3D.hpp"
+#include "EditorEvent.hpp"
 #include "GraphicsEvent.hpp"
 #include <glm/gtx/string_cast.hpp>
 
@@ -11,7 +12,8 @@ MapView::MapView(
   Core::OnEventProc proc)
   : mMainRenderStage(renderer.mainRenderStage()),
     mDelegateResize3D(renderer),
-    mOnEvent(proc) {
+    mOnEvent(proc),
+    mTerrainTool(Core::TerrainTool::DensityPaintBrushAdd) {
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
   cursorChange->show = false;
   mOnEvent(cursorChange);
@@ -91,7 +93,6 @@ MapView::MapView(
     mMapScene->lighting.data.waveProfiles[2] = {0.008f, 0.3f, 1.668f};
     mMapScene->lighting.data.waveProfiles[3] = {0.001f, 0.5f, 4.24f};
     mMapScene->lighting.rotationAngle = glm::radians(86.5f);
-
   }
 
   { // Set camera properties
@@ -122,6 +123,10 @@ void MapView::processEvents(ViewProcessEventsParams &params) {
       processInputEvent(ev);
     } break;
 
+    case Core::EventCategory::Editor: {
+      processEditorEvent(ev);
+    } break;
+
     default:;
     }
   });
@@ -135,6 +140,20 @@ void MapView::processGraphicsEvent(Core::Event *ev) {
     auto *resizeEvent = (Core::EventViewportResize *)ev;
     mDelegateResize3D.resize(resizeEvent->newResolution);
     resizeEvent->isHandled = true;
+  } break;
+
+  default:;
+  }
+}
+
+void MapView::processEditorEvent(Core::Event *ev) {
+  // Forward events to game state and game renderer
+  // Tell the game to tick
+  switch (ev->type) {
+  case Core::EventType::TerrainToolChange: {
+    auto *toolChange = (Core::EventTerrainToolChange *)ev;
+    mTerrainTool = toolChange->terrainTool;
+    toolChange->isHandled = true;
   } break;
 
   default:;
@@ -241,12 +260,27 @@ void MapView::processGameInput(
   }
 
   if (inputTracker.mouseButton(Core::MouseButton::Right).isDown) {
-    // mMapScene->terrain.makeSphere(100.0f, mMapScene->camera.wPosition);
-    mMapScene->terrain.queuePaint(
-      mMapScene->camera.wPosition,
-      mMapScene->camera.wViewDirection,
-      180.0f,
-      tick.dt);
+    switch (mTerrainTool) {
+    case Core::TerrainTool::DensityPaintBrushAdd: {
+      mMapScene->terrain.queuePaint(
+        mMapScene->camera.wPosition,
+        mMapScene->camera.wViewDirection,
+        180.0f,
+        tick.dt);
+    } break;
+
+    case Core::TerrainTool::DensityPaintBrushDestroy: {
+      mMapScene->terrain.queuePaint(
+        mMapScene->camera.wPosition,
+        mMapScene->camera.wViewDirection,
+        180.0f,
+        -tick.dt);
+    } break;
+
+    case Core::TerrainTool::ColorPaintBrush: {
+      
+    } break;
+    }
   }
 }
 
