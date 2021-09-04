@@ -436,6 +436,11 @@ void TerrainRenderer::sync(
   }
 }
 
+void TerrainRenderer::forceFullUpdate() {
+  mSnapshots.clear();
+  mQuadTree.clear();
+}
+
 void TerrainRenderer::updateChunkGroupsSnapshots(
   const VulkanCommandBuffer &commandBuffer) {
   mIsosurface.syncWithGPU(commandBuffer);

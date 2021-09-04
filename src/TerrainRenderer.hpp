@@ -69,6 +69,8 @@ public:
     const CameraProperties &camera,
     const VulkanCommandBuffer &commandBuffer);
 
+  void forceFullUpdate();
+
 private:
   void updateChunkGroupsSnapshots(const VulkanCommandBuffer &commandBuffer);
 

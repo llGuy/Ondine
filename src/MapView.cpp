@@ -39,7 +39,7 @@ MapView::MapView(
   { // Set up scene objects
     auto handle1 = mMapScene->createSceneObject("TaurusModelRenderMethod"); 
     auto &sceneObj1 = mMapScene->getSceneObject(handle1);
-    sceneObj1.position = glm::vec3(1051.0f, 140.0f, 605.0f);
+    sceneObj1.position = glm::vec3(1051.0f, 130.0f, 605.0f);
     sceneObj1.scale = glm::vec3(10.0f);
     sceneObj1.rotation = glm::angleAxis(
       glm::radians(30.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
@@ -89,7 +89,7 @@ MapView::MapView(
     mMapScene->lighting.data.waveProfiles[0] = {0.01f, 1.0f, 0.75f};
     mMapScene->lighting.data.waveProfiles[1] = {0.005f, 1.0f, 1.0f};
     mMapScene->lighting.data.waveProfiles[2] = {0.008f, 0.3f, 1.668f};
-    mMapScene->lighting.data.waveProfiles[3] = {0.001f, 0.5f, 3.64f};
+    mMapScene->lighting.data.waveProfiles[3] = {0.001f, 0.5f, 4.24f};
     mMapScene->lighting.rotationAngle = glm::radians(86.5f);
 
   }
@@ -246,7 +246,7 @@ void MapView::processGameInput(
       mMapScene->camera.wPosition,
       mMapScene->camera.wViewDirection,
       180.0f,
-      0.1f);
+      tick.dt);
   }
 }
 

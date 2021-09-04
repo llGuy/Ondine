@@ -337,7 +337,7 @@ void Terrain::paint(
   float strength) {
   position /= (float)mTerrainScale;
 
-  glm::vec3 step = glm::normalize(direction);
+  glm::vec3 step = glm::normalize(direction) / 2.0f;
 
   const uint32_t MAX_STEP_COUNT = 50;
 
@@ -356,6 +356,8 @@ void Terrain::paint(
       if (c->voxels[voxelIndex].density > SURFACE_DENSITY && outside) {
         step /= -2.0f;
         outside = false;
+
+        break;
       }
       else if (c->voxels[voxelIndex].density < SURFACE_DENSITY && !outside) {
         step /= -2.0f;
@@ -460,8 +462,6 @@ void Terrain::setVoxelNormal(
 }
 
 void Terrain::generateVoxelNormals() {
-  LOG_INFOV("Generating normals for %d chunks\n", mUpdatedChunks.size);
-
   for (int i = 0; i < mUpdatedChunks.size; ++i) {
     uint32_t chunkIndex = mUpdatedChunks[i];
     Chunk *chunk = mLoadedChunks[chunkIndex];

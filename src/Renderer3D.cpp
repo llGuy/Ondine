@@ -148,49 +148,6 @@ void Renderer3D::init() {
   mPixelater.init(
     mGraphicsContext,
     {pipelineViewport.width, pipelineViewport.height});
-
-  // Testing vulkan arena allocator
-  mArena.init(
-    20,
-    (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer,
-    mGraphicsContext);
-
-#if 0
-  VulkanArenaSlot slot0 = mArena.allocate(0x1000);
-  VulkanArenaSlot slot1 = mArena.allocate(0x2000);
-  VulkanArenaSlot slot2 = mArena.allocate(0x3000);
-  VulkanArenaSlot slot3 = mArena.allocate(0x4000);
-  VulkanArenaSlot slot4 = mArena.allocate(0x5000);
-  mArena.debugLogState();
-
-  std::cin.get();
-
-  mArena.free(slot1.offset);
-  mArena.debugLogState();
-
-  std::cin.get();
-
-  mArena.free(slot0.offset);
-  mArena.debugLogState();
-
-  std::cin.get();
-
-  mArena.free(slot3.offset);
-  mArena.debugLogState();
-
-  std::cin.get();
-
-  slot1 = mArena.allocate(0x2000);
-  mArena.debugLogState();
-
-  std::cin.get();
-
-  slot3 = mArena.allocate(0x4000);
-  mArena.debugLogState();
-
-  LOG_INFO("Last before game\n");
-  std::cin.get();
-#endif
 }
 
 void Renderer3D::shutdown() {
@@ -294,6 +251,11 @@ Scene *Renderer3D::createScene() {
 }
 
 void Renderer3D::bindScene(Scene *scene) {
+  // This sucks
+  if (mBoundScene != scene) {
+    mTerrainRenderer.forceFullUpdate();
+  }
+
   mBoundScene = scene;
 }
 

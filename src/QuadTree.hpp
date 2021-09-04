@@ -41,6 +41,8 @@ public:
   NodeInfo getNodeInfo(uint32_t index) const;
 
   void clearDiff();
+  // Clears the entire structure
+  void clear();
 
 private:
   struct Node {

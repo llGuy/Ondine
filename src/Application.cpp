@@ -51,7 +51,7 @@ void Application::run() {
     "EditorView", new View::EditorView(
       surfaceInfo, mGraphicsContext, mRenderer3D, evProc));
 
-  mViewStack.push("MapView");
+  mViewStack.push("GameView");
   mViewStack.push("EditorView");
 
   /* User-defined function which will be overriden */

@@ -594,8 +594,7 @@ void main() {
     vec3 gamma = vec3(1.0 / 2.2);
 
     outColor.rgb = pow(diff, gamma);
-
-    outColor.a = texture(uBRDFLutTexture, vec2(0.0)).r;
+    outColor.a = 1.0;
   }
   else {
     outColor = gbuffer.albedo;

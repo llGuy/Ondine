@@ -69,7 +69,7 @@ GameView::GameView(
     mGameScene->lighting.data.waveProfiles[0] = {0.01f, 1.0f, 0.75f};
     mGameScene->lighting.data.waveProfiles[1] = {0.005f, 1.0f, 1.0f};
     mGameScene->lighting.data.waveProfiles[2] = {0.008f, 0.3f, 1.668f};
-    mGameScene->lighting.data.waveProfiles[3] = {0.001f, 0.5f, 3.64f};
+    mGameScene->lighting.data.waveProfiles[3] = {0.001f, 0.5f, 4.24f};
     mGameScene->lighting.rotationAngle = glm::radians(86.5f);
   }
 

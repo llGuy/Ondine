@@ -22,7 +22,7 @@ EditorView::EditorView(
   : mIsDockLayoutInitialised(false),
     mViewportResolution{0, 0},
     mFocusedWindow(EditorWindow::None),
-    mBoundViewport(ViewportType::MapEditor),
+    mBoundViewport(ViewportType::GameEditor),
     mRenderer3D(renderer3D),
     mOnEvent(onEventProc) {
   windowName(EditorWindow::Graphics) = "Graphics";
@@ -535,6 +535,23 @@ void EditorView::renderTerrainWindow() {
     if (ImGui::IsWindowFocused()) {
       mFocusedWindow = EditorWindow::Terrain;
     }
+
+    const char *options[] = {
+      "Density Paint Brush (Add)",
+      "Density Paint Brush (Destroy)",
+      "Color Paint Brush"
+    };
+
+    static int currentItem = 0;
+
+    if (ImGui::Combo(
+          "Tool", &currentItem, options, sizeof(options) / sizeof(options[0]))) {
+      
+    }
+
+    static glm::vec3 paintColor = glm::vec3(0.0f);
+
+    ImGui::ColorEdit3("Paint Color", &paintColor[0]);
   }
 
   ImGui::End();
@@ -552,9 +569,7 @@ void EditorView::renderToolsWindow() {
     auto *boundScene = mRenderer3D.mBoundScene;
     auto &terrainRenderer = mRenderer3D.mTerrainRenderer;
 
-    if (ImGui::TreeNodeEx(
-          "Quad Tree",
-          ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::TreeNodeEx("Quad Tree", ImGuiTreeNodeFlags_SpanFullWidth)) {
       auto &arena = terrainRenderer.mIsosurface.mGPUVerticesAllocator;
 
       uint32_t totalFreeBlockCount = 0;
@@ -754,30 +769,24 @@ void EditorView::renderGraphicsWindow() {
     }
 
     if (ImGui::TreeNodeEx("Day/Night", ImGuiTreeNodeFlags_SpanFullWidth)) {
-      if (ImGui::Button("Sunset")) {
-        boundScene->lighting.fastForwardTo(
-          Graphics::LightingProperties::FastForwardDst::Sunset);
-      }
+      const char *times[] = {
+        "Sunset", "Midday", "Midnight", "Sunrise"
+      };
 
-      ImGui::SameLine();
+      using Graphics::LightingProperties;
 
-      if (ImGui::Button("Midday")) {
-        boundScene->lighting.fastForwardTo(
-          Graphics::LightingProperties::FastForwardDst::Midday);
-      }
+      LightingProperties::FastForwardDst timesEnum[] = {
+        LightingProperties::FastForwardDst::Sunset,
+        LightingProperties::FastForwardDst::Midday,
+        LightingProperties::FastForwardDst::Midnight,
+        LightingProperties::FastForwardDst::Sunrise,
+      };
 
-      ImGui::SameLine();
+      static int currentItem = 0;
 
-      if (ImGui::Button("Midnight")) {
-        boundScene->lighting.fastForwardTo(
-          Graphics::LightingProperties::FastForwardDst::Midnight);
-      }
-
-      ImGui::SameLine();
-
-      if (ImGui::Button("Sunrise")) {
-        boundScene->lighting.fastForwardTo(
-          Graphics::LightingProperties::FastForwardDst::Sunrise);
+      if (ImGui::Combo(
+            "Jump to", &currentItem, times, sizeof(times) / sizeof(times[0]))) {
+        boundScene->lighting.fastForwardTo(timesEnum[currentItem]);
       }
 
       if (ImGui::Checkbox(

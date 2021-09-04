@@ -56,6 +56,15 @@ void QuadTree::clearDiff() {
   mDiffAdd.clear();
 }
 
+void QuadTree::clear() {
+  clearDiff();
+
+  mNodeAllocator.clear();
+  mDeepestNodes.size = 0;
+
+  mRoot = createNode(0, 0);
+}
+
 QuadTree::NodeInfo QuadTree::getNodeInfo(const glm::vec2 &position) const {
   NodeInfo nodeInfo = {};
   Node *deepestNode = getDeepestNode(position, &nodeInfo.offset);

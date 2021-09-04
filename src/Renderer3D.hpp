@@ -68,7 +68,6 @@ private:
   RenderMethodEntries mRenderMethods;
   RenderShaderEntries mShaderEntries;
   ModelManager mModelManager;
-  VulkanArenaAllocator mArena;
   Scene *mBoundScene;
   VulkanContext &mGraphicsContext;
 
