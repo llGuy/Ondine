@@ -4,7 +4,11 @@
 
 Make sure to call `git submodule update --init --recursive` after cloning.
 
-TODO (CMake).
+### Unix
+
+Make sure to install the Vulkan SDK. On Ubuntu run `sudo apt update` and `sudo apt install vulkan-sdk` to do this.
+
+Then, run `setup_unix.sh`.
 
 ## Shaders
 

@@ -1,3 +1,3 @@
-[submodule "dep/assimp"]
-	path = dep/assimp
-	url = https://github.com/assimp/assimp.git
+[submodule "vcpkg"]
+	path = vcpkg
+	url = https://github.com/microsoft/vcpkg
