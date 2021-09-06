@@ -10,10 +10,10 @@
 #include "ThreadPool.hpp"
 #include "Application.hpp"
 
-namespace Ondine::Core {
+namespace Ondine::Runtime {
 
 Application::Application(int argc, char **argv)
-  : mWindow(WindowMode::Windowed, "Ondine"),
+  : mWindow(Core::WindowMode::Windowed, "Ondine"),
     mRenderer3D(mGraphicsContext),
     mViewStack(mRenderer3D, mGraphicsContext) {
   /* Initialise graphics context, etc... */
@@ -26,17 +26,17 @@ Application::~Application() {
 
 void Application::run() {
   /* Change YONA_PROJECT_ROOT depending on build type */
-  gFileSystem->addMountPoint(
-    (MountPoint)ApplicationMountPoints::Application,
+  Core::gFileSystem->addMountPoint(
+    (Core::MountPoint)Core::ApplicationMountPoints::Application,
     YONA_PROJECT_ROOT);
 
-  gFileSystem->addMountPoint(
-    (MountPoint)ApplicationMountPoints::Raw,
+  Core::gFileSystem->addMountPoint(
+    (Core::MountPoint)Core::ApplicationMountPoints::Raw,
     "");
 
   mGraphicsContext.initInstance();
 
-  Window::initWindowAPI();
+  Core::Window::initWindowAPI();
   auto evProc = RECV_EVENT_PROC(recvEvent);
   auto surfaceInfo = mWindow.init(evProc);
 
@@ -62,34 +62,34 @@ void Application::run() {
   float accumulatedTime = 0.0f;
 
   while (mIsRunning) {
-    TimeStamp frameStart = getCurrentTime();
-    Tick currentTick = { mDt, accumulatedTime };
+    Core::TimeStamp frameStart = Core::getCurrentTime();
+    Core::Tick currentTick = { mDt, accumulatedTime };
 
     mInputTracker.tick(currentTick);
 
     mWindow.pollInput();
-    gFileSystem->trackFiles(evProc);
-    gThreadPool->tick();
+    Core::gFileSystem->trackFiles(evProc);
+    Core::gThreadPool->tick();
 
     /* 
        Go through the core events (window resize, etc...), then offload 
        to the different views.
     */
-    mEventQueue.process([this](Event *ev) {
+    mEventQueue.process([this](Core::Event *ev) {
       switch (ev->category) {
-      case EventCategory::Input: {
+      case Core::EventCategory::Input: {
         processInputEvent(ev);
       } break;
 
-      case EventCategory::Graphics: {
+      case Core::EventCategory::Graphics: {
         processGraphicsEvent(ev);
       } break;
 
-      case EventCategory::Debug: {
+      case Core::EventCategory::Debug: {
         processDebugEvent(ev);
       } break;
 
-      case EventCategory::File: {
+      case Core::EventCategory::File: {
         processFileEvent(ev);
       } break;
 
@@ -123,11 +123,11 @@ void Application::run() {
       mGraphicsContext.endFrame(frame);
     }
 
-    TimeStamp frameEnd = getCurrentTime();
-    mDt = getTimeDifference(frameEnd, frameStart);
+    Core::TimeStamp frameEnd = Core::getCurrentTime();
+    mDt = Core::getTimeDifference(frameEnd, frameStart);
 
     if (mDt < mMinFrametime) {
-      sleepSeconds(mMinFrametime - mDt);
+      Core::sleepSeconds(mMinFrametime - mDt);
       mDt = mMinFrametime;
     }
 
@@ -138,36 +138,36 @@ void Application::run() {
   mRenderer3D.shutdown();
 }
 
-void Application::recvEvent(Event *ev, void *obj) {
+void Application::recvEvent(Core::Event *ev, void *obj) {
   Application *app = (Application *)obj;
   app->pushEvent(ev);
 }
 
-void Application::pushEvent(Event *ev) {
+void Application::pushEvent(Core::Event *ev) {
   mEventQueue.push(ev);
 }
 
-void Application::processInputEvent(Event *ev) {
+void Application::processInputEvent(Core::Event *ev) {
   switch (ev->type) {
-  case EventType::Close: {
+  case Core::EventType::Close: {
     mIsRunning = false;
     ev->isHandled = true;
   } break;
 
-  case EventType::Resize: {
-    auto *resizeEvent = (EventResize *)ev;
+  case Core::EventType::Resize: {
+    auto *resizeEvent = (Core::EventResize *)ev;
     mGraphicsContext.resize(resizeEvent->newResolution);
 
     // Don't set it to handled - view stack will want to have a look at this
   } break;
 
     /* Just for fullscreen toggling */
-  case EventType::Keyboard: {
-    auto *kbEvent = (EventKeyboard *)ev;
+  case Core::EventType::Keyboard: {
+    auto *kbEvent = (Core::EventKeyboard *)ev;
     mInputTracker.handleKeyboardEvent(kbEvent);
 
-    if (kbEvent->keyboardEventType == KeyboardEventType::Press) {
-      if (kbEvent->press.button == KeyboardButton::F11 &&
+    if (kbEvent->keyboardEventType == Core::KeyboardEventType::Press) {
+      if (kbEvent->press.button == Core::KeyboardButton::F11 &&
           !kbEvent->press.isRepeat) {
         mWindow.toggleFullscreen();
         mGraphicsContext.skipFrame();
@@ -177,15 +177,15 @@ void Application::processInputEvent(Event *ev) {
     kbEvent->isHandled = true;
   } break;
 
-  case EventType::Mouse: {
-    auto *event = (EventMouse *)ev;
+  case Core::EventType::Mouse: {
+    auto *event = (Core::EventMouse *)ev;
     mInputTracker.handleMouseEvent(event);
 
     event->isHandled = true;
   } break;
 
-  case EventType::CursorDisplayChange: {
-    auto *event = (EventCursorDisplayChange *)ev;
+  case Core::EventType::CursorDisplayChange: {
+    auto *event = (Core::EventCursorDisplayChange *)ev;
     mWindow.changeCursorDisplay(event->show);
 
     event->isHandled = true;
@@ -195,16 +195,16 @@ void Application::processInputEvent(Event *ev) {
   }
 }
 
-void Application::processGraphicsEvent(Event *ev) {
+void Application::processGraphicsEvent(Core::Event *ev) {
   switch (ev->type) {
   default:;
   }
 }
 
-void Application::processDebugEvent(Event *ev) {
+void Application::processDebugEvent(Core::Event *ev) {
   switch (ev->type) {
-  case EventType::Breakpoint: {
-    auto *event = (EventBreakpoint *)ev;
+  case Core::EventType::Breakpoint: {
+    auto *event = (Core::EventBreakpoint *)ev;
     
 #if _WIN32
     __debugbreak();
@@ -219,10 +219,10 @@ void Application::processDebugEvent(Event *ev) {
   }
 }
 
-void Application::processFileEvent(Event *ev) {
+void Application::processFileEvent(Core::Event *ev) {
   switch (ev->type) {
-  case EventType::PathChanged: {
-    auto *event = (EventPathChanged *)ev;
+  case Core::EventType::PathChanged: {
+    auto *event = (Core::EventPathChanged *)ev;
 
     /* Get renderer to update changed resources */
     mRenderer3D.trackPath(event->id, event->path);

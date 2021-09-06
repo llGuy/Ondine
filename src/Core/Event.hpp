@@ -69,7 +69,7 @@ private:
   void *mObj;
 };
 
-#define RECV_EVENT_PROC(proc) OnEventProc(proc, this)
+#define RECV_EVENT_PROC(proc) Core::OnEventProc(proc, this)
 
 class EventQueue {
 public:

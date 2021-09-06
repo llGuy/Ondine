@@ -2,7 +2,7 @@
 
 #include "Application.hpp"
 
-namespace Ondine::Core {
+namespace Ondine::Runtime {
 
 class Client : public Application {
 public:

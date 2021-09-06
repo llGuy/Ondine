@@ -1,6 +1,5 @@
 #include "Vulkan.hpp"
 #include "FileSystem.hpp"
-#include "Application.hpp"
 #include "VulkanDevice.hpp"
 #include "VulkanPipeline.hpp"
 #include "VulkanDescriptor.hpp"

@@ -3,7 +3,6 @@
 #include "IOEvent.hpp"
 #include "FileSystem.hpp"
 #include "EditorView.hpp"
-#include "Application.hpp"
 #include "EditorEvent.hpp"
 #include <imgui_internal.h>
 #include "RendererDebug.hpp"

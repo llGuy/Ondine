@@ -2,7 +2,6 @@
 #include "Vulkan.hpp"
 #include "VulkanSync.hpp"
 #include "FileSystem.hpp"
-#include "Application.hpp"
 #include "VulkanDevice.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanCommandPool.hpp"
