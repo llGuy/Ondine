@@ -9,12 +9,7 @@
 #include "FileSystem.hpp"
 #include "VulkanContext.hpp"
 
-namespace Ondine::Core {
-
-enum class ApplicationMountPoints : uint8_t {
-  Application,
-  Raw
-};
+namespace Ondine::Runtime {
 
 class Application {
 public:
@@ -24,28 +19,28 @@ public:
   /* Core */
   void run();
 
-  static void recvEvent(Event *ev, void *app);
+  static void recvEvent(Core::Event *ev, void *app);
 
 private:
   /* Need to be defined in a Client / Editor application */
   virtual void start() = 0;
   virtual void tick() = 0;
 
-  void pushEvent(Event *ev);
-  void processInputEvent(Event *ev);
-  void processGraphicsEvent(Event *ev);
-  void processDebugEvent(Event *ev);
-  void processFileEvent(Event *ev);
+  void pushEvent(Core::Event *ev);
+  void processInputEvent(Core::Event *ev);
+  void processGraphicsEvent(Core::Event *ev);
+  void processDebugEvent(Core::Event *ev);
+  void processFileEvent(Core::Event *ev);
   void setMaxFramerate(float fps);
 
 private:
   bool mIsRunning;
-  EventQueue mEventQueue;
-  Window mWindow;
+  Core::EventQueue mEventQueue;
+  Core::Window mWindow;
   Graphics::VulkanContext mGraphicsContext;
   Graphics::Renderer3D mRenderer3D;
   View::ViewStack mViewStack;
-  InputTracker mInputTracker;
+  Core::InputTracker mInputTracker;
 
   float mDt;
   float mMaxFramerate;

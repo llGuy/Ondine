@@ -14,6 +14,11 @@ namespace Ondine::Core {
 
 constexpr uint32_t MAX_MOUNT_POINTS = 16;
 
+enum class ApplicationMountPoints : uint8_t {
+  Application,
+  Raw
+};
+
 using MountPoint = uint8_t;
 using TrackPathID = int32_t;
 using FileTime = std::filesystem::file_time_type;

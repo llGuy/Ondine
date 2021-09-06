@@ -2,8 +2,6 @@
 #include "Buffer.hpp"
 #include "Renderer3D.hpp"
 #include "FileSystem.hpp"
-#include "Application.hpp"
-#include "Application.hpp"
 #include "RendererCache.hpp"
 #include "RendererDebug.hpp"
 #include "VulkanRenderPass.hpp"

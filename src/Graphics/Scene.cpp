@@ -1,5 +1,4 @@
 #include "FileSystem.hpp"
-#include "Application.hpp"
 #include "Scene.hpp"
 #include <glm/gtx/transform.hpp>
 

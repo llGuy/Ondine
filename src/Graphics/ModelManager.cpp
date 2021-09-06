@@ -1,6 +1,5 @@
 #include <new>
 #include "FileSystem.hpp"
-#include "Application.hpp"
 #include "ModelManager.hpp"
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>

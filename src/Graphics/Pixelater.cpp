@@ -1,6 +1,5 @@
 #include "Pixelater.hpp"
 #include "FileSystem.hpp"
-#include "Application.hpp"
 #include "RendererDebug.hpp"
 
 namespace Ondine::Graphics {

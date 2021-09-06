@@ -1,5 +1,5 @@
 #include "FileSystem.hpp"
-#include "Application.hpp"
+#include "SkyRenderer.hpp"
 #include "WaterRenderer.hpp"
 #include "RendererDebug.hpp"
 #include "DeferredLighting.hpp"

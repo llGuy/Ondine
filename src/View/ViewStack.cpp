@@ -2,7 +2,6 @@
 #include "Event.hpp"
 #include "ViewStack.hpp"
 #include "FileSystem.hpp"
-#include "Application.hpp"
 #include "GraphicsEvent.hpp"
 
 namespace Ondine::View {

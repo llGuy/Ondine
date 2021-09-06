@@ -1,8 +1,8 @@
 #include "Model.hpp"
 #include "Camera.hpp"
-#include "Application.hpp"
 #include "StarRenderer.hpp"
 #include <glm/gtc/random.hpp>
+#include "DeferredLighting.hpp"
 
 namespace Ondine::Graphics {
 

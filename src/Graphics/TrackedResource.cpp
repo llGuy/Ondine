@@ -1,4 +1,3 @@
-#include "Application.hpp"
 #include "TrackedResource.hpp"
 
 namespace Ondine::Graphics {

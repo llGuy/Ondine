@@ -5,7 +5,7 @@
 #include "FileSystem.hpp"
 #include "VulkanContext.hpp"
 
-namespace Ondine {
+namespace Ondine::Runtime {
 
 int entry(int argc, char **argv) {
   /* Make sure to also write FL allocator at some point */
@@ -17,7 +17,7 @@ int entry(int argc, char **argv) {
   Core::gThreadPool = flAlloc<Core::ThreadPool>();
   Core::gThreadPool->init();
 
-  Core::Application *client = flAlloc<Core::Client>(argc, argv);
+  Application *client = flAlloc<Client>(argc, argv);
   client->run();
   flFree(client);
 
@@ -27,5 +27,5 @@ int entry(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-  return Ondine::entry(argc, argv);
+  return Ondine::Runtime::entry(argc, argv);
 }
