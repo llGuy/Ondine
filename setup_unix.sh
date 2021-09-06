@@ -8,6 +8,4 @@ git submodule update --init --recursive
 ./vcpkg/vcpkg install openal-soft
 ./vcpkg/vcpkg install stb
 mkdir build
-pushd build
-cmake -DCMAKE_BUILD_TYPE=DEBUG ..
-popd
+(cd build && cmake -DCMAKE_BUILD_TYPE=DEBUG ..)
