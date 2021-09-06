@@ -92,14 +92,14 @@ MapView::MapView(
     mMapScene->lighting.data.waveProfiles[1] = {0.005f, 1.0f, 1.0f};
     mMapScene->lighting.data.waveProfiles[2] = {0.008f, 0.3f, 1.668f};
     mMapScene->lighting.data.waveProfiles[3] = {0.001f, 0.5f, 4.24f};
-    mMapScene->lighting.rotationAngle = glm::radians(86.5f);
+    mMapScene->lighting.rotationAngle = glm::radians(89.5f);
   }
 
   { // Set camera properties
     mMapScene->camera.fov = glm::radians(50.0f);
-    mMapScene->camera.wPosition = glm::vec3(1122.0f, 131.0f, 452.0f);
+    mMapScene->camera.wPosition = glm::vec3(969.0f, 136.0f, 480.0f);
     mMapScene->camera.wViewDirection =
-      glm::normalize(glm::vec3(-0.428f, -0.11f, 0.897f));
+      glm::normalize(glm::vec3(0.415, -0.123f, 0.9f));
     mMapScene->camera.wUp = glm::vec3(0.0f, 1.0f, 0.0f);
   }
 }
