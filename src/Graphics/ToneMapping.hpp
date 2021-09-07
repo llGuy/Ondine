@@ -39,6 +39,10 @@ private:
   void destroyTargets(VulkanContext &graphicsContext);
 
 private:
+  static const char *const TONE_MAPPING_FRAG_SPV;
+  static constexpr VkFormat TONE_MAPPING_TEXTURE_FORMAT =
+    VK_FORMAT_R8G8B8A8_UNORM;
+
   VkExtent2D mExtent;
   VulkanTexture mTexture;
   VulkanFramebuffer mFBO;

@@ -77,6 +77,10 @@ void Renderer3D::init() {
   mDeferredLighting.init(
     mGraphicsContext,
     {pipelineViewport.width, pipelineViewport.height});
+  mToneMapping.init(
+    mGraphicsContext,
+    {pipelineViewport.width, pipelineViewport.height},
+    {glm::vec4(2.0f, 2.0f, 2.0f, 1.0f), 20.0f});
   mClipping.init(
     mGraphicsContext,
     -1.0f,
@@ -204,6 +208,8 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
     frame, mGBuffer, mCamera, mPlanetRenderer, mWaterRenderer, mSkyRenderer);
 
   mPixelater.render(frame, mDeferredLighting);
+
+  mToneMapping.render(frame, mPixelater.uniform());
 }
 
 void Renderer3D::resize(Resolution newResolution) {
@@ -222,6 +228,8 @@ void Renderer3D::resize(Resolution newResolution) {
   mWaterRenderer.resize(mGraphicsContext, newResolution);
 
   mPixelater.resize(mGraphicsContext, newResolution);
+
+  mToneMapping.resize(mGraphicsContext, newResolution);
 }
 
 void Renderer3D::trackPath(Core::TrackPathID id, const char *path) {
@@ -229,7 +237,8 @@ void Renderer3D::trackPath(Core::TrackPathID id, const char *path) {
 
   ResourceTracker *trackers[] = {
     &mPixelater,
-    &mDeferredLighting
+    &mDeferredLighting,
+    &mToneMapping
   };
 
   // Add other file trackers after
@@ -239,7 +248,7 @@ void Renderer3D::trackPath(Core::TrackPathID id, const char *path) {
 }
 
 const RenderStage &Renderer3D::mainRenderStage() const {
-  return mPixelater;
+  return mToneMapping;
 }
 
 Scene *Renderer3D::createScene() {

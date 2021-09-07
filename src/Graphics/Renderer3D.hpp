@@ -13,6 +13,7 @@
 #include "Pixelater.hpp"
 #include "EditorView.hpp"
 #include "SkyRenderer.hpp"
+#include "ToneMapping.hpp"
 #include "RenderStage.hpp"
 #include "ModelManager.hpp"
 #include "RenderMethod.hpp"
@@ -65,6 +66,7 @@ private:
   TerrainRenderer mTerrainRenderer;
   DeferredLighting mDeferredLighting;
   Pixelater mPixelater;
+  ToneMapping mToneMapping;
   RenderMethodEntries mRenderMethods;
   RenderShaderEntries mShaderEntries;
   ModelManager mModelManager;

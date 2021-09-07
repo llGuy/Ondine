@@ -21,7 +21,7 @@ void Pixelater::init(
     renderPassConfig.addAttachment(
       LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
       OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      VK_FORMAT_R8G8B8A8_UNORM);
+      VK_FORMAT_R16G16B16A16_SFLOAT);
 
     renderPassConfig.addSubpass(
       makeArray<uint32_t, AllocationType::Linear>(0U),
@@ -129,7 +129,7 @@ VkExtent2D Pixelater::extent() const {
 void Pixelater::initTargets(VulkanContext &graphicsContext) {
   mTexture.init(
     graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
-    TextureContents::Color, VK_FORMAT_R8G8B8A8_UNORM, VK_FILTER_NEAREST,
+    TextureContents::Color, VK_FORMAT_R16G16B16A16_SFLOAT, VK_FILTER_NEAREST,
     {mExtent.width, mExtent.height, 1}, 1, 1);
 
   mOutput.init(
