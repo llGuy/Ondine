@@ -151,9 +151,11 @@ void Renderer3D::init() {
     mGraphicsContext,
     {pipelineViewport.width, pipelineViewport.height});
 
+#if 0
   mBloomRenderer.init(
     mGraphicsContext,
     {pipelineViewport.width, pipelineViewport.height});
+#endif
 }
 
 void Renderer3D::shutdown() {
