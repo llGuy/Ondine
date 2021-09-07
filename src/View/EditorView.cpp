@@ -703,7 +703,7 @@ void EditorView::renderGraphicsWindow() {
     if (ImGui::TreeNodeEx("Lighting", ImGuiTreeNodeFlags_SpanFullWidth)) {
       ImGui::SliderFloat(
         "Exposure",
-        &boundScene->lighting.data.exposure,
+        &mRenderer3D.mToneMapping.mProperties.exposure,
         1.0f, 50.0f);
 
       ImGui::TreePop();

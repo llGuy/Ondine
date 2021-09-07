@@ -18,6 +18,7 @@
 #include "ModelManager.hpp"
 #include "RenderMethod.hpp"
 #include "StarRenderer.hpp"
+#include "BloomRenderer.hpp"
 #include "WaterRenderer.hpp"
 #include "VulkanContext.hpp"
 #include "TerrainRenderer.hpp"
@@ -34,13 +35,9 @@ public:
 
   void init();
   void shutdown();
-
   void tick(const Core::Tick &tick, Graphics::VulkanFrame &frame);
-
   void resize(Resolution newResolution) override;
-
   void trackPath(Core::TrackPathID id, const char *path);
-
   const RenderStage &mainRenderStage() const;
 
 public:
@@ -66,6 +63,7 @@ private:
   TerrainRenderer mTerrainRenderer;
   DeferredLighting mDeferredLighting;
   Pixelater mPixelater;
+  BloomRenderer mBloomRenderer;
   ToneMapping mToneMapping;
   RenderMethodEntries mRenderMethods;
   RenderShaderEntries mShaderEntries;

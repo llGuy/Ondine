@@ -6,6 +6,12 @@
 #include "TrackedResource.hpp"
 #include "VulkanRenderPass.hpp"
 
+namespace Ondine::View {
+
+class EditorView;
+
+}
+
 namespace Ondine::Graphics {
 
 struct ToneMappingProperties {
@@ -50,6 +56,8 @@ private:
   VulkanUniform mToneMappingOutput;
   ToneMappingProperties mProperties;
   TrackedResource<VulkanPipeline, ToneMapping> mPipeline;
+
+  friend class View::EditorView;
 };
 
 }

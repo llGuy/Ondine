@@ -150,6 +150,10 @@ void Renderer3D::init() {
   mPixelater.init(
     mGraphicsContext,
     {pipelineViewport.width, pipelineViewport.height});
+
+  mBloomRenderer.init(
+    mGraphicsContext,
+    {pipelineViewport.width, pipelineViewport.height});
 }
 
 void Renderer3D::shutdown() {
