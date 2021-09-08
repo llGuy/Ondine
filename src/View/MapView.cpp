@@ -41,6 +41,7 @@ MapView::MapView(
   { // Set up scene objects
     auto handle1 = mMapScene->createSceneObject("TaurusModelRenderMethod"); 
     auto &sceneObj1 = mMapScene->getSceneObject(handle1);
+    sceneObj1.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f) * 2.0f;
     sceneObj1.position = glm::vec3(1051.0f, 130.0f, 605.0f);
     sceneObj1.scale = glm::vec3(10.0f);
     sceneObj1.rotation = glm::angleAxis(
@@ -49,6 +50,7 @@ MapView::MapView(
 
     auto handle2 = mMapScene->createSceneObject("SphereModelRenderMethod"); 
     auto &sceneObj2 = mMapScene->getSceneObject(handle2);
+    sceneObj2.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f);
     sceneObj2.position = glm::vec3(1081.0f, 150.0f, 605.0f);
     sceneObj2.scale = glm::vec3(5.0f);
     sceneObj2.rotation = glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -56,6 +58,7 @@ MapView::MapView(
 
     auto handle3 = mMapScene->createSceneObject("SphereModelRenderMethod"); 
     auto &sceneObj3 = mMapScene->getSceneObject(handle3);
+    sceneObj3.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f);
     sceneObj3.position = glm::vec3(1051.0f, 105.0f, 575.0f);
     sceneObj3.scale = glm::vec3(5.0f);
     sceneObj3.rotation = glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -63,6 +66,7 @@ MapView::MapView(
 
     auto handle4 = mMapScene->createSceneObject("SphereModelRenderMethod"); 
     auto &sceneObj4 = mMapScene->getSceneObject(handle4);
+    sceneObj4.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f);
     sceneObj4.position = glm::vec3(951.0f, 90.0f, 705.0f);
     sceneObj4.scale = glm::vec3(20.0f);
     sceneObj4.rotation = glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f));

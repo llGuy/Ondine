@@ -42,7 +42,7 @@ void main() {
     discard;
   }
   else {
-    outAlbedo = vec4(0.2, 0.9, 0.3, 0.0);
+    outAlbedo = vec4(0.05, 1.3, 0.1, 0.0) * 0.3;
     outNormal = vec4(nanSafeNormalize(inFS.wNormal.xyz), ROUGHNESS);
     outPosition = inFS.wPosition;
     outPosition.a = 1.0 + METALNESS;

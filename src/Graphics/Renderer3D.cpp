@@ -91,7 +91,7 @@ void Renderer3D::init() {
     ModelConfig modelConfig;
     auto sphereModelHandle = mModelManager.loadStaticModel(
       "res/model/UVSphere.fbx", mGraphicsContext, modelConfig);
-    auto monkeyModelHandle = mModelManager.loadStaticModel(
+    auto taurusModelHandle = mModelManager.loadStaticModel(
       "res/model/Taurus.fbx", mGraphicsContext, modelConfig);
     
     /* Create shader */
@@ -102,7 +102,7 @@ void Renderer3D::init() {
 
     pipelineConfig.enableDepthTesting();
     pipelineConfig.configurePipelineLayout(
-      sizeof(glm::mat4),
+      sizeof(SceneObject::pushConstant),
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
@@ -126,23 +126,23 @@ void Renderer3D::init() {
           res.camera.uniform(), res.planet.uniform(), res.clipping.uniform);
       },
       [](const VulkanCommandBuffer &cmdbuf, const SceneObject &obj) {
-        cmdbuf.pushConstants(sizeof(glm::mat4), &obj.transform);
+        cmdbuf.pushConstants(sizeof(obj.pushConstant), &obj.pushConstant);
       });
 
     mRenderMethods.insert("SphereModelRenderMethod", baseModelMethod);
 
-    RenderMethod monkeyModelMethod(mModelManager, mShaderEntries);
-    monkeyModelMethod.init(
-      "BaseModelShader", monkeyModelHandle,
+    RenderMethod taurusModelMethod(mModelManager, mShaderEntries);
+    taurusModelMethod.init(
+      "BaseModelShader", taurusModelHandle,
       [](const VulkanCommandBuffer &cmdbuf, const RenderResources &res) {
         cmdbuf.bindUniforms(
           res.camera.uniform(), res.planet.uniform(), res.clipping.uniform);
       },
       [](const VulkanCommandBuffer &cmdbuf, const SceneObject &obj) {
-        cmdbuf.pushConstants(sizeof(glm::mat4), &obj.transform);
+        cmdbuf.pushConstants(sizeof(obj.pushConstant), &obj.pushConstant);
       });
 
-    mRenderMethods.insert("TaurusModelRenderMethod", monkeyModelMethod);
+    mRenderMethods.insert("TaurusModelRenderMethod", taurusModelMethod);
   }
 
   mWaterRenderer.init(mGraphicsContext, mPlanetProperties);

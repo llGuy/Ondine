@@ -23,11 +23,17 @@ struct SceneObject {
   glm::vec3 position;
   glm::quat rotation;
   glm::vec3 scale;
-  glm::mat4 transform;
+
+  // Named for push constant
+  struct {
+    glm::mat4 transform;
+    glm::vec3 color;
+  } pushConstant;
+
   RenderMethodHandle renderMethod;
 
   inline void constructTransform() {
-    transform = glm::translate(position) *
+    pushConstant.transform = glm::translate(position) *
       glm::mat4_cast(rotation) *
       glm::scale(scale);
   }

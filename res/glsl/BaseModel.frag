@@ -9,6 +9,7 @@ layout (location = 0) in VS_DATA {
   // World space
   vec4 wPosition;
   vec4 wNormal;
+  vec4 color;
 } inFS;
 
 layout (location = 0) out vec4 outAlbedo;
@@ -42,7 +43,8 @@ void main() {
     discard;
   }
   else {
-    outAlbedo = vec4(0.8, 0.9, 0.85, 0.0);
+    // outAlbedo = vec4(0.8, 0.9, 0.85, 0.0);
+    outAlbedo = vec4(inFS.color.rgb, 0.0);
     outNormal = vec4(nanSafeNormalize(inFS.wNormal.xyz), ROUGHNESS);
     outPosition = inFS.wPosition;
     outPosition.a = 1.0 + METALNESS;
