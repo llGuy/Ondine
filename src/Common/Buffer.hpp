@@ -63,6 +63,14 @@ struct Array {
     memset(data, 0, sizeof(T) * capacity);
   }
 
+  uint32_t memCapacity() {
+    return sizeof(T) * capacity;
+  }
+
+  uint32_t memSize() {
+    return sizeof(T) * size;
+  }
+
   void free() {
     if constexpr (A == AllocationType::Freelist) {
       flFreev(data);

@@ -4,6 +4,7 @@
 #include "FileSystem.hpp"
 #include "RendererCache.hpp"
 #include "RendererDebug.hpp"
+#include "AssimpImporter.hpp"
 #include "VulkanRenderPass.hpp"
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -16,6 +17,10 @@ Renderer3D::Renderer3D(VulkanContext &graphicsContext)
 }
 
 void Renderer3D::init() {
+  if (!gAssimpImporter) {
+    gAssimpImporter = flAlloc<Assimp::Importer>();
+  }
+
   auto properties = mGraphicsContext.getProperties();
   pipelineViewport = {
     properties.swapchainExtent.width, properties.swapchainExtent.height
@@ -89,9 +94,9 @@ void Renderer3D::init() {
   { // Prepare scene resources
     /* Create model */
     ModelConfig modelConfig;
-    auto sphereModelHandle = mModelManager.loadStaticModel(
+    auto sphereModelHandle = mModelManager.loadModel(
       "res/model/UVSphere.fbx", mGraphicsContext, modelConfig);
-    auto taurusModelHandle = mModelManager.loadStaticModel(
+    auto taurusModelHandle = mModelManager.loadModel(
       "res/model/Taurus.fbx", mGraphicsContext, modelConfig);
     
     /* Create shader */

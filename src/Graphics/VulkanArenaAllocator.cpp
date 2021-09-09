@@ -59,12 +59,6 @@ VulkanArenaSlot VulkanArenaAllocator::allocate(uint32_t size) {
 
   uint16_t allocationStart = prevBlock->next; // aka. current block
 
-  /*
-  if (allocationStart == 26) {
-    asm("int $3");
-  }
-  */
-
   /* The slot which gets returned back to the calling function */
   VulkanArenaSlot slot(
     mGPUPool,
@@ -157,12 +151,6 @@ void VulkanArenaAllocator::free(VulkanArenaSlot &slot) {
 
   assert(!newFreeBlock->isFree);
 
-  /*
-  if (blockIndex == 26) {
-    asm("int $3");
-  }
-  */
-
   bool createNewBlock = true;
 
   /* Is there a block before this new free one? */
@@ -172,12 +160,6 @@ void VulkanArenaAllocator::free(VulkanArenaSlot &slot) {
     /* Now is this block free? */
     if (prev->isFree) {
       uint16_t newBaseIndex = prev->base;
-
-      /*
-      if (newBaseIndex == 26) {
-        asm("int $3");
-      }
-      */
 
       /* Need to merge with the adjacent block before this one */
       setRangeTo(
@@ -235,11 +217,11 @@ void VulkanArenaAllocator::debugLogState() {
   FreeBlock *freeBlock = getBlock(mFirstFreeBlock.next);
   
   while (freeBlock) {
-    /*
+#if 0
     LOG_INFOV(
       "%d free blocks blocks at %p\n",
       freeBlock->blockCount, (void *)index);
-    */
+#endif
 
     totalFreeBlockCount += freeBlock->blockCount;
     freeSectionsCount++;
@@ -248,16 +230,16 @@ void VulkanArenaAllocator::debugLogState() {
     freeBlock = getBlock(freeBlock->next);
   }
 
-  /*
+#if 0
   LOG_INFOV(
     "There are %u free blocks left (%u bytes out of %u) in %u contiguous segments\n",
     totalFreeBlockCount,
     totalFreeBlockCount * POOL_BLOCK_SIZE,
     mAllocatedSize,
     freeSectionsCount);
-  */
+#endif
 
-  /*
+#if 0
   printf("\n");
   LOG_INFO("--- LOGGING ARENA ALLOCATOR STATE ---\n");
   LOG_INFOV(
@@ -279,7 +261,7 @@ void VulkanArenaAllocator::debugLogState() {
     printf("%d -> ", block->blockCount);
     block = getBlock(block->next);
   }
-  */
+#endif
 }
 
 void VulkanArenaAllocator::setRangeTo(

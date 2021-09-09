@@ -583,7 +583,7 @@ void EditorView::renderToolsWindow() {
       while (freeBlock) {
         ImGui::Text(
           "%d free blocks blocks at %p\n",
-          freeBlock->blockCount, (void *)index);
+          freeBlock->blockCount, (void *)((uint64_t)index));
 
         totalFreeBlockCount += freeBlock->blockCount;
         freeSectionsCount++;

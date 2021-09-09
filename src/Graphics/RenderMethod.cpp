@@ -12,7 +12,7 @@ RenderMethod::RenderMethod(
 
 void RenderMethod::init(
   const std::string &shaderName,
-  StaticModelHandle handleModel,
+  ModelHandle handleModel,
   RenderBindResourceProc bindResProc,
   RenderPushConstantProc pushConstantProc) {
   mRenderShader = mShaderEntries->getHandle(shaderName);
@@ -29,7 +29,7 @@ void RenderMethod::bindShader(const VulkanFrame &frame) {
 void RenderMethod::bindBuffers(const VulkanFrame &frame) {
   auto &pipeline = mShaderEntries->getEntry(mRenderShader);
 
-  const auto &model = mModelManager->getStaticModel(mModel);
+  const auto &model = mModelManager->getModel(mModel);
   model.bindIndexBuffer(frame.primaryCommandBuffer);
   model.bindVertexBuffers(frame.primaryCommandBuffer);
 }
@@ -47,7 +47,7 @@ void RenderMethod::pushConstant(
 }
 
 void RenderMethod::submit(const VulkanFrame &frame) {
-  const auto &model = mModelManager->getStaticModel(mModel);
+  const auto &model = mModelManager->getModel(mModel);
   model.submitForRenderIndexed(frame.primaryCommandBuffer);
 }
 

@@ -42,6 +42,7 @@ private:
   Buffer mIndices;
 
   friend class Model;
+  friend class AnimationManager;
 };
 
 class Model {

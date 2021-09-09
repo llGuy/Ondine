@@ -75,29 +75,43 @@ void BloomRenderer::init(
 }
 
 void BloomRenderer::render(VulkanFrame &frame, const RenderStage &previous) {
-  auto &commandBuffer = frame.primaryCommandBuffer;
+#if 0
+  { // Prefilter stage
+    auto &commandBuffer = frame.primaryCommandBuffer;
 
-  commandBuffer.dbgBeginRegion(
-    "BloomPrefilterStage", DBG_BLOOM_PREFILTER_COLOR);
+    commandBuffer.dbgBeginRegion(
+      "BloomPrefilterStage", DBG_BLOOM_PREFILTER_COLOR);
 
-  commandBuffer.beginRenderPass(
-    mRenderPass,
-    mPrefilteredTarget.fbo,
-    {},
-    mPrefilteredExtent);
+    commandBuffer.beginRenderPass(
+      mRenderPass,
+      mPrefilteredTarget.fbo,
+      {},
+      mPrefilteredExtent);
 
-  commandBuffer.bindPipeline(mPrefilterPipeline.res);
-  commandBuffer.bindUniforms(previous.uniform());
-  // commandBuffer.pushConstants(sizeof(ToneMappingProperties), &mProperties);
+    commandBuffer.bindPipeline(mPrefilterPipeline.res);
+    commandBuffer.bindUniforms(previous.uniform());
+    // commandBuffer.pushConstants(sizeof(ToneMappingProperties), &mProperties);
 
-  commandBuffer.setViewport();
-  commandBuffer.setScissor();
+    commandBuffer.setViewport();
+    commandBuffer.setScissor();
 
-  commandBuffer.draw(4, 1, 0, 0);
+    commandBuffer.draw(4, 1, 0, 0);
 
-  commandBuffer.endRenderPass();
+    commandBuffer.endRenderPass();
 
-  commandBuffer.dbgEndRegion();
+    commandBuffer.dbgEndRegion();
+  }
+
+  { // Blur passes
+    for (int i = 0; i < mBlurTargets.size; ++i) {
+      
+    }
+  }
+
+  { // Addition passes
+
+  }
+#endif
 }
 
 void BloomRenderer::resize(

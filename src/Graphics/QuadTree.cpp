@@ -294,7 +294,7 @@ void QuadTree::getDeepestNodesUnderImpl(
   if (!node->children[0]) {
     // This node doesn't have any children - it's the deepest
     list->push({
-      true, node->wasDiffed, node->level, node->index,
+      true, (bool)node->wasDiffed, node->level, node->index,
       {node->offsetx, node->offsety},
       {width, width}
     });

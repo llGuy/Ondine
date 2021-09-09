@@ -39,7 +39,7 @@ public:
 
   void init(
     const std::string &shaderName,
-    StaticModelHandle handleModel,
+    ModelHandle handleModel,
     RenderBindResourceProc bindResProc,
     RenderPushConstantProc pushConstantProc);
 
@@ -59,7 +59,7 @@ public:
   
 private:
   FastMapHandle mRenderShader;
-  StaticModelHandle mModel;
+  ModelHandle mModel;
   RenderBindResourceProc mBindResourceProc;
   RenderPushConstantProc mPushConstantProc;
   const RenderShaderEntries *mShaderEntries;
