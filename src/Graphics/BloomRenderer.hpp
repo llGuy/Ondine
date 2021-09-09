@@ -21,7 +21,7 @@ public:
   void init(
     VulkanContext &graphicsContext,
     VkExtent2D initialExtent);
-  void render(VulkanFrame &frame, const VulkanUniform &previous);
+  void render(VulkanFrame &frame, const RenderStage &previous);
   void resize(VulkanContext &vulkanContext, Resolution newResolution);
 
   const VulkanRenderPass &renderPass() const override;
@@ -30,7 +30,15 @@ public:
   VkExtent2D extent() const override;
 
 private:
+  struct Target {
+    VulkanTexture texture;
+    VulkanUniform uniform;
+    VulkanFramebuffer fbo;
+  };
+
   void initTargets(VulkanContext &graphicsContext);
+  void initTarget(Target &target, VkExtent2D extent, VulkanContext &context);
+  void destroyTarget(Target &target, VulkanContext &context);
   void destroyTargets(VulkanContext &graphicsContext);
 
 private:
@@ -39,23 +47,21 @@ private:
   static constexpr VkFormat BLOOM_TEXTURE_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
 
   struct BlurTexturePair {
+    VkExtent2D extent;
+
     /* Horizontal and verical blur targets */
-    VulkanTexture targets[2];
-    VulkanUniform uniforms[2];
-    VulkanFramebuffer fbos[2];
+    Target blurTargets[2];
 
     /* TODO: Reuse target textures but for debugging purposes, do this */
-    VulkanTexture addition;
-    VulkanUniform additionUniform;
-    VulkanFramebuffer additionFBO;
+    Target additiveTarget;
   };
 
   VkExtent2D mExtent;
   VulkanRenderPass mRenderPass;
 
-  VulkanTexture mPrefiltered;
-  VulkanUniform mPrefilteredUniform;
-  VulkanFramebuffer mPrefilteredFBO;
+  VkExtent2D mPrefilteredExtent;
+  Target mPrefilteredTarget;
+
   Array<BlurTexturePair> mBlurTargets;
 
   TrackedResource<VulkanPipeline, BloomRenderer> mBlurPipeline;

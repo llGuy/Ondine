@@ -32,7 +32,7 @@ public:
     VkExtent2D initialExtent,
     const ToneMappingProperties &initialProperties);
 
-  void render(VulkanFrame &frame, const VulkanUniform &previousOutput);
+  void render(VulkanFrame &frame, const RenderStage &previousOutput);
   void resize(VulkanContext &vulkanContext, Resolution newResolution);
 
   const VulkanRenderPass &renderPass() const override;

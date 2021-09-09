@@ -70,7 +70,7 @@ ImagePixels getImagePixelsFromBuffer(const Buffer &data);
 // Only use very rarely to avoid return warning in functions that PANIC_AND_EXIT
 template <typename T>
 struct NullReference {
-  static T nullRef;
+  static inline T nullRef;
 };
 
 }

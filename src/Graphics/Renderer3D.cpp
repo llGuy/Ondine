@@ -151,11 +151,9 @@ void Renderer3D::init() {
     mGraphicsContext,
     {pipelineViewport.width, pipelineViewport.height});
 
-#if 0
   mBloomRenderer.init(
     mGraphicsContext,
     {pipelineViewport.width, pipelineViewport.height});
-#endif
 }
 
 void Renderer3D::shutdown() {
@@ -215,7 +213,9 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
 
   mPixelater.render(frame, mDeferredLighting);
 
-  mToneMapping.render(frame, mPixelater.uniform());
+  mBloomRenderer.render(frame, mPixelater);
+
+  mToneMapping.render(frame, mPixelater);
 }
 
 void Renderer3D::resize(Resolution newResolution) {
@@ -235,6 +235,8 @@ void Renderer3D::resize(Resolution newResolution) {
 
   mPixelater.resize(mGraphicsContext, newResolution);
 
+  mBloomRenderer.resize(mGraphicsContext, newResolution);
+
   mToneMapping.resize(mGraphicsContext, newResolution);
 }
 
@@ -244,7 +246,8 @@ void Renderer3D::trackPath(Core::TrackPathID id, const char *path) {
   ResourceTracker *trackers[] = {
     &mPixelater,
     &mDeferredLighting,
-    &mToneMapping
+    &mToneMapping,
+    &mBloomRenderer
   };
 
   // Add other file trackers after

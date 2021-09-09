@@ -61,7 +61,7 @@ void ToneMapping::init(
 }
 
 void ToneMapping::render(
-  VulkanFrame &frame, const VulkanUniform &previousOutput) {
+  VulkanFrame &frame, const RenderStage &previousOutput) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.dbgBeginRegion(
@@ -70,7 +70,7 @@ void ToneMapping::render(
   commandBuffer.beginRenderPass(mRenderPass, mFBO, {}, mExtent);
 
   commandBuffer.bindPipeline(mPipeline.res);
-  commandBuffer.bindUniforms(previousOutput);
+  commandBuffer.bindUniforms(previousOutput.uniform());
   commandBuffer.pushConstants(sizeof(ToneMappingProperties), &mProperties);
 
   commandBuffer.setViewport();
