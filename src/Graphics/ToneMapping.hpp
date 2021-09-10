@@ -14,6 +14,8 @@ class EditorView;
 
 namespace Ondine::Graphics {
 
+class BloomRenderer;
+
 struct ToneMappingProperties {
   glm::vec4 white;
   float exposure;
@@ -32,7 +34,10 @@ public:
     VkExtent2D initialExtent,
     const ToneMappingProperties &initialProperties);
 
-  void render(VulkanFrame &frame, const RenderStage &previousOutput);
+  void render(
+    VulkanFrame &frame,
+    const BloomRenderer &bloom,
+    const RenderStage &previousOutput);
   void resize(VulkanContext &vulkanContext, Resolution newResolution);
 
   const VulkanRenderPass &renderPass() const override;

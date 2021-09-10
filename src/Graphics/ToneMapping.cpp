@@ -1,4 +1,5 @@
 #include "ToneMapping.hpp"
+#include "BloomRenderer.hpp"
 #include "RendererDebug.hpp"
 
 namespace Ondine::Graphics {
@@ -41,6 +42,8 @@ void ToneMapping::init(
         pipelineConfig.configurePipelineLayout(
           sizeof(ToneMappingProperties),
           VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
+          VulkanPipelineDescriptorLayout{
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
 
         res.init(context.device(), context.descriptorLayouts(), pipelineConfig);
@@ -61,7 +64,9 @@ void ToneMapping::init(
 }
 
 void ToneMapping::render(
-  VulkanFrame &frame, const RenderStage &previousOutput) {
+  VulkanFrame &frame,
+  const BloomRenderer &bloom,
+  const RenderStage &previousOutput) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.dbgBeginRegion(
@@ -70,7 +75,7 @@ void ToneMapping::render(
   commandBuffer.beginRenderPass(mRenderPass, mFBO, {}, mExtent);
 
   commandBuffer.bindPipeline(mPipeline.res);
-  commandBuffer.bindUniforms(previousOutput.uniform());
+  commandBuffer.bindUniforms(previousOutput.uniform(), bloom.uniform());
   commandBuffer.pushConstants(sizeof(ToneMappingProperties), &mProperties);
 
   commandBuffer.setViewport();

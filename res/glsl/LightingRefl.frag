@@ -568,8 +568,8 @@ void main() {
       transmittance) + radianceBaseColor;
 
     if (dot(viewRay, uLighting.lighting.sunDirection) >
-        uLighting.lighting.sunSize.y) {
-      radiance = radiance + transmittance * getSolarRadiance(uSky.sky);
+        uLighting.lighting.sunSize.y * 0.99999) {
+      radiance = radiance + transmittance * getSolarRadiance(uSky.sky) * 0.3;
     }
 
     radiance += getSkyRadiance(
@@ -581,7 +581,7 @@ void main() {
 
     if (dot(viewRay, uLighting.lighting.moonDirection) >
         uLighting.lighting.sunSize.y * 0.9999) {
-      radiance = radiance + (transmittance * getSolarRadiance(uSky.sky));
+      radiance = radiance + (transmittance * getSolarRadiance(uSky.sky) * 0.001);
     }
 
     radiance = mix(radiance, pointRadiance, pointAlpha);

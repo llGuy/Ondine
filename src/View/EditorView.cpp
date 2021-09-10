@@ -723,6 +723,20 @@ void EditorView::renderGraphicsWindow() {
         &mRenderer3D.mPixelater.pixelationStrength,
         1.0f, 5.0f);
 
+      static float bloomIntensity = 0.003f;
+      ImGui::SliderFloat(
+        "Bloom Intensity",
+        &bloomIntensity,
+        0.0f, 1.0f);
+
+      mRenderer3D.mBloomRenderer.mProperties.intensity =
+        glm::vec4(bloomIntensity);
+
+      ImGui::SliderFloat(
+        "Threshold",
+        &mRenderer3D.mBloomRenderer.mProperties.threshold,
+        0.0f, 1.0f);
+
       ImGui::TreePop();
     }
 

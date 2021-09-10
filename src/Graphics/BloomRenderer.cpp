@@ -6,6 +6,8 @@ namespace Ondine::Graphics {
 const char *BloomRenderer::BLOOM_BLUR_FRAG_SPV = "res/spv/BloomBlur.frag.spv";
 const char *BloomRenderer::BLOOM_PREFILTER_FRAG_SPV =
   "res/spv/BloomPrefilter.frag.spv";
+const char *BloomRenderer::BLOOM_ADDITIVE_FRAG_SPV =
+  "res/spv/BloomAdditive.frag.spv";
 
 void BloomRenderer::init(
   VulkanContext &graphicsContext,
@@ -65,6 +67,25 @@ void BloomRenderer::init(
       },
       *this,
       graphicsContext);
+
+    mAdditivePipeline.init(
+      [](VulkanPipeline &res, BloomRenderer &owner, VulkanContext &context) {
+        VulkanPipelineConfig pipelineConfig(
+          {owner.mRenderPass, 0},
+          VulkanShader(context.device(), "res/spv/TexturedQuad.vert.spv"),
+          VulkanShader(context.device(), BLOOM_ADDITIVE_FRAG_SPV));
+
+        pipelineConfig.configurePipelineLayout(
+          sizeof(BloomProperties),
+          VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
+          VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
+
+        res.init(context.device(), context.descriptorLayouts(), pipelineConfig);
+      },
+      *this,
+      graphicsContext);
   }
 
   { // Attachments and framebuffers
@@ -73,14 +94,14 @@ void BloomRenderer::init(
     initTargets(graphicsContext);
   }
 
-  mProperties.intensity = glm::vec4(1.0f);
+  mProperties.intensity = glm::vec4(0.003f);
   mProperties.threshold = 1.0f;
 }
 
 void BloomRenderer::render(VulkanFrame &frame, const RenderStage &previous) {
-  { // Prefilter stage
-    auto &commandBuffer = frame.primaryCommandBuffer;
+  auto &commandBuffer = frame.primaryCommandBuffer;
 
+  { // Prefilter stage
     commandBuffer.dbgBeginRegion(
       "BloomPrefilterStage", DBG_BLOOM_PREFILTER_COLOR);
 
@@ -105,13 +126,99 @@ void BloomRenderer::render(VulkanFrame &frame, const RenderStage &previous) {
   }
 
   { // Blur passes
-    for (int i = 0; i < mBlurTargets.size; ++i) {
-      
+    VulkanUniform *previousOutput = &mPrefilteredTarget.uniform;
+
+    auto properties = mProperties;
+
+    char dbgName[] = "BloomBlur0HStage";
+
+    for (int targetIdx = 0; targetIdx < mBlurTargets.size; ++targetIdx) {
+      auto *pair = &mBlurTargets[targetIdx];
+
+      dbgName[10] = 'H';
+
+      properties.horizontal = true;
+      properties.scale = glm::vec4(
+        1.0f / (float)pair->extent.width,
+        1.0f / (float)pair->extent.height,
+        0.0f, 1.0f);
+
+      for (int pass = 0; pass < 2; ++pass) {
+        dbgName[9] = targetIdx + '0';
+        commandBuffer.dbgBeginRegion(
+          dbgName, DBG_BLOOM_PREFILTER_COLOR);
+
+        commandBuffer.beginRenderPass(
+          mRenderPass,
+          pair->blurTargets[pass].fbo,
+          {},
+          pair->extent);
+
+        commandBuffer.bindPipeline(mBlurPipeline.res);
+        commandBuffer.bindUniforms(*previousOutput);
+        commandBuffer.pushConstants(sizeof(BloomProperties), &properties);
+
+        commandBuffer.setViewport();
+        commandBuffer.setScissor();
+
+        commandBuffer.draw(4, 1, 0, 0);
+
+        commandBuffer.endRenderPass();
+
+        commandBuffer.dbgEndRegion();
+
+        properties.horizontal = !properties.horizontal;
+        dbgName[10] = 'V';
+        previousOutput = &pair->blurTargets[pass].uniform;
+      }
     }
   }
 
   { // Addition passes
+    VulkanUniform *previousOutput = &mPrefilteredTarget.uniform;
 
+    auto properties = mProperties;
+
+    char dbgName[] = "BloomAdditive0Stage";
+
+    for (int targetIdx = mBlurTargets.size - 2; targetIdx >= 0; --targetIdx) {
+      auto *highres = &mBlurTargets[targetIdx];
+      auto *lowres = &mBlurTargets[targetIdx + 1];
+
+      dbgName[13] = targetIdx + '0';
+      commandBuffer.dbgBeginRegion(
+        dbgName, DBG_BLOOM_PREFILTER_COLOR);
+
+      commandBuffer.beginRenderPass(
+        mRenderPass,
+        highres->additiveTarget.fbo,
+        {},
+        highres->extent);
+
+      commandBuffer.bindPipeline(mAdditivePipeline.res);
+
+      if (targetIdx == mBlurTargets.size - 2) {
+        commandBuffer.bindUniforms(
+          lowres->blurTargets[1].uniform,
+          highres->blurTargets[1].uniform);
+      }
+      else {
+        commandBuffer.bindUniforms(
+          lowres->additiveTarget.uniform,
+          highres->blurTargets[1].uniform);
+      }
+
+      commandBuffer.pushConstants(sizeof(BloomProperties), &properties);
+
+      commandBuffer.setViewport();
+      commandBuffer.setScissor();
+
+      commandBuffer.draw(4, 1, 0, 0);
+
+      commandBuffer.endRenderPass();
+
+      commandBuffer.dbgEndRegion();
+    }
   }
 }
 
@@ -132,7 +239,8 @@ const VulkanFramebuffer &BloomRenderer::framebuffer() const {
 }
 
 const VulkanUniform &BloomRenderer::uniform() const {
-  return NullReference<VulkanUniform>::nullRef;
+  return mBlurTargets[0].additiveTarget.uniform;
+  // return NullReference<VulkanUniform>::nullRef;
   // TODO
 }
 
@@ -141,7 +249,7 @@ VkExtent2D BloomRenderer::extent() const {
 }
 
 void BloomRenderer::initTargets(VulkanContext &graphicsContext) {
-  VkExtent2D extent = {mExtent.width / 2, mExtent.height / 2};
+  VkExtent2D extent = {mExtent.width, mExtent.height};
 
   /* 
      Initialise the prefiltering target which will be at half the resolution 
@@ -150,6 +258,7 @@ void BloomRenderer::initTargets(VulkanContext &graphicsContext) {
      NOTE: To tinker with a little...
   */
   initTarget(mPrefilteredTarget, extent, graphicsContext);
+
   mPrefilteredExtent = extent;
   LOG_INFOV(
     "Prefilter Extent: %dx%d\n",

@@ -222,9 +222,9 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
 
   mPixelater.render(frame, mDeferredLighting);
 
-  mBloomRenderer.render(frame, mPixelater);
+  mBloomRenderer.render(frame, mDeferredLighting);
 
-  mToneMapping.render(frame, mPixelater);
+  mToneMapping.render(frame, mBloomRenderer, mPixelater);
 }
 
 void Renderer3D::resize(Resolution newResolution) {

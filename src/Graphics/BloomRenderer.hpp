@@ -5,10 +5,17 @@
 #include "TrackedResource.hpp"
 #include "VulkanRenderPass.hpp"
 
+namespace Ondine::View {
+
+class EditorView;
+
+}
+
 namespace Ondine::Graphics {
 
 struct BloomProperties {
   glm::vec4 intensity;
+  glm::vec4 scale;
   float threshold;
   bool horizontal;
 };
@@ -46,6 +53,7 @@ private:
 private:
   static const char *BLOOM_PREFILTER_FRAG_SPV;
   static const char *BLOOM_BLUR_FRAG_SPV;
+  static const char *BLOOM_ADDITIVE_FRAG_SPV;
   static constexpr VkFormat BLOOM_TEXTURE_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
 
   struct BlurTexturePair {
@@ -68,8 +76,11 @@ private:
 
   TrackedResource<VulkanPipeline, BloomRenderer> mBlurPipeline;
   TrackedResource<VulkanPipeline, BloomRenderer> mPrefilterPipeline;
+  TrackedResource<VulkanPipeline, BloomRenderer> mAdditivePipeline;
 
   BloomProperties mProperties;
+
+  friend class View::EditorView;
 };
 
 }

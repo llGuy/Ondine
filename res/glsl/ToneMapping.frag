@@ -4,6 +4,7 @@ layout (location = 0) in vec2 inUVs;
 layout (location = 0) out vec4 outColor;
 
 layout (set = 0, binding = 0) uniform sampler2D uTexture;
+layout (set = 1, binding = 0) uniform sampler2D uBloom;
 
 layout (push_constant) uniform PushConstant {
   vec4 white;
@@ -11,7 +12,8 @@ layout (push_constant) uniform PushConstant {
 } uPushConstant;
 
 void main() {
-  vec3 radiance = texture(uTexture, inUVs).rgb;
+  vec3 bloom = texture(uBloom, inUVs).rgb;
+  vec3 radiance = texture(uTexture, inUVs).rgb + bloom;
 
   vec3 one = vec3(1.0);
   vec3 expValue =

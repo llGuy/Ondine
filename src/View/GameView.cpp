@@ -21,12 +21,23 @@ GameView::GameView(
   { // Set up scene objects
     auto handle1 = mGameScene->createSceneObject("TaurusModelRenderMethod"); 
     auto &sceneObj1 = mGameScene->getSceneObject(handle1);
-    sceneObj1.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f) * 2.0f;
+    sceneObj1.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f);
     sceneObj1.position = glm::vec3(0.0f, 140.0f, 0.0f);
     sceneObj1.scale = glm::vec3(10.0f);
     sceneObj1.rotation = glm::angleAxis(
       glm::radians(30.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
     sceneObj1.constructTransform();
+
+    /*
+    auto handle5 = mGameScene->createSceneObject("SphereModelRenderMethod"); 
+    auto &sceneObj5 = mGameScene->getSceneObject(handle5);
+    sceneObj5.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f) * 10000.0f;
+    sceneObj5.position = glm::vec3(-200.0f, 150.0f, -100.0f);
+    sceneObj5.scale = glm::vec3(4.0f);
+    sceneObj5.rotation = glm::angleAxis(
+      glm::radians(30.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+    sceneObj5.constructTransform();
+    */
 
     auto handle2 = mGameScene->createSceneObject("SphereModelRenderMethod"); 
     auto &sceneObj2 = mGameScene->getSceneObject(handle2);
