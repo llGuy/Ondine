@@ -193,7 +193,7 @@ void main() {
   // Moon always visible
   if (dot(viewRay, uLighting.lighting.moonDirection) >
       uLighting.lighting.sunSize.y * 0.9999) {
-    radiance = radiance + (transmittance * getSolarRadiance(uSky.sky));
+    radiance = radiance + (transmittance * getSolarRadiance(uSky.sky)) * 0.0003;
   }
 
   radiance = mix(radiance, pointRadiance, pointAlpha) + radianceBaseColor;

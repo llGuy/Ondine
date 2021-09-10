@@ -723,7 +723,7 @@ void EditorView::renderGraphicsWindow() {
         &mRenderer3D.mPixelater.pixelationStrength,
         1.0f, 5.0f);
 
-      static float bloomIntensity = 0.003f;
+      static float bloomIntensity = 0.024f;
       ImGui::SliderFloat(
         "Bloom Intensity",
         &bloomIntensity,

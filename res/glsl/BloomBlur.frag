@@ -33,8 +33,8 @@ void main() {
   }
   else {
     for (int i = 1; i < 4; ++i){
-      color += texture(uTexture, inUVs + vec2(0.0f, texOffset.x * i)).rgb * WEIGHTS[i];
-      color += texture(uTexture, inUVs - vec2(0.0f, texOffset.x * i)).rgb * WEIGHTS[i];
+      color += texture(uTexture, inUVs + vec2(0.0f, texOffset.y * i)).rgb * WEIGHTS[i];
+      color += texture(uTexture, inUVs - vec2(0.0f, texOffset.y * i)).rgb * WEIGHTS[i];
     }
   }
 

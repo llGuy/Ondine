@@ -94,7 +94,7 @@ void BloomRenderer::init(
     initTargets(graphicsContext);
   }
 
-  mProperties.intensity = glm::vec4(0.003f);
+  mProperties.intensity = glm::vec4(0.024f);
   mProperties.threshold = 1.0f;
 }
 
