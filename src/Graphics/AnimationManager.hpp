@@ -24,7 +24,7 @@ class AnimationManager {
 public:
   void init();
 
-  void loadSkeleton(
+  SkeletonHandle loadSkeleton(
     const aiScene *scene, ModelConfig &config, VulkanContext &context);
 
   Skeleton &getSkeleton(SkeletonHandle handle);
@@ -33,6 +33,13 @@ public:
   const Skeleton &getSkeleton(SkeletonHandle handle) const;
   const AnimationCycleGroup &getAnimationCycleGroup(
     AnimationCycleGroupHandle handle) const;
+
+private:
+  void loadHierarchy(
+    const std::unordered_map<std::string, uint32_t> &boneNameMap,
+    std::vector<Bone> &bones,
+    const aiNode *node,
+    const aiScene *scene);
 
 private:
   void loadBones(

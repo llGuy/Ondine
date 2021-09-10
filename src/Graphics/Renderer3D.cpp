@@ -93,11 +93,15 @@ void Renderer3D::init() {
 
   { // Prepare scene resources
     /* Create model */
-    ModelConfig modelConfig;
-    auto sphereModelHandle = mModelManager.loadModel(
-      "res/model/UVSphere.fbx", mGraphicsContext, modelConfig);
-    auto taurusModelHandle = mModelManager.loadModel(
-      "res/model/Taurus.fbx", mGraphicsContext, modelConfig);
+    ModelConfig sphereModelConfig = mModelManager.loadModelConfig(
+      "res/model/UVSphere.fbx", mGraphicsContext);
+    auto sphereModelHandle = mModelManager.createModel(
+      sphereModelConfig, mGraphicsContext);
+
+    ModelConfig taurusModelConfig = mModelManager.loadModelConfig(
+      "res/model/Taurus.fbx", mGraphicsContext);
+    auto taurusModelHandle = mModelManager.createModel(
+      taurusModelConfig, mGraphicsContext);
     
     /* Create shader */
     VulkanPipelineConfig pipelineConfig(
@@ -112,7 +116,7 @@ void Renderer3D::init() {
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
-    modelConfig.configureVertexInput(pipelineConfig);
+    sphereModelConfig.configureVertexInput(pipelineConfig);
     pipelineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
     auto &baseModelShader = mShaderEntries.emplace("BaseModelShader");

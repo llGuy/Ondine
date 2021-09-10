@@ -8,7 +8,9 @@
 namespace Ondine::Graphics {
 
 struct BloomProperties {
-  glm::vec4 bloomIntensity;
+  glm::vec4 intensity;
+  float threshold;
+  bool horizontal;
 };
 
 class BloomRenderer :
@@ -66,6 +68,8 @@ private:
 
   TrackedResource<VulkanPipeline, BloomRenderer> mBlurPipeline;
   TrackedResource<VulkanPipeline, BloomRenderer> mPrefilterPipeline;
+
+  BloomProperties mProperties;
 };
 
 }

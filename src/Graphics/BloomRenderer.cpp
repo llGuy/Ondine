@@ -72,10 +72,12 @@ void BloomRenderer::init(
 
     initTargets(graphicsContext);
   }
+
+  mProperties.intensity = glm::vec4(1.0f);
+  mProperties.threshold = 1.0f;
 }
 
 void BloomRenderer::render(VulkanFrame &frame, const RenderStage &previous) {
-#if 0
   { // Prefilter stage
     auto &commandBuffer = frame.primaryCommandBuffer;
 
@@ -90,7 +92,7 @@ void BloomRenderer::render(VulkanFrame &frame, const RenderStage &previous) {
 
     commandBuffer.bindPipeline(mPrefilterPipeline.res);
     commandBuffer.bindUniforms(previous.uniform());
-    // commandBuffer.pushConstants(sizeof(ToneMappingProperties), &mProperties);
+    commandBuffer.pushConstants(sizeof(BloomProperties), &mProperties);
 
     commandBuffer.setViewport();
     commandBuffer.setScissor();
@@ -111,7 +113,6 @@ void BloomRenderer::render(VulkanFrame &frame, const RenderStage &previous) {
   { // Addition passes
 
   }
-#endif
 }
 
 void BloomRenderer::resize(

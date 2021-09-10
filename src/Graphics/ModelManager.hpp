@@ -13,12 +13,11 @@ class ModelManager {
 public:
   void init();
 
-  ModelHandle loadModel(
-    const char *path, VulkanContext &context,
-    ModelConfig &config);
-  ModelHandle loadModel(
-    const aiScene *scene, VulkanContext &context,
-    ModelConfig &config);
+  ModelConfig loadModelConfig(const char *path, VulkanContext &context);
+  ModelConfig loadModelConfig(const aiScene *scene, VulkanContext &context);
+
+  ModelHandle createModel(ModelConfig &config, VulkanContext &context);
+
   Model &getModel(ModelHandle modelHandle);
   const Model &getModel(ModelHandle modelHandle) const;
 

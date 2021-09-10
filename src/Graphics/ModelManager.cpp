@@ -10,15 +10,14 @@ void ModelManager::init() {
   mModels.init(MAX_MODEL_COUNT);
 }
 
-ModelHandle ModelManager::loadModel(
-  const char *path, VulkanContext &graphicsContext,
-  ModelConfig &modelConfig) {
+ModelConfig ModelManager::loadModelConfig(
+  const char *path, VulkanContext &graphicsContext) {
   const aiScene *scene = importScene(path);
 
   /* We assume just one mesh for now */
   const aiMesh *mesh = scene->mMeshes[0];
 
-  new(&modelConfig) ModelConfig(mesh->mNumVertices);
+  ModelConfig modelConfig(mesh->mNumVertices);
 
   modelConfig.pushAttribute(
     {sizeof(glm::vec3), VK_FORMAT_R32G32B32_SFLOAT},
@@ -42,22 +41,16 @@ ModelHandle ModelManager::loadModel(
   modelConfig.configureIndices(
     indexCount, VK_INDEX_TYPE_UINT32,
     {(uint8_t *)indices, sizeof(uint32_t) * indexCount});
-  
-  /* TODO: Rest */
-  ModelHandle handle = mModels.size++;
-  Model &model = mModels[handle];
-  model.init(modelConfig, graphicsContext);
 
-  return handle;
+  return modelConfig;
 }
 
-ModelHandle ModelManager::loadModel(
-  const aiScene *scene, VulkanContext &context,
-  ModelConfig &modelConfig) {
+ModelConfig ModelManager::loadModelConfig(
+  const aiScene *scene, VulkanContext &context) {
   /* We assume just one mesh for now */
   const aiMesh *mesh = scene->mMeshes[0];
 
-  new(&modelConfig) ModelConfig(mesh->mNumVertices);
+  ModelConfig modelConfig(mesh->mNumVertices);
 
   modelConfig.pushAttribute(
     {sizeof(glm::vec3), VK_FORMAT_R32G32B32_SFLOAT},
@@ -81,11 +74,15 @@ ModelHandle ModelManager::loadModel(
   modelConfig.configureIndices(
     indexCount, VK_INDEX_TYPE_UINT32,
     {(uint8_t *)indices, sizeof(uint32_t) * indexCount});
-  
-  /* TODO: Rest */
+
+  return modelConfig;
+}
+
+ModelHandle ModelManager::createModel(
+  ModelConfig &config, VulkanContext &context) {
   ModelHandle handle = mModels.size++;
   Model &model = mModels[handle];
-  model.init(modelConfig, context);
+  model.init(config, context);
 
   return handle;
 }

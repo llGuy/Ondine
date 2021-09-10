@@ -9,7 +9,7 @@ void AnimationManager::init() {
   mAnimationCycleGroups.init(MAX_ANIMATION_COUNT);
 }
 
-void AnimationManager::loadSkeleton(
+SkeletonHandle AnimationManager::loadSkeleton(
   const aiScene *scene, ModelConfig &config, VulkanContext &context) {
   SkeletonHandle handle = mSkeletons.size++;
   auto &skeleton = mSkeletons[handle];
@@ -23,6 +23,9 @@ void AnimationManager::loadSkeleton(
   std::unordered_map<std::string, uint32_t> boneNameMap;
 
   loadBones(scene, skeleton, boneNameMap, weights, boneIDs);
+  loadHierarchy(boneNameMap, skeleton.bones, scene->mRootNode, scene);
+
+  return handle;
 }
 
 Skeleton &AnimationManager::getSkeleton(SkeletonHandle handle) {
@@ -84,6 +87,32 @@ void AnimationManager::loadBones(
           break;
         }
       }
+    }
+  }
+}
+
+void AnimationManager::loadHierarchy(
+  const std::unordered_map<std::string, uint32_t> &boneNameMap,
+  std::vector<Bone> &bones,
+  const aiNode *node,
+  const aiScene *scene) {
+  if (boneNameMap.find(node->mName.data) != boneNameMap.end()) {
+    uint32_t index = boneNameMap.at(node->mName.data);
+    Bone &bone = bones[index];
+
+    for (uint32_t i = 0; i < node->mNumChildren && i < MAX_CHILD_BONES; ++i) {
+      std::string childName = node->mChildren[i]->mName.data;
+      if (boneNameMap.find(childName) != boneNameMap.end()) {
+        uint32_t childIndex = boneNameMap.at(childName);
+        bone.childrenIDs[bone.childrenCount++] = childIndex;
+
+        loadHierarchy(boneNameMap, bones, node->mChildren[i], scene);
+      }
+    }
+  }
+  else {
+    for (uint32_t i = 0; i < node->mNumChildren; ++i) {
+      loadHierarchy(boneNameMap, bones, node->mChildren[i], scene);
     }
   }
 }
