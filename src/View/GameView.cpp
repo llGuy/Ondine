@@ -22,7 +22,7 @@ GameView::GameView(
 #if 1
     auto handle5 = mGameScene->createSceneObject("GlowingTaurusRenderMethod"); 
     auto &sceneObj5 = mGameScene->getSceneObject(handle5);
-    sceneObj5.pushConstant.color = glm::vec3(1.8f, 0.9f, 2.85f) * 2.0f;
+    sceneObj5.pushConstant.color = glm::vec3(1.8f, 0.9f, 2.85f) * 1.0f;
     sceneObj5.position = glm::vec3(0.0f, 240.0f, 0.0f);
     sceneObj5.scale = glm::vec3(10.0f);
     sceneObj5.rotation = glm::angleAxis(
