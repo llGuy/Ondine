@@ -12,6 +12,9 @@ layout (push_constant) uniform PushConstant {
   bool horizontal;
 } uPushConstant;
 
+#define KERNEL7
+
+#ifdef KERNEL7
 const float WEIGHTS[4] = float[](
   20.0 / 64.0,
   15.0 / 64.0,
@@ -40,3 +43,30 @@ void main() {
 
   outColor = vec4(color.rgb, 1.0);
 }
+#else
+const float WEIGHTS[5] = float[](
+ 0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216 
+);
+
+void main() {
+  // outColor = texture(uTexture, inUVs);
+
+  vec2 texOffset = uPushConstant.scale.xy;
+  vec3 color = texture(uTexture, inUVs).rgb * WEIGHTS[0];
+
+  if (bool(uPushConstant.horizontal)) {
+    for (int i = 1; i < 5; ++i) {
+      color += texture(uTexture, inUVs + vec2(texOffset.x * i, 0.0f)).rgb * WEIGHTS[i];
+      color += texture(uTexture, inUVs - vec2(texOffset.x * i, 0.0f)).rgb * WEIGHTS[i];
+    }
+  }
+  else {
+    for (int i = 1; i < 5; ++i){
+      color += texture(uTexture, inUVs + vec2(0.0f, texOffset.y * i)).rgb * WEIGHTS[i];
+      color += texture(uTexture, inUVs - vec2(0.0f, texOffset.y * i)).rgb * WEIGHTS[i];
+    }
+  }
+
+  outColor = vec4(color.rgb, 1.0);
+}
+#endif

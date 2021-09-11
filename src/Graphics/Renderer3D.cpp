@@ -103,28 +103,53 @@ void Renderer3D::init() {
     auto taurusModelHandle = mModelManager.createModel(
       taurusModelConfig, mGraphicsContext);
     
-    /* Create shader */
-    VulkanPipelineConfig pipelineConfig(
-      {mGBuffer.renderPass(), 0},
-      VulkanShader{mGraphicsContext.device(), "res/spv/BaseModel.vert.spv"},
-      VulkanShader{mGraphicsContext.device(), "res/spv/BaseModel.frag.spv"});
+    { // Create base model shader
+      VulkanPipelineConfig pipelineConfig(
+        {mGBuffer.renderPass(), 0},
+        VulkanShader{mGraphicsContext.device(), "res/spv/BaseModel.vert.spv"},
+        VulkanShader{mGraphicsContext.device(), "res/spv/BaseModel.frag.spv"});
 
-    pipelineConfig.enableDepthTesting();
-    pipelineConfig.configurePipelineLayout(
-      sizeof(SceneObject::pushConstant),
-      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
+      pipelineConfig.enableDepthTesting();
+      pipelineConfig.configurePipelineLayout(
+        sizeof(SceneObject::pushConstant),
+        VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+        VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+        VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
-    sphereModelConfig.configureVertexInput(pipelineConfig);
-    pipelineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+      sphereModelConfig.configureVertexInput(pipelineConfig);
+      pipelineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
-    auto &baseModelShader = mShaderEntries.emplace("BaseModelShader");
+      auto &baseModelShader = mShaderEntries.emplace("BaseModelShader");
       
-    baseModelShader.init(
-      mGraphicsContext.device(),
-      mGraphicsContext.descriptorLayouts(),
-      pipelineConfig);
+      baseModelShader.init(
+        mGraphicsContext.device(),
+        mGraphicsContext.descriptorLayouts(),
+        pipelineConfig);
+    }
+
+    { // Create glowing shader
+      VulkanPipelineConfig pipelineConfig(
+        {mGBuffer.renderPass(), 0},
+        VulkanShader{mGraphicsContext.device(), "res/spv/BaseModel.vert.spv"},
+        VulkanShader{mGraphicsContext.device(), "res/spv/Glowing.frag.spv"});
+
+      pipelineConfig.enableDepthTesting();
+      pipelineConfig.configurePipelineLayout(
+        sizeof(SceneObject::pushConstant),
+        VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+        VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+        VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
+
+      sphereModelConfig.configureVertexInput(pipelineConfig);
+      pipelineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+
+      auto &baseModelShader = mShaderEntries.emplace("GlowingModelShader");
+      
+      baseModelShader.init(
+        mGraphicsContext.device(),
+        mGraphicsContext.descriptorLayouts(),
+        pipelineConfig);
+    }
 
     /* Create render method */
     RenderMethod baseModelMethod(mModelManager, mShaderEntries);
@@ -152,6 +177,19 @@ void Renderer3D::init() {
       });
 
     mRenderMethods.insert("TaurusModelRenderMethod", taurusModelMethod);
+
+    RenderMethod glowingModelMethod(mModelManager, mShaderEntries);
+    glowingModelMethod.init(
+      "GlowingModelShader", taurusModelHandle,
+      [](const VulkanCommandBuffer &cmdbuf, const RenderResources &res) {
+        cmdbuf.bindUniforms(
+          res.camera.uniform(), res.planet.uniform(), res.clipping.uniform);
+      },
+      [](const VulkanCommandBuffer &cmdbuf, const SceneObject &obj) {
+        cmdbuf.pushConstants(sizeof(obj.pushConstant), &obj.pushConstant);
+      });
+
+    mRenderMethods.insert("GlowingTaurusRenderMethod", glowingModelMethod);
   }
 
   mWaterRenderer.init(mGraphicsContext, mPlanetProperties);
