@@ -260,10 +260,6 @@ void BloomRenderer::initTargets(VulkanContext &graphicsContext) {
   initTarget(mPrefilteredTarget, extent, graphicsContext);
 
   mPrefilteredExtent = extent;
-  LOG_INFOV(
-    "Prefilter Extent: %dx%d\n",
-    (int)extent.width,
-    (int)extent.height);
 
   uint32_t blurTargetCount = glm::log2((float)extent.width) / 2 + 1;
   mBlurTargets.init(blurTargetCount);
@@ -272,11 +268,6 @@ void BloomRenderer::initTargets(VulkanContext &graphicsContext) {
     VkExtent2D currentExtent = extent;
     currentExtent.width /= glm::pow(2, i);
     currentExtent.height /= glm::pow(2, i);
-
-    LOG_INFOV(
-      "Extent: %dx%d\n",
-      (int)currentExtent.width,
-      (int)currentExtent.height);
 
     mBlurTargets[i].extent = currentExtent;
     initTarget(mBlurTargets[i].blurTargets[0], currentExtent, graphicsContext);

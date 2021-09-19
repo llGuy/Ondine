@@ -25,6 +25,26 @@ SkeletonHandle AnimationManager::loadSkeleton(
   loadBones(scene, skeleton, boneNameMap, weights, boneIDs);
   loadHierarchy(boneNameMap, skeleton.bones, scene->mRootNode, scene);
 
+  Attribute weightsAttribute = {
+    sizeof(glm::vec4),
+    VK_FORMAT_R32G32B32A32_SFLOAT
+  };
+
+  Attribute indicesAttribute = {
+    sizeof(glm::ivec4),
+    VK_FORMAT_R32G32B32A32_UINT
+  };
+
+  config.pushAttribute(
+    weightsAttribute,
+    {(uint8_t *)weights.data(), weights.size() * sizeof(glm::vec4)}
+  );
+
+  config.pushAttribute(
+    indicesAttribute,
+    {(uint8_t *)boneIDs.data(), boneIDs.size() * sizeof(glm::ivec4)}
+  );
+
   return handle;
 }
 

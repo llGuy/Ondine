@@ -6,12 +6,10 @@
 #include "Scene.hpp"
 #include "Window.hpp"
 #include "Camera.hpp"
-#include "MapView.hpp"
 #include "GBuffer.hpp"
 #include "Delegate.hpp"
 #include "Clipping.hpp"
 #include "Pixelater.hpp"
-#include "EditorView.hpp"
 #include "SkyRenderer.hpp"
 #include "ToneMapping.hpp"
 #include "RenderStage.hpp"
@@ -22,8 +20,16 @@
 #include "WaterRenderer.hpp"
 #include "VulkanContext.hpp"
 #include "TerrainRenderer.hpp"
+#include "AnimationManager.hpp"
 #include "DeferredLighting.hpp"
 #include "VulkanArenaAllocator.hpp"
+
+namespace Ondine::View {
+
+class EditorView;
+class MapView;
+
+}
 
 namespace Ondine::Graphics {
 
@@ -52,24 +58,48 @@ public:
   Resolution pipelineViewport;
 
 private:
-  Camera mCamera;
-  PlanetProperties mPlanetProperties;
-  GBuffer mGBuffer;
-  Clipping mClipping;
+  /* 
+     Contains all the info about the 3D scene currently being rendered 
+  */
+  Scene *mBoundScene;
+
+  /* 
+     Various renderers for specific things 
+  */
   StarRenderer mStarRenderer;
   SkyRenderer mSkyRenderer;
-  PlanetRenderer mPlanetRenderer;
   WaterRenderer mWaterRenderer;
   TerrainRenderer mTerrainRenderer;
+  PlanetRenderer mPlanetRenderer;
+
+  /* 
+     Rendering stages in the pipeline 
+  */
+  GBuffer mGBuffer;
   DeferredLighting mDeferredLighting;
-  Pixelater mPixelater;
   BloomRenderer mBloomRenderer;
+  Pixelater mPixelater;
   ToneMapping mToneMapping;
+
+  /* 
+     Some uniform buffer / GPU storage 
+  */
+  Camera mCamera;
+  Clipping mClipping;
+  PlanetProperties mPlanetProperties;
+
+  /* 
+     A bunch of centralised locations for rendering objects. Allows for some
+     optimisation - mostly memory related.
+  */
   RenderMethodEntries mRenderMethods;
   RenderShaderEntries mShaderEntries;
   ModelManager mModelManager;
-  Scene *mBoundScene;
+  AnimationManager mAnimationManager;
+
+
   VulkanContext &mGraphicsContext;
+
 
   // Only relevant in DEV builds
   friend class View::EditorView;

@@ -492,7 +492,7 @@ void main() {
     // Checking if this was a rasterized object
     if (gbuffer.wPosition.a >= 1.0) {
       float roughness = gbuffer.wNormal.w;
-      float metalness = gbuffer.wPosition.w - 1.0;
+      float metalness = gbuffer.wPosition.w - 2.0;
 
       // Check if this point is further away than the ocean
       vec4 vPosition = uCamera.camera.view * vec4(
@@ -500,9 +500,17 @@ void main() {
       vec4 vOceanPosition = uCamera.camera.view * vec4(
         oceanIntersection.wIntersectionPoint, 1.0);
 
+      vec4 rasterizedRadiance = vec4(0.0);
+
       // This is a rendered object
-      vec4 rasterizedRadiance = getPointRadianceBRDF(roughness, metalness, gbuffer);
-      gbuffer.albedo = rasterizedRadiance;
+      if (gbuffer.wPosition.a >= 2.0) {
+        rasterizedRadiance = getPointRadianceBRDF(
+          roughness, metalness, gbuffer);
+        gbuffer.albedo = rasterizedRadiance;
+      }
+      else {
+        rasterizedRadiance = gbuffer.albedo;
+      }
 
       if (vPosition.z < vOceanPosition.z && oceanIntersection.didIntersect) {
         // This is the ocean

@@ -2,7 +2,6 @@
 
 #include <imgui.h>
 #include "View.hpp"
-#include "Renderer3D.hpp"
 #include "VulkanRenderPass.hpp"
 #include "VulkanFramebuffer.hpp"
 

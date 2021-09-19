@@ -9,7 +9,7 @@ namespace Ondine::Graphics {
 const char *const StarRenderer::STARS_VERT_SPV = "res/spv/Stars.vert.spv";
 const char *const StarRenderer::STARS_FRAG_SPV = "res/spv/Stars.frag.spv";
 
-constexpr uint32_t STAR_COUNT = 150;
+constexpr uint32_t STAR_COUNT = 60;
 
 StarRenderer::StarRenderer()
   : mPipelineModelConfig(STAR_COUNT) {
@@ -130,7 +130,7 @@ void StarRenderer::generateStars() {
   for (int i = 0; i < mStarCount; ++i) {
     mStars[i].azimuthAngleRadians = glm::radians(glm::linearRand(0.0f, 360.0f));
     mStars[i].zenithAngleRadians = glm::radians(glm::linearRand(0.0f, 360.0f));
-    mStars[i].brightness = glm::linearRand(0.1f, 1.0f);
+    mStars[i].brightness = glm::linearRand(0.001f, 1.0f);
   }
 
   mStars.size = mStarCount;

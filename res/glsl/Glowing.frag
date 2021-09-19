@@ -44,8 +44,8 @@ void main() {
   }
   else {
     // outAlbedo = vec4(0.8, 0.9, 0.85, 0.0);
-    outAlbedo = vec4(inFS.color.rgb, 0.0);
+    outAlbedo = vec4(inFS.color.rgb, 1.0);
     outNormal = vec4(nanSafeNormalize(inFS.wNormal.xyz), ROUGHNESS);
-    outPosition = vec4(0.0);
+    outPosition = vec4(inFS.wPosition.xyz, 1.0);
   }
 }

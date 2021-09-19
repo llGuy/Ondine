@@ -47,6 +47,6 @@ void main() {
     outAlbedo = vec4(inFS.color.rgb, 0.0);
     outNormal = vec4(nanSafeNormalize(inFS.wNormal.xyz), ROUGHNESS);
     outPosition = inFS.wPosition;
-    outPosition.a = 1.0 + METALNESS;
+    outPosition.a = 2.0 + METALNESS;
   }
 }

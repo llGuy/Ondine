@@ -133,9 +133,17 @@ void main() {
 
   if (wPosition.a >= 1.0) {
     float roughness = gbuffer.wNormal.w;
-    float metalness = gbuffer.wPosition.w - 1.0;
+    float metalness = gbuffer.wPosition.w - 2.0;
 
-    vec4 radiance = getPointRadianceBRDF(roughness, metalness, gbuffer);
+    vec4 radiance = vec4(0.0);
+
+    if (wPosition.a >= 2.0) {
+      radiance = getPointRadianceBRDF(roughness, metalness, gbuffer);
+    }
+    else {
+      radiance = gbuffer.albedo;
+    }
+
     pointRadiance = radiance.rgb;
     pointAlpha = radiance.a;
 
