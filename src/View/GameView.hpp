@@ -42,6 +42,8 @@ private:
   // Allows to call Renderer3D::resize
   DelegateResize &mDelegateResize3D;
   Core::OnEventProc mOnEvent;
+
+  Graphics::Renderer3D &mRenderer3D;
 };
 
 }

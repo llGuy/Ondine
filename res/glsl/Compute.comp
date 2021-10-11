@@ -1,0 +1,24 @@
+#version 450
+
+layout (set = 0, binding = 0, std430) buffer Positions {
+  vec2 pos[];
+} positions;
+
+layout (set = 0, binding = 1, std430) readonly buffer Velocity {
+  vec2 vel[];
+} velocities;
+
+void main() {
+  vec2 currentPos = positions.pos[gl_GlobalInvocationID.x];
+  vec2 velocity = velocities.vel[gl_GlobalInvocationID.x];
+  currentPos += velocity;
+
+  if (currentPos.x > 0.95 ||
+      currentPos.x < -0.95 ||
+      currentPos.y > 0.95 ||
+      currentPos.y < -0.95) {
+    currentPos = -2.0 * velocity + currentPos * 0.05;
+  }
+
+  positions.pos[gl_GlobalInvocationID.x] = currentPos;
+}

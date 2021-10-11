@@ -57,8 +57,10 @@ WindowContextInfo Window::init(OnEventProc callback) {
   case WindowMode::Windowed: {
     const GLFWvidmode *vidmode = glfwGetVideoMode(primaryMonitor);
     if (!mResolution.width) {
-      mResolution.width = vidmode->width / 1.5f;
       mResolution.height = vidmode->height / 1.5f;
+      // mResolution.width = vidmode->width / 1.5f;
+      // mResolution.width = mResolution.height;
+      mResolution = {1000, 1000};
     }
   } break;
 
@@ -356,7 +358,8 @@ void Window::changeCursorDisplay(bool show) {
     glfwSetInputMode(mHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   }
   else {
-    glfwSetInputMode(mHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetInputMode(mHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(mHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   }
 }
 
