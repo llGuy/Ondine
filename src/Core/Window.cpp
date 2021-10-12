@@ -42,28 +42,28 @@ WindowContextInfo Window::init(OnEventProc callback) {
   GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
   GLFWmonitor *monitor = nullptr;
 
-  switch (mWindowMode) {
+  if (!mResolution.width) {
+    switch (mWindowMode) {
 
-  case WindowMode::Fullscreen: {
-    monitor = primaryMonitor;
-    const GLFWvidmode *vidmode = glfwGetVideoMode(monitor);
-    mResolution.width = vidmode->width;
-    mResolution.height = vidmode->height;
+    case WindowMode::Fullscreen: {
+      monitor = primaryMonitor;
+      const GLFWvidmode *vidmode = glfwGetVideoMode(monitor);
+      mResolution.width = vidmode->width;
+      mResolution.height = vidmode->height;
 
-    mPreviousWindowedResolution.width = vidmode->width / 1.5f;
-    mPreviousWindowedResolution.height = vidmode->height / 1.5f;
-  } break;
+      mPreviousWindowedResolution.width = vidmode->width / 1.5f;
+      mPreviousWindowedResolution.height = vidmode->height / 1.5f;
+    } break;
 
-  case WindowMode::Windowed: {
-    const GLFWvidmode *vidmode = glfwGetVideoMode(primaryMonitor);
-    if (!mResolution.width) {
-      mResolution.height = vidmode->height / 1.5f;
-      // mResolution.width = vidmode->width / 1.5f;
-      // mResolution.width = mResolution.height;
-      mResolution = {1000, 1000};
+    case WindowMode::Windowed: {
+      const GLFWvidmode *vidmode = glfwGetVideoMode(primaryMonitor);
+      if (!mResolution.width) {
+        mResolution.height = vidmode->height / 1.5f;
+        mResolution.width = vidmode->width / 1.5f;
+      }
+    } break;
+
     }
-  } break;
-
   }
 
   if (!(mHandle = glfwCreateWindow(

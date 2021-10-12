@@ -9,6 +9,8 @@
 #include "FileSystem.hpp"
 #include "VulkanContext.hpp"
 
+#define PARTICLE_DEMO
+
 namespace Ondine::Runtime {
 
 class Application {

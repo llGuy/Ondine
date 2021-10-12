@@ -5,6 +5,7 @@
 #include "Terrain.hpp"
 #include "Clipping.hpp"
 #include "SceneObject.hpp"
+#include "ParticleDemo.hpp"
 #include "DynamicArray.hpp"
 #include "ModelManager.hpp"
 #include "PlanetRenderer.hpp"
@@ -20,7 +21,8 @@ struct SceneDebug {
   uint32_t renderChunkOutlines : 1;
   uint32_t renderQuadTree: 1;
   uint32_t wireframeTerrain: 1;
-  uint32_t bits : 29;
+  uint32_t enableParticleDemo: 1;
+  uint32_t bits : 28;
 };
 
 class Scene {
@@ -36,7 +38,8 @@ public:
     const PlanetRenderer &planet,
     const Clipping &clipping,
     TerrainRenderer &terrainRenderer,
-    VulkanFrame &frame);
+    VulkanFrame &frame,
+    const Core::Tick &tick);
 
   void submitDebug(
     const Camera &camera,
@@ -55,6 +58,9 @@ public:
   LightingProperties lighting;
   Terrain terrain;
   SceneDebug debug;
+
+  /* Let's just make this public ok? It's just a demo. Won't be in final version */
+  ParticleDemo particleDemo;
 
 private:
   static constexpr uint32_t MAX_SCENE_OBJECTS_COUNT = 5000;

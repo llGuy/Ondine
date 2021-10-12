@@ -9,7 +9,6 @@ GameView::GameView(
   Core::OnEventProc proc)
   : mGameRenderStage(renderer.mainRenderStage()),
     mDelegateResize3D(renderer),
-    mRenderer3D(renderer),
     mOnEvent(proc) {
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
   cursorChange->show = true;
@@ -40,8 +39,42 @@ GameView::GameView(
     mGameScene->lighting.data.waveProfiles[1] = {0.005f, 1.0f, 1.0f};
     mGameScene->lighting.data.waveProfiles[2] = {0.008f, 0.3f, 1.668f};
     mGameScene->lighting.data.waveProfiles[3] = {0.001f, 0.5f, 4.24f};
+    mGameScene->lighting.data.enableLighting = true;
     mGameScene->lighting.rotationAngle = glm::radians(86.5f);
   }
+
+  auto handle1 = mGameScene->createSceneObject("TaurusModelRenderMethod"); 
+  auto &sceneObj1 = mGameScene->getSceneObject(handle1);
+  sceneObj1.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f);
+  sceneObj1.position = glm::vec3(0.0f, 140.0f, 0.0f);
+  sceneObj1.scale = glm::vec3(10.0f);
+  sceneObj1.rotation = glm::angleAxis(
+    glm::radians(30.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+  sceneObj1.constructTransform();
+
+  auto handle2 = mGameScene->createSceneObject("SphereModelRenderMethod"); 
+  auto &sceneObj2 = mGameScene->getSceneObject(handle2);
+  sceneObj2.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f);
+  sceneObj2.position = glm::vec3(30.0f, 150.0f, 0.0f);
+  sceneObj2.scale = glm::vec3(5.0f);
+  sceneObj2.rotation = glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+  sceneObj2.constructTransform();
+
+  auto handle3 = mGameScene->createSceneObject("SphereModelRenderMethod"); 
+  auto &sceneObj3 = mGameScene->getSceneObject(handle3);
+  sceneObj3.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f);
+  sceneObj3.position = glm::vec3(0.0f, 105.0f, -30.0f);
+  sceneObj3.scale = glm::vec3(5.0f);
+  sceneObj3.rotation = glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+  sceneObj3.constructTransform();
+
+  auto handle4 = mGameScene->createSceneObject("SphereModelRenderMethod"); 
+  auto &sceneObj4 = mGameScene->getSceneObject(handle4);
+  sceneObj4.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f);
+  sceneObj4.position = glm::vec3(-100.0f, 90.0f, 100.0f);
+  sceneObj4.scale = glm::vec3(20.0f);
+  sceneObj4.rotation = glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+  sceneObj4.constructTransform();
 
   { // Set camera properties
     mGameScene->camera.fov = glm::radians(50.0f);
@@ -58,6 +91,10 @@ void GameView::onPush(ViewPushParams &params) {
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
   cursorChange->show = false;
   mOnEvent(cursorChange);
+}
+
+void GameView::onPop(ViewPushParams &params) {
+  
 }
 
 GameView::~GameView() {
@@ -170,19 +207,6 @@ void GameView::processGameInput(
   }
 
   const auto &cursor = inputTracker.cursor();
-
-  if (inputTracker.mouseButton(Core::MouseButton::Left).didRelease) {
-    glm::vec2 position = (glm::vec2)cursor.cursorPos /
-      glm::vec2(mRenderer3D.pipelineViewport.width,
-                mRenderer3D.pipelineViewport.height);
-
-    position.y = 1.0f - position.y;
-
-    position = position * 2.0f - glm::vec2(1.0f);
-
-    mRenderer3D.mCircles.add(
-      Graphics::Renderer3D::Circle{position, 1.0f});
-  }
   
   if (cursor.didCursorMove) {
     static constexpr float SENSITIVITY = 15.0f;

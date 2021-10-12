@@ -23,7 +23,8 @@ void Scene::submit(
   const PlanetRenderer &planet,
   const Clipping &clipping,
   TerrainRenderer &terrainRenderer,
-  VulkanFrame &frame) {
+  VulkanFrame &frame,
+  const Core::Tick &tick) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.setViewport();
@@ -52,6 +53,10 @@ void Scene::submit(
   else {
     terrainRenderer.render(
       camera, planet, clipping, terrain, frame);
+  }
+
+  if (debug.enableParticleDemo) {
+    particleDemo.tick(camera, tick, frame);
   }
 }
 

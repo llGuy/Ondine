@@ -50,6 +50,8 @@ public:
   /* When the hierarchy changes, this function gets called */
   virtual void onPush(ViewPushParams &) = 0;
 
+  virtual void onPop(ViewPushParams &) = 0;
+
   /* Used for processing events like viewport resize, etc... */
   virtual void processEvents(ViewProcessEventsParams &) = 0;
 

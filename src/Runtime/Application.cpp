@@ -2,6 +2,7 @@
 #include "Memory.hpp"
 #include "IOEvent.hpp"
 #include "MapView.hpp"
+#include "DemoView.hpp"
 #include "GameView.hpp"
 #include "FileEvent.hpp"
 #include "FileSystem.hpp"
@@ -13,9 +14,13 @@
 namespace Ondine::Runtime {
 
 Application::Application(int argc, char **argv)
-  : mWindow(Core::WindowMode::Windowed, "Ondine"),
-    mRenderer3D(mGraphicsContext),
-    mViewStack(mRenderer3D, mGraphicsContext) {
+  :  mRenderer3D(mGraphicsContext),
+#ifdef PARTICLE_DEMO
+     mWindow(Core::WindowMode::Windowed, "Ondine", {1000, 1000}),
+#else
+     mWindow(Core::WindowMode::Windowed, "Ondine"),
+#endif
+     mViewStack(mRenderer3D, mGraphicsContext) {
   /* Initialise graphics context, etc... */
   setMaxFramerate(60.0f);
 }
@@ -45,14 +50,19 @@ void Application::run() {
   mRenderer3D.init();
   mViewStack.init();
 
+  mViewStack.createView("DemoView", new View::DemoView(mRenderer3D, evProc));
   mViewStack.createView("GameView", new View::GameView(mRenderer3D, evProc));
   mViewStack.createView("MapView", new View::MapView(mRenderer3D, evProc));
   mViewStack.createView(
     "EditorView", new View::EditorView(
       surfaceInfo, mGraphicsContext, mRenderer3D, evProc));
 
+#ifdef PARTICLE_DEMO
+  mViewStack.push("DemoView");
+#else
   mViewStack.push("GameView");
-  // mViewStack.push("EditorView");
+  mViewStack.push("EditorView");
+#endif
 
   /* User-defined function which will be overriden */
   start();

@@ -15,6 +15,7 @@
 #include "RenderStage.hpp"
 #include "ModelManager.hpp"
 #include "RenderMethod.hpp"
+#include "ParticleDemo.hpp"
 #include "StarRenderer.hpp"
 #include "BloomRenderer.hpp"
 #include "WaterRenderer.hpp"
@@ -28,7 +29,7 @@ namespace Ondine::View {
 
 class EditorView;
 class MapView;
-class GameView;
+class DemoView;
 
 }
 
@@ -97,41 +98,14 @@ private:
   RenderShaderEntries mShaderEntries;
   ModelManager mModelManager;
   AnimationManager mAnimationManager;
-
-
-
-  struct Circle {
-    glm::vec2 center;
-    float radius;
-  };
-
-
-  struct Particle {
-    glm::vec2 dstPosition;
-    glm::vec2 currentPosition;
-    glm::vec2 velocity;
-    glm::vec4 color;
-    float random;
-  };
-
-  static constexpr uint32_t PARTICLE_COUNT = 10000;
-  static constexpr uint32_t MAX_CIRCLE_COUNT = 100;
-
-  Array<Particle> mParticles;
-  NumericMap<Circle> mCircles;
-  float mFade = 0.0f;
-
-
-
-  VulkanPipeline mPointPipeline;
-
+  
 
   VulkanContext &mGraphicsContext;
 
 
   // Only relevant in DEV builds
   friend class View::EditorView;
-  friend class View::GameView;
+  friend class View::DemoView;
   friend class View::MapView;
 };
 

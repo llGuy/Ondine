@@ -37,6 +37,8 @@ struct LightingProperties {
     alignas(4) float waterMetal;
 
     alignas(16) WaveProfile waveProfiles[4];
+
+    bool enableLighting;
   } data;
 
   float rotationAngle;
@@ -91,6 +93,9 @@ public:
     const WaterRenderer &water,
     const SkyRenderer &sky);
 
+  void render(
+    VulkanFrame &frame, const GBuffer &gbuffer, const Camera &camera);
+
   void updateData(
     const VulkanCommandBuffer &commandBuffer,
     const LightingProperties &properties);
@@ -108,6 +113,7 @@ private:
   void precomputeBRDFLut(VulkanContext &graphicsContext);
 
 private:
+  static const char *const NO_LIGHTING_FRAG_SPV;
   static const char *const LIGHTING_FRAG_SPV;
   static const char *const LIGHTING_REFL_FRAG_SPV;
   static constexpr VkFormat LIGHTING_TEXTURE_FORMAT =
@@ -127,6 +133,7 @@ private:
 
   TrackedResource<VulkanPipeline, DeferredLighting> mLightingReflPipeline;
   TrackedResource<VulkanPipeline, DeferredLighting> mLightingPipeline;
+  TrackedResource<VulkanPipeline, DeferredLighting> mNoLightingPipeline;
 
   VulkanRenderPass mLightingRenderPass;
   VulkanFramebuffer mLightingFBO;

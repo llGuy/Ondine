@@ -64,6 +64,10 @@ void EditorView::onPush(ViewPushParams &params) {
   // Nothing for now
 }
 
+void EditorView::onPop(ViewPushParams &params) {
+  
+}
+
 EditorView::~EditorView() {
   
 }

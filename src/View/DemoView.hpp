@@ -2,23 +2,22 @@
 
 #include "View.hpp"
 #include "Scene.hpp"
-#include "Delegate.hpp"
+#include "Renderer3D.hpp"
 #include "RenderStage.hpp"
-#include "EditorEvent.hpp"
 
 namespace Ondine::View {
 
-/* Forwards events to the map creation tool */
-class MapView : public View {
+/* Forwards events to the game state */
+class DemoView : public View {
 public:
-  MapView(
+  DemoView(
     Graphics::Renderer3D &renderer,
     Core::OnEventProc proc);
 
-  ~MapView() override;
+  ~DemoView() override;
 
   void onPush(ViewPushParams &params) override;
-  void onPop(ViewPushParams &params) override;
+  void onPop(ViewPushParams &) override;
 
   void processEvents(ViewProcessEventsParams &) override;
   void render(ViewRenderParams &) override;
@@ -30,7 +29,6 @@ public:
 
 private:
   void processGraphicsEvent(Core::Event *ev);
-  void processEditorEvent(Core::Event *ev);
   void processInputEvent(Core::Event *ev);
 
   // For now process game input directly in the game view
@@ -38,13 +36,15 @@ private:
     const Core::Tick &tick, const Core::InputTracker &tracker);
 
 private:
-  Graphics::Scene *mMapScene;
+  const Graphics::RenderStage &mGameRenderStage;
+  Graphics::Scene *mDemoScene;
 
-  const Graphics::RenderStage &mMainRenderStage;
-  Core::TerrainTool mTerrainTool;
-
+  // Allows to call Renderer3D::resize
   DelegateResize &mDelegateResize3D;
   Core::OnEventProc mOnEvent;
+
+  // Just have a reference to this for easy access. This is just a demo
+  Graphics::Renderer3D &mRenderer3D;
 };
 
 }

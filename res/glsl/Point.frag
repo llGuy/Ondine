@@ -13,6 +13,6 @@ layout (push_constant) uniform PushConstant {
 
 void main() {
   outAlbedo = vec4(uPushConstant.color * uPushConstant.fade);
-  outNormal = vec4(0.0);
+  outNormal = vec4(-1.0);
   outPosition = vec4(0.0);
 }

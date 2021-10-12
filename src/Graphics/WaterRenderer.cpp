@@ -41,7 +41,7 @@ void WaterRenderer::tick(
   mGBuffer.beginRender(frame);
   { // Render 3D scene
     sceneSubmitter.submit(
-      mReflectionCamera, planet, mClipping, terrainRenderer, frame);
+      mReflectionCamera, planet, mClipping, terrainRenderer, frame, {});
     stars.render(1.0f, mReflectionCamera, frame);
   }
   mGBuffer.endRender(frame);

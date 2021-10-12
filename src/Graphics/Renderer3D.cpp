@@ -162,42 +162,6 @@ void Renderer3D::init() {
         pipelineConfig);
     }
 
-    { // Points
-      VulkanPipelineConfig pipelineConfig(
-        {mGBuffer.renderPass(), 0},
-        VulkanShader{mGraphicsContext.device(), "res/spv/Point.vert.spv"},
-        VulkanShader{mGraphicsContext.device(), "res/spv/Point.frag.spv"});
-
-      pipelineConfig.configurePipelineLayout(
-        sizeof(SceneObject::pushConstant));
-
-      pipelineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
-
-      mPointPipeline.init(
-        mGraphicsContext.device(),
-        mGraphicsContext.descriptorLayouts(),
-        pipelineConfig);
-
-      mParticles.init(PARTICLE_COUNT);
-      mCircles.init(MAX_CIRCLE_COUNT);
-
-      float firstCircleRadius = 0.5f;
-      mCircles.add(Circle{glm::vec2(0.0f), firstCircleRadius});
-
-      for (int i = 0; i < mParticles.capacity; ++i) {
-        mParticles[i].random = glm::linearRand(0.0f, 1.0f);
-
-        mParticles[i].dstPosition = firstCircleRadius * glm::vec2(
-          glm::cos(glm::radians(mParticles[i].random * 360.0f)),
-          glm::sin(glm::radians(mParticles[i].random * 360.0f)));
-        mParticles[i].currentPosition = mParticles[i].dstPosition +
-          glm::linearRand(glm::vec2(-1.0f), glm::vec2(1.0f)) * 0.01f;
-
-        mParticles[i].color = glm::vec4(1.8f, 0.9f, 2.85f, 1.0f) * 5.0f;
-        mParticles[i].velocity = glm::vec2(0.0f);
-      }
-    }
-
     /* Create render method */
     RenderMethod baseModelMethod(mModelManager, mShaderEntries);
     baseModelMethod.init(
@@ -295,75 +259,21 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
   mGBuffer.beginRender(frame);
   { // Render 3D scene
     mBoundScene->submit(
-      mCamera, mPlanetRenderer, mClipping, mTerrainRenderer, frame);
+      mCamera, mPlanetRenderer, mClipping, mTerrainRenderer, frame, tick);
     mBoundScene->submitDebug(
       mCamera, mPlanetRenderer, mClipping, mTerrainRenderer, frame);
     mStarRenderer.render(3.0f, mCamera, frame);
-
-    auto &commandBuffer = frame.primaryCommandBuffer;
-
-    commandBuffer.bindPipeline(mPointPipeline);
-
-    commandBuffer.setViewport();
-    commandBuffer.setScissor();
-
-    struct PushConstant {
-      glm::vec4 position;
-      glm::vec4 color;
-      float fade;
-      float starSize;
-    };
-
-    mFade = 1.0;
-
-    float radius = 0.5f / (float)mCircles.size();
-
-    int particleIdx = 0;
-    int particlesPerCircle = 1 + mParticles.capacity / mCircles.size();
-
-    for (auto &circle : mCircles) {
-      int startIdx = particleIdx;
-      int endIdx = particleIdx + particlesPerCircle;
-
-      for (; particleIdx < endIdx && particleIdx < mParticles.capacity; ++particleIdx) {
-        auto &particle = mParticles[particleIdx];
-
-        float circleProgress = particle.random;
-
-        particle.dstPosition = circle.center + radius * glm::vec2(
-          glm::cos(glm::radians(circleProgress * 360.0f)),
-          glm::sin(glm::radians(circleProgress * 360.0f)));
-
-        glm::vec2 diff = (particle.dstPosition - particle.currentPosition);
-        float magSq = glm::dot(diff, diff);
-
-        glm::vec2 acc = diff * magSq;
-
-        particle.velocity += acc * tick.dt;
-        particle.currentPosition += particle.velocity * tick.dt;
-
-        PushConstant pushConstant = {
-          glm::vec4(
-            particle.currentPosition.x,
-            particle.currentPosition.y,
-            0.0f, 1.0f),
-
-          particle.color,
-          mFade,
-          3.0f
-        };
-
-        commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
-
-        commandBuffer.draw(1, 1, 0, 0);
-      }
-    }
   }
 
   mGBuffer.endRender(frame);
 
-  mDeferredLighting.render(
-    frame, mGBuffer, mCamera, mPlanetRenderer, mWaterRenderer, mSkyRenderer);
+  if (mBoundScene->lighting.data.enableLighting) {
+    mDeferredLighting.render(
+      frame, mGBuffer, mCamera, mPlanetRenderer, mWaterRenderer, mSkyRenderer);
+  }
+  else {
+    mDeferredLighting.render(frame, mGBuffer, mCamera);
+  }
 
   mPixelater.render(frame, mDeferredLighting);
 

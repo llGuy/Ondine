@@ -17,6 +17,7 @@ public:
   ~GameView() override;
 
   void onPush(ViewPushParams &params) override;
+  void onPop(ViewPushParams &params) override;
 
   void processEvents(ViewProcessEventsParams &) override;
   void render(ViewRenderParams &) override;
@@ -42,8 +43,6 @@ private:
   // Allows to call Renderer3D::resize
   DelegateResize &mDelegateResize3D;
   Core::OnEventProc mOnEvent;
-
-  Graphics::Renderer3D &mRenderer3D;
 };
 
 }

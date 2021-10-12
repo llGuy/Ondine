@@ -468,16 +468,6 @@ void main() {
     texture(uPosition, inUVs),
     texture(uAlbedo, inUVs));
 
-  outColor = gbuffer.albedo;
-
-  #if 0
-  /* Get all the inputs */
-  GBufferData gbuffer = GBufferData(
-    texture(uNormal, inUVs),
-    texture(uDepth, inUVs).r,
-    texture(uPosition, inUVs),
-    texture(uAlbedo, inUVs));
-
   if (gbuffer.wNormal.w >= 0.0) {
     vec3 viewRay = normalize(inViewRay);
 
@@ -610,5 +600,4 @@ void main() {
   else {
     outColor = gbuffer.albedo;
   }
-  #endif
 }

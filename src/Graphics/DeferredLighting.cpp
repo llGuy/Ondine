@@ -119,6 +119,8 @@ const char *const DeferredLighting::LIGHTING_FRAG_SPV =
   "res/spv/Lighting.frag.spv";
 const char *const DeferredLighting::LIGHTING_REFL_FRAG_SPV =
   "res/spv/LightingRefl.frag.spv";
+const char *const DeferredLighting::NO_LIGHTING_FRAG_SPV =
+  "res/spv/NoLighting.frag.spv";
 
 VulkanTexture *DeferredLighting::sWaterNormalMapTexture = nullptr;
 VulkanTexture *DeferredLighting::sWaterDistortionTexture = nullptr;
@@ -204,6 +206,31 @@ void DeferredLighting::init(
           VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
           VulkanPipelineDescriptorLayout{
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4});
+
+        res.init(
+          graphicsContext.device(),
+          graphicsContext.descriptorLayouts(),
+          pipelineConfig);
+      },
+      *this,
+      graphicsContext);
+  }
+
+  { // Create pipeline which does no lighting whatsover
+    mNoLightingPipeline.init(
+      [](VulkanPipeline &res, DeferredLighting &owner,
+         VulkanContext &graphicsContext) {
+        VulkanPipelineConfig pipelineConfig(
+          {owner.mLightingRenderPass, 0},
+          VulkanShader(graphicsContext.device(), "res/spv/Lighting.vert.spv"),
+          VulkanShader(graphicsContext.device(), NO_LIGHTING_FRAG_SPV));
+
+        pipelineConfig.configurePipelineLayout(
+          0,
+          VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
+          VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
         res.init(
           graphicsContext.device(),
@@ -337,6 +364,31 @@ void DeferredLighting::render(
     water.uniform(),
     *sWaterUniform,
     *sBRDFLutUniform);
+
+  commandBuffer.setViewport();
+  commandBuffer.setScissor();
+
+  commandBuffer.draw(4, 1, 0, 0);
+
+  commandBuffer.endRenderPass();
+
+  commandBuffer.dbgEndRegion();
+}
+
+void DeferredLighting::render(
+  VulkanFrame &frame, const GBuffer &gbuffer, const Camera &camera) {
+  auto &commandBuffer = frame.primaryCommandBuffer;
+
+  commandBuffer.dbgBeginRegion(
+    "NoLighting", DBG_DEFERRED_LIGHTING_COLOR);
+
+  commandBuffer.beginRenderPass(
+    mLightingRenderPass,
+    mLightingFBO,
+    {}, mLightingExtent);
+
+  commandBuffer.bindPipeline(mNoLightingPipeline.res);
+  commandBuffer.bindUniforms(gbuffer.uniform(), camera.uniform());
 
   commandBuffer.setViewport();
   commandBuffer.setScissor();

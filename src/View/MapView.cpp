@@ -96,6 +96,7 @@ MapView::MapView(
     mMapScene->lighting.data.waveProfiles[1] = {0.005f, 1.0f, 1.0f};
     mMapScene->lighting.data.waveProfiles[2] = {0.008f, 0.3f, 1.668f};
     mMapScene->lighting.data.waveProfiles[3] = {0.001f, 0.5f, 4.24f};
+    mMapScene->lighting.data.enableLighting = true;
     mMapScene->lighting.rotationAngle = glm::radians(89.5f);
   }
 
@@ -110,6 +111,10 @@ MapView::MapView(
 
 void MapView::onPush(ViewPushParams &params) {
   params.renderer.bindScene(mMapScene);
+}
+
+void MapView::onPop(ViewPushParams &params) {
+  
 }
 
 MapView::~MapView() {
