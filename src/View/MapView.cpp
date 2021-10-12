@@ -15,7 +15,7 @@ MapView::MapView(
     mOnEvent(proc),
     mTerrainTool(Core::TerrainTool::DensityPaintBrushAdd) {
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
-  cursorChange->show = false;
+  cursorChange->show = true;
   mOnEvent(cursorChange);
 
   mMapScene = renderer.createScene();

@@ -60,7 +60,7 @@ void DemoView::onPush(ViewPushParams &params) {
   params.renderer.bindScene(mDemoScene);
 
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
-  cursorChange->show = false;
+  cursorChange->show = true;
   mOnEvent(cursorChange);
 }
 

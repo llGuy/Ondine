@@ -358,8 +358,8 @@ void Window::changeCursorDisplay(bool show) {
     glfwSetInputMode(mHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   }
   else {
-    //glfwSetInputMode(mHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetInputMode(mHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetInputMode(mHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // glfwSetInputMode(mHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   }
 }
 
