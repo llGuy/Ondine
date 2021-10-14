@@ -12,7 +12,8 @@ class VulkanDescriptorSetLayoutMaker;
 enum VulkanShaderType {
   Vertex = VK_SHADER_STAGE_VERTEX_BIT,
   Geometry = VK_SHADER_STAGE_GEOMETRY_BIT,
-  Fragment = VK_SHADER_STAGE_FRAGMENT_BIT
+  Fragment = VK_SHADER_STAGE_FRAGMENT_BIT,
+  Compute = VK_SHADER_STAGE_COMPUTE_BIT
 };
 
 class VulkanShader {
@@ -60,12 +61,12 @@ public:
       mPushConstantSize(0),
       mViewportInfo{},
       mTarget(target),
-      mCreateInfo{} {
+      mCreateInfoGraphics{} {
     mShaderStages.zero();
-    setDefaultValues();
-
     setShaderStages(
       makeArray<VulkanShader, AllocationType::Linear>(shaders...));
+
+    setDefaultValues();
   }
 
   void enableBlendingSame(
@@ -105,6 +106,8 @@ private:
     const VulkanDevice &device,
     VulkanDescriptorSetLayoutMaker &layout);
 
+  bool isCompute();
+
 private:
   VkPipelineInputAssemblyStateCreateInfo mInputAssembly;
   VkPipelineVertexInputStateCreateInfo mVertexInput;
@@ -126,8 +129,14 @@ private:
   Array<VkPipelineShaderStageCreateInfo, AllocationType::Linear> mShaderStages;
   size_t mPushConstantSize;
   VulkanShaderTarget mTarget;
-  VkGraphicsPipelineCreateInfo mCreateInfo;
+
+  union {
+    VkGraphicsPipelineCreateInfo mCreateInfoGraphics;
+    VkComputePipelineCreateInfo mCreateInfoCompute;
+  };
+
   VkPipelineLayout mPipelineLayout;
+  bool isComputePipeline;
 
   friend class VulkanPipeline;
 };

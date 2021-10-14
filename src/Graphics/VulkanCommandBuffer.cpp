@@ -195,6 +195,16 @@ void VulkanCommandBuffer::bindPipeline(const VulkanPipeline &pipeline) {
   mCurrentPipelineLayout = pipeline.mPipelineLayout;
 }
 
+void VulkanCommandBuffer::bindComputePipeline(const VulkanPipeline &pipeline) {
+  vkCmdBindPipeline(
+    mCommandBuffer,
+    VK_PIPELINE_BIND_POINT_COMPUTE,
+    pipeline.mPipeline);
+
+  mCurrentPipeline = pipeline.mPipeline;
+  mCurrentPipelineLayout = pipeline.mPipelineLayout;
+}
+
 void VulkanCommandBuffer::pushConstants(size_t size, const void *ptr) const {
   vkCmdPushConstants(
     mCommandBuffer, mCurrentPipelineLayout,
@@ -482,5 +492,9 @@ void VulkanCommandBuffer::dbgEndRegion() {
   }
 }
 #endif
+
+void VulkanCommandBuffer::dispatch(int groupCount) const {
+  vkCmdDispatch(mCommandBuffer, groupCount, 1, 1);
+}
 
 }

@@ -189,7 +189,7 @@ void DemoView::processGameInput(
     position = position * 2.0f - glm::vec2(1.0f);
 
     mDemoScene->particleDemo.mCircles.add(
-      Graphics::Circle{position, 1.0f});
+      glm::vec2(position));
   }
   
   if (cursor.didCursorMove) {

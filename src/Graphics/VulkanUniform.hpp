@@ -13,11 +13,13 @@ namespace Ondine::Graphics {
 */
 class VulkanUniform {
 public:
+  /* TODO: Just have separate names: initUniformBuffer, initStorageBuffer, etc.. */
   void init(
     const VulkanDevice &device,
     const VulkanDescriptorPool &pool,
     VulkanDescriptorSetLayoutMaker &layouts,
-    const Array<VulkanBuffer, AllocationType::Linear> &buffers);
+    const Array<VulkanBuffer, AllocationType::Linear> &buffers,
+    bool isForComputeBuffer = false);
 
   void init(
     const VulkanDevice &device,

@@ -40,6 +40,7 @@ public:
   VkExtent2D popViewport();
 
   void bindPipeline(const VulkanPipeline &pipeline);
+  void bindComputePipeline(const VulkanPipeline &pipeline);
   void pushConstants(size_t size, const void *ptr) const;
   void bindVertexBuffers(
     uint32_t firstBinding, uint32_t bindingCount,
@@ -70,9 +71,32 @@ public:
         NULL);
   }
 
+  template <typename ...T>
+  void bindComputeUniforms(const T &...uniforms) const {
+    size_t count = sizeof...(T);
+    auto pred = [](const VulkanUniform &uniform) -> VkDescriptorSet {
+      return uniform.mDescriptorSet;
+    };
+
+    Array<VkDescriptorSet, AllocationType::Linear> sets =
+      makeArrayPred<VkDescriptorSet, AllocationType::Linear>(pred, uniforms...);
+
+    vkCmdBindDescriptorSets(
+        mCommandBuffer,
+        VK_PIPELINE_BIND_POINT_COMPUTE,
+        mCurrentPipelineLayout,
+        0,
+        count,
+        sets.data,
+        0,
+        NULL);
+  }
+
   void draw(
     size_t vertexCount, size_t instanceCount,
     size_t firstVertex, size_t firstInstance) const;
+
+  void dispatch(int groupCount) const;
 
   void drawIndexed(
     uint32_t indexCount, uint32_t instanceCount,

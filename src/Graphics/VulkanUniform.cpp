@@ -6,9 +6,16 @@ void VulkanUniform::init(
   const VulkanDevice &device,
   const VulkanDescriptorPool &pool,
   VulkanDescriptorSetLayoutMaker &layouts,
-  const Array<VulkanBuffer, AllocationType::Linear> &buffers) {
+  const Array<VulkanBuffer, AllocationType::Linear> &buffers,
+  bool isForCompute) {
+  VkDescriptorType type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+  if (isForCompute) {
+    type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  }
+
   VkDescriptorSetLayout layout = layouts.getDescriptorSetLayout(
-    device, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, buffers.size);
+    device, type, buffers.size);
 
   VkDescriptorSetAllocateInfo allocateInfo = {};
   allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -38,7 +45,7 @@ void VulkanUniform::init(
     writes[i].dstBinding = i;
     writes[i].dstArrayElement = 0;
     writes[i].descriptorCount = 1;
-    writes[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    writes[i].descriptorType = type;
     writes[i].pBufferInfo = &bufferInfos[i];
   }
 

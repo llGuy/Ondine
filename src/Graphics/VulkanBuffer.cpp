@@ -18,6 +18,11 @@ void VulkanBuffer::init(
     mUsage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     mUsedAtEarliest = mUsedAtLatest = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
   }
+  if (type & VulkanBufferFlag::StorageBuffer) {
+    mUsage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    mUsedAtEarliest = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+    mUsedAtLatest = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  }
   if (type & VulkanBufferFlag::IndexBuffer) {
     mUsage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
     mUsedAtEarliest = mUsedAtLatest = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;

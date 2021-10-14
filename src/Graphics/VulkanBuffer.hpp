@@ -15,6 +15,7 @@ enum class VulkanBufferFlag {
   UniformBuffer = BIT(2),
   Mappable = BIT(3),
   TransferSource = BIT(4),
+  StorageBuffer = BIT(5),
   // By default, all buffers are transfer dst
 };
 

@@ -33,6 +33,10 @@ public:
     const GBuffer &gbuffer,
     VulkanContext &graphicsContext);
 
+  void tick(
+    const Camera &camera,
+    const Core::Tick &tick, Graphics::VulkanFrame &frame);
+
   void submit(
     const Camera &camera,
     const PlanetRenderer &planet,

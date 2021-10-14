@@ -36,6 +36,9 @@ VulkanShader::VulkanShader(const VulkanDevice &device, const char *path) {
   else if (!strcmp(ext, "frag.spv")) {
     mType = VulkanShaderType::Fragment;
   }
+  else if (!strcmp(ext, "comp.spv")) {
+    mType = VulkanShaderType::Compute;
+  }
   else {
     LOG_ERRORV("Unknown shader file extention: %s\n", path);
     PANIC_AND_EXIT();
@@ -119,53 +122,60 @@ void VulkanPipelineConfig::setToWireframe() {
   mRasterization.polygonMode = VK_POLYGON_MODE_LINE;
 }
 
+bool VulkanPipelineConfig::isCompute() {
+  return mShaderStages.size == 1 &&
+    mShaderStages[0].stage == VK_SHADER_STAGE_COMPUTE_BIT;
+}
+
 void VulkanPipelineConfig::setDefaultValues() {
-  /* Blend states */
-  const auto &renderPass = mTarget.renderPass;
-  const auto &subpass = renderPass.mSubpasses[mTarget.subpassIndex];
+  if (!isCompute()) {
+    /* Blend states */
+    const auto &renderPass = mTarget.renderPass;
+    const auto &subpass = renderPass.mSubpasses[mTarget.subpassIndex];
 
-  uint32_t colorAttachmentCount = subpass.colorAttachmentCount;
-  mBlendStates.init(colorAttachmentCount);
-  mBlendStates.zero();
+    uint32_t colorAttachmentCount = subpass.colorAttachmentCount;
+    mBlendStates.init(colorAttachmentCount);
+    mBlendStates.zero();
 
-  for (int i = 0; i < colorAttachmentCount; ++i) {
-    const auto &colorRef = subpass.pColorAttachments[i];
-    const auto &attachmentDesc = renderPass.mAttachments[colorRef.attachment];
-    auto &blendState = mBlendStates[mBlendStates.size++];
+    for (int i = 0; i < colorAttachmentCount; ++i) {
+      const auto &colorRef = subpass.pColorAttachments[i];
+      const auto &attachmentDesc = renderPass.mAttachments[colorRef.attachment];
+      auto &blendState = mBlendStates[mBlendStates.size++];
 
-    switch (attachmentDesc.format) {
-      // TODO: Add other formats as they come up
-    case VK_FORMAT_B8G8R8A8_UNORM:
-    case VK_FORMAT_R8G8B8A8_UNORM:
-    case VK_FORMAT_R32G32B32A32_SFLOAT:
-    case VK_FORMAT_R16G16B16A16_SFLOAT: {
-      blendState.colorWriteMask =
-        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-        VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    } break;
+      switch (attachmentDesc.format) {
+        // TODO: Add other formats as they come up
+      case VK_FORMAT_B8G8R8A8_UNORM:
+      case VK_FORMAT_R8G8B8A8_UNORM:
+      case VK_FORMAT_R32G32B32A32_SFLOAT:
+      case VK_FORMAT_R16G16B16A16_SFLOAT: {
+        blendState.colorWriteMask =
+          VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+          VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+      } break;
 
-    case VK_FORMAT_R32G32_SFLOAT:
-    case VK_FORMAT_R16G16_SFLOAT: {
-      blendState.colorWriteMask =
-        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT;
-    } break;
+      case VK_FORMAT_R32G32_SFLOAT:
+      case VK_FORMAT_R16G16_SFLOAT: {
+        blendState.colorWriteMask =
+          VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT;
+      } break;
 
-    case VK_FORMAT_R16_SFLOAT: {
-      blendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT;
-    } break;
+      case VK_FORMAT_R16_SFLOAT: {
+        blendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT;
+      } break;
 
-    default: {
-      LOG_ERROR("Handling unsupported format for color blending!\n");
-      PANIC_AND_EXIT();
-    } break;
+      default: {
+        LOG_ERROR("Handling unsupported format for color blending!\n");
+        PANIC_AND_EXIT();
+      } break;
+      }
     }
-  }
 
-  mBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-  mBlending.logicOpEnable = VK_FALSE;
-  mBlending.attachmentCount = colorAttachmentCount;
-  mBlending.pAttachments = mBlendStates.data;
-  mBlending.logicOp = VK_LOGIC_OP_COPY;
+    mBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    mBlending.logicOpEnable = VK_FALSE;
+    mBlending.attachmentCount = colorAttachmentCount;
+    mBlending.pAttachments = mBlendStates.data;
+    mBlending.logicOp = VK_LOGIC_OP_COPY;
+  }
 
   /* Vertex input (empty by default) */
   mVertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -268,22 +278,32 @@ void VulkanPipelineConfig::finishConfiguration(
       NULL,
       &mPipelineLayout));
 
-  mCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-  mCreateInfo.stageCount = mShaderStages.size;
-  mCreateInfo.pStages = mShaderStages.data;
-  mCreateInfo.pVertexInputState = &mVertexInput;
-  mCreateInfo.pInputAssemblyState = &mInputAssembly;
-  mCreateInfo.pViewportState = &mViewportInfo;
-  mCreateInfo.pRasterizationState = &mRasterization;
-  mCreateInfo.pMultisampleState = &mMultisample;
-  mCreateInfo.pDepthStencilState = &mDepthStencil;
-  mCreateInfo.pColorBlendState = &mBlending;
-  mCreateInfo.pDynamicState = &mDynamicState;
-  mCreateInfo.layout = mPipelineLayout;
-  mCreateInfo.renderPass = mTarget.renderPass.mRenderPass;
-  mCreateInfo.subpass = mTarget.subpassIndex;
-  mCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
-  mCreateInfo.basePipelineIndex = -1;
+  if (isCompute()) {
+    mCreateInfoCompute = {};
+    mCreateInfoCompute.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    mCreateInfoCompute.pNext = nullptr;
+    mCreateInfoCompute.flags = 0;
+    mCreateInfoCompute.stage = mShaderStages[0];
+    mCreateInfoCompute.layout = mPipelineLayout;
+  }
+  else {
+    mCreateInfoGraphics.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    mCreateInfoGraphics.stageCount = mShaderStages.size;
+    mCreateInfoGraphics.pStages = mShaderStages.data;
+    mCreateInfoGraphics.pVertexInputState = &mVertexInput;
+    mCreateInfoGraphics.pInputAssemblyState = &mInputAssembly;
+    mCreateInfoGraphics.pViewportState = &mViewportInfo;
+    mCreateInfoGraphics.pRasterizationState = &mRasterization;
+    mCreateInfoGraphics.pMultisampleState = &mMultisample;
+    mCreateInfoGraphics.pDepthStencilState = &mDepthStencil;
+    mCreateInfoGraphics.pColorBlendState = &mBlending;
+    mCreateInfoGraphics.pDynamicState = &mDynamicState;
+    mCreateInfoGraphics.layout = mPipelineLayout;
+    mCreateInfoGraphics.renderPass = mTarget.renderPass.mRenderPass;
+    mCreateInfoGraphics.subpass = mTarget.subpassIndex;
+    mCreateInfoGraphics.basePipelineHandle = VK_NULL_HANDLE;
+    mCreateInfoGraphics.basePipelineIndex = -1;
+  }
 }
 
 void VulkanPipeline::init(
@@ -292,14 +312,26 @@ void VulkanPipeline::init(
   VulkanPipelineConfig &config) {
   config.finishConfiguration(device, layouts);
 
-  VK_CHECK(
-    vkCreateGraphicsPipelines(
-      device.mLogicalDevice,
-      VK_NULL_HANDLE,
-      1,
-      &config.mCreateInfo,
-      NULL,
-      &mPipeline));
+  if (config.isCompute()) {
+    VK_CHECK(
+      vkCreateComputePipelines(
+        device.mLogicalDevice,
+        VK_NULL_HANDLE,
+        1,
+        &config.mCreateInfoCompute,
+        NULL,
+        &mPipeline));
+  }
+  else {
+    VK_CHECK(
+      vkCreateGraphicsPipelines(
+        device.mLogicalDevice,
+        VK_NULL_HANDLE,
+        1,
+        &config.mCreateInfoGraphics,
+        NULL,
+        &mPipeline));
+  }
 
   mPipelineLayout = config.mPipelineLayout;
 }

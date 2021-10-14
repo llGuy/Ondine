@@ -18,6 +18,14 @@ void Scene::init(
 
 }
 
+void Scene::tick(
+  const Camera &camera,
+  const Core::Tick &tick, Graphics::VulkanFrame &frame) {
+  if (debug.enableParticleDemo) {
+    particleDemo.tick(camera, tick, frame);
+  }
+}
+
 void Scene::submit(
   const Camera &camera,
   const PlanetRenderer &planet,
@@ -56,7 +64,7 @@ void Scene::submit(
   }
 
   if (debug.enableParticleDemo) {
-    particleDemo.tick(camera, tick, frame);
+    particleDemo.render(camera, tick, frame);
   }
 }
 

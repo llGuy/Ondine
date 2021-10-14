@@ -17,12 +17,6 @@ class DemoView;
 
 namespace Ondine::Graphics {
 
-struct Circle {
-  glm::vec2 center;
-  float radius;
-};
-
-
 struct Particle {
   glm::vec2 dstPosition;
   glm::vec2 currentPosition;
@@ -57,22 +51,35 @@ public:
     const Camera &camera,
     const Core::Tick &tick, Graphics::VulkanFrame &frame);
 
+  void render(
+    const Camera &camera,
+    const Core::Tick &tick, Graphics::VulkanFrame &frame);
+
 public:
   // This is absolutely terrible. Should be using a vertex buffer but ALAS
   struct PushConstant {
-    glm::vec4 position;
     glm::vec4 color;
-    float fade;
-    float starSize;
+  };
+
+  struct ComputePushConstant {
+    glm::vec4 color;
+    int circleCount;
+    int particleCount;
+    float dt;
   };
 
 private:
-  static constexpr uint32_t MAX_CIRCLE_COUNT = 100;
+  // Array<Particle> mParticles;
+  NumericMap<glm::vec2> mCircles;
 
-  Array<Particle> mParticles;
-  NumericMap<Circle> mCircles;
-
+  TrackedResource<VulkanPipeline, ParticleDemo> mCompute;
   TrackedResource<VulkanPipeline, ParticleDemo> mPipeline;
+
+  VulkanBuffer mParticleBuffers[4];
+  VulkanBuffer mCircleBuffer;
+
+  VulkanUniform mParticleUniform;
+  VulkanUniform mCircleUniform;
 
   const RenderStage *mGBuffer;
 

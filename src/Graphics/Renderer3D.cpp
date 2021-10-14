@@ -255,6 +255,8 @@ void Renderer3D::tick(const Core::Tick &tick, Graphics::VulkanFrame &frame) {
   mWaterRenderer.tick(
     frame, mPlanetRenderer, mSkyRenderer,
     mStarRenderer, mTerrainRenderer, *mBoundScene);
+
+  mBoundScene->tick(mCamera, tick, frame);
      
   mGBuffer.beginRender(frame);
   { // Render 3D scene

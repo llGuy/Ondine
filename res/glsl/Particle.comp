@@ -1,0 +1,61 @@
+#version 450
+
+layout (local_size_x = 256) in;
+
+/* Particle state */
+layout (set = 0, binding = 0, std430) buffer ParticlePositions {
+  vec2 pos[];
+} uParticlePositions;
+
+layout (set = 0, binding = 1, std430) buffer ParticleDstPositions {
+  vec2 dstPos[];
+} uParticleDstPositions;
+
+layout (set = 0, binding = 2, std430) buffer ParticleVelocities {
+  vec2 vel[];
+} uParticleVelocities;
+
+layout (set = 0, binding = 3, std430) readonly buffer ParticleRandom {
+  float random[];
+} uParticleRandom;
+
+/* Circles */
+layout (set = 1, binding = 0, std430) readonly buffer Circles {
+  // xy -> center
+  vec2 centerRadius[];
+} uCircles;
+
+layout (push_constant) uniform PushConstant {
+  vec4 color;
+  int circleCount;
+  int particleCount;
+  float dt;
+} uPushConstant;
+
+const float PI = 3.14159265;
+const float TWO_PI = 2.0 * PI;
+
+void main() {
+  int particlesPerCircle = 1 + uPushConstant.particleCount /
+    uPushConstant.circleCount;
+  float radius = 0.5 / float(uPushConstant.circleCount);
+
+
+
+  uint i = gl_GlobalInvocationID.x;
+  uint circle = i / particlesPerCircle;
+  float circleProgress = uParticleRandom.random[i];
+
+  uParticleDstPositions.dstPos[i] = uCircles.centerRadius[circle] + radius *
+    vec2(cos(TWO_PI * circleProgress), sin(TWO_PI * circleProgress));
+
+  vec2 diff = uParticleDstPositions.dstPos[i] - uParticlePositions.pos[i];
+  float magSq = dot(diff, diff);
+
+  vec2 acc = diff * magSq;
+
+  uParticleVelocities.vel[i] += acc * uPushConstant.dt;
+  uParticlePositions.pos[i] += uParticleVelocities.vel[i] * uPushConstant.dt;
+
+  // uParticlePositions.pos[i] = vec2(float(uPushConstantjkI));
+}
