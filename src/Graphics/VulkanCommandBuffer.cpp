@@ -7,6 +7,7 @@
 #include "VulkanRenderPass.hpp"
 #include "VulkanFramebuffer.hpp"
 #include "VulkanCommandBuffer.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace Ondine::Graphics {
 
@@ -185,10 +186,12 @@ VkExtent2D VulkanCommandBuffer::popViewport() {
   return mViewports[mViewportCount--];
 }
 
-void VulkanCommandBuffer::bindPipeline(const VulkanPipeline &pipeline) {
+void VulkanCommandBuffer::bindPipeline(
+  const VulkanPipeline &pipeline,
+  VulkanPipelineBindPoint bindPoint) {
   vkCmdBindPipeline(
     mCommandBuffer,
-    VK_PIPELINE_BIND_POINT_GRAPHICS,
+    (VkPipelineBindPoint)bindPoint,
     pipeline.mPipeline);
 
   mCurrentPipeline = pipeline.mPipeline;
@@ -238,6 +241,10 @@ void VulkanCommandBuffer::bindIndexBuffer(
   VkDeviceSize offset, VkIndexType indexType,
   const VulkanBuffer &buffer) const {
   vkCmdBindIndexBuffer(mCommandBuffer, buffer.mBuffer, offset, indexType);
+}
+
+void VulkanCommandBuffer::dispatch(const glm::ivec3 &groups) const {
+  vkCmdDispatch(mCommandBuffer, groups.x, groups.y, groups.z);
 }
 
 void VulkanCommandBuffer::draw(

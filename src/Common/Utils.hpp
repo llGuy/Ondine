@@ -3,7 +3,11 @@
 #include <utility>
 #include <stdint.h>
 #include <stdlib.h>
+
+#if !defined(__APPLE__)
 #include <malloc.h>
+#endif
+
 #include <string.h>
 #include "Buffer.hpp"
 

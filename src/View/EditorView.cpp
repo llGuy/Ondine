@@ -162,6 +162,11 @@ void EditorView::render(ViewRenderParams &params) {
     viewportPos = ImGui::GetWindowPos();
     viewportSize = ImGui::GetWindowSize();
 
+#ifdef __APPLE__
+    viewportPos.x *= 1, viewportPos.y *= 2;
+    viewportSize.x *= 2, viewportSize.y *= 2;
+#endif
+
     if (mViewportResolution.width == 0) {
       mViewportResolution.width = (uint32_t)viewportSize.x;
       mViewportResolution.height = (uint32_t)viewportSize.y;

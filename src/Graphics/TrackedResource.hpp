@@ -32,7 +32,7 @@ public:
     mOwner = &owner;
   }
   
-  void init(VulkanContext &graphicsContext) {
+  void init(VulkanContext &graphicsContext) override {
     mProc(res, *mOwner, graphicsContext);
   }
 

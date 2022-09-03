@@ -1,4 +1,5 @@
 #include "VulkanUniform.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace Ondine::Graphics {
 
@@ -77,7 +78,12 @@ void VulkanUniform::init(
   memset(writes, 0, sizeof(VkWriteDescriptorSet) * textures.size);
 
   for (int i = 0; i < textures.size; ++i) {
-    imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    if (type == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE) {
+      imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    }
+    else {
+      imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    }
     imageInfos[i].imageView = textures[i].mImageViewSample;
     imageInfos[i].sampler = textures[i].mSampler;
 

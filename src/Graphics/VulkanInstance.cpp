@@ -4,6 +4,9 @@
 #include "Vulkan.hpp"
 #include "VulkanInstance.hpp"
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
 namespace Ondine::Graphics {
 
 VulkanInstance::VulkanInstance(bool enableValidation)
@@ -36,9 +39,12 @@ void VulkanInstance::init() {
     "VK_KHR_win32_surface",
 #elif defined(__ANDROID__)
     "VK_KHR_android_surface"
+#elif defined(__APPLE__)
+    "VK_EXT_metal_surface",
 #else
     "VK_KHR_xcb_surface",
 #endif
+
     "VK_KHR_surface",
 #ifndef NDEBUG
     "VK_EXT_debug_utils",

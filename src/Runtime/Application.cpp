@@ -1,3 +1,4 @@
+#include <signal.h>
 #include "Log.hpp"
 #include "Memory.hpp"
 #include "IOEvent.hpp"
@@ -34,9 +35,9 @@ void Application::run() {
     (Core::MountPoint)Core::ApplicationMountPoints::Raw,
     "");
 
+  Core::Window::initWindowAPI();
   mGraphicsContext.initInstance();
 
-  Core::Window::initWindowAPI();
   auto evProc = RECV_EVENT_PROC(recvEvent);
   auto surfaceInfo = mWindow.init(evProc);
 
@@ -208,6 +209,8 @@ void Application::processDebugEvent(Core::Event *ev) {
     
 #if _WIN32
     __debugbreak();
+#elif defined(__APPLE__)
+    raise(SIGTRAP);
 #else
     asm("int $3");
 #endif

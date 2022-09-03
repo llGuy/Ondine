@@ -4,6 +4,7 @@
 #include "Log.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
+#include <string>
 #include <unordered_map>
 
 namespace Ondine {

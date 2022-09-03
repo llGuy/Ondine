@@ -3,6 +3,7 @@
 #include "Vulkan.hpp"
 #include "VulkanSync.hpp"
 #include "VulkanDevice.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace Ondine::Graphics {
 
@@ -46,6 +47,9 @@ VkAccessFlags findAccessFlagsForImageLayout(VkImageLayout layout) {
 
   case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
     return VK_ACCESS_TRANSFER_WRITE_BIT | VK_ACCESS_TRANSFER_READ_BIT;
+
+  case VK_IMAGE_LAYOUT_GENERAL:
+    return VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
 
   case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
     return VK_ACCESS_TRANSFER_WRITE_BIT;

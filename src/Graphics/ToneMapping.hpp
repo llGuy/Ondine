@@ -34,10 +34,7 @@ public:
     VkExtent2D initialExtent,
     const ToneMappingProperties &initialProperties);
 
-  void render(
-    VulkanFrame &frame,
-    const BloomRenderer &bloom,
-    const RenderStage &previousOutput);
+  void render(VulkanFrame &frame);
   void resize(VulkanContext &vulkanContext, Resolution newResolution);
 
   const VulkanRenderPass &renderPass() const override;
@@ -59,8 +56,9 @@ private:
   VulkanFramebuffer mFBO;
   VulkanRenderPass mRenderPass;
   VulkanUniform mToneMappingOutput;
+  VulkanUniform mToneMappingStorage;
   ToneMappingProperties mProperties;
-  TrackedResource<VulkanPipeline, ToneMapping> mPipeline;
+  VulkanPipeline mPipeline;
 
   friend class View::EditorView;
 };

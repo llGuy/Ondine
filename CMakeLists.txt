@@ -4,7 +4,7 @@ project(Ondine)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_MBCS -DGLM_ENABLE_EXPERIMENTAL")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_MBCS -DGLM_ENABLE_EXPERIMENTAL -Wordered-compare-function-pointers")
 
 file(GLOB_RECURSE COMMON_SOURCES "src/Common/*.cpp" "src/Common/*.hpp")
 file(GLOB_RECURSE CORE_SOURCES "src/Core/*.cpp" "src/Core/*.hpp")
@@ -19,9 +19,18 @@ include_directories("${CMAKE_SOURCE_DIR}/dep/imgui/include")
 
 find_package(Vulkan)
 find_package(OpenAL)
+
+set(ASSIMP_BUILD_FBX_IMPORTER ON)
+set(ASSIMP_BUILD_FBX_EXPORTER ON)
+set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
+set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF)
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
+set(ASSIMP_BUILD_TESTS OFF)
 add_subdirectory("${CMAKE_SOURCE_DIR}/dep/assimp")
 
 add_library(Imgui "${IMGUI_SOURCES}")
+target_include_directories(Imgui PUBLIC "${Vulkan_INCLUDE_DIRS}")
+target_link_libraries(Imgui PUBLIC "${Vulkan_LIBRARY}" "glfw")
 
 include_directories("src/Common")
 include_directories("src/Core")
@@ -31,6 +40,7 @@ include_directories("src/Imgui")
 
 add_library(Common "${COMMON_SOURCES}")
 add_library(Core "${CORE_SOURCES}")
+target_link_libraries(Common PUBLIC Core)
 add_library(Graphics "${GRAPHICS_SOURCES}")
 target_link_libraries(Graphics PUBLIC "${Vulkan_LIBRARY}")
 target_link_libraries(Graphics PUBLIC Imgui)
@@ -40,7 +50,7 @@ target_include_directories(Graphics PUBLIC "${CMAKE_SOURCE_DIR}/dep/assimp/inclu
 target_include_directories(Graphics PUBLIC "src/Imgui")
 
 add_library(View "${VIEW_SOURCES}")
-target_link_libraries(View PUBLIC "assimp")
+target_link_libraries(View PUBLIC "assimp" Imgui Core Graphics)
 target_include_directories(View PUBLIC "${CMAKE_SOURCE_DIR}/dep/assimp/include")
 
 add_executable(Ondine "${RUNTIME_SOURCES}")
@@ -72,7 +82,12 @@ if(Vulkan_FOUND)
 
   message(STATUS "Found Vulkan package in system ${Vulkan_LIBRARY}")
   target_include_directories(Ondine PUBLIC "${Vulkan_INCLUDE_DIRS}")
+  target_include_directories(Core PUBLIC "${Vulkan_INCLUDE_DIRS}")
+  target_include_directories(View PUBLIC "${Vulkan_INCLUDE_DIRS}")
+  message("${Vulkan_INCLUDE_DIRS}")
   target_link_libraries(Ondine PUBLIC "${Vulkan_LIBRARY}")
+  target_link_libraries(Core PUBLIC "${Vulkan_LIBRARY}")
+  target_link_libraries(View PUBLIC "${Vulkan_LIBRARY}")
 
 else(Vulkan_FOUND)
 
@@ -101,7 +116,10 @@ if (WIN32)
 
 else (WIN32)
 
-  target_link_libraries(Ondine PUBLIC "pthread" "stdc++fs" "glfw")
+  # target_link_libraries(Ondine PUBLIC "pthread" "stdc++fs" "glfw")
+  # target_link_libraries(Core PUBLIC "pthread" "stdc++fs" "glfw")
+  target_link_libraries(Ondine PUBLIC "pthread" "glfw")
+  target_link_libraries(Core PUBLIC "pthread" "glfw")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 endif()

@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <math.h>
 #include "FileSystem.hpp"
 #include "SkyRenderer.hpp"

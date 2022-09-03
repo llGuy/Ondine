@@ -16,16 +16,17 @@ void VulkanDevice::init(
   enum {
     SwapchainExtIndex,
     DebugMarkerExtIndex,
+    PortabilitySubsetExtIndex,
+    ShaderViewportIndexLayer,
     InvalidExtIndex
   };
 
   const char *requestedExtNames[InvalidExtIndex] = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    VK_EXT_DEBUG_MARKER_EXTENSION_NAME
+    VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
+    "VK_KHR_portability_subset",
+    "VK_EXT_shader_viewport_index_layer"
   };
-
-  requestedExtNames[SwapchainExtIndex] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
-  requestedExtNames[DebugMarkerExtIndex] = VK_EXT_DEBUG_MARKER_EXTENSION_NAME;
 
   DeviceExtensions requestedExt = {};
   requestedExt.count = sizeof(requestedExtNames) / sizeof(requestedExtNames[0]);

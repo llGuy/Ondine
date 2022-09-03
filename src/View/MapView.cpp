@@ -14,6 +14,7 @@ MapView::MapView(
     mDelegateResize3D(renderer),
     mOnEvent(proc),
     mTerrainTool(Core::TerrainTool::DensityPaintBrushAdd) {
+#if 0
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
   cursorChange->show = false;
   mOnEvent(cursorChange);
@@ -106,6 +107,7 @@ MapView::MapView(
       glm::normalize(glm::vec3(0.415, -0.123f, 0.9f));
     mMapScene->camera.wUp = glm::vec3(0.0f, 1.0f, 0.0f);
   }
+#endif
 }
 
 void MapView::onPush(ViewPushParams &params) {

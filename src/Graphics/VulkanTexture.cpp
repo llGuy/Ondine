@@ -48,6 +48,11 @@ void VulkanTexture::init(
     usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
   }
 
+  if (type & TextureType::ComputeTarget) {
+    type &= ~(TextureType::ComputeTarget);
+    usage |= VK_IMAGE_USAGE_STORAGE_BIT;
+  }
+
   if (type & TextureType::Attachment) {
     type &= ~(TextureType::Attachment);
 

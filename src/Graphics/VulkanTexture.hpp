@@ -19,7 +19,8 @@ enum TextureType {
   StoreInRam = BIT(5),
   TransferSource = BIT(6),
   LinearTiling = BIT(7),
-  WrapSampling = BIT(8)
+  WrapSampling = BIT(8),
+  ComputeTarget = BIT(9)
 };
 
 using TextureTypeBits = uint32_t;

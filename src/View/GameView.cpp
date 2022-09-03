@@ -10,6 +10,7 @@ GameView::GameView(
   : mGameRenderStage(renderer.mainRenderStage()),
     mDelegateResize3D(renderer),
     mOnEvent(proc) {
+#if 0
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
   cursorChange->show = false;
   mOnEvent(cursorChange);
@@ -97,14 +98,17 @@ GameView::GameView(
       glm::normalize(glm::vec3(-0.3f, -0.1f, 1.0f));
     mGameScene->camera.wUp = glm::vec3(0.0f, 1.0f, 0.0f);
   }
+#endif
 }
 
 void GameView::onPush(ViewPushParams &params) {
   params.renderer.bindScene(mGameScene);
 
+#if 0
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
   cursorChange->show = false;
   mOnEvent(cursorChange);
+#endif
 }
 
 GameView::~GameView() {
@@ -181,6 +185,7 @@ FocusedView GameView::trackInput(
 
 void GameView::processGameInput(
   const Core::Tick &tick, const Core::InputTracker &inputTracker) {
+#if 0
   auto up = mGameScene->camera.wUp;
   auto right = glm::normalize(glm::cross(
     mGameScene->camera.wViewDirection, mGameScene->camera.wUp));
@@ -239,6 +244,7 @@ void GameView::processGameInput(
     mGameScene->lighting.rotateBy(
       glm::radians(30.0f * cursor.scroll.y * tick.dt));
   }
+#endif
 }
 
 }

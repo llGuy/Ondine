@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan.h>
 #include "Buffer.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace Ondine::Graphics {
 
@@ -9,10 +10,16 @@ class VulkanDevice;
 class VulkanRenderPass;
 class VulkanDescriptorSetLayoutMaker;
 
-enum VulkanShaderType {
+enum class VulkanShaderType {
   Vertex = VK_SHADER_STAGE_VERTEX_BIT,
   Geometry = VK_SHADER_STAGE_GEOMETRY_BIT,
-  Fragment = VK_SHADER_STAGE_FRAGMENT_BIT
+  Fragment = VK_SHADER_STAGE_FRAGMENT_BIT,
+  Compute = VK_SHADER_STAGE_COMPUTE_BIT
+};
+
+enum class VulkanPipelineBindPoint {
+  Graphics = VK_PIPELINE_BIND_POINT_GRAPHICS,
+  Compute = VK_PIPELINE_BIND_POINT_COMPUTE
 };
 
 class VulkanShader {
@@ -60,12 +67,12 @@ public:
       mPushConstantSize(0),
       mViewportInfo{},
       mTarget(target),
-      mCreateInfo{} {
+      mCreateInfoGraphics{} {
     mShaderStages.zero();
-    setDefaultValues();
-
     setShaderStages(
       makeArray<VulkanShader, AllocationType::Linear>(shaders...));
+
+    setDefaultValues();
   }
 
   void enableBlendingSame(
@@ -74,6 +81,7 @@ public:
 
   void enableDepthTesting();
 
+  // T should be VulkanPipelineDescriptorLayout
   template <typename ...T>
   void configurePipelineLayout(
     size_t pushConstantSize,
@@ -105,6 +113,8 @@ private:
     const VulkanDevice &device,
     VulkanDescriptorSetLayoutMaker &layout);
 
+  bool isCompute();
+
 private:
   VkPipelineInputAssemblyStateCreateInfo mInputAssembly;
   VkPipelineVertexInputStateCreateInfo mVertexInput;
@@ -126,8 +136,14 @@ private:
   Array<VkPipelineShaderStageCreateInfo, AllocationType::Linear> mShaderStages;
   size_t mPushConstantSize;
   VulkanShaderTarget mTarget;
-  VkGraphicsPipelineCreateInfo mCreateInfo;
+
+  union {
+    VkGraphicsPipelineCreateInfo mCreateInfoGraphics;
+    VkComputePipelineCreateInfo mCreateInfoCompute;
+  };
+
   VkPipelineLayout mPipelineLayout;
+  bool isComputePipeline;
 
   friend class VulkanPipeline;
 };
@@ -152,5 +168,6 @@ private:
 
   friend class VulkanCommandBuffer;
 };
+
 
 }
