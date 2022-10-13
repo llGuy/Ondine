@@ -34,7 +34,7 @@ public:
     const GBuffer &gbuffer);
 
   // Temporary
-  void queueQuadTreeUpdate();
+  void setUpdateQuadTree(bool shouldUpdate);
 
   void render(
     const Camera &camera,

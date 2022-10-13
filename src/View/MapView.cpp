@@ -18,6 +18,7 @@ MapView::MapView(
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
   cursorChange->show = false;
   mOnEvent(cursorChange);
+#endif
 
   mMapScene = renderer.createScene();
   mMapScene->debug.renderChunkOutlines = 0;
@@ -25,17 +26,14 @@ MapView::MapView(
   mMapScene->debug.renderQuadTree = 0;
   mMapScene->terrain.init();
 
-  /*
-  mMapScene->terrain.makeSphere(500.0f, glm::vec3(000.0f, 580.0f, 100.0f));
-  mMapScene->terrain.makeSphere(250.0f, glm::vec3(-350.0f, 380.0f, 0.0f));
-
-  mMapScene->terrain.makeSphere(500.0f, glm::vec3(1000.0f, 580.0f, 1100.0f));
-  */
-  
+#if 0
   mMapScene->terrain.makeIslands(
-    100, 5, 0.1f, 1.4f, 20.0f, 0.8f,
-    glm::ivec2(-250, -250) * 7,
-    glm::ivec2(250, 250) * 7);
+    100, 10, 0.1f, 1.4f, 160.0f, 0.6f,
+    glm::ivec2(-250, -250) * 14,
+    glm::ivec2(250, 250) * 14);
+#endif
+
+  mMapScene->terrain.makeSphere(250, glm::vec3(0.0f, 300.0f, 0.0f));
 
   // mMapScene->terrain.generateVoxelNormals();
 
@@ -87,7 +85,7 @@ MapView::MapView(
     mMapScene->lighting.data.white = glm::vec3(2.0f);
     mMapScene->lighting.data.waterSurfaceColor =
       glm::vec3(8.0f, 54.0f, 76.0f) / 255.0f;
-    mMapScene->lighting.pause = false;
+    mMapScene->lighting.pause = true;
     mMapScene->lighting.data.continuous = 0.0f;
     mMapScene->lighting.data.waveStrength = 0.54f;
     mMapScene->lighting.data.waterRoughness = 0.01f;
@@ -107,7 +105,6 @@ MapView::MapView(
       glm::normalize(glm::vec3(0.415, -0.123f, 0.9f));
     mMapScene->camera.wUp = glm::vec3(0.0f, 1.0f, 0.0f);
   }
-#endif
 }
 
 void MapView::onPush(ViewPushParams &params) {
@@ -265,7 +262,7 @@ void MapView::processGameInput(
       glm::radians(30.0f * cursor.scroll.y * tick.dt));
   }
 
-  if (inputTracker.mouseButton(Core::MouseButton::Right).isDown) {
+  if (inputTracker.mouseButton(Core::MouseButton::Left).isDown) {
     switch (mTerrainTool) {
     case Core::TerrainTool::DensityPaintBrushAdd: {
       mMapScene->terrain.queuePaint(

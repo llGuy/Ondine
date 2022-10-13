@@ -5,9 +5,16 @@
 
 namespace Ondine::Graphics {
 
-void ModelManager::init() {
+void ModelManager::init(VulkanContext &context) {
   /* Possibly load models loaded from previous session or something idk */
   mModels.init(MAX_MODEL_COUNT);
+
+  mVertexPool.init(
+    context.device(),
+    VERTEX_POOL_SIZE,
+    (VulkanBufferFlagBits)VulkanBufferFlag::VertexBuffer);
+
+  mCurrentOffset = 0;
 }
 
 ModelConfig ModelManager::loadModelConfig(

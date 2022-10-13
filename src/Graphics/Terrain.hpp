@@ -138,7 +138,7 @@ private:
 
 private:
   static constexpr uint32_t MAX_DENSITY = 0xFFFF;
-  static constexpr uint32_t MAX_CHUNKS = 3000;
+  static constexpr uint32_t MAX_CHUNKS = 6000;
   static constexpr uint32_t SURFACE_DENSITY = 30000;
 
   int mTerrainScale;

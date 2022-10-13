@@ -5,7 +5,7 @@
 namespace Ondine::Graphics {
 
 const glm::vec3 Isosurface::NORMALIZED_CUBE_VERTICES[8] = {
- glm::vec3(-0.5f, -0.5f, -0.5f),
+  glm::vec3(-0.5f, -0.5f, -0.5f),
   glm::vec3(+0.5f, -0.5f, -0.5f),
   glm::vec3(-0.5f, +0.5f, -0.5f),
   glm::vec3(+0.5f, +0.5f, -0.5f),
@@ -842,9 +842,11 @@ void Isosurface::updateVoxelCell(
 
     float interpolatedVoxelValues = lerp(voxelValue0, voxelValue1, surfaceLevelF);
     
+    // Vertex
     glm::vec3 vertex = interpolate(
       vertices[v0], vertices[v1], interpolatedVoxelValues);
 
+    // Normal
     glm::vec3 normal0 = glm::vec3(
       voxels[v0].normalX, voxels[v0].normalY, voxels[v0].normalZ) / 1000.0f;
     glm::vec3 normal1 = glm::vec3(
@@ -853,11 +855,30 @@ void Isosurface::updateVoxelCell(
     glm::vec3 normal = interpolate(
       normal0, normal1, interpolatedVoxelValues);
 
+    // Color
+    glm::vec3 color = glm::vec3(0.0f);
+
+    glm::vec3 color0 = b16ColorToV3(voxels[v0].color);
+    glm::vec3 color1 = b16ColorToV3(voxels[v1].color);
+    if (voxels[v0].density < mSurfaceDensity.density) {
+      // If the first is below density, set color to the second
+      color = color1;
+    }
+    else if (voxels[v1].density < mSurfaceDensity.density) {
+      // If the second is below density, set the color to the first
+      color = color0;
+    }
+    else {
+      // If both voxels are above surface density, interpolate the colors
+      color = interpolate(
+          color0, color1, interpolatedVoxelValues);
+    }
+
     if (glm::dot(normal, normal) != 0.0f) {
       normal = glm::normalize(normal);
     }
 
-    verts[i] = {vertex, normal};
+    verts[i] = {vertex, normal, color};
   }
 
   for (int i = 0; i < cellData.GetTriangleCount() * 3; ++i) {
@@ -960,7 +981,28 @@ void Isosurface::updateTransVoxelCell(
       glm::vec3 normal = interpolate(
         normal0, normal1, interpolatedVoxelValues);
 
-      verts[i] = {vertex, normal};
+      // Color
+      glm::vec3 color = glm::vec3(0.0f);
+
+      glm::vec3 color0 = b16ColorToV3(voxels[v0].color);
+      glm::vec3 color1 = b16ColorToV3(voxels[v1].color);
+
+      if (voxels[v0].density < mSurfaceDensity.density) {
+        // If the first is below density, set color to the second
+        color = color1;
+      }
+      else if (voxels[v1].density < mSurfaceDensity.density) {
+        // If the second is below density, set the color to the first
+        color = color0;
+      }
+      else 
+      {
+        // If both voxels are above surface density, interpolate the colors
+        color = interpolate(
+            color0, color1, interpolatedVoxelValues);
+      }
+
+      verts[i] = {vertex, normal, color};
     }
 
     for (int i = 0; i < cellData.GetTriangleCount() * 3; ++i) {
@@ -1093,7 +1135,37 @@ void Isosurface::updateTransVoxelCell(
         normal = glm::normalize(normal);
       }
 
-      verts[i] = {vertex, normal};
+      // Color
+      glm::vec3 color = glm::vec3(0.0f);
+
+      glm::vec3 color0 = b16ColorToV3(voxels[v0].color);
+      glm::vec3 color1 = b16ColorToV3(voxels[v1].color);
+
+#if 0
+      if (voxels[v0].density < mSurfaceDensity.density && voxels[v1].density < mSurfaceDensity.density) {
+        LOG_ERROR("Surface density bug\n");
+        PANIC_AND_EXIT();
+      }
+#endif
+
+      if (voxels[v0].density < mSurfaceDensity.density) {
+        // If the first is below density, set color to the second
+        color = color1;
+      }
+      else if (voxels[v1].density < mSurfaceDensity.density) {
+        // If the second is below density, set the color to the first
+        color = color0;
+      }
+      else 
+      {
+        // If both voxels are above surface density, interpolate the colors
+        color = interpolate(
+            color0, color1, interpolatedVoxelValues);
+      }
+
+      color = glm::vec3(0.0f);
+
+      verts[i] = {vertex, normal, color};
     }
 
     if (cellClassIdx & 0x80) {

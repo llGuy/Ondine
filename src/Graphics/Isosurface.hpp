@@ -16,6 +16,7 @@ class Terrain;
 struct IsoVertex {
   glm::vec3 position;
   glm::vec3 normal;
+  glm::vec3 color;
 };
 
 /* A group which can encompass a certain volume of chunks depending on LOD */

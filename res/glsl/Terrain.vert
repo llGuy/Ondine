@@ -4,11 +4,13 @@
 
 layout (location = 0) in vec3 inPosition;
 layout (location = 1) in vec3 inNormal;
+layout (location = 2) in vec3 inColor;
 // Add normals in future
 
 layout (location = 0) out VS_DATA {
   vec4 wPosition;
   vec4 wNormal;
+  vec4 color;
 } outVS;
 
 layout (push_constant) uniform PushConstant {
@@ -22,6 +24,7 @@ layout (set = 0, binding = 0) uniform CameraUniform {
 void main() {
   outVS.wPosition = uPushConstant.modelMatrix * vec4(inPosition, 1.0);
   outVS.wNormal = uPushConstant.modelMatrix * vec4(inNormal, 0.0);
+  outVS.color = vec4(inColor, 0.0);
 
   gl_Position = uCamera.camera.viewProjection * outVS.wPosition;
 

@@ -4,6 +4,7 @@
 #include "IOEvent.hpp"
 #include "MapView.hpp"
 #include "GameView.hpp"
+#include "Settings.hpp"
 #include "FileEvent.hpp"
 #include "FileSystem.hpp"
 #include "EditorView.hpp"
@@ -18,7 +19,7 @@ Application::Application(int argc, char **argv)
     mRenderer3D(mGraphicsContext),
     mViewStack(mRenderer3D, mGraphicsContext) {
   /* Initialise graphics context, etc... */
-  setMaxFramerate(60.0f);
+  gSettings.setMaxFramerate(60.0f);
 }
 
 Application::~Application() {
@@ -46,7 +47,10 @@ void Application::run() {
   mRenderer3D.init();
   mViewStack.init();
 
-  mViewStack.createView("GameView", new View::GameView(mRenderer3D, evProc));
+  mGame.init();
+  mGame.initGameRendering(mRenderer3D);
+
+  mViewStack.createView("GameView", new View::GameView(mGame, mRenderer3D, evProc));
   mViewStack.createView("MapView", new View::MapView(mRenderer3D, evProc));
   mViewStack.createView(
     "EditorView", new View::EditorView(
@@ -109,6 +113,8 @@ void Application::run() {
     // Defined in client
     tick();
 
+    mGame.tick(currentTick);
+
     Graphics::VulkanFrame frame = mGraphicsContext.beginFrame();
     if (!frame.skipped) { // All rendering here
       mRenderer3D.tick(currentTick, frame);
@@ -127,9 +133,9 @@ void Application::run() {
     Core::TimeStamp frameEnd = Core::getCurrentTime();
     mDt = Core::getTimeDifference(frameEnd, frameStart);
 
-    if (mDt < mMinFrametime) {
-      Core::sleepSeconds(mMinFrametime - mDt);
-      mDt = mMinFrametime;
+    if (mDt < gSettings.minFrametime) {
+      Core::sleepSeconds(gSettings.minFrametime - mDt);
+      mDt = gSettings.minFrametime;
     }
 
     accumulatedTime += mDt;
@@ -235,11 +241,6 @@ void Application::processFileEvent(Core::Event *ev) {
 
   default:;
   }
-}
-
-void Application::setMaxFramerate(float fps) {
-  mMaxFramerate = fps;
-  mMinFrametime = 1.0f / mMaxFramerate;
 }
 
 }

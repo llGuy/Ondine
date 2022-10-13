@@ -1,0 +1,40 @@
+#version 450
+
+#include "Sky.glsl"
+
+layout (local_size_x = 16, local_size_y = 16) in;
+
+layout (set = 0, binding = 0) uniform PlanetUniform {
+  PlanetProperties sky;
+} uSky;
+
+layout (set = 1, binding = 0, rgba32f) uniform image2D uDeltaIrradiance;
+layout (set = 2, binding = 0, rgba32f) uniform image2D uIrradiance;
+
+layout (set = 3, binding = 0) uniform sampler3D uSingleRayleighScattering;
+layout (set = 4, binding = 0) uniform sampler3D uSingleMieScattering;
+layout (set = 5, binding = 0) uniform sampler3D uMultipleScattering;
+
+layout (push_constant) uniform PushConstant {
+  int layer;
+  int scatteringOrder;
+} uPushConstant;
+
+void main() {
+  ivec2 extent = ivec2(IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT);
+
+  ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+
+  if (pixelCoords.x < extent.x && pixelCoords.y < extent.y) {
+    vec3 outDeltaIrradiance = computeIndirectIrradianceTexture(
+      uSky.sky, uSingleRayleighScattering, uSingleMieScattering,
+      uMultipleScattering, vec2(pixelCoords) + vec2(0.5), uPushConstant.scatteringOrder);
+
+    imageStore(uDeltaIrradiance, pixelCoords, vec4(outDeltaIrradiance, 1.0));
+
+    vec3 prevIrradiance = imageLoad(uIrradiance, pixelCoords).rgb;
+    vec3 outIrradiance = prevIrradiance + outDeltaIrradiance;
+
+    imageStore(uIrradiance, pixelCoords, vec4(outIrradiance, 1.0));
+  }
+}

@@ -2,6 +2,7 @@
 
 #include "IO.hpp"
 #include "Time.hpp"
+#include "Game.hpp"
 #include "Event.hpp"
 #include "Window.hpp"
 #include "Renderer3D.hpp"
@@ -41,10 +42,9 @@ private:
   Graphics::Renderer3D mRenderer3D;
   View::ViewStack mViewStack;
   Core::InputTracker mInputTracker;
+  Game::Game mGame;
 
   float mDt;
-  float mMaxFramerate;
-  float mMinFrametime;
 };
 
 }

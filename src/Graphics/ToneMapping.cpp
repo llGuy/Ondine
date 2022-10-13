@@ -1,31 +1,55 @@
 #include "ToneMapping.hpp"
 #include "BloomRenderer.hpp"
 #include "RendererDebug.hpp"
-#include "VulkanPipeline.hpp"
-#include "vulkan/vulkan_core.h"
 
 namespace Ondine::Graphics {
 
 const char *const ToneMapping::TONE_MAPPING_FRAG_SPV =
-  "res/spv/ToneMapping.comp.spv";
+  "res/spv/ToneMapping.frag.spv";
 
 void ToneMapping::init(
   VulkanContext &graphicsContext,
   VkExtent2D initialExtent,
   const ToneMappingProperties &initialProperties) {
+  { // Create render pass
+    VulkanRenderPassConfig renderPassConfig(1, 1);
+
+    renderPassConfig.addAttachment(
+      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
+      OutputUsage::FragmentShaderRead, AttachmentType::Color,
+      TONE_MAPPING_TEXTURE_FORMAT);
+
+    renderPassConfig.addSubpass(
+      makeArray<uint32_t, AllocationType::Linear>(0U),
+      makeArray<uint32_t, AllocationType::Linear>(),
+      false);
+
+    mRenderPass.init(graphicsContext.device(), renderPassConfig);
+  }
+
+  { // Add tracked paths
+    addTrackedPath(TONE_MAPPING_FRAG_SPV, &mPipeline);
+  }
+
   { // Create pipeline
-    VulkanPipelineConfig pipelineConfig(
-      {NullReference<VulkanRenderPass>::nullRef, 0},
-      VulkanShader(graphicsContext.device(), "res/spv/ToneMapping.comp.spv"));
-
-    pipelineConfig.configurePipelineLayout(
-      0 /* Push constant size */,
-      VulkanPipelineDescriptorLayout{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1});
-
     mPipeline.init(
-      graphicsContext.device(),
-      graphicsContext.descriptorLayouts(),
-      pipelineConfig);
+      [](VulkanPipeline &res, ToneMapping &owner, VulkanContext &context) {
+        VulkanPipelineConfig pipelineConfig(
+          {owner.mRenderPass, 0},
+          VulkanShader(context.device(), "res/spv/TexturedQuad.vert.spv"),
+          VulkanShader(context.device(), TONE_MAPPING_FRAG_SPV));
+
+        pipelineConfig.configurePipelineLayout(
+          sizeof(ToneMappingProperties),
+          VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
+          VulkanPipelineDescriptorLayout{
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
+
+        res.init(context.device(), context.descriptorLayouts(), pipelineConfig);
+      },
+      *this,
+      graphicsContext);
   }
 
   { // Attachments and framebuffer
@@ -39,33 +63,30 @@ void ToneMapping::init(
   }
 }
 
-void ToneMapping::render(VulkanFrame &frame) {
+void ToneMapping::render(
+  VulkanFrame &frame,
+  const BloomRenderer &bloom,
+  const RenderStage &previousOutput) {
   auto &commandBuffer = frame.primaryCommandBuffer;
 
   commandBuffer.dbgBeginRegion(
     "ToneMappingStage", DBG_TONE_MAPPING_COLOR);
 
-  commandBuffer.transitionImageLayout(
-    mTexture,
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    VK_IMAGE_LAYOUT_GENERAL,
-    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
-    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+  commandBuffer.beginRenderPass(mRenderPass, mFBO, {}, mExtent);
 
-  commandBuffer.bindPipeline(mPipeline, VulkanPipelineBindPoint::Compute);
-  commandBuffer.bindUniformsCompute(mToneMappingStorage);
-  commandBuffer.dispatch(glm::ivec3(mExtent.width/16+1, mExtent.height/16+1, 1));
+  commandBuffer.bindPipeline(mPipeline.res);
+  commandBuffer.bindUniforms(previousOutput.uniform(), bloom.uniform());
+  commandBuffer.pushConstants(sizeof(ToneMappingProperties), &mProperties);
 
-  commandBuffer.transitionImageLayout(
-    mTexture,
-    VK_IMAGE_LAYOUT_GENERAL,
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+  commandBuffer.setViewport();
+  commandBuffer.setScissor();
+
+  commandBuffer.draw(4, 1, 0, 0);
+
+  commandBuffer.endRenderPass();
 
   commandBuffer.dbgEndRegion();
 }
-
 void ToneMapping::resize(
   VulkanContext &vulkanContext, Resolution newResolution) {
   destroyTargets(vulkanContext);
@@ -91,7 +112,7 @@ VkExtent2D ToneMapping::extent() const {
 
 void ToneMapping::initTargets(VulkanContext &graphicsContext) {
   mTexture.init(
-    graphicsContext.device(), TextureType::T2D | TextureType::ComputeTarget,
+    graphicsContext.device(), TextureType::T2D | TextureType::Attachment,
     TextureContents::Color, TONE_MAPPING_TEXTURE_FORMAT, VK_FILTER_LINEAR,
     {mExtent.width, mExtent.height, 1}, 1, 1);
 
@@ -101,33 +122,9 @@ void ToneMapping::initTargets(VulkanContext &graphicsContext) {
     graphicsContext.descriptorLayouts(),
     makeArray<VulkanTexture, AllocationType::Linear>(mTexture));
 
-  mToneMappingStorage.init(
-    graphicsContext.device(),
-    graphicsContext.descriptorPool(),
-    graphicsContext.descriptorLayouts(),
-    makeArray<VulkanTexture, AllocationType::Linear>(mTexture),
-    VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
-
-  auto cmdbuf = graphicsContext.commandPool().makeCommandBuffer(
-      graphicsContext.device(), VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-
-  cmdbuf.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
-
-  // Do layout transition
-  cmdbuf.transitionImageLayout(
-    mTexture,
-    VK_IMAGE_LAYOUT_UNDEFINED,
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT);
-
-  cmdbuf.end();
-  
-  graphicsContext.device().graphicsQueue().submitCommandBuffer(
-    cmdbuf,
-    makeArray<VulkanSemaphore, AllocationType::Linear>(),
-    makeArray<VulkanSemaphore, AllocationType::Linear>(),
-    0, VulkanFence());
+  VulkanFramebufferConfig fboConfig(1, mRenderPass);
+  fboConfig.addAttachment(mTexture);
+  mFBO.init(graphicsContext.device(), fboConfig);
 }
 
 void ToneMapping::destroyTargets(VulkanContext &graphicsContext) {

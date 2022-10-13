@@ -9,7 +9,7 @@ const char *const Pixelater::PIXELATER_FRAG_SPV = "res/spv/Pixelater.frag.spv";
 void Pixelater::init(
   VulkanContext &graphicsContext,
   const VkExtent2D &initialExtent) {
-  pixelationStrength = 3.0f;
+  pixelationStrength = 5.0f;
 
   { // Set tracked resources
     addTrackedPath(PIXELATER_FRAG_SPV, &mPipeline);

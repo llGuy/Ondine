@@ -92,9 +92,9 @@ void VulkanTexture::init(
   case TextureType::T3D: {
     imageType = VK_IMAGE_TYPE_3D;
     // May need to change this to 3D or have multiple views
-    viewTypeAttachment = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+    // viewTypeAttachment = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
     viewTypeSample = VK_IMAGE_VIEW_TYPE_3D;
-    imageFlags = VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT;
+    // imageFlags = VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT;
     mViewLayerCount = extent.depth;
   } break;
 
@@ -151,6 +151,7 @@ void VulkanTexture::init(
     vkCreateImageView(
       device.mLogicalDevice, &imageViewInfo, NULL, &mImageViewSample));
 
+  /*
   if (type == TextureType::T3D) {
     imageViewInfo.viewType = viewTypeAttachment;
     imageViewInfo.subresourceRange.layerCount = mViewLayerCount;
@@ -159,7 +160,7 @@ void VulkanTexture::init(
       vkCreateImageView(
         device.mLogicalDevice, &imageViewInfo, NULL, &mImageViewAttachment));
   }
-  else {
+  else*/ {
     mImageViewAttachment = mImageViewSample;
   }
 

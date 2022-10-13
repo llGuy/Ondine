@@ -159,7 +159,7 @@ void getRMuFromTransmittanceTextureUv(
 
   centreToPointDist = sqrt(rho * rho + sky.bottomRadius * sky.bottomRadius);
 
-  float dMin = sky.topRadius - centreToPointDist;
+  float dMin = max(0.0, sky.topRadius - centreToPointDist);
   float dMax = rho + h;
 
   float d = dMin + xMu * (dMax - dMin);

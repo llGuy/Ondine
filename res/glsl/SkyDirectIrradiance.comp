@@ -1,0 +1,30 @@
+#version 450
+
+#include "Sky.glsl"
+
+layout (local_size_x = 16, local_size_y = 16) in;
+
+layout (set = 0, binding = 0) uniform PlanetUniform {
+  PlanetProperties sky;
+} uSky;
+
+layout (set = 1, binding = 0) uniform sampler2D uTransmittanceTexture;
+
+layout (set = 2, binding = 0, rgba32f) uniform image2D uDeltaIrradiance;
+layout (set = 3, binding = 0, rgba32f) uniform image2D uIrradiance;
+
+void main() {
+  ivec2 extent = ivec2(IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT);
+
+  ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+
+  if (pixelCoords.x < extent.x && pixelCoords.y < extent.y) {
+    vec3 outDeltaIrradiance = computeDirectIrradianceTexture(
+        uSky.sky, uTransmittanceTexture, vec2(pixelCoords) + vec2(0.5));
+
+    vec3 outIrradiance = vec3(0.0);
+
+    imageStore(uDeltaIrradiance, pixelCoords, vec4(outDeltaIrradiance, 1.0));
+    imageStore(uIrradiance, pixelCoords, vec4(outIrradiance, 1.0));
+  }
+}

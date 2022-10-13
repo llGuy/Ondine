@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 namespace Ondine {
 
 inline float lerp(float a, float b, float x) {
@@ -16,5 +18,7 @@ inline T interpolate(const T &a, const T &b, float progress) {
   }
     return a + progress * (b - a);
 }
+
+static constexpr glm::vec3 kGlobalUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 }

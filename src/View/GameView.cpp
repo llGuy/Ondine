@@ -5,10 +5,12 @@
 namespace Ondine::View {
 
 GameView::GameView(
+  Game::Game &game,
   Graphics::Renderer3D &renderer,
   Core::OnEventProc proc)
   : mGameRenderStage(renderer.mainRenderStage()),
     mDelegateResize3D(renderer),
+    mGame(game),
     mOnEvent(proc) {
 #if 0
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
@@ -20,7 +22,6 @@ GameView::GameView(
   renderer.bindScene(mGameScene);
   
   { // Set up scene objects
-#if 1
     auto handle5 = mGameScene->createSceneObject("GlowingTaurusRenderMethod"); 
     auto &sceneObj5 = mGameScene->getSceneObject(handle5);
     sceneObj5.pushConstant.color = glm::vec3(1.8f, 0.9f, 2.85f) * 1.0f;
@@ -31,15 +32,18 @@ GameView::GameView(
     sceneObj5.constructTransform();
 #endif
 
-    #if 1
-    auto handle1 = mGameScene->createSceneObject("TaurusModelRenderMethod"); 
+#if 0
+    mRotAngle = 0.0f;
+
+    auto handle1 = mGameScene->createSceneObject("CubeModelRenderMethod"); 
     auto &sceneObj1 = mGameScene->getSceneObject(handle1);
     sceneObj1.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f);
     sceneObj1.position = glm::vec3(0.0f, 140.0f, 0.0f);
     sceneObj1.scale = glm::vec3(10.0f);
     sceneObj1.rotation = glm::angleAxis(
-      glm::radians(30.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+      glm::radians(30.0f), glm::vec3(-1.0f, -0.3f, 0.0f));
     sceneObj1.constructTransform();
+    mCubeHandle = handle1;
 
     auto handle2 = mGameScene->createSceneObject("SphereModelRenderMethod"); 
     auto &sceneObj2 = mGameScene->getSceneObject(handle2);
@@ -60,13 +64,14 @@ GameView::GameView(
     auto handle4 = mGameScene->createSceneObject("SphereModelRenderMethod"); 
     auto &sceneObj4 = mGameScene->getSceneObject(handle4);
     sceneObj4.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f);
-    sceneObj4.position = glm::vec3(-100.0f, 90.0f, 100.0f);
+    sceneObj4.position = glm::vec3(-100.0f, 160.0f, 100.0f);
     sceneObj4.scale = glm::vec3(20.0f);
     sceneObj4.rotation = glm::angleAxis(0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
     sceneObj4.constructTransform();
-    #endif
   }
+#endif
 
+#if 0
   { // Set lighting properties
     mGameScene->lighting.data.sunDirection =
       glm::normalize(glm::vec3(0.000001f, 0.1f, -1.00001f));
@@ -90,7 +95,9 @@ GameView::GameView(
     mGameScene->lighting.data.waveProfiles[3] = {0.001f, 0.5f, 4.24f};
     mGameScene->lighting.rotationAngle = glm::radians(86.5f);
   }
+#endif
 
+#if 0 
   { // Set camera properties
     mGameScene->camera.fov = glm::radians(50.0f);
     mGameScene->camera.wPosition = glm::vec3(100.0f, 140.0f, -180.0f);
@@ -102,13 +109,11 @@ GameView::GameView(
 }
 
 void GameView::onPush(ViewPushParams &params) {
-  params.renderer.bindScene(mGameScene);
+  params.renderer.bindScene(mGame.getScene());
 
-#if 0
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
   cursorChange->show = false;
   mOnEvent(cursorChange);
-#endif
 }
 
 GameView::~GameView() {
@@ -169,7 +174,7 @@ const Graphics::VulkanUniform &GameView::getOutput() const {
 
 FocusedView GameView::trackInput(
   const Core::Tick &tick, const Core::InputTracker &tracker) {
-  processGameInput(tick, tracker);
+  mGame.trackInput(tick, tracker);
 
   if (tracker.key(Core::KeyboardButton::Escape).didInstant) {
     auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
@@ -181,70 +186,6 @@ FocusedView GameView::trackInput(
   else {
     return FocusedView::Current;
   }
-}
-
-void GameView::processGameInput(
-  const Core::Tick &tick, const Core::InputTracker &inputTracker) {
-#if 0
-  auto up = mGameScene->camera.wUp;
-  auto right = glm::normalize(glm::cross(
-    mGameScene->camera.wViewDirection, mGameScene->camera.wUp));
-  auto forward = glm::normalize(glm::cross(up, right));
-
-  float speedMultiplier = 30.0f;
-  if (inputTracker.key(Core::KeyboardButton::R).isDown) {
-    speedMultiplier *= 10.0f;
-  }
-
-  if (inputTracker.key(Core::KeyboardButton::W).isDown) {
-    mGameScene->camera.wPosition +=
-      forward * tick.dt * speedMultiplier;
-  }
-  if (inputTracker.key(Core::KeyboardButton::A).isDown) {
-    mGameScene->camera.wPosition -=
-      right * tick.dt * speedMultiplier;
-  }
-  if (inputTracker.key(Core::KeyboardButton::S).isDown) {
-    mGameScene->camera.wPosition -=
-      forward * tick.dt * speedMultiplier;
-  }
-  if (inputTracker.key(Core::KeyboardButton::D).isDown) {
-    mGameScene->camera.wPosition +=
-      right * tick.dt * speedMultiplier;
-  }
-  if (inputTracker.key(Core::KeyboardButton::Space).isDown) {
-    mGameScene->camera.wPosition +=
-      mGameScene->camera.wUp * tick.dt * speedMultiplier;
-  }
-  if (inputTracker.key(Core::KeyboardButton::LeftShift).isDown) {
-    mGameScene->camera.wPosition -=
-      mGameScene->camera.wUp * tick.dt * speedMultiplier;
-  }
-
-  const auto &cursor = inputTracker.cursor();
-  if (cursor.didCursorMove) {
-    static constexpr float SENSITIVITY = 15.0f;
-
-    auto delta = glm::vec2(cursor.cursorPos) - glm::vec2(cursor.previousPos);
-    auto res = mGameScene->camera.wViewDirection;
-
-    float xAngle = glm::radians(-delta.x) * SENSITIVITY * tick.dt;
-    float yAngle = glm::radians(-delta.y) * SENSITIVITY * tick.dt;
-                
-    res = glm::mat3(glm::rotate(xAngle, mGameScene->camera.wUp)) * res;
-    auto rotateY = glm::cross(res, mGameScene->camera.wUp);
-    res = glm::mat3(glm::rotate(yAngle, rotateY)) * res;
-
-    res = glm::normalize(res);
-
-    mGameScene->camera.wViewDirection = res;
-  }
-
-  if (cursor.didScroll) {
-    mGameScene->lighting.rotateBy(
-      glm::radians(30.0f * cursor.scroll.y * tick.dt));
-  }
-#endif
 }
 
 }

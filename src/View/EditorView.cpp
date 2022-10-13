@@ -1,6 +1,7 @@
 #include <imgui.h>
 #include "Utils.hpp"
 #include "IOEvent.hpp"
+#include "Settings.hpp"
 #include "FileSystem.hpp"
 #include "EditorView.hpp"
 #include "EditorEvent.hpp"
@@ -55,13 +56,17 @@ EditorView::EditorView(
   initViewportRendering(graphicsContext);
   initImguiContext(contextInfo, graphicsContext);
 
+#if 0
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
   cursorChange->show = true;
   mOnEvent(cursorChange);
+#endif
 }
 
 void EditorView::onPush(ViewPushParams &params) {
-  // Nothing for now
+  auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
+  cursorChange->show = true;
+  mOnEvent(cursorChange);
 }
 
 EditorView::~EditorView() {
@@ -162,9 +167,11 @@ void EditorView::render(ViewRenderParams &params) {
     viewportPos = ImGui::GetWindowPos();
     viewportSize = ImGui::GetWindowSize();
 
+#if 1
 #ifdef __APPLE__
     viewportPos.x *= 1, viewportPos.y *= 2;
     viewportSize.x *= 2, viewportSize.y *= 2;
+#endif
 #endif
 
     if (mViewportResolution.width == 0) {
@@ -357,7 +364,9 @@ void EditorView::initImguiContext(
   colors[ImGuiCol_Text] = ImVec4(1.000f, 1.000f, 1.000f, 1.000f);
   colors[ImGuiCol_TextDisabled] = ImVec4(0.500f, 0.500f, 0.500f, 1.000f);
   colors[ImGuiCol_WindowBg] = ImVec4(0.180f, 0.180f, 0.180f, 1.000f);
+  // colors[ImGuiCol_WindowBg] = ImVec4(0.14f, 0.14f, 0.14f, 0.0f);
   colors[ImGuiCol_ChildBg] = ImVec4(0.280f, 0.280f, 0.280f, 0.000f);
+  // colors[ImGuiCol_ChildBg] = ImVec4(0.2f, 0.2f, 0.2f, 0.0f);
   colors[ImGuiCol_PopupBg] = ImVec4(0.313f, 0.313f, 0.313f, 1.000f);
   colors[ImGuiCol_Border] = ImVec4(0.266f, 0.266f, 0.266f, 1.000f);
   colors[ImGuiCol_BorderShadow] = ImVec4(0.000f, 0.000f, 0.000f, 0.000f);
@@ -499,6 +508,9 @@ void EditorView::renderGeneralWindow() {
     windowName(EditorWindow::General), nullptr,
     ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
     ImGui::Text("Framerate: %.1f", ImGui::GetIO().Framerate);
+    int current = gSettings.maxFramerate;
+    ImGui::SliderInt("Max Framerate", &current, 30, 120);
+    gSettings.setMaxFramerate((float)current);
 
     switch (mBoundViewport) {
     case ViewportType::GameEditor: {
@@ -666,17 +678,11 @@ void EditorView::renderToolsWindow() {
             &wireframeMode));
       boundScene->debug.wireframeTerrain = wireframeMode;
 
-      if (ImGui::Button("Update Quad Tree")) {
-        terrainRenderer.queueQuadTreeUpdate();
-        /*
-        terrainRenderer.mQuadTree.setFocalPoint(
-          terrainRenderer.worldToQuadTreeCoords(
-            boundScene->terrain,
-            {boundScene->camera.wPosition.x, boundScene->camera.wPosition.z}));
-        */
-
-        // mQuadTree.setFocalPoint(worldToQuadTreeCoords(glm::vec3(0)));
-      }
+      bool shouldUpdateQuadTree = terrainRenderer.mUpdateQuadTree;
+      if (ImGui::Checkbox(
+            "Update Quad Tree",
+            &shouldUpdateQuadTree));
+      terrainRenderer.setUpdateQuadTree(shouldUpdateQuadTree);
 
       ImGui::TreePop();
     }

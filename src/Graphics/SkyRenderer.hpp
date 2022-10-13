@@ -37,33 +37,12 @@ private:
   void initTemporaryPrecomputeTextures(VulkanContext &graphicsContext);
 
   void preparePrecompute(VulkanContext &graphicsContext);
-
-  void prepareTransmittancePrecompute(
-    const Buffer &precomputeVsh,
-    VulkanContext &graphicsContext);
-
-  void prepareSingleScatteringPrecompute(
-    const Buffer &precomputeVsh,
-    const Buffer &precomputeGsh,
-    VulkanContext &graphicsContext);
-
-  void prepareDirectIrradiancePrecompute(
-    const Buffer &precomputeVsh,
-    VulkanContext &graphicsContext);
-
-  void prepareIndirectIrradiancePrecompute(
-    const Buffer &precomputeVsh,
-    VulkanContext &graphicsContext);
-
-  void prepareScatteringDensityPrecompute(
-    const Buffer &precomputeVsh,
-    const Buffer &precomputeGsh,
-    VulkanContext &graphicsContext);
-
-  void prepareMultipleScatteringPrecompute(
-    const Buffer &precomputeVsh,
-    const Buffer &precomputeGsh,
-    VulkanContext &graphicsContext);
+  void prepareTransmittancePrecompute(VulkanContext &graphicsContext);
+  void prepareSingleScatteringPrecompute(VulkanContext &graphicsContext);
+  void prepareDirectIrradiancePrecompute(VulkanContext &graphicsContext);
+  void prepareIndirectIrradiancePrecompute(VulkanContext &graphicsContext);
+  void prepareScatteringDensityPrecompute(VulkanContext &graphicsContext);
+  void prepareMultipleScatteringPrecompute(VulkanContext &graphicsContext);
 
   void precompute(VulkanContext &graphicsContext);
   void precomputeTransmittance(VulkanCommandBuffer &commandBuffer);
@@ -81,16 +60,21 @@ private:
     uint32_t startLayer, uint32_t endLayer);
 
 private:
+  struct PrecomputedUniform {
+    VulkanUniform storage;
+    VulkanUniform sampler;
+  };
+
   // Some utility functions
   void make3DTextureAndUniform(
     const VkExtent3D extent,
-    VulkanTexture &texture, VulkanUniform &uniform,
+    VulkanTexture &texture, PrecomputedUniform &uniform,
     VulkanContext &graphicsContext,
     bool isTemporary);
 
   void make2DTextureAndUniform(
     const VkExtent3D extent,
-    VulkanTexture &texture, VulkanUniform &uniform,
+    VulkanTexture &texture, PrecomputedUniform &uniform,
     VulkanContext &graphicsContext);
 
   void initDemoPipeline(
@@ -101,6 +85,11 @@ private:
 
   void loadFromCache(VulkanContext &graphicsContext);
   void saveToCache(VulkanContext &graphicsContext);
+
+  void prepareImageLayoutForCompute(
+    VulkanCommandBuffer &cmdbuf, const VulkanTexture &texture);
+  void prepareImageLayoutForRead(
+    VulkanCommandBuffer &cmdbuf, const VulkanTexture &texture);
 
 private:
   static constexpr size_t NUM_SCATTERING_ORDERS = 4;
@@ -125,15 +114,29 @@ private:
   VulkanBuffer mSkyPropertiesBuffer;
   VulkanUniform mSkyPropertiesUniform;
 
+  /*
+   * Any uniform prefixed with the word "Storage" means that it is
+   * the uniform that is passed to the compute shaders
+   */
+
+
   VulkanPipeline mPrecomputeTransmittancePipeline;
   VulkanRenderPass mPrecomputeTransmittanceRenderPass;
   VulkanFramebuffer mPrecomputeTransmittanceFBO;
   VulkanTexture mPrecomputedTransmittance;
-  VulkanUniform mPrecomputedTransmittanceUniform;
+
+  PrecomputedUniform mPrecomputedTransmittanceUniform;
 
   struct PrecomputePushConstant {
     int layer;
     int scatteringOrder;
+  };
+
+  struct PrecomputeSplitPushConstant {
+    int layer;
+    int scatteringOrder;
+    int depthOffset;
+    int depthSize;
   };
 
   struct DemoPushConstant {
@@ -153,7 +156,9 @@ private:
   VulkanFramebuffer mPrecomputeSingleScatteringFBO;
 
   VulkanTexture mPrecomputedScattering;
-  VulkanUniform mPrecomputedScatteringUniform;
+
+  PrecomputedUniform mPrecomputedScatteringUniform;
+  // VulkanUniform mPrecomputedScatteringUniform;
 
   VulkanPipeline mPrecomputeDirectIrradiancePipeline;
   VulkanRenderPass mPrecomputeDirectIrradianceRenderPass;
@@ -162,7 +167,12 @@ private:
   VulkanPipeline mPrecomputeIndirectIrradiancePipeline;
 
   VulkanTexture mPrecomputedIrradiance;
-  VulkanUniform mPrecomputedIrradianceUniform;
+  
+  // VulkanUniform mPrecomputedIrradianceUniform;
+  PrecomputedUniform mPrecomputedIrradianceUniform;
+
+  VulkanPipeline mPrecomputeScatteringDensityPipeline;
+  VulkanPipeline mPrecomputeMultipleScatteringPipeline;
 
   struct SplitPrecomputation {
     VulkanPipeline pipeline[2];
@@ -194,18 +204,21 @@ private:
   };
 
   union {
-    VulkanUniform mDeltaMultipleScatteringUniform;
-    VulkanUniform mDeltaRayleighScatteringUniform;
+    PrecomputedUniform mDeltaMultipleScatteringUniform;
+    PrecomputedUniform mDeltaRayleighScatteringUniform;
   };
 
   VulkanTexture mDeltaMieScatteringTexture;
-  VulkanUniform mDeltaMieScatteringUniform;
+  PrecomputedUniform mDeltaMieScatteringUniform;
+  // VulkanUniform mDeltaMieScatteringUniform;
 
   VulkanTexture mDeltaIrradianceTexture;
-  VulkanUniform mDeltaIrradianceUniform;
+  PrecomputedUniform mDeltaIrradianceUniform;
+  //VulkanUniform mDeltaIrradianceUniform;
 
   VulkanTexture mDeltaScatteringDensityTexture;
-  VulkanUniform mDeltaScatteringDensityUniform;
+  PrecomputedUniform mDeltaScatteringDensityUniform;
+  // VulkanUniform mDeltaScatteringDensityUniform;
 
   /* Uniform that gets passed to rendering operations which need the sky */
   VulkanUniform mRenderingUniform;

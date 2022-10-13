@@ -1,7 +1,9 @@
 #pragma once
 
 #include "View.hpp"
+#include "Game.hpp"
 #include "Scene.hpp"
+#include "Delegate.hpp"
 #include "Renderer3D.hpp"
 #include "RenderStage.hpp"
 
@@ -11,6 +13,7 @@ namespace Ondine::View {
 class GameView : public View {
 public:
   GameView(
+    Game::Game &game,
     Graphics::Renderer3D &renderer,
     Core::OnEventProc proc);
 
@@ -30,14 +33,10 @@ private:
   void processGraphicsEvent(Core::Event *ev);
   void processInputEvent(Core::Event *ev);
 
-  // For now process game input directly in the game view
-  void processGameInput(
-    const Core::Tick &tick, const Core::InputTracker &tracker);
-
 private:
-  Graphics::Scene *mGameScene;
-
   const Graphics::RenderStage &mGameRenderStage;
+
+  Game::Game &mGame;
 
   // Allows to call Renderer3D::resize
   DelegateResize &mDelegateResize3D;

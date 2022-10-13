@@ -1,3 +1,4 @@
+#include "Chunk.hpp"
 #include "Math.hpp"
 #include "Camera.hpp"
 #include "Terrain.hpp"
@@ -11,7 +12,7 @@
 namespace Ondine::Graphics {
 
 void Terrain::init() {
-  mTerrainScale = 40;
+  mTerrainScale = 10;
   mChunkWidth = mTerrainScale * (float)CHUNK_DIM;
 
   mChunkIndices.init();
@@ -125,6 +126,7 @@ void Terrain::makeSphere(float radius, glm::vec3 center, float intensity) {
             int32_t finalValue = addedValue + (int32_t)v->density;
             finalValue = glm::clamp(finalValue, 0, (int32_t)MAX_DENSITY);
             v->density = finalValue;
+            v->color = v3ColorToB16(glm::vec3(1.0f));
           }
           else {
             glm::ivec3 c = worldToChunkCoord(position);
@@ -143,6 +145,7 @@ void Terrain::makeSphere(float radius, glm::vec3 center, float intensity) {
             int32_t finalValue = addedValue + (int32_t)v->density;
             finalValue = glm::clamp(finalValue, 0, (int32_t)MAX_DENSITY);
             v->density = finalValue;
+            v->color = v3ColorToB16(glm::vec3(1.0f));
           }
         }
       }
@@ -237,7 +240,10 @@ void Terrain::makeIslands(
   Chunk *currentChunk = getChunk(currentChunkCoord);
   markChunkForUpdate(currentChunk);
 
-  int32_t minHeight = (int32_t)seaLevel - 2;
+  int32_t minHeight = (int32_t)seaLevel - 10;
+
+  glm::vec3 grassColor = glm::vec3(0.05f, 1.3f, 0.1f) * 0.3f;
+  glm::vec3 rockColor = glm::vec3(0.2f * 0.3f);
 
   for (int32_t z = start.y; z < end.y; ++z) {
     for (int32_t x = start.x; x < end.x; ++x) {
@@ -262,6 +268,21 @@ void Terrain::makeIslands(
       height = fmax(height, minHeight) * (1.0f - dist);
 
       for (int32_t y = (int32_t)minHeight; y < (int32_t)height; ++y) {
+        const int32_t max = height-minHeight;
+        int32_t diff = y-minHeight;
+
+        glm::vec3 color = rockColor;
+
+#if 0
+        glm::vec3 color = glm::vec3(0.0f);
+        if (diff < max/4) {
+          color = grassColor;
+        }
+        else {
+          color = rockColor;
+        }
+#endif
+
         glm::ivec3 position = glm::ivec3(x, y, z);
         glm::ivec3 chunkOriginDiff = position -
           currentChunkCoord * (int32_t)CHUNK_DIM;
@@ -272,8 +293,11 @@ void Terrain::makeIslands(
         if (chunkOriginDiff.x >= 0 && chunkOriginDiff.x < CHUNK_DIM &&
             chunkOriginDiff.y >= 0 && chunkOriginDiff.y < CHUNK_DIM &&
             chunkOriginDiff.z >= 0 && chunkOriginDiff.z < CHUNK_DIM) {
-          currentChunk->voxels[getVoxelIndex(chunkOriginDiff)].density = 
+          auto index = getVoxelIndex(chunkOriginDiff);
+          currentChunk->voxels[index].density = 
             (uint16_t)(mMaxVoxelDensity) * proportion;
+          currentChunk->voxels[index].color = 
+            v3ColorToB16(color);
 
           /*
           if (y < seaLevel + 4) {
@@ -297,8 +321,11 @@ void Terrain::makeIslands(
           chunkOriginDiff = position -
             currentChunkCoord * (int32_t)CHUNK_DIM;
 
-          currentChunk->voxels[getVoxelIndex(chunkOriginDiff)].density = 
+          auto index = getVoxelIndex(chunkOriginDiff);
+          currentChunk->voxels[index].density = 
             (uint16_t)(mMaxVoxelDensity) * proportion;
+          currentChunk->voxels[index].color = 
+            v3ColorToB16(color);
         }
       }
     }
@@ -335,7 +362,7 @@ void Terrain::paint(
   float strength) {
   position /= (float)mTerrainScale;
 
-  glm::vec3 step = glm::normalize(direction) / 2.0f;
+  glm::vec3 step = glm::normalize(direction) * 5.0f;
 
   const uint32_t MAX_STEP_COUNT = 50;
 

@@ -19,4 +19,9 @@ public:
     const Core::InputTracker &inputTracker) = 0;
 };
 
+class DelegateTickable {
+public:
+  virtual void tick(const Core::Tick &tick) = 0;
+};
+
 }

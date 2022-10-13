@@ -43,6 +43,7 @@ private:
 
   friend class Model;
   friend class AnimationManager;
+  friend class std::hash<ModelConfig>;
 };
 
 class Model {
@@ -71,6 +72,27 @@ private:
   uint32_t mIndexCount;
 
   uint32_t mVertexCount;
+};
+
+}
+
+namespace std {
+
+template <>
+struct hash<Ondine::Graphics::ModelConfig> {
+  std::size_t operator()(const Ondine::Graphics::ModelConfig &cfg) const {
+    const uint64_t PRIME_NUMBER = 7873;
+
+    uint64_t finalHash = 0xC0FFEEBEEF;
+    finalHash = finalHash * PRIME_NUMBER + cfg.mAttributeCount;
+
+    for (int i = 0; i < cfg.mAttributeCount; i++) {
+      finalHash = finalHash * PRIME_NUMBER + cfg.mAttributes[i].attribSize;
+      finalHash = finalHash * PRIME_NUMBER + (uint64_t)cfg.mAttributes[i].format;
+    }
+
+    return finalHash;
+  }
 };
 
 }

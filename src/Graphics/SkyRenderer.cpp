@@ -174,197 +174,70 @@ void SkyRenderer::initTemporaryPrecomputeTextures(
 }
 
 void SkyRenderer::preparePrecompute(VulkanContext &graphicsContext) {
-  Core::File precomputeVshFile = Core::gFileSystem->createFile(
-    (Core::MountPoint)Core::ApplicationMountPoints::Application,
-    "res/spv/SkyPrecompute.vert.spv",
-    Core::FileOpenType::Binary | Core::FileOpenType::In);
-
-  Core::File precomputeGshFile = Core::gFileSystem->createFile(
-    (Core::MountPoint)Core::ApplicationMountPoints::Application,
-    "res/spv/SkyPrecompute.geom.spv",
-    Core::FileOpenType::Binary | Core::FileOpenType::In);
-
-  Buffer quadVsh = precomputeVshFile.readBinary();
-  Buffer quadGsh = precomputeGshFile.readBinary();
-
   initTemporaryPrecomputeTextures(graphicsContext);
 
-  prepareTransmittancePrecompute(quadVsh, graphicsContext);
-  prepareSingleScatteringPrecompute(quadVsh, quadGsh, graphicsContext);
-  prepareDirectIrradiancePrecompute(quadVsh, graphicsContext);
-  prepareScatteringDensityPrecompute(quadVsh, quadGsh, graphicsContext);
-  prepareMultipleScatteringPrecompute(quadVsh, quadGsh, graphicsContext);
+  prepareTransmittancePrecompute(graphicsContext);
+  prepareSingleScatteringPrecompute(graphicsContext);
+  prepareDirectIrradiancePrecompute(graphicsContext);
+  prepareScatteringDensityPrecompute(graphicsContext);
+  prepareMultipleScatteringPrecompute(graphicsContext);
 }
 
-void SkyRenderer::prepareTransmittancePrecompute(
-  const Buffer &precomputeVsh,
-  VulkanContext &graphicsContext) {
-  { // Create render pass
-    VulkanRenderPassConfig renderPassConfig(1, 1);
-
-    renderPassConfig.addAttachment(
-      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
-      OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      PRECOMPUTED_TEXTURE_FORMAT32);
-
-    renderPassConfig.addSubpass(
-      makeArray<uint32_t, AllocationType::Linear>(0U),
-      makeArray<uint32_t, AllocationType::Linear>(),
-      false);
-
-    mPrecomputeTransmittanceRenderPass.init(
-      graphicsContext.device(), renderPassConfig);
-  }
-
+void SkyRenderer::prepareTransmittancePrecompute(VulkanContext &graphicsContext) {
   { // Create pipeline
-    Core::File precomputeTransmittance = Core::gFileSystem->createFile(
-      (Core::MountPoint)Core::ApplicationMountPoints::Application,
-      "res/spv/SkyTransmittance.frag.spv",
-      Core::FileOpenType::Binary | Core::FileOpenType::In);
-
-    Buffer fsh = precomputeTransmittance.readBinary();
-
     VulkanPipelineConfig pipelineConfig(
-      {mPrecomputeTransmittanceRenderPass, 0},
-      VulkanShader(
-        graphicsContext.device(), precomputeVsh, VulkanShaderType::Vertex),
-      VulkanShader(
-        graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+      {NullReference<VulkanRenderPass>::nullRef, 0},
+      VulkanShader(graphicsContext.device(), "res/spv/SkyTransmittance.comp.spv"));
 
     pipelineConfig.configurePipelineLayout(
-      0, VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
+      0, 
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1});
 
     mPrecomputeTransmittancePipeline.init(
       graphicsContext.device(),
       graphicsContext.descriptorLayouts(),
       pipelineConfig);
   }
-
-  { // Create attachments and framebuffer
-    VulkanFramebufferConfig fboConfig(1, mPrecomputeTransmittanceRenderPass);
-    fboConfig.addAttachment(mPrecomputedTransmittance);
-
-    mPrecomputeTransmittanceFBO.init(graphicsContext.device(), fboConfig);
-  }
 }
 
-void SkyRenderer::prepareSingleScatteringPrecompute(
-  const Buffer &precomputeVsh,
-  const Buffer &precomputeGsh,
-  VulkanContext &graphicsContext) {
-  { // Create render pass
-    VulkanRenderPassConfig renderPassConfig(3, 1);
-
-    renderPassConfig.addAttachment(
-      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
-      OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      PRECOMPUTED_TEXTURE_FORMAT16);
-
-    renderPassConfig.addAttachment(
-      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
-      OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      PRECOMPUTED_TEXTURE_FORMAT16);
-
-    // The scattering texture
-    renderPassConfig.addAttachment(
-      LoadAndStoreOp::ClearThenStore, LoadAndStoreOp::DontCareThenDontCare,
-      OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      PRECOMPUTED_TEXTURE_FORMAT16);
-
-    renderPassConfig.addSubpass(
-      makeArray<uint32_t, AllocationType::Linear>(0U, 1U, 2U),
-      makeArray<uint32_t, AllocationType::Linear>(),
-      false);
-
-    mPrecomputeSingleScatteringRenderPass.init(
-      graphicsContext.device(), renderPassConfig);
-  }
-  
+void SkyRenderer::prepareSingleScatteringPrecompute(VulkanContext &graphicsContext) {
   { // Create pipeline
-    Core::File precomputeSingleScattering = Core::gFileSystem->createFile(
-      (Core::MountPoint)Core::ApplicationMountPoints::Application,
-      "res/spv/SkySingleScattering.frag.spv",
-      Core::FileOpenType::Binary | Core::FileOpenType::In);
-
-    Buffer fsh = precomputeSingleScattering.readBinary();
-
     VulkanPipelineConfig pipelineConfig(
-      {mPrecomputeSingleScatteringRenderPass, 0},
-      VulkanShader(
-        graphicsContext.device(), precomputeVsh, VulkanShaderType::Vertex),
-      VulkanShader(
-        graphicsContext.device(), precomputeGsh, VulkanShaderType::Geometry),
-      VulkanShader(
-        graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+      {NullReference<VulkanRenderPass>::nullRef, 0},
+      VulkanShader(graphicsContext.device(), "res/spv/SkySingleScattering.comp.spv"));
+
+    VulkanPipelineDescriptorLayout storageLayout = {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1};
 
     pipelineConfig.configurePipelineLayout(
       sizeof(PrecomputePushConstant),
       VulkanPipelineDescriptorLayout{
         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       VulkanPipelineDescriptorLayout{
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
+      storageLayout, storageLayout, storageLayout);
 
     mPrecomputeSingleScatteringPipeline.init(
       graphicsContext.device(),
       graphicsContext.descriptorLayouts(),
       pipelineConfig);
   }
-
-  { // Create attachments and framebuffer
-    VulkanFramebufferConfig fboConfig(3, mPrecomputeSingleScatteringRenderPass);
-    fboConfig.addAttachment(mDeltaRayleighScatteringTexture);
-    fboConfig.addAttachment(mDeltaMieScatteringTexture);
-    fboConfig.addAttachment(mPrecomputedScattering);
-
-    mPrecomputeSingleScatteringFBO.init(graphicsContext.device(), fboConfig);
-  }
 }
 
-void SkyRenderer::prepareDirectIrradiancePrecompute(
-  const Buffer &precomputeVsh,
-  VulkanContext &graphicsContext) {
-  { // Create render pass
-    VulkanRenderPassConfig renderPassConfig(2, 1);
-
-    renderPassConfig.addAttachment(
-      LoadAndStoreOp::LoadThenStore, LoadAndStoreOp::DontCareThenDontCare,
-      OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      PRECOMPUTED_TEXTURE_FORMAT32);
-
-    renderPassConfig.addAttachment(
-      LoadAndStoreOp::LoadThenStore, LoadAndStoreOp::DontCareThenDontCare,
-      OutputUsage::FragmentShaderRead, AttachmentType::Color,
-      PRECOMPUTED_TEXTURE_FORMAT32);
-
-    renderPassConfig.addSubpass(
-      makeArray<uint32_t, AllocationType::Linear>(0U, 1U),
-      makeArray<uint32_t, AllocationType::Linear>(),
-      false);
-
-    mPrecomputeDirectIrradianceRenderPass.init(
-      graphicsContext.device(), renderPassConfig);
-  }
-
+void SkyRenderer::prepareDirectIrradiancePrecompute(VulkanContext &graphicsContext) {
   { // Create pipeline (direct irradiance)
-    Core::File precomputeDirectIrradiance = Core::gFileSystem->createFile(
-      (Core::MountPoint)Core::ApplicationMountPoints::Application,
-      "res/spv/SkyDirectIrradiance.frag.spv",
-      Core::FileOpenType::Binary | Core::FileOpenType::In);
-
-    Buffer fsh = precomputeDirectIrradiance.readBinary();
-
     VulkanPipelineConfig pipelineConfig(
-      {mPrecomputeDirectIrradianceRenderPass, 0},
-      VulkanShader(
-        graphicsContext.device(), precomputeVsh, VulkanShaderType::Vertex),
-      VulkanShader(
-        graphicsContext.device(), fsh, VulkanShaderType::Fragment));
+      {NullReference<VulkanRenderPass>::nullRef, 0},
+      VulkanShader(graphicsContext.device(), "res/spv/SkyDirectIrradiance.comp.spv"));
+
+    VulkanPipelineDescriptorLayout storageLayout = {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1};
 
     pipelineConfig.configurePipelineLayout(
       0,
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       VulkanPipelineDescriptorLayout{
-        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1});
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
+      storageLayout, storageLayout);
 
     mPrecomputeDirectIrradiancePipeline.init(
       graphicsContext.device(),
@@ -373,207 +246,71 @@ void SkyRenderer::prepareDirectIrradiancePrecompute(
   }
 
   { // Create pipeline (indirect irradiance)
-    Core::File precomputeIndirectIrradiance = Core::gFileSystem->createFile(
-      (Core::MountPoint)Core::ApplicationMountPoints::Application,
-      "res/spv/SkyIndirectIrradiance.frag.spv",
-      Core::FileOpenType::Binary | Core::FileOpenType::In);
-
-    Buffer fsh = precomputeIndirectIrradiance.readBinary();
-
     VulkanPipelineConfig pipelineConfig(
       {mPrecomputeDirectIrradianceRenderPass, 0},
-      VulkanShader(
-        graphicsContext.device(), precomputeVsh, VulkanShaderType::Vertex),
-      VulkanShader(
-        graphicsContext.device(), fsh, VulkanShaderType::Fragment));
-
-    pipelineConfig.enableBlendingSame(
-      1, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ONE);
+      VulkanShader(graphicsContext.device(), "res/spv/SkyIndirectIrradiance.comp.spv"));
 
     VulkanPipelineDescriptorLayout textureUL = {
       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1
     };
 
+    VulkanPipelineDescriptorLayout storageUL = {
+      VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1
+    };
+
     pipelineConfig.configurePipelineLayout(
       sizeof(PrecomputePushConstant),
       VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-      textureUL, textureUL, textureUL);
+      storageUL, storageUL, textureUL, textureUL, textureUL);
 
     mPrecomputeIndirectIrradiancePipeline.init(
       graphicsContext.device(),
       graphicsContext.descriptorLayouts(),
       pipelineConfig);
   }
-
-  { // Create attachments and framebuffer
-    VulkanFramebufferConfig fboConfig(2, mPrecomputeDirectIrradianceRenderPass);
-    fboConfig.addAttachment(mDeltaIrradianceTexture);
-    fboConfig.addAttachment(mPrecomputedIrradiance);
-
-    mPrecomputeDirectIrradianceFBO.init(graphicsContext.device(), fboConfig);
-  }
 }
 
-void SkyRenderer::prepareScatteringDensityPrecompute(
-  const Buffer &precomputeVsh,
-  const Buffer &precomputeGsh,
-  VulkanContext &graphicsContext) {
-  Core::File precomputeScatteringDensity = Core::gFileSystem->createFile(
-    (Core::MountPoint)Core::ApplicationMountPoints::Application,
-    "res/spv/SkyScatteringDensity.frag.spv",
-    Core::FileOpenType::Binary | Core::FileOpenType::In);
+void SkyRenderer::prepareScatteringDensityPrecompute(VulkanContext &graphicsContext) {
 
-  Buffer fsh = precomputeScatteringDensity.readBinary();
+  VulkanPipelineConfig pipelineConfig(
+      {NullReference<VulkanRenderPass>::nullRef, 0},
+      VulkanShader(graphicsContext.device(), "res/spv/SkyScatteringDensity.comp.spv"));
 
-  VkExtent3D extent = {
-    SCATTERING_TEXTURE_WIDTH,
-    SCATTERING_TEXTURE_HEIGHT,
-    SCATTERING_TEXTURE_DEPTH
-  };
+  VulkanPipelineDescriptorLayout textureUL =
+  {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
 
-  auto prepareProc =
-    [this, &precomputeVsh, &precomputeGsh, &graphicsContext, &fsh] (
-      LoadAndStoreOp loadAndStoreOp,
-      OutputUsage outputUsage,
-      VulkanPipeline &dstPipeline,
-      VulkanRenderPass &dstRenderPass,
-      VulkanFramebuffer &dstFramebuffer) {
-      { // Create first render pass
-        VulkanRenderPassConfig renderPassConfig(1, 1);
-        
-        renderPassConfig.addAttachment(
-          loadAndStoreOp, LoadAndStoreOp::DontCareThenDontCare,
-          outputUsage, AttachmentType::Color,
-          PRECOMPUTED_TEXTURE_FORMAT16);
+  pipelineConfig.configurePipelineLayout(
+      sizeof(PrecomputeSplitPushConstant),
+      VulkanPipelineDescriptorLayout{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      VulkanPipelineDescriptorLayout{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
+      textureUL, textureUL, textureUL, textureUL, textureUL);
 
-        renderPassConfig.addSubpass(
-          makeArray<uint32_t, AllocationType::Linear>(0U),
-          makeArray<uint32_t, AllocationType::Linear>(),
-          false);
-
-        dstRenderPass.init(graphicsContext.device(), renderPassConfig);
-      }
-  
-      { // Create pipeline
-        VulkanPipelineConfig pipelineConfig(
-          {dstRenderPass, 0},
-          VulkanShader(
-            graphicsContext.device(), precomputeVsh, VulkanShaderType::Vertex),
-          VulkanShader(
-            graphicsContext.device(), precomputeGsh, VulkanShaderType::Geometry),
-          VulkanShader(
-            graphicsContext.device(), fsh, VulkanShaderType::Fragment));
-
-        VulkanPipelineDescriptorLayout textureUL =
-          {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
-
-        pipelineConfig.configurePipelineLayout(
-          sizeof(PrecomputePushConstant),
-          VulkanPipelineDescriptorLayout{
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-          textureUL, textureUL, textureUL, textureUL, textureUL);
-
-        dstPipeline.init(
-          graphicsContext.device(),
-          graphicsContext.descriptorLayouts(),
-          pipelineConfig);
-      }
-
-      { // Create attachments and framebuffer
-        VulkanFramebufferConfig fboConfig(1, dstRenderPass);
-        fboConfig.addAttachment(mDeltaScatteringDensityTexture);
-
-        dstFramebuffer.init(graphicsContext.device(), fboConfig);
-      }
-    };
-
-  mPrecomputeScatteringDensity.prepare(prepareProc);
+  mPrecomputeScatteringDensityPipeline.init(
+      graphicsContext.device(),
+      graphicsContext.descriptorLayouts(),
+      pipelineConfig);
 }
 
-void SkyRenderer::prepareMultipleScatteringPrecompute(
-  const Buffer &precomputeVsh,
-  const Buffer &precomputeGsh,
-  VulkanContext &graphicsContext) {
-  Core::File precomputeMultipleScattering = Core::gFileSystem->createFile(
-    (Core::MountPoint)Core::ApplicationMountPoints::Application,
-    "res/spv/SkyMultipleScattering.frag.spv",
-    Core::FileOpenType::Binary | Core::FileOpenType::In);
+void SkyRenderer::prepareMultipleScatteringPrecompute(VulkanContext &graphicsContext) {
+  VulkanPipelineConfig pipelineConfig(
+    {NullReference<VulkanRenderPass>::nullRef, 0},
+    VulkanShader(graphicsContext.device(), "res/spv/SkyMultipleScattering.comp.spv"));
 
-  Buffer fsh = precomputeMultipleScattering.readBinary();
+  VulkanPipelineDescriptorLayout textureUL =
+    {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
 
-  VkExtent3D extent = {
-    SCATTERING_TEXTURE_WIDTH,
-    SCATTERING_TEXTURE_HEIGHT,
-    SCATTERING_TEXTURE_DEPTH
-  };
+  VulkanPipelineDescriptorLayout storageUL =
+    {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1};
 
-  auto prepareProc =
-    [this, &precomputeVsh, &precomputeGsh, &graphicsContext, &fsh] (
-      LoadAndStoreOp loadAndStoreOp,
-      OutputUsage outputUsage,
-      VulkanPipeline &dstPipeline,
-      VulkanRenderPass &dstRenderPass,
-      VulkanFramebuffer &dstFramebuffer) {
-      { // Create first render pass
-        VulkanRenderPassConfig renderPassConfig(2, 1);
-        
-        renderPassConfig.addAttachment(
-          LoadAndStoreOp::LoadThenStore, LoadAndStoreOp::DontCareThenDontCare,
-          outputUsage, AttachmentType::Color,
-          PRECOMPUTED_TEXTURE_FORMAT16);
+  pipelineConfig.configurePipelineLayout(
+    sizeof(PrecomputeSplitPushConstant),
+    VulkanPipelineDescriptorLayout{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+    storageUL, storageUL, textureUL, textureUL);
 
-        renderPassConfig.addAttachment(
-          LoadAndStoreOp::LoadThenStore, LoadAndStoreOp::DontCareThenDontCare,
-          outputUsage, AttachmentType::Color,
-          PRECOMPUTED_TEXTURE_FORMAT16);
-
-        renderPassConfig.addSubpass(
-          makeArray<uint32_t, AllocationType::Linear>(0U, 1U),
-          makeArray<uint32_t, AllocationType::Linear>(),
-          false);
-
-        dstRenderPass.init(graphicsContext.device(), renderPassConfig);
-      }
-  
-      { // Create pipeline
-
-        VulkanPipelineConfig pipelineConfig(
-          {dstRenderPass, 0},
-          VulkanShader(
-            graphicsContext.device(), precomputeVsh, VulkanShaderType::Vertex),
-          VulkanShader(
-            graphicsContext.device(), precomputeGsh, VulkanShaderType::Geometry),
-          VulkanShader(
-            graphicsContext.device(), fsh, VulkanShaderType::Fragment));
-
-        pipelineConfig.enableBlendingSame(
-          1, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ONE);
-
-        VulkanPipelineDescriptorLayout textureUL =
-          {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
-
-        pipelineConfig.configurePipelineLayout(
-          sizeof(PrecomputePushConstant),
-          VulkanPipelineDescriptorLayout{
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-          textureUL, textureUL);
-
-        dstPipeline.init(
-          graphicsContext.device(),
-          graphicsContext.descriptorLayouts(),
-          pipelineConfig);
-      }
-
-      { // Create attachments and framebuffer
-        VulkanFramebufferConfig fboConfig(2, dstRenderPass);
-        fboConfig.addAttachment(mDeltaMultipleScatteringTexture);
-        fboConfig.addAttachment(mPrecomputedScattering);
-
-        dstFramebuffer.init(graphicsContext.device(), fboConfig);
-      }
-    };
-
-  mPrecomputeMultipleScattering.prepare(prepareProc);
+  mPrecomputeMultipleScatteringPipeline.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorLayouts(),
+    pipelineConfig);
 }
 
 void SkyRenderer::precompute(VulkanContext &graphicsContext) {
@@ -640,20 +377,6 @@ void SkyRenderer::precompute(VulkanContext &graphicsContext) {
 
     recordComputation(
       [this, scatteringOrder](VulkanCommandBuffer &commandBuffer) {
-        commandBuffer.transitionImageLayout(
-          mDeltaMultipleScatteringTexture,
-          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-        commandBuffer.transitionImageLayout(
-          mPrecomputedScattering,
-          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
         precomputeMultipleScattering(
           commandBuffer, 0, scatteringOrder,
           0, SCATTERING_TEXTURE_DEPTH / 2);
@@ -703,82 +426,65 @@ void SkyRenderer::precomputeTransmittance(
   VulkanCommandBuffer &commandBuffer) {
   VkExtent2D extent = {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT};
 
-  commandBuffer.beginRenderPass(
-    mPrecomputeTransmittanceRenderPass,
-    mPrecomputeTransmittanceFBO,
-    {}, extent);
+  commandBuffer.bindPipeline(
+      mPrecomputeTransmittancePipeline, VulkanPipelineBindPoint::Compute);
+  commandBuffer.bindUniformsCompute(
+      mSkyPropertiesUniform, mPrecomputedTransmittanceUniform.storage);
 
-  commandBuffer.bindPipeline(mPrecomputeTransmittancePipeline);
-  commandBuffer.bindUniforms(mSkyPropertiesUniform);
+  prepareImageLayoutForCompute(commandBuffer, mPrecomputedTransmittance);
 
-  commandBuffer.setViewport(extent);
-  commandBuffer.setScissor({}, extent);
+  commandBuffer.dispatch(glm::ivec3(extent.width/16, extent.height/16, 1));
 
-  commandBuffer.draw(4, 1, 0, 0);
-
-  commandBuffer.endRenderPass();
+  prepareImageLayoutForRead(commandBuffer, mPrecomputedTransmittance);
 }
 
 void SkyRenderer::precomputeSingleScattering(
   VulkanCommandBuffer &commandBuffer) {
+
   VkExtent2D extent = {SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT};
-
-  commandBuffer.beginRenderPass(
-    mPrecomputeSingleScatteringRenderPass,
-    mPrecomputeSingleScatteringFBO, {}, extent);
-
   PrecomputePushConstant pushConstant = {};
 
-  for (int layer = 0; layer < SCATTERING_TEXTURE_DEPTH; ++layer) {
-    pushConstant.layer = layer;
+  commandBuffer.bindPipeline(
+      mPrecomputeSingleScatteringPipeline,
+      VulkanPipelineBindPoint::Compute);
+  commandBuffer.bindUniformsCompute(
+    mSkyPropertiesUniform, mPrecomputedTransmittanceUniform.sampler,
+    mDeltaRayleighScatteringUniform.storage, mDeltaMieScatteringUniform.storage,
+    mPrecomputedScatteringUniform.storage);
 
-    commandBuffer.bindPipeline(mPrecomputeSingleScatteringPipeline);
-    commandBuffer.bindUniforms(
-      mSkyPropertiesUniform, mPrecomputedTransmittanceUniform);
+  commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
 
-    commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
+  prepareImageLayoutForCompute(commandBuffer, mPrecomputedScattering);
+  prepareImageLayoutForCompute(commandBuffer, mDeltaRayleighScatteringTexture);
+  prepareImageLayoutForCompute(commandBuffer, mDeltaMieScatteringTexture);
 
-    commandBuffer.setViewport(extent);
-    commandBuffer.setScissor({}, extent);
+  commandBuffer.dispatch(glm::ivec3(
+        extent.width / 16, extent.height/16,
+        SCATTERING_TEXTURE_DEPTH));
 
-    commandBuffer.draw(4, 1, 0, 0);
-  }
-
-  commandBuffer.endRenderPass();
+  prepareImageLayoutForRead(commandBuffer, mPrecomputedScattering);
+  prepareImageLayoutForRead(commandBuffer, mDeltaRayleighScatteringTexture);
+  prepareImageLayoutForRead(commandBuffer, mDeltaMieScatteringTexture);
 }
 
 void SkyRenderer::precomputeDirectIrradiance(
   VulkanCommandBuffer &commandBuffer) {
   VkExtent2D extent = {IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT};
 
-  commandBuffer.transitionImageLayout(
-    mPrecomputedIrradiance,
-    VK_IMAGE_LAYOUT_UNDEFINED,
-    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+  commandBuffer.bindPipeline(
+      mPrecomputeDirectIrradiancePipeline, VulkanPipelineBindPoint::Compute);
+  commandBuffer.bindUniformsCompute(
+    mSkyPropertiesUniform, mPrecomputedTransmittanceUniform.sampler,
+    mDeltaIrradianceUniform.storage, mPrecomputedIrradianceUniform.storage);
 
-  commandBuffer.transitionImageLayout(
-    mDeltaIrradianceTexture,
-    VK_IMAGE_LAYOUT_UNDEFINED,
-    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+  prepareImageLayoutForCompute(commandBuffer, mDeltaIrradianceTexture);
+  prepareImageLayoutForCompute(commandBuffer, mPrecomputedIrradiance);
 
-  commandBuffer.beginRenderPass(
-    mPrecomputeDirectIrradianceRenderPass,
-    mPrecomputeDirectIrradianceFBO, {}, extent);
+  commandBuffer.dispatch(glm::ivec3(
+        extent.width/16, extent.height/16, 1));
 
-  commandBuffer.bindPipeline(mPrecomputeDirectIrradiancePipeline);
-  commandBuffer.bindUniforms(
-    mSkyPropertiesUniform, mPrecomputedTransmittanceUniform);
-
-  commandBuffer.setViewport(extent);
-  commandBuffer.setScissor({}, extent);
-
-  commandBuffer.draw(4, 1, 0, 0);
-
-  commandBuffer.endRenderPass();
+  prepareImageLayoutForRead(commandBuffer, mDeltaIrradianceTexture);
+  prepareImageLayoutForRead(commandBuffer, mPrecomputedIrradiance);
 }
 
 void SkyRenderer::precomputeIndirectIrradiance(
@@ -786,30 +492,16 @@ void SkyRenderer::precomputeIndirectIrradiance(
   int scatteringOrder) {
   VkExtent2D extent = {IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT};
 
-  commandBuffer.transitionImageLayout(
-    mPrecomputedIrradiance,
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+  commandBuffer.bindPipeline(
+    mPrecomputeIndirectIrradiancePipeline, VulkanPipelineBindPoint::Compute);
 
-  commandBuffer.transitionImageLayout(
-    mDeltaIrradianceTexture,
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-  commandBuffer.beginRenderPass(
-    mPrecomputeDirectIrradianceRenderPass,
-    mPrecomputeDirectIrradianceFBO, {}, extent);
-
-  commandBuffer.bindPipeline(mPrecomputeIndirectIrradiancePipeline);
-  commandBuffer.bindUniforms(
+  commandBuffer.bindUniformsCompute(
     mSkyPropertiesUniform,
-    mDeltaRayleighScatteringUniform,
-    mDeltaMieScatteringUniform,
-    mDeltaMultipleScatteringUniform);
+    mDeltaIrradianceUniform.storage,
+    mPrecomputedIrradianceUniform.storage,
+    mDeltaRayleighScatteringUniform.sampler,
+    mDeltaMieScatteringUniform.sampler,
+    mDeltaMultipleScatteringUniform.sampler);
 
   PrecomputePushConstant pushConstant = {};
   pushConstant.layer = 0;
@@ -817,12 +509,14 @@ void SkyRenderer::precomputeIndirectIrradiance(
 
   commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
 
-  commandBuffer.setViewport(extent);
-  commandBuffer.setScissor({}, extent);
+  prepareImageLayoutForCompute(commandBuffer, mDeltaIrradianceTexture);
+  prepareImageLayoutForCompute(commandBuffer, mPrecomputedIrradiance);
 
-  commandBuffer.draw(4, 1, 0, 0);
+  commandBuffer.dispatch(glm::ivec3(
+        extent.width/16, extent.height/16, 1));
 
-  commandBuffer.endRenderPass();
+  prepareImageLayoutForRead(commandBuffer, mDeltaIrradianceTexture);
+  prepareImageLayoutForRead(commandBuffer, mPrecomputedIrradiance);
 }
 
 void SkyRenderer::precomputeScatteringDensity(
@@ -831,36 +525,31 @@ void SkyRenderer::precomputeScatteringDensity(
   uint32_t startLayer, uint32_t endLayer) {
   VkExtent2D extent = {SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT};
 
-  commandBuffer.beginRenderPass(
-    mPrecomputeScatteringDensity.renderPass[splitIndex],
-    mPrecomputeScatteringDensity.fbo[splitIndex], {}, extent);
+  PrecomputeSplitPushConstant pushConstant = {};
 
-  PrecomputePushConstant pushConstant = {};
+  pushConstant.scatteringOrder = scatteringOrder;
+  pushConstant.depthOffset = startLayer;
 
-  for (int layer = startLayer; layer < endLayer; ++layer) {
-    pushConstant.layer = layer;
-    pushConstant.scatteringOrder = scatteringOrder;
+  commandBuffer.bindPipeline(
+      mPrecomputeScatteringDensityPipeline, VulkanPipelineBindPoint::Compute);
 
-    commandBuffer.bindPipeline(
-      mPrecomputeScatteringDensity.pipeline[splitIndex]);
-
-    commandBuffer.bindUniforms(
+  commandBuffer.bindUniformsCompute(
       mSkyPropertiesUniform,
-      mPrecomputedTransmittanceUniform,
-      mDeltaRayleighScatteringUniform,
-      mDeltaMieScatteringUniform,
-      mDeltaMultipleScatteringUniform,
-      mDeltaIrradianceUniform);
+      mDeltaScatteringDensityUniform.storage,
+      mPrecomputedTransmittanceUniform.sampler,
+      mDeltaRayleighScatteringUniform.sampler,
+      mDeltaMieScatteringUniform.sampler,
+      mDeltaMultipleScatteringUniform.sampler,
+      mDeltaIrradianceUniform.sampler);
 
-    commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
+  commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
 
-    commandBuffer.setViewport(extent);
-    commandBuffer.setScissor({}, extent);
+  prepareImageLayoutForCompute(commandBuffer, mDeltaScatteringDensityTexture);
 
-    commandBuffer.draw(4, 1, 0, 0);
-  }
+  commandBuffer.dispatch(glm::ivec3(
+        extent.width/16, extent.height/16, endLayer-startLayer));
 
-  commandBuffer.endRenderPass();
+  prepareImageLayoutForRead(commandBuffer, mDeltaScatteringDensityTexture);
 }
 
 void SkyRenderer::precomputeMultipleScattering(
@@ -869,43 +558,42 @@ void SkyRenderer::precomputeMultipleScattering(
   uint32_t startLayer, uint32_t endLayer) {
   VkExtent2D extent = {SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT};
 
-  commandBuffer.beginRenderPass(
-    mPrecomputeMultipleScattering.renderPass[splitIndex],
-    mPrecomputeMultipleScattering.fbo[splitIndex], {}, extent);
+  PrecomputeSplitPushConstant pushConstant = {};
 
-  PrecomputePushConstant pushConstant = {};
+  pushConstant.scatteringOrder = scatteringOrder;
+  pushConstant.depthOffset = startLayer;
 
-  for (int layer = startLayer; layer < endLayer; ++layer) {
-    pushConstant.layer = layer;
-    pushConstant.scatteringOrder = scatteringOrder;
+  commandBuffer.bindPipeline(
+      mPrecomputeMultipleScatteringPipeline,
+      VulkanPipelineBindPoint::Compute);
 
-    commandBuffer.bindPipeline(
-      mPrecomputeMultipleScattering.pipeline[splitIndex]);
-
-    commandBuffer.bindUniforms(
+  commandBuffer.bindUniformsCompute(
       mSkyPropertiesUniform,
-      mPrecomputedTransmittanceUniform,
-      mDeltaScatteringDensityUniform);
+      mDeltaMultipleScatteringUniform.storage,
+      mPrecomputedScatteringUniform.storage,
+      mPrecomputedTransmittanceUniform.sampler,
+      mDeltaScatteringDensityUniform.sampler);
 
-    commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
+  commandBuffer.pushConstants(sizeof(pushConstant), &pushConstant);
 
-    commandBuffer.setViewport(extent);
-    commandBuffer.setScissor({}, extent);
+  prepareImageLayoutForCompute(commandBuffer, mDeltaMultipleScatteringTexture);
+  prepareImageLayoutForCompute(commandBuffer, mPrecomputedScattering);
 
-    commandBuffer.draw(4, 1, 0, 0);
-  }
+  commandBuffer.dispatch(glm::ivec3(
+        extent.width/16, extent.height/16, endLayer-startLayer));
 
-  commandBuffer.endRenderPass();
+  prepareImageLayoutForRead(commandBuffer, mDeltaMultipleScatteringTexture);
+  prepareImageLayoutForRead(commandBuffer, mPrecomputedScattering);
 }
 
 void SkyRenderer::make3DTextureAndUniform(
   const VkExtent3D extent,
   VulkanTexture &texture,
-  VulkanUniform &uniform,
+  PrecomputedUniform &uniform,
   VulkanContext &graphicsContext,
   bool isTemporary) {
   TextureTypeBits textureType =
-    TextureType::T3D | TextureType::Attachment | TextureType::TransferSource;
+    TextureType::T3D | TextureType::ComputeTarget | TextureType::TransferSource;
   if (isTemporary) {
     // textureType |= TextureType::StoreInRam;
   }
@@ -915,7 +603,14 @@ void SkyRenderer::make3DTextureAndUniform(
     TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT16, VK_FILTER_LINEAR,
     extent, 1, 1);
 
-  uniform.init(
+  uniform.storage.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorPool(),
+    graphicsContext.descriptorLayouts(),
+    makeArray<VulkanTexture, AllocationType::Linear>(texture),
+    VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+
+  uniform.sampler.init(
     graphicsContext.device(),
     graphicsContext.descriptorPool(),
     graphicsContext.descriptorLayouts(),
@@ -925,15 +620,22 @@ void SkyRenderer::make3DTextureAndUniform(
 void SkyRenderer::make2DTextureAndUniform(
   const VkExtent3D extent,
   VulkanTexture &texture,
-  VulkanUniform &uniform,
+  PrecomputedUniform &uniform,
   VulkanContext &graphicsContext) {
   texture.init(
     graphicsContext.device(),
-    TextureType::T2D | TextureType::Attachment | TextureType::TransferSource,
+    TextureType::T2D | TextureType::ComputeTarget | TextureType::TransferSource,
     TextureContents::Color, PRECOMPUTED_TEXTURE_FORMAT32, VK_FILTER_LINEAR,
     extent, 1, 1);
 
-  uniform.init(
+  uniform.storage.init(
+    graphicsContext.device(),
+    graphicsContext.descriptorPool(),
+    graphicsContext.descriptorLayouts(),
+    makeArray<VulkanTexture, AllocationType::Linear>(texture),
+    VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+
+  uniform.sampler.init(
     graphicsContext.device(),
     graphicsContext.descriptorPool(),
     graphicsContext.descriptorLayouts(),
@@ -1022,7 +724,6 @@ void SkyRenderer::loadFromCache(VulkanContext &graphicsContext) {
 
   VulkanCommandBuffer cmdbufs[4] = {};
   VulkanBuffer staging[4] = {};
-  VulkanTexture linearTextures[4] = {};
 
   VkExtent3D scatteringExtent = {
     SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH
@@ -1030,34 +731,6 @@ void SkyRenderer::loadFromCache(VulkanContext &graphicsContext) {
   VkExtent3D irradianceExtent = {
     IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT, 1
   };
-
-  linearTextures[0].init(
-    graphicsContext.device(),
-    TextureType::T2D | TextureType::LinearTiling | TextureType::TransferSource,
-    TextureContents::Color,
-    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
-    {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT, 1}, 1, 1);
-
-  linearTextures[1].init(
-    graphicsContext.device(),
-    TextureType::T3D | TextureType::LinearTiling | TextureType::TransferSource,
-    TextureContents::Color,
-    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
-    scatteringExtent, 1, 1);
-
-  linearTextures[2].init(
-    graphicsContext.device(),
-    TextureType::T3D | TextureType::LinearTiling | TextureType::TransferSource,
-    TextureContents::Color,
-    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
-    scatteringExtent, 1, 1);
-
-  linearTextures[3].init(
-    graphicsContext.device(),
-    TextureType::T2D | TextureType::LinearTiling | TextureType::TransferSource,
-    TextureContents::Color,
-    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
-    irradianceExtent, 1, 1);
 
   auto &commandPool = graphicsContext.commandPool();
 
@@ -1089,15 +762,9 @@ void SkyRenderer::loadFromCache(VulkanContext &graphicsContext) {
     commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
 
     commandBuffer.copyBufferToImage(
-      linearTextures[i],
+      *textures[i],
       0, 1, 0,
       buffer, 0, bin.size);
-
-    commandBuffer.blitImage(
-      *textures[i], VK_IMAGE_LAYOUT_UNDEFINED,
-      linearTextures[i], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, 1,
-      VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-      VK_PIPELINE_STAGE_TRANSFER_BIT);
 
     commandBuffer.transitionImageLayout(
       *textures[i],
@@ -1113,6 +780,8 @@ void SkyRenderer::loadFromCache(VulkanContext &graphicsContext) {
       makeArray<VulkanSemaphore, AllocationType::Linear>(),
       makeArray<VulkanSemaphore, AllocationType::Linear>(),
       0, VulkanFence());
+
+    LOG_INFOV("Loaded %s\n", names[i]);
   }
 
   graphicsContext.device().idle();
@@ -1120,8 +789,9 @@ void SkyRenderer::loadFromCache(VulkanContext &graphicsContext) {
   for (int i = 0; i < 4; ++i) {
     commandPool.freeCommandBuffer(graphicsContext.device(), cmdbufs[i]);
     staging[i].destroy(graphicsContext.device());
-    linearTextures[i].destroy(graphicsContext.device());
   }
+
+  LOG_INFO("Finished loading sky cache\n");
 }
 
 void SkyRenderer::saveToCache(VulkanContext &graphicsContext) {
@@ -1141,7 +811,6 @@ void SkyRenderer::saveToCache(VulkanContext &graphicsContext) {
 
   VulkanCommandBuffer cmdbufs[4] = {};
   VulkanBuffer staging[4] = {};
-  VulkanTexture linearTextures[4] = {};
 
   VkExtent3D scatteringExtent = {
     SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH
@@ -1149,34 +818,6 @@ void SkyRenderer::saveToCache(VulkanContext &graphicsContext) {
   VkExtent3D irradianceExtent = {
     IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT, 1
   };
-
-  linearTextures[0].init(
-    graphicsContext.device(),
-    TextureType::T2D | TextureType::LinearTiling | TextureType::TransferSource,
-    TextureContents::Color,
-    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
-    {TRANSMITTANCE_WIDTH, TRANSMITTANCE_HEIGHT, 1}, 1, 1);
-
-  linearTextures[1].init(
-    graphicsContext.device(),
-    TextureType::T3D | TextureType::LinearTiling | TextureType::TransferSource,
-    TextureContents::Color,
-    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
-    scatteringExtent, 1, 1);
-
-  linearTextures[2].init(
-    graphicsContext.device(),
-    TextureType::T3D | TextureType::LinearTiling | TextureType::TransferSource,
-    TextureContents::Color,
-    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
-    scatteringExtent, 1, 1);
-
-  linearTextures[3].init(
-    graphicsContext.device(),
-    TextureType::T2D | TextureType::LinearTiling | TextureType::TransferSource,
-    TextureContents::Color,
-    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FILTER_NEAREST,
-    irradianceExtent, 1, 1);
 
   auto &commandPool = graphicsContext.commandPool();
 
@@ -1186,7 +827,7 @@ void SkyRenderer::saveToCache(VulkanContext &graphicsContext) {
       std::string(SKY_CACHE_DIRECTORY) + names[i],
       Core::FileOpenType::Binary | Core::FileOpenType::Out);
 
-    size_t size = linearTextures[i].memoryRequirement();
+    size_t size = textures[i]->memoryRequirement();
 
     VulkanBuffer &buffer = staging[i];
     buffer.init(
@@ -1201,19 +842,15 @@ void SkyRenderer::saveToCache(VulkanContext &graphicsContext) {
     commandBuffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
 
     commandBuffer.transitionImageLayout(
-      linearTextures[i], VK_IMAGE_LAYOUT_UNDEFINED,
+      *textures[i], 
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+      VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-    commandBuffer.blitImage(
-      linearTextures[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      *textures[i], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, 1,
-      VK_PIPELINE_STAGE_TRANSFER_BIT,
-      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-    
     commandBuffer.copyImageToBuffer(
       buffer, 0, size,
-      linearTextures[i],
+      *textures[i],
       0, 1, 0);
 
     commandBuffer.end();
@@ -1235,6 +872,25 @@ void SkyRenderer::saveToCache(VulkanContext &graphicsContext) {
     commandPool.freeCommandBuffer(graphicsContext.device(), cmdbufs[i]);
     staging[i].destroy(graphicsContext.device());
   }
+}
+
+void SkyRenderer::prepareImageLayoutForCompute(
+  VulkanCommandBuffer &cmdbuf, const VulkanTexture &texture) {
+  cmdbuf.transitionImageLayout(
+    texture,
+    VK_IMAGE_LAYOUT_UNDEFINED,
+    VK_IMAGE_LAYOUT_GENERAL,
+    VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+}
+void SkyRenderer::prepareImageLayoutForRead(
+  VulkanCommandBuffer &cmdbuf, const VulkanTexture &texture) {
+  cmdbuf.transitionImageLayout(
+    texture,
+    VK_IMAGE_LAYOUT_GENERAL,
+    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
 }

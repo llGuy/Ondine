@@ -13,6 +13,8 @@ namespace Ondine::Graphics {
 void TerrainRenderer::init(
   VulkanContext &graphicsContext,
   const GBuffer &gbuffer) {
+  mUpdateQuadTree = true;
+
   /* Create shader */
   VulkanPipelineConfig pipelineConfig(
     {gbuffer.renderPass(), 0},
@@ -26,13 +28,15 @@ void TerrainRenderer::init(
     VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
     VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
-  pipelineConfig.configureVertexInput(2, 1);
+  pipelineConfig.configureVertexInput(3, 1);
   pipelineConfig.setBinding(
-    0, sizeof(glm::vec3) * 2, VK_VERTEX_INPUT_RATE_VERTEX);
+    0, sizeof(glm::vec3) * 3, VK_VERTEX_INPUT_RATE_VERTEX);
   pipelineConfig.setBindingAttribute(
     0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
   pipelineConfig.setBindingAttribute(
     1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(glm::vec3));
+  pipelineConfig.setBindingAttribute(
+    2, 0, VK_FORMAT_R32G32B32_SFLOAT, 2*sizeof(glm::vec3));
 
   pipelineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
@@ -66,7 +70,7 @@ void TerrainRenderer::init(
 
   mSnapshots.init(1000);
 
-  mQuadTree.init(4);
+  mQuadTree.init(8);
 
   mIsosurface.init(mQuadTree, graphicsContext);
 
@@ -75,8 +79,8 @@ void TerrainRenderer::init(
   mParams = new GenerateMeshParams;
 }
 
-void TerrainRenderer::queueQuadTreeUpdate() {
-  mUpdateQuadTree = true;
+void TerrainRenderer::setUpdateQuadTree(bool shouldUpdate) {
+  mUpdateQuadTree = shouldUpdate;
 }
 
 void TerrainRenderer::render(
@@ -416,11 +420,10 @@ void TerrainRenderer::sync(
        If the job has been finished, and we need to update the quad tree
        queue the job again.
     */
-    /* if (mUpdateQuadTree) */ {
+    if (mUpdateQuadTree) { // For debugging purposes we have this if
       mQuadTree.setFocalPoint(pos);
 
       if (mQuadTree.mDiffAdd.size() || terrain.mUpdatedChunks.size) {
-        mUpdateQuadTree = false;
         mIsWaitingForSnapshots = true;
         mParams->terrainRenderer = this;
         mParams->terrain = &terrain;

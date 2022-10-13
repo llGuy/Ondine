@@ -51,8 +51,8 @@ struct PlanetProperties {
 
   vec3 wPlanetCenter;
 };
-
 const int TRANSMITTANCE_TEXTURE_WIDTH = 256;
+
 const int TRANSMITTANCE_TEXTURE_HEIGHT = 64;
 
 const int SCATTERING_TEXTURE_R_SIZE = 32;

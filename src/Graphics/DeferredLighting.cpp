@@ -54,7 +54,7 @@ void LightingProperties::tick(
 
   if (isFastForwarding) {
     fastForwardTime += tick.dt;
-    float scaledTime = fastForwardTime * 0.1f;
+    float scaledTime = fastForwardTime * 0.06f;
 
     rotationDiff = 
       diff * (6.0f * scaledTime - 6.0f * scaledTime * scaledTime);

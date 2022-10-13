@@ -8,11 +8,11 @@
 
 namespace Ondine {
 
-inline uint32_t kilobytes(uint32_t kb) {
+inline constexpr uint32_t kilobytes(uint32_t kb) {
     return(kb * 1024);
 }
 
-inline uint32_t megabytes(uint32_t mb) {
+inline constexpr uint32_t megabytes(uint32_t mb) {
     return(kilobytes(mb * 1024));
 }
 

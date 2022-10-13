@@ -1,0 +1,26 @@
+#version 450
+
+#include "Sky.glsl"
+
+layout (local_size_x = 16, local_size_y = 16) in;
+
+layout (set = 0, binding = 0) uniform PlanetUniform {
+  PlanetProperties sky;
+} uSky;
+
+layout (set = 1, binding = 0, rgba32f) uniform image2D uTransmittance;
+
+void main() {
+  ivec2 extent = ivec2(
+    TRANSMITTANCE_TEXTURE_WIDTH,
+    TRANSMITTANCE_TEXTURE_HEIGHT);
+
+  // Equivalent to gl_FragCoord
+  ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+
+  if (pixelCoords.x < extent.x && pixelCoords.y < extent.y) {
+    vec3 transmittance = computeTransmittanceToSkyBoundaryTexture(
+    uSky.sky, vec2(pixelCoords) + vec2(0.5));
+    imageStore(uTransmittance, pixelCoords, vec4(transmittance, 1.0));
+  }
+}

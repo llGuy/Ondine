@@ -1,0 +1,51 @@
+#version 450
+
+#include "Sky.glsl"
+
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout (set = 0, binding = 0) uniform PlanetUniform {
+  PlanetProperties sky;
+} uSky;
+
+layout (set = 1, binding = 0, rgba16f) uniform image3D uScatteringDensity;
+
+layout (set = 2, binding = 0) uniform sampler2D uTransmittance;
+
+layout (set = 3, binding = 0) uniform sampler3D uSingleRayleighScattering;
+layout (set = 4, binding = 0) uniform sampler3D uSingleMieScattering;
+layout (set = 5, binding = 0) uniform sampler3D uMultipleScattering;
+
+layout (set = 6, binding = 0) uniform sampler2D uIrradiance;
+
+layout(push_constant) uniform PushConstant {
+  int layer;
+  int scatteringOrder;
+  int depthOffset;
+  int depthSize;
+} uPushConstant;
+
+void main() {
+  ivec3 extent = ivec3(
+      SCATTERING_TEXTURE_WIDTH,
+      SCATTERING_TEXTURE_HEIGHT,
+      SCATTERING_TEXTURE_DEPTH);
+
+  /* gl_GlobalInvocationID is always going to be between
+   * vec3(0) -> vec3(width, height, depthSize)
+   * We need to get it to:
+   *
+   * vec3(0, 0, depthOffset) -> vec3(width, height, depthOffset + depthSize)
+   */
+  ivec3 pixelCoords = ivec3(gl_GlobalInvocationID.xyz);
+  pixelCoords.z += uPushConstant.depthOffset;
+
+  if (pixelCoords.x < extent.x && pixelCoords.y < extent.y && pixelCoords.z < extent.z) {
+    vec3 outScatteringDensity = computeScatteringDensityTexture(
+        uSky.sky, uTransmittance, uSingleRayleighScattering, uSingleMieScattering,
+        uMultipleScattering, uIrradiance,
+        vec3(pixelCoords), uPushConstant.scatteringOrder);
+
+    imageStore(uScatteringDensity, pixelCoords, vec4(outScatteringDensity, 1.0));
+  }
+}
