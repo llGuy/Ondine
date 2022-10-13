@@ -212,6 +212,15 @@ public:
     return iterator(this, 0);
   }
 
+  const_iterator at(const const_iterator &other) const {
+    const_iterator res = {};
+    res.mContainer = other.mContainer;
+    res.mIndex = other.mIndex;
+    res.mRemovedIndex = other.mRemovedIndex;
+
+    return res;
+  }
+
   const_iterator end() const {
     return const_iterator(this, mSize);
   }

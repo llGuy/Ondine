@@ -31,12 +31,15 @@ void Game::init() {
     a.scale    = glm::vec3(10.0f);
     a.rotation = glm::angleAxis(glm::radians(0.0f), kGlobalUp);
     a.velocity = glm::vec3(-10.0f, 0.0f, 0.0f);
+    // in the future, this will have to be linked to the entity's mesh
+    a.aabb = AABB::unitCube();
     mCubeA = aID;
 
     auto [b, bID] = mSimulation.createEntity();
     b.position = { -30.0f, 160.0f, 0.0f };
     b.scale    = glm::vec3(10.0f);
     b.rotation = glm::angleAxis(glm::radians(0.0f), kGlobalUp);
+    b.aabb = AABB::unitCube();
     mCubeB = bID;
   }
 

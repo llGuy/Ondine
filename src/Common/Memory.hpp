@@ -20,6 +20,9 @@ inline constexpr uint32_t megabytes(uint32_t mb) {
 void *lnAlloc(size_t size);
 void lnClear();
 
+void freezeLinearAllocator();
+void unfreezeLinearAllocator();
+
 template <typename T, typename ...Args>
 T *lnEmplaceAlloc(Args &&...args) {
   return Core::gLinearAllocator->emplaceAlloc<T>(std::forward<Args>(args)...);

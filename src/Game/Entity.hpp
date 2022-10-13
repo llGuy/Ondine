@@ -22,9 +22,17 @@ struct Entity {
   glm::vec3 velocity;
   glm::quat rotation;
 
+  AABB aabb;
+
   // Rendering
   Graphics::SceneObjectHandle draw;
 };
+
+inline glm::mat4 constructTransform(const Entity &entity) {
+  return glm::translate(entity.position) *
+    glm::mat4_cast(entity.rotation) *
+    glm::scale(entity.scale);
+}
 
 template <typename T> struct BehaviorID { static int32_t id; };
 template <typename T> int32_t BehaviorID<T>::id = -1;
