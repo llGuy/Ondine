@@ -29,9 +29,14 @@ enum class EventType {
   Invalid
 };
 
+#ifndef NDEBUG
 #define EVENT_DEF(name, category, type)                                 \
   name() : Event::Event(EventType:: type, EventCategory:: category) {}  \
   const char *getName() override {return #name;}
+#else
+#define EVENT_DEF(name, category, type)                                 \
+  name() : Event::Event(EventType:: type, EventCategory:: category) {}
+#endif
 
 struct Event {
   bool isHandled;

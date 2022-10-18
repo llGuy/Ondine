@@ -32,15 +32,6 @@ public:
     memset(mData, 0, sizeof(T) * mMaxElements);
   }
 
-  void init(uint32_t max) {
-    mSize = 0;
-    mMaxElements(max);
-    mRemovedCount(0);
-    mData = flAllocv<T>(mMaxElements);
-    mRemoved = flAllocv<uint32_t>(mMaxElements);
-    memset(mData, 0, sizeof(T) * mMaxElements);
-  }
-
   ~DynamicArray() {
     clear();
 

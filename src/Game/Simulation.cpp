@@ -58,6 +58,7 @@ void Simulation::tick(const Core::Tick &tick) {
     AABB aabb1 = constructTransform(entity1) * entity1.aabb;
 
     if (aabb0.overlaps(aabb1)) {
+      // Assume all entities have the same mass
       glm::vec3 aToB = entity1.position - entity0.position;
       entity1.velocity = aToB;
       entity0.velocity = -aToB;

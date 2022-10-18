@@ -16,6 +16,10 @@ struct Voxel {
   int16_t normalY;
   int16_t normalZ;
   uint16_t color;
+
+  // Zeroed out color will result in invalid color
+  static constexpr uint32_t kMaxColor = 0xFFFF - 1;
+  static constexpr uint32_t kInvalidColor = 0x0;
 };
 
 extern const int8_t VOXEL_EDGE_CONNECT[256][16];
@@ -39,7 +43,7 @@ struct Chunk {
 };
 
 enum { B8_R_MAX = 0b111, B8_G_MAX = 0b111, B8_B_MAX = 0b11 };
-enum { B16_R_MAX = 0b111111, B16_G_MAX = 0b11111, B16_B_MAX = 0b11111 };
+enum { B16_R_MAX = 0b111111, B16_G_MAX = 0b11111, B16_B_MAX = 0b11110 };
 
 constexpr inline glm::vec3 b8ColorToV3(uint8_t color) {
   uint8_t rb8 = color >> 5;
@@ -54,6 +58,8 @@ constexpr inline glm::vec3 b8ColorToV3(uint8_t color) {
 }
 
 constexpr inline glm::vec3 b16ColorToV3(uint16_t color) {
+  color -= 1;
+
   uint16_t rb16 = color >> 10;
   uint16_t gb16 = (color >> 5) & 0b11111;
   uint16_t bb16 = (color) & 0b11111;
@@ -78,9 +84,10 @@ constexpr inline uint16_t v3ColorToB16(const glm::vec3 &color) {
   float g = color.g * (float)(B16_G_MAX);
   float b = color.b * (float)(B16_B_MAX);
 
-  return ((uint16_t)r << 10) + ((uint16_t)g << 5) + ((uint16_t)b);
+  return ((uint16_t)r << 10) + ((uint16_t)g << 5) + ((uint16_t)b + 1);
 }
 
+#if 0
 constexpr inline uint8_t b8vColorToB8(uint8_t r, uint8_t g, uint8_t b) {
   return (r << 5) + (g << 2) + b;
 }
@@ -88,6 +95,7 @@ constexpr inline uint8_t b8vColorToB8(uint8_t r, uint8_t g, uint8_t b) {
 constexpr inline uint8_t b16vColorToB16(uint16_t r, uint16_t g, uint16_t b) {
   return (r << 10) + (g << 5) + b;
 }
+#endif
 
 constexpr inline uint32_t getVoxelIndex(int x, int y, int z) {
   return z * (CHUNK_DIM * CHUNK_DIM) + y * CHUNK_DIM + x;

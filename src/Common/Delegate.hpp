@@ -7,6 +7,12 @@
 
 namespace Ondine {
 
+namespace Graphics {
+
+class Geometry;
+
+}
+
 class DelegateResize {
 public:
   virtual void resize(Resolution newResolution) = 0;
@@ -22,6 +28,11 @@ public:
 class DelegateTickable {
 public:
   virtual void tick(const Core::Tick &tick) = 0;
+};
+
+class DelegateGeometryManager {
+public:
+  virtual Graphics::Geometry &getGeometry(const char *name) = 0;
 };
 
 }

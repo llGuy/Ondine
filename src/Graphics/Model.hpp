@@ -12,7 +12,24 @@ struct Attribute {
   VkVertexInputRate rate = VK_VERTEX_INPUT_RATE_VERTEX;
 };
 
-class ModelConfig {
+class Geometry {
+public:
+  struct Vertices {
+    glm::vec3 *vertices;
+    size_t count;
+  };
+
+  virtual Vertices getVertices() = 0;
+
+  struct Indices {
+    uint32_t *indices;
+    size_t count;
+  };
+
+  virtual Indices getIndices() = 0;
+};
+
+class ModelConfig : public Geometry {
 public:
   ModelConfig() = default;
   ModelConfig(uint32_t vertexCount);
@@ -23,7 +40,10 @@ public:
 
   void configureVertexInput(VulkanPipelineConfig &config);
 
-private:
+  Vertices getVertices() override;
+  Indices getIndices() override;
+
+protected:
   static constexpr uint32_t MAX_ATTRIBUTE_COUNT = 10;
 
   struct ModelAttribute {

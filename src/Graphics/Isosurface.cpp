@@ -887,6 +887,7 @@ void Isosurface::updateVoxelCell(
   }
 }
 
+// Roadmap for color addition - need to fix bug with transitions!
 void Isosurface::updateTransVoxelCell(
   Voxel *voxels,
   Voxel *transVoxels,
@@ -1141,18 +1142,11 @@ void Isosurface::updateTransVoxelCell(
       glm::vec3 color0 = b16ColorToV3(voxels[v0].color);
       glm::vec3 color1 = b16ColorToV3(voxels[v1].color);
 
-#if 0
-      if (voxels[v0].density < mSurfaceDensity.density && voxels[v1].density < mSurfaceDensity.density) {
-        LOG_ERROR("Surface density bug\n");
-        PANIC_AND_EXIT();
-      }
-#endif
-
-      if (voxels[v0].density < mSurfaceDensity.density) {
+      if (voxels[v0].color == Voxel::kInvalidColor) {
         // If the first is below density, set color to the second
         color = color1;
       }
-      else if (voxels[v1].density < mSurfaceDensity.density) {
+      else if (voxels[v1].color == Voxel::kInvalidColor) {
         // If the second is below density, set the color to the first
         color = color0;
       }
@@ -1162,8 +1156,6 @@ void Isosurface::updateTransVoxelCell(
         color = interpolate(
             color0, color1, interpolatedVoxelValues);
       }
-
-      color = glm::vec3(0.0f);
 
       verts[i] = {vertex, normal, color};
     }

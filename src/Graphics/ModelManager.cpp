@@ -8,6 +8,9 @@ namespace Ondine::Graphics {
 void ModelManager::init(VulkanContext &context) {
   /* Possibly load models loaded from previous session or something idk */
   mModels.init(MAX_MODEL_COUNT);
+  mCachedConfigs.init(MAX_MODEL_COUNT);
+
+  mModelNameMap.init();
 
   mVertexPool.init(
     context.device(),
@@ -94,6 +97,22 @@ ModelHandle ModelManager::createModel(
   return handle;
 }
 
+void ModelManager::registerModel(ModelHandle handle, const char *name) {
+  mModelNameMap.emplace(std::string(name), handle);
+}
+
+ModelHandle ModelManager::getModelHandle(const char *name) const {
+  return mModelNameMap.getHandle(std::string(name));
+}
+
+Model &ModelManager::getModel(const char *name) {
+  return getModel(getModelHandle(name));
+}
+
+const Model &ModelManager::getModel(const char *name) const {
+  return getModel(getModelHandle(name));
+}
+
 Model &ModelManager::getModel(ModelHandle modelHandle) {
   assert(modelHandle != MODEL_HANDLE_INVALID);
   return mModels[modelHandle];
@@ -102,6 +121,14 @@ Model &ModelManager::getModel(ModelHandle modelHandle) {
 const Model &ModelManager::getModel(ModelHandle modelHandle) const {
   assert(modelHandle != MODEL_HANDLE_INVALID);
   return mModels[modelHandle];
+}
+
+void ModelManager::cacheModelConfig(ModelHandle handle, const ModelConfig &config) {
+  mCachedConfigs[handle] = config;
+}
+
+ModelConfig &ModelManager::getCachedModelConfig(ModelHandle handle) {
+  return mCachedConfigs.data[handle];
 }
 
 }

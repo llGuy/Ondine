@@ -100,8 +100,17 @@ void Terrain::makeSphere(float radius, glm::vec3 center, float intensity) {
   Chunk *currentChunk = getChunk(currentChunkCoord);
   markChunkForUpdate(currentChunk);
 
+  // Make a color gradient based on y
+
   for (int32_t z = start.z; z < start.z + diameter; ++z) {
     for (int32_t y = start.y; y < start.y + diameter; ++y) {
+      float gradient = (float)(y - start.y) / (float)(diameter);
+
+      glm::vec3 color = glm::mix(
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        gradient);
+
       for (int32_t x = start.x; x < start.x + diameter; ++x) {
         glm::ivec3 position = glm::ivec3(x, y, z);
         glm::vec3 posFloat = (glm::vec3)position;
@@ -126,7 +135,7 @@ void Terrain::makeSphere(float radius, glm::vec3 center, float intensity) {
             int32_t finalValue = addedValue + (int32_t)v->density;
             finalValue = glm::clamp(finalValue, 0, (int32_t)MAX_DENSITY);
             v->density = finalValue;
-            v->color = v3ColorToB16(glm::vec3(1.0f));
+            v->color = v3ColorToB16(color);
           }
           else {
             glm::ivec3 c = worldToChunkCoord(position);
@@ -145,7 +154,7 @@ void Terrain::makeSphere(float radius, glm::vec3 center, float intensity) {
             int32_t finalValue = addedValue + (int32_t)v->density;
             finalValue = glm::clamp(finalValue, 0, (int32_t)MAX_DENSITY);
             v->density = finalValue;
-            v->color = v3ColorToB16(glm::vec3(1.0f));
+            v->color = v3ColorToB16(color);
           }
         }
       }

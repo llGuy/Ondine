@@ -34,7 +34,8 @@ class MapView;
 namespace Ondine::Graphics {
 
 class Renderer3D :
-  public DelegateResize {
+  public DelegateResize,
+  public DelegateGeometryManager {
 public:
   Renderer3D(
     VulkanContext &graphicsContext);
@@ -45,6 +46,8 @@ public:
   void resize(Resolution newResolution) override;
   void trackPath(Core::TrackPathID id, const char *path);
   const RenderStage &mainRenderStage() const;
+
+  Geometry &getGeometry(const char *name) override;
 
 public:
   Scene *createScene();

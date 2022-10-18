@@ -38,6 +38,16 @@ void ModelConfig::configureVertexInput(VulkanPipelineConfig &config) {
   }
 }
 
+Geometry::Vertices ModelConfig::getVertices() {
+  return {(glm::vec3 *)(mAttributes[0].data.data), 
+    mAttributes[0].data.size / sizeof(glm::vec3)};
+}
+
+Geometry::Indices ModelConfig::getIndices() {
+  return {(uint32_t *)(mIndices.data),
+    mIndices.size / sizeof(uint32_t)};
+}
+
 void Model::init(const ModelConfig &def, VulkanContext &context) {
   mVertexCount = def.mVertexCount;
 

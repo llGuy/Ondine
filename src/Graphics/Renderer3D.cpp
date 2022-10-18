@@ -99,6 +99,10 @@ void Renderer3D::init() {
     ModelConfig cubeModelConfig = mModelManager.loadModelConfig( "res/model/Cube.fbx", mGraphicsContext);
     auto cubeModelHandle = mModelManager.createModel( cubeModelConfig, mGraphicsContext);
 
+    // For physics
+    mModelManager.registerModel(cubeModelHandle, "Cube");
+    mModelManager.cacheModelConfig(cubeModelHandle, cubeModelConfig);
+
     ModelConfig taurusModelConfig = mModelManager.loadModelConfig( "res/model/Taurus.fbx", mGraphicsContext);
     auto taurusModelHandle = mModelManager.createModel( taurusModelConfig, mGraphicsContext);
     
@@ -287,6 +291,10 @@ void Renderer3D::registerShader(
       mGraphicsContext.device(),
       mGraphicsContext.descriptorLayouts(),
       pipelineConfig);
+}
+
+Geometry &Renderer3D::getGeometry(const char *name) {
+  return mModelManager.getCachedModelConfig(mModelManager.getModelHandle(name));
 }
 
 }
