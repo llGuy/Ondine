@@ -38,12 +38,12 @@ void ModelConfig::configureVertexInput(VulkanPipelineConfig &config) {
   }
 }
 
-Geometry::Vertices ModelConfig::getVertices() {
+Geometry::Vertices ModelConfig::getVertices() const {
   return {(glm::vec3 *)(mAttributes[0].data.data), 
     mAttributes[0].data.size / sizeof(glm::vec3)};
 }
 
-Geometry::Indices ModelConfig::getIndices() {
+Geometry::Indices ModelConfig::getIndices() const {
   return {(uint32_t *)(mIndices.data),
     mIndices.size / sizeof(uint32_t)};
 }

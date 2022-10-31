@@ -47,7 +47,9 @@ public:
   void trackPath(Core::TrackPathID id, const char *path);
   const RenderStage &mainRenderStage() const;
 
-  Geometry &getGeometry(const char *name) override;
+  const Geometry &getGeometry(const char *name) const override;
+  const Geometry &getGeometry(GeometryID id) const override;
+  const GeometryID getGeometryID(const char *name) const override;
 
 public:
   Scene *createScene();

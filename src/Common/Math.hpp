@@ -83,4 +83,10 @@ inline AABB operator*(const glm::mat4 &transform, const AABB &box) {
   return res;
 }
 
+inline bool isSameDirection(const glm::vec3 &a, const glm::vec3 &b) {
+  return glm::dot(a, b) > 0.0f;
+}
+
+static constexpr uint32_t kMaxUint32 = 0xFFFFFFFF;
+
 }

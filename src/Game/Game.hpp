@@ -13,7 +13,7 @@ namespace Ondine::Game {
 class Game : public DelegateTickable, public DelegateTrackInput {
 public:
   // Initialize ALL non-rendering game state
-  void init();
+  void init(const DelegateGeometryManager &geometryManager);
 
   // Initialize game rendering state
   void initGameRendering(Graphics::Renderer3D &);
@@ -26,7 +26,7 @@ public:
     const Core::Tick &tick,
     const Core::InputTracker &inputTracker) override;
 
-  struct Viewer{
+  struct Viewer {
     glm::vec3 wPosition;
     glm::vec3 wViewDirection;
     glm::vec3 wUp;
@@ -55,8 +55,12 @@ private:
   EntityHandle mCubeA;
   EntityHandle mCubeB;
 
+  float mRotation;
+
   // Current rendering scene
   Graphics::Scene *mScene;
+  // This is gonna be tied to the renderer for now
+  const DelegateGeometryManager *mGeometryManager;
 };
 
 }

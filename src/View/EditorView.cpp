@@ -1,4 +1,5 @@
 #include <imgui.h>
+#include "DebugEvent.hpp"
 #include "Utils.hpp"
 #include "IOEvent.hpp"
 #include "Settings.hpp"
@@ -360,7 +361,8 @@ void EditorView::initImguiContext(
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
   ImGuiStyle* style = &ImGui::GetStyle();
   ImVec4* colors = style->Colors;
-  // ImGui::StyleColorsDark();
+  ImGui::StyleColorsDark();
+
   colors[ImGuiCol_Text] = ImVec4(1.000f, 1.000f, 1.000f, 1.000f);
   colors[ImGuiCol_TextDisabled] = ImVec4(0.500f, 0.500f, 0.500f, 1.000f);
   colors[ImGuiCol_WindowBg] = ImVec4(0.180f, 0.180f, 0.180f, 1.000f);
@@ -526,6 +528,11 @@ void EditorView::renderGeneralWindow() {
 
     if (ImGui::IsWindowFocused()) {
       mFocusedWindow = EditorWindow::General;
+    }
+
+    if (ImGui::Button("Breakpoint")) {
+      auto *breakpointEvent = lnEmplaceAlloc<Core::EventBreakpoint>();
+      mOnEvent(breakpointEvent);
     }
   }
 

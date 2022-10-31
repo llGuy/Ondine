@@ -36,6 +36,7 @@ public:
   void cacheModelConfig(ModelHandle handle, const ModelConfig &config);
 
   ModelConfig &getCachedModelConfig(ModelHandle handle);
+  const ModelConfig &getCachedModelConfig(ModelHandle handle) const;
 
 private:
   static constexpr uint32_t MAX_MODEL_COUNT = 100;

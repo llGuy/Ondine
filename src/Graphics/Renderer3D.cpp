@@ -117,6 +117,7 @@ void Renderer3D::init() {
     /* Create render method */
     registerRenderMethod("SphereModelRenderMethod", "BaseModelShader", sphereModelHandle);
     registerRenderMethod("CubeModelRenderMethod", "BaseModelShader", cubeModelHandle);
+    registerRenderMethod("GlowingCubeModelRenderMethod", "BaseModelShader", cubeModelHandle);
     registerRenderMethod("TaurusModelRenderMethod", "BaseModelShader", taurusModelHandle);
     registerRenderMethod("GlowingTaurusRenderMethod", "GlowingModelShader", taurusModelHandle);
   }
@@ -293,8 +294,15 @@ void Renderer3D::registerShader(
       pipelineConfig);
 }
 
-Geometry &Renderer3D::getGeometry(const char *name) {
+const Geometry &Renderer3D::getGeometry(const char *name) const {
   return mModelManager.getCachedModelConfig(mModelManager.getModelHandle(name));
+}
+
+const Geometry &Renderer3D::getGeometry(GeometryID id) const {
+  return mModelManager.getCachedModelConfig(id);
+}
+const GeometryID Renderer3D::getGeometryID(const char *name) const {
+  return mModelManager.getModelHandle(name);
 }
 
 }

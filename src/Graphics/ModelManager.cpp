@@ -29,18 +29,24 @@ ModelConfig ModelManager::loadModelConfig(
 
   ModelConfig modelConfig(mesh->mNumVertices);
 
+  glm::vec3 *vertsBuffer = flAllocv<glm::vec3>(mesh->mNumVertices);
+  memcpy(vertsBuffer, mesh->mVertices, sizeof(glm::vec3) * mesh->mNumVertices);
+
   modelConfig.pushAttribute(
     {sizeof(glm::vec3), VK_FORMAT_R32G32B32_SFLOAT},
-    {(uint8_t *)mesh->mVertices, sizeof(glm::vec3) * mesh->mNumVertices});
+    {(uint8_t *)vertsBuffer, sizeof(glm::vec3) * mesh->mNumVertices});
+
+  glm::vec3 *normalBuffer = flAllocv<glm::vec3>(mesh->mNumVertices);
+  memcpy(normalBuffer, mesh->mNormals, sizeof(glm::vec3) * mesh->mNumVertices);
 
   if (mesh->mNormals) {
     modelConfig.pushAttribute(
       {sizeof(glm::vec3), VK_FORMAT_R32G32B32_SFLOAT},
-      {(uint8_t *)mesh->mNormals, sizeof(glm::vec3) * mesh->mNumVertices});
+      {(uint8_t *)normalBuffer, sizeof(glm::vec3) * mesh->mNumVertices});
   }
 
   uint32_t indexCount = mesh->mNumFaces * 3;
-  uint32_t *indices = lnAllocv<uint32_t>(indexCount);
+  uint32_t *indices = flAllocv<uint32_t>(indexCount);
 
   for (int i = 0; i < mesh->mNumFaces; ++i) {
     indices[i * 3] = mesh->mFaces[i].mIndices[0];
@@ -102,7 +108,7 @@ void ModelManager::registerModel(ModelHandle handle, const char *name) {
 }
 
 ModelHandle ModelManager::getModelHandle(const char *name) const {
-  return mModelNameMap.getHandle(std::string(name));
+  return mModelNameMap.getEntry(std::string(name));
 }
 
 Model &ModelManager::getModel(const char *name) {
@@ -128,6 +134,10 @@ void ModelManager::cacheModelConfig(ModelHandle handle, const ModelConfig &confi
 }
 
 ModelConfig &ModelManager::getCachedModelConfig(ModelHandle handle) {
+  return mCachedConfigs.data[handle];
+}
+
+const ModelConfig &ModelManager::getCachedModelConfig(ModelHandle handle) const {
   return mCachedConfigs.data[handle];
 }
 

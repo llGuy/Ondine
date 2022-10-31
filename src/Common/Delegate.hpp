@@ -30,9 +30,13 @@ public:
   virtual void tick(const Core::Tick &tick) = 0;
 };
 
+using GeometryID = uint32_t;
+
 class DelegateGeometryManager {
 public:
-  virtual Graphics::Geometry &getGeometry(const char *name) = 0;
+  virtual const Graphics::Geometry &getGeometry(const char *name) const = 0;
+  virtual const Graphics::Geometry &getGeometry(GeometryID id) const = 0;
+  virtual const GeometryID getGeometryID(const char *name) const = 0;
 };
 
 }

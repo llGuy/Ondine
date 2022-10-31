@@ -15,18 +15,18 @@ struct Attribute {
 class Geometry {
 public:
   struct Vertices {
-    glm::vec3 *vertices;
+    const glm::vec3 *vertices;
     size_t count;
   };
 
-  virtual Vertices getVertices() = 0;
+  virtual Vertices getVertices() const = 0;
 
   struct Indices {
-    uint32_t *indices;
+    const uint32_t *indices;
     size_t count;
   };
 
-  virtual Indices getIndices() = 0;
+  virtual Indices getIndices() const = 0;
 };
 
 class ModelConfig : public Geometry {
@@ -40,8 +40,8 @@ public:
 
   void configureVertexInput(VulkanPipelineConfig &config);
 
-  Vertices getVertices() override;
-  Indices getIndices() override;
+  Vertices getVertices() const override;
+  Indices getIndices() const override;
 
 protected:
   static constexpr uint32_t MAX_ATTRIBUTE_COUNT = 10;

@@ -2,6 +2,7 @@
 
 #include "Tick.hpp"
 #include "Entity.hpp"
+#include "Delegate.hpp"
 #include "Renderer3D.hpp"
 #include "SceneObject.hpp"
 #include "DynamicArray.hpp"
@@ -14,7 +15,7 @@ public:
   Simulation();
 
   virtual void init();
-  virtual void tick(const Core::Tick &tick);
+  virtual void tick(const Core::Tick &tick, const DelegateGeometryManager &geometryManager);
 
 public:
   struct CreatedEntity {

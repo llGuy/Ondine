@@ -1,9 +1,10 @@
 #include "Game.hpp"
-#include "glm/gtc/quaternion.hpp"
 
 namespace Ondine::Game {
 
-void Game::init() {
+void Game::init(const DelegateGeometryManager &geometryManager) {
+  mGeometryManager = &geometryManager;
+
   mSimulation.init();
   mEntityCamera.init();
   mEntityController.init();
@@ -26,25 +27,30 @@ void Game::init() {
     floor.rotation = glm::angleAxis(glm::radians(0.0f), kGlobalUp);
     mFloor = floorID;
 
+    auto cubeID = mGeometryManager->getGeometryID("Cube");
+
+    mRotation = 0.0f;
+
     auto [a, aID] = mSimulation.createEntity();
     a.position = { 30.0f, 160.0f, 0.0f };
     a.scale    = glm::vec3(10.0f);
-    a.rotation = glm::angleAxis(glm::radians(0.0f), kGlobalUp);
+    a.rotation = glm::angleAxis(glm::radians(mRotation), glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f)));
     a.velocity = glm::vec3(-10.0f, 0.0f, 0.0f);
-    // in the future, this will have to be linked to the entity's mesh
     a.aabb = AABB::unitCube();
+    a.geometryID = cubeID;
     mCubeA = aID;
 
     auto [b, bID] = mSimulation.createEntity();
     b.position = { -30.0f, 160.0f, 0.0f };
     b.scale    = glm::vec3(10.0f);
-    b.rotation = glm::angleAxis(glm::radians(0.0f), kGlobalUp);
+    b.rotation = glm::angleAxis(glm::radians(-20.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 1.0f)));
     b.aabb = AABB::unitCube();
+    b.geometryID = cubeID;
     mCubeB = bID;
   }
 
   mSimulation.registerBehavior<PhysicsBehavior>(20);
-  mSimulation.attachBehavior<PhysicsBehavior>(mFloor);
+  // mSimulation.attachBehavior<PhysicsBehavior>(mFloor);
   mSimulation.attachBehavior<PhysicsBehavior>(mCubeA);
   mSimulation.attachBehavior<PhysicsBehavior>(mCubeB);
 }
@@ -76,9 +82,17 @@ void Game::initGameRendering(Graphics::Renderer3D &gfx) {
 }
 
 void Game::tick(const Core::Tick &tick) {
-  mSimulation.tick(tick);
+  mSimulation.tick(tick, *mGeometryManager);
 
   mEntityCamera.tick(tick, mSimulation);
+
+  Entity &a = mSimulation.getEntity(mCubeA);
+  a.rotation = glm::angleAxis(glm::radians(mRotation), glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f)));
+
+  Entity &b = mSimulation.getEntity(mCubeB);
+  b.rotation = glm::angleAxis(glm::radians(-20.0f - mRotation * 0.5f), glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f)));
+
+  mRotation += tick.dt * 90.0f;
 
   updateEntitySceneObject(mSimulation.getEntity(mCubeA));
   updateEntitySceneObject(mSimulation.getEntity(mCubeB));

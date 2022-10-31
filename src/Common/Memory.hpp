@@ -16,7 +16,7 @@ inline constexpr uint32_t megabytes(uint32_t mb) {
     return(kilobytes(mb * 1024));
 }
 
-/* Short hands for gLinearAllocator->* */
+/* Short hands for gLinearAllocator->* - TODO: Each thread should have a linear allocator */
 void *lnAlloc(size_t size);
 void lnClear();
 

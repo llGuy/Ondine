@@ -47,7 +47,7 @@ void Application::run() {
   mRenderer3D.init();
   mViewStack.init();
 
-  mGame.init();
+  mGame.init(mRenderer3D);
   mGame.initGameRendering(mRenderer3D);
 
   mViewStack.createView("GameView", new View::GameView(mGame, mRenderer3D, evProc));

@@ -3,6 +3,8 @@
 #include <tuple>
 #include "Math.hpp"
 #include "Scene.hpp"
+#include "Delegate.hpp"
+#include "Physics.hpp"
 
 namespace Ondine::Game {
 
@@ -22,6 +24,11 @@ struct Entity {
   glm::vec3 velocity;
   glm::quat rotation;
 
+  GeometryID geometryID;
+  // This gets updated every frame
+  Physics::CollisionMesh collisionMesh;
+
+  // Broadphase bounding box
   AABB aabb;
 
   // Rendering

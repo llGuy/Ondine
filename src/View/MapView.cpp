@@ -38,9 +38,9 @@ MapView::MapView(
   // mMapScene->terrain.generateVoxelNormals();
 
   { // Set up scene objects
-    auto handle1 = mMapScene->createSceneObject("TaurusModelRenderMethod"); 
+    auto handle1 = mMapScene->createSceneObject("GlowingTaurusRenderMethod"); 
     auto &sceneObj1 = mMapScene->getSceneObject(handle1);
-    sceneObj1.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f) * 2.0f;
+    sceneObj1.pushConstant.color = glm::vec3(1.8f, 0.9f, 1.2f) * 10.0f;
     sceneObj1.position = glm::vec3(1051.0f, 130.0f, 605.0f);
     sceneObj1.scale = glm::vec3(10.0f);
     sceneObj1.rotation = glm::angleAxis(

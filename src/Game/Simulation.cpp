@@ -1,3 +1,5 @@
+#include "Physics.hpp"
+#include "Delegate.hpp"
 #include "Log.hpp"
 #include "Entity.hpp"
 #include "Memory.hpp"
@@ -14,7 +16,7 @@ void Simulation::init() {
   registerBehavior<PhysicsBehavior>(100);
 }
 
-void Simulation::tick(const Core::Tick &tick) {
+void Simulation::tick(const Core::Tick &tick, const DelegateGeometryManager &geometryManager) {
   // For now just manually iterate over all physics behavior entities
   auto &physicsEntities = getEntitiesWith<PhysicsBehavior>();
 
@@ -27,26 +29,27 @@ void Simulation::tick(const Core::Tick &tick) {
     entity.position += entity.velocity * tick.dt;
   }
 
-  uint32_t candidateCount = 0;
-  Candidate *candidates = lnAllocv<Candidate>(0);
-  freezeLinearAllocator();
+  const uint32_t kMaxCandidateCount = 100;
 
-  // Really stupid
+  uint32_t candidateCount = 0;
+  Candidate *candidates = lnAllocv<Candidate>(kMaxCandidateCount);
+
+  // Really stupid - will implement broadphase later with BVH
   for (auto a = physicsEntities.begin(); a != physicsEntities.end(); ++a) {
+    // Create collision mesh for this entity
+    auto &currentEntity = getEntity(*a);
+    const Graphics::Geometry &geometry = geometryManager.getGeometry(currentEntity.geometryID);
+    currentEntity.collisionMesh = Physics::createCollisionMesh(geometry, currentEntity);
+
     for (auto b = a; b != physicsEntities.end(); ++b) {
       if (*a != *b) {
         Candidate candidate = { *a, *b };
 
-        unfreezeLinearAllocator();
-        *lnAllocv<Candidate>(1) = candidate;
-        freezeLinearAllocator();
-
+        candidates[candidateCount] = candidate;
         ++candidateCount;
       }
     }
   }
-
-  unfreezeLinearAllocator();
 
   // Process candidates
   for (int i = 0; i < candidateCount; ++i) {
@@ -54,17 +57,15 @@ void Simulation::tick(const Core::Tick &tick) {
     auto &entity0 = getEntity(hdl0);
     auto &entity1 = getEntity(hdl1);
 
-    AABB aabb0 = constructTransform(entity0) * entity0.aabb;
-    AABB aabb1 = constructTransform(entity1) * entity1.aabb;
+    Physics::Collision collision = Physics::detectCollision(entity0.collisionMesh, entity1.collisionMesh);
 
-    if (aabb0.overlaps(aabb1)) {
+    if (collision.bDetectedCollision) {
       // Assume all entities have the same mass
-      glm::vec3 aToB = entity1.position - entity0.position;
+      glm::vec3 aToB = collision.normal;
       entity1.velocity = aToB;
       entity0.velocity = -aToB;
 
-      // We have a collision!
-      LOG_INFO("There was a collision!\n");
+      LOG_INFO("There was a collision!");
     }
   }
 }
