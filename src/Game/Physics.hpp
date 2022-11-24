@@ -70,12 +70,35 @@ struct GJK {
 
 GJK gjkOverlap(const CollisionMesh &a, const CollisionMesh &b);
 
+struct ContactPoint {
+  glm::vec3 barycentricCoords;
+
+  // Provide information for both meshes
+  uint32_t faceIndicesA[3];
+  uint32_t faceIndicesB[3];
+
+  glm::vec3 faceVerticesA[3];
+  glm::vec3 faceVerticesB[3];
+
+  // Calculated using the barycentric coordinates provided in this struct
+  glm::vec3 pointA;
+  glm::vec3 pointB;
+};
+
+
 struct Collision {
   bool bDetectedCollision;
-  glm::vec3 normal;
   float depth;
+  glm::vec3 normal;
+  ContactPoint contactPoint;
 };
 
 Collision detectCollision(const CollisionMesh &a, const CollisionMesh &b);
+
+struct Manifold {
+  // Some data
+};
+
+void doSAT(Manifold &manifold, const CollisionMesh &a, const CollisionMesh &b);
 
 }

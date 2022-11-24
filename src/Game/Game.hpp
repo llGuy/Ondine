@@ -55,6 +55,9 @@ private:
   EntityHandle mCubeA;
   EntityHandle mCubeB;
 
+  // Visualizer for contact point
+  EntityHandle mContactPoint;
+
   float mRotation;
 
   // Current rendering scene

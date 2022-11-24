@@ -14,9 +14,14 @@ Simulation::Simulation()
 
 void Simulation::init() {
   registerBehavior<PhysicsBehavior>(100);
+
+  mCubeHalfEdge.constructCube();
 }
 
-void Simulation::tick(const Core::Tick &tick, const DelegateGeometryManager &geometryManager) {
+void Simulation::tick(
+  const Core::Tick &tick,
+  const DelegateGeometryManager &geometryManager,
+  DEBUG *debug) {
   // For now just manually iterate over all physics behavior entities
   auto &physicsEntities = getEntitiesWith<PhysicsBehavior>();
 
@@ -60,12 +65,24 @@ void Simulation::tick(const Core::Tick &tick, const DelegateGeometryManager &geo
     Physics::Collision collision = Physics::detectCollision(entity0.collisionMesh, entity1.collisionMesh);
 
     if (collision.bDetectedCollision) {
+      LOG_INFO("GJK Detected collision!\n");
+
       // Assume all entities have the same mass
       glm::vec3 aToB = collision.normal;
-      entity1.velocity = aToB;
-      entity0.velocity = -aToB;
+      // entity1.velocity = aToB;
+      // entity0.velocity = -aToB;
 
-      LOG_INFO("There was a collision!");
+      // If there was a detection, we gotta change the posiiton of the contact point entity
+      debug->bUpdateContactPoints = true;
+
+      // Change the position of the contact point entity
+      Entity &contactPoint = getEntity(debug->contactPoint);
+      contactPoint.position = collision.contactPoint.pointB;
+
+      // LOG_INFOV("Moved contact point entity to where the contact happened!: %s\n", glm::to_string(contactPoint.position).c_str());
+    }
+    else {
+      LOG_INFO("GJK didn't detect collision\n");
     }
   }
 }

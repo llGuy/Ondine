@@ -3,6 +3,9 @@
 #include "Entity.hpp"
 #include "Memory.hpp"
 #include "Physics.hpp"
+#include "Geometry.hpp"
+
+// http://media.steampowered.com/apps/valve/2015/DirkGregorius_Contacts.pdf
 
 namespace Ondine::Game::Physics {
 
@@ -122,7 +125,7 @@ CollisionMesh createCollisionMesh(const Graphics::Geometry &geometry, const Enti
   return mesh;
 }
 
-glm::vec3 findFurthestPoint(const CollisionMesh &m, const glm::vec3 &d) {
+uint32_t findFurthestPointIdx(const CollisionMesh &m, const glm::vec3 &d) {
   float maxDistance = glm::dot(d, m.vertices[0]);
   uint32_t vertexIdx = 0;
 
@@ -136,7 +139,11 @@ glm::vec3 findFurthestPoint(const CollisionMesh &m, const glm::vec3 &d) {
 
   assert(vertexIdx != kMaxUint32);
 
-  return m.vertices[vertexIdx];
+  return vertexIdx;
+}
+
+glm::vec3 findFurthestPoint(const CollisionMesh &m, const glm::vec3 &d) {
+  return m.vertices[findFurthestPointIdx(m, d)];
 }
 
 glm::vec3 findSupportPointMinkowski(
@@ -144,6 +151,14 @@ glm::vec3 findSupportPointMinkowski(
   const CollisionMesh &b,
   const glm::vec3 &d) {
   return findFurthestPoint(a, d) - findFurthestPoint(b, -d);
+}
+
+// Assume that minkowskiPoint is normalized
+uint32_t findOriginalVertex(
+  const glm::vec3 &minkowskiPoint,
+  const CollisionMesh &a) {
+
+  return findFurthestPointIdx(a, minkowskiPoint);
 }
 
 GJK gjkOverlap(const CollisionMesh &a, const CollisionMesh &b) {
@@ -182,6 +197,7 @@ struct EPAFaceNormal {
 struct EPAFaceNormals {
   std::vector<EPAFaceNormal> normals;
   uint32_t minNormalIdx;
+  glm::ivec3 minVertexIndices;
 };
 
 EPAFaceNormals getFaceNormals(
@@ -189,6 +205,7 @@ EPAFaceNormals getFaceNormals(
   const std::vector<uint32_t> &faces) {
   EPAFaceNormals ret = {};
   uint32_t minIdx = 0;
+  glm::ivec3 minVertexIndices;
   float minDist = FLT_MAX;
 
   for (uint32_t i = 0; i < faces.size(); i += 3) {
@@ -210,10 +227,12 @@ EPAFaceNormals getFaceNormals(
     if (dist < minDist) {
       minIdx = i / 3;
       minDist = dist;
+      minVertexIndices = glm::ivec3(faces[i], faces[i+1], faces[i+2]);
     }
   }
 
   ret.minNormalIdx = minIdx;
+  ret.minVertexIndices = minVertexIndices;
 
   return ret;
 }
@@ -233,6 +252,20 @@ static void addUniqueEdge(
   }
 }
 
+// Project origin to plane containing triangle ABC
+static glm::vec3 getContactPointBarycentricCoords(
+  const glm::vec3 &a,
+  const glm::vec3 &b,
+  const glm::vec3 &c) {
+  glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
+  // Distance from origin to triangle
+  float dist = glm::dot(normal, a);
+  glm::vec3 p = normal * dist;
+
+  // This is the point in Minkowski space where the collision happened
+  return getBarycentricCoordinates(p, a, b, c);
+}
+
 static Collision epaGetCollision(
   const Simplex &simplex,
   const CollisionMesh &a,
@@ -245,7 +278,7 @@ static Collision epaGetCollision(
     1, 3, 2
   };
 
-  auto [normals, minNormalIdx] = getFaceNormals(polytope, faces);
+  auto [normals, minNormalIdx, minVertexIndices] = getFaceNormals(polytope, faces);
 
   glm::vec3 minNormal;
   float minDist = FLT_MAX;
@@ -288,7 +321,7 @@ static Collision epaGetCollision(
 
       polytope.push_back(support);
 
-      auto [newNormals, newMinFace] = getFaceNormals(polytope, newFaces);
+      auto [newNormals, newMinFace, newMinVertexIndices] = getFaceNormals(polytope, newFaces);
 
       float oldMinDist = FLT_MAX;
       for (uint32_t i = 0; i < normals.size(); ++i) {
@@ -299,6 +332,7 @@ static Collision epaGetCollision(
 
       if (newNormals[newMinFace].dist < oldMinDist) {
         minNormalIdx = newMinFace + normals.size();
+        minVertexIndices = newMinVertexIndices + glm::ivec3(faces.size());
       }
 
       faces.insert(faces.end(), newFaces.begin(), newFaces.end());
@@ -306,11 +340,32 @@ static Collision epaGetCollision(
     }
   }
 
+  ContactPoint contactPoint = {};
+  contactPoint.barycentricCoords = getContactPointBarycentricCoords(
+    polytope[faces[minVertexIndices[0]]],
+    polytope[faces[minVertexIndices[1]]],
+    polytope[faces[minVertexIndices[2]]]);
+
+  for (int i = 0; i < 3; ++i) {
+    contactPoint.faceIndicesA[i] = findOriginalVertex(polytope[faces[minVertexIndices[i]]], a);
+    contactPoint.faceVerticesA[i] = a.vertices[contactPoint.faceIndicesA[i]];
+    contactPoint.faceIndicesB[i] = findOriginalVertex(polytope[faces[minVertexIndices[i]]], b);
+    contactPoint.faceVerticesB[i] = b.vertices[contactPoint.faceIndicesB[i]];
+
+    contactPoint.pointA = contactPoint.faceVerticesA[i] * contactPoint.barycentricCoords[i];
+    contactPoint.pointB = contactPoint.faceVerticesB[i] * contactPoint.barycentricCoords[i];
+  }
+
+  LOG_INFOV("Contact Point A: %s\n", glm::to_string(contactPoint.pointA).c_str());
+  LOG_INFOV("Contact Point B: %s\n", glm::to_string(contactPoint.pointB).c_str());
+
   Collision collision;
   collision.normal = minNormal;
+  LOG_INFOV("Contact normal: %s\n", glm::to_string(minNormal).c_str());
   collision.depth = minDist + 0.001f;
+  collision.contactPoint = contactPoint;
   collision.bDetectedCollision = true;
-
+  //
   return collision;
 }
 
@@ -318,11 +373,38 @@ Collision detectCollision(const CollisionMesh &a, const CollisionMesh &b) {
   GJK gjk = gjkOverlap(a, b);
 
   if (gjk.bOverlapped) {
-    return epaGetCollision(gjk.simplex, a, b);
+    // return epaGetCollision(gjk.simplex, a, b);
+    return Collision {
+      .bDetectedCollision = true,
+    };
   }
   else {
     return {};
   }
 }
+
+#if 0
+void doSAT(Manifold &manifold, const CollisionMesh &a, const CollisionMesh &b) {
+  FaceQuery faceQueryA = queryFaceDirections(a, b);
+  if (faceQueryA.separation > 0.0f) {
+    // There is a separating axis - no collision
+    return;
+  }
+
+  FaceQuery faceQueryB = queryFaceDirections(b, a);
+  if (faceQueryB.separation > 0.0f) {
+    // There is a separating axis - no collision
+    return;
+  }
+
+  EdgeQuery edgeQuery = queryEdgeDirections(a, b);
+  if (edgeQuery.separation > 0.0f) {
+    // There is a separating axis - no collision
+    return;
+  }
+
+  // No separating axis, the meshes overlap
+}
+#endif
 
 }

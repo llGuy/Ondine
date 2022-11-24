@@ -6,6 +6,7 @@
 #include "RendererDebug.hpp"
 #include "AssimpImporter.hpp"
 #include "VulkanRenderPass.hpp"
+#include "vulkan/vulkan_core.h"
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
@@ -39,7 +40,8 @@ void Renderer3D::init() {
   mGraphicsContext.device().graphicsQueue().idle();
 
   { // Set planet properties
-    mPlanetProperties.solarIrradiance = glm::vec3(1.474f, 1.8504f, 1.91198f);
+    // mPlanetProperties.solarIrradiance = glm::vec3(1.474f, 1.8504f, 1.91198f);
+    mPlanetProperties.solarIrradiance = glm::vec3(0.0f);
 
     // Angular radius of the Sun (radians)
     mPlanetProperties.solarAngularRadius = 0.004695f;
@@ -110,6 +112,10 @@ void Renderer3D::init() {
       "BaseModelShader", "res/spv/BaseModel.vert.spv", "res/spv/BaseModel.frag.spv",
       sphereModelConfig);
 
+    registerWireframeShader(
+      "WireframeBaseModelShader", "res/spv/BaseModel.vert.spv", "res/spv/BaseModel.frag.spv",
+      sphereModelConfig);
+
     registerShader(
       "GlowingModelShader", "res/spv/BaseModel.vert.spv", "res/spv/Glowing.frag.spv",
       sphereModelConfig);
@@ -117,6 +123,7 @@ void Renderer3D::init() {
     /* Create render method */
     registerRenderMethod("SphereModelRenderMethod", "BaseModelShader", sphereModelHandle);
     registerRenderMethod("CubeModelRenderMethod", "BaseModelShader", cubeModelHandle);
+    registerRenderMethod("WireframeCubeModelRenderMethod", "WireframeBaseModelShader", cubeModelHandle);
     registerRenderMethod("GlowingCubeModelRenderMethod", "BaseModelShader", cubeModelHandle);
     registerRenderMethod("TaurusModelRenderMethod", "BaseModelShader", taurusModelHandle);
     registerRenderMethod("GlowingTaurusRenderMethod", "GlowingModelShader", taurusModelHandle);
@@ -285,6 +292,32 @@ void Renderer3D::registerShader(
 
   config.configureVertexInput(pipelineConfig);
   pipelineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+
+  auto &shader = mShaderEntries.emplace(name);
+
+  shader.init(
+      mGraphicsContext.device(),
+      mGraphicsContext.descriptorLayouts(),
+      pipelineConfig);
+}
+
+void Renderer3D::registerWireframeShader(
+  const char *name, const char *vsh, const char *fsh,
+  ModelConfig &config) {
+  VulkanPipelineConfig pipelineConfig(
+      {mGBuffer.renderPass(), 0},
+      VulkanShader{mGraphicsContext.device(), vsh},
+      VulkanShader{mGraphicsContext.device(), fsh});
+
+  pipelineConfig.enableDepthTesting();
+  pipelineConfig.configurePipelineLayout(
+      sizeof(SceneObject::pushConstant),
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      VulkanPipelineDescriptorLayout{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
+
+  config.configureVertexInput(pipelineConfig);
+  pipelineConfig.setTopology(VK_PRIMITIVE_TOPOLOGY_LINE_STRIP);
 
   auto &shader = mShaderEntries.emplace(name);
 

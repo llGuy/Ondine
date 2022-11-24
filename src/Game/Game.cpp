@@ -32,8 +32,8 @@ void Game::init(const DelegateGeometryManager &geometryManager) {
     mRotation = 0.0f;
 
     auto [a, aID] = mSimulation.createEntity();
-    a.position = { 30.0f, 160.0f, 0.0f };
-    a.scale    = glm::vec3(10.0f);
+    a.position = { 5.0f, 160.0f, 0.0f };
+    a.scale    = glm::vec3(20.0f);
     a.rotation = glm::angleAxis(glm::radians(mRotation), glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f)));
     a.velocity = glm::vec3(-10.0f, 0.0f, 0.0f);
     a.aabb = AABB::unitCube();
@@ -41,12 +41,18 @@ void Game::init(const DelegateGeometryManager &geometryManager) {
     mCubeA = aID;
 
     auto [b, bID] = mSimulation.createEntity();
-    b.position = { -30.0f, 160.0f, 0.0f };
-    b.scale    = glm::vec3(10.0f);
+    b.position = { -5.0f, 160.0f, 0.0f };
+    b.scale    = glm::vec3(20.0f);
     b.rotation = glm::angleAxis(glm::radians(-20.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 1.0f)));
     b.aabb = AABB::unitCube();
     b.geometryID = cubeID;
     mCubeB = bID;
+
+    auto [contactPoint, contactPointID] = mSimulation.createEntity();
+    contactPoint.position = {30.0f, 160.0f, 0.0f};
+    contactPoint.scale = glm::vec3(3.0f);
+    contactPoint.rotation = glm::angleAxis(0.0f, kGlobalUp);
+    mContactPoint = contactPointID;
   }
 
   mSimulation.registerBehavior<PhysicsBehavior>(20);
@@ -77,12 +83,17 @@ void Game::initGameRendering(Graphics::Renderer3D &gfx) {
   mScene->lighting.rotationAngle = glm::radians(86.5f);
 
   // makeEntityRenderable(mSimulation.getEntity(mFloor), "CubeModelRenderMethod");
-  makeEntityRenderable(mSimulation.getEntity(mCubeA), "CubeModelRenderMethod");
-  makeEntityRenderable(mSimulation.getEntity(mCubeB), "CubeModelRenderMethod");
+  makeEntityRenderable(mSimulation.getEntity(mCubeA), "WireframeCubeModelRenderMethod");
+  makeEntityRenderable(mSimulation.getEntity(mCubeB), "WireframeCubeModelRenderMethod");
+  makeEntityRenderable(mSimulation.getEntity(mContactPoint), "SphereModelRenderMethod");
 }
 
 void Game::tick(const Core::Tick &tick) {
-  mSimulation.tick(tick, *mGeometryManager);
+  DEBUG debug = {
+    .contactPoint = mContactPoint,
+    .bUpdateContactPoints = false
+  };
+  mSimulation.tick(tick, *mGeometryManager, &debug);
 
   mEntityCamera.tick(tick, mSimulation);
 
@@ -96,6 +107,7 @@ void Game::tick(const Core::Tick &tick) {
 
   updateEntitySceneObject(mSimulation.getEntity(mCubeA));
   updateEntitySceneObject(mSimulation.getEntity(mCubeB));
+  updateEntitySceneObject(mSimulation.getEntity(mContactPoint));
 
   // Update camera information
   Entity &controlledEntity = mSimulation.getEntity(mEntityCamera.getAttachedEntity());

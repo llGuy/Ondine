@@ -64,6 +64,9 @@ private:
   void registerShader(
     const char *name, const char *vsh, const char *fsh,
     ModelConfig &config);
+  void registerWireframeShader(
+    const char *name, const char *vsh, const char *fsh,
+    ModelConfig &config);
   void registerRenderMethod(
     const char *name, const char *shader, ModelHandle handle);
 

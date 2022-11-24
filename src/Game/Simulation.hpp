@@ -2,6 +2,7 @@
 
 #include "Tick.hpp"
 #include "Entity.hpp"
+#include "Geometry.hpp"
 #include "Delegate.hpp"
 #include "Renderer3D.hpp"
 #include "SceneObject.hpp"
@@ -9,13 +10,22 @@
 
 namespace Ondine::Game {
 
+struct DEBUG {
+  // For rendering
+  bool bUpdateContactPoints;
+  EntityHandle contactPoint;
+};
+
 // Structure handles all entities
 class Simulation {
 public:
   Simulation();
 
   virtual void init();
-  virtual void tick(const Core::Tick &tick, const DelegateGeometryManager &geometryManager);
+  virtual void tick(
+    const Core::Tick &tick,
+    const DelegateGeometryManager &geometryManager,
+    DEBUG *debug);
 
 public:
   struct CreatedEntity {
@@ -52,6 +62,8 @@ private:
 
   DynamicArray<Entity> mEntities;
   std::vector<DynamicArray<EntityHandle>> mBehaviors;
+
+  Physics::HalfEdgeMesh mCubeHalfEdge;
 };
 
 }
