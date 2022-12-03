@@ -40,8 +40,7 @@ void Renderer3D::init() {
   mGraphicsContext.device().graphicsQueue().idle();
 
   { // Set planet properties
-    // mPlanetProperties.solarIrradiance = glm::vec3(1.474f, 1.8504f, 1.91198f);
-    mPlanetProperties.solarIrradiance = glm::vec3(0.0f);
+    mPlanetProperties.solarIrradiance = glm::vec3(1.474f, 1.8504f, 1.91198f);
 
     // Angular radius of the Sun (radians)
     mPlanetProperties.solarAngularRadius = 0.004695f;

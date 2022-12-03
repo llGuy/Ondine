@@ -2,6 +2,7 @@
 
 #include "Math.hpp"
 #include "Model.hpp"
+#include "Geometry.hpp"
 
 namespace Ondine::Game {
 
@@ -48,10 +49,15 @@ bool nextSimplex(Simplex &simplex, const glm::vec3 &d);
 struct CollisionMesh {
   uint32_t vertexCount;
   glm::vec3 *vertices;
+
+  const HalfEdgeMesh *halfEdgeMesh;
+
+  glm::vec3 center;
 };
 
 // Allocates in the linear allocator so cheap allocation
-CollisionMesh createCollisionMesh(const Graphics::Geometry &geometry, const Entity &entity);
+CollisionMesh createCollisionMesh(const Graphics::Geometry &geometry, const Entity &entity, const HalfEdgeMesh &halfEdgeMesh);
+CollisionMesh createCubeCollisionMesh(const Entity &entity, const HalfEdgeMesh &halfEdgeMesh);
 
 // Finds the furthest point from the origin
 glm::vec3 findFurthestVertex(const CollisionMesh &geometry, const glm::vec3 &d);
@@ -84,7 +90,6 @@ struct ContactPoint {
   glm::vec3 pointA;
   glm::vec3 pointB;
 };
-
 
 struct Collision {
   bool bDetectedCollision;

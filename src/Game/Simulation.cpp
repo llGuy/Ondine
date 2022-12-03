@@ -44,7 +44,8 @@ void Simulation::tick(
     // Create collision mesh for this entity
     auto &currentEntity = getEntity(*a);
     const Graphics::Geometry &geometry = geometryManager.getGeometry(currentEntity.geometryID);
-    currentEntity.collisionMesh = Physics::createCollisionMesh(geometry, currentEntity);
+    // For now hardcode cube
+    currentEntity.collisionMesh = Physics::createCubeCollisionMesh(currentEntity, mCubeHalfEdge);
 
     for (auto b = a; b != physicsEntities.end(); ++b) {
       if (*a != *b) {
@@ -62,6 +63,10 @@ void Simulation::tick(
     auto &entity0 = getEntity(hdl0);
     auto &entity1 = getEntity(hdl1);
 
+    Physics::Manifold manifold;
+    Physics::doSAT(manifold, entity0.collisionMesh, entity1.collisionMesh);
+
+#if 0
     Physics::Collision collision = Physics::detectCollision(entity0.collisionMesh, entity1.collisionMesh);
 
     if (collision.bDetectedCollision) {
@@ -84,6 +89,7 @@ void Simulation::tick(
     else {
       LOG_INFO("GJK didn't detect collision\n");
     }
+#endif
   }
 }
 

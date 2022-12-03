@@ -1,6 +1,7 @@
 #pragma once
 
 #include <utility>
+#include <signal.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -76,5 +77,15 @@ template <typename T>
 struct NullReference {
   static inline T nullRef;
 };
+
+inline void setBreakpoint() {
+#if _WIN32
+  __debugbreak();
+#elif defined(__APPLE__)
+  raise(SIGTRAP);
+#else
+  asm("int $3");
+#endif
+}
 
 }

@@ -28,6 +28,8 @@ struct Entity {
   // This gets updated every frame
   Physics::CollisionMesh collisionMesh;
 
+  glm::vec3 color;
+
   // Broadphase bounding box
   AABB aabb;
 

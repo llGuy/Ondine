@@ -1,3 +1,4 @@
+#include <cfloat>
 #include "Math.hpp"
 #include "Utils.hpp"
 #include "Entity.hpp"
@@ -107,7 +108,9 @@ bool nextSimplex(Simplex &simplex, glm::vec3 &d) {
   return false;
 }
 
-CollisionMesh createCollisionMesh(const Graphics::Geometry &geometry, const Entity &entity) {
+CollisionMesh createCollisionMesh(
+  const Graphics::Geometry &geometry, const Entity &entity,
+  const HalfEdgeMesh &halfEdgeMesh) {
   auto [vertices, vertexCount] = geometry.getVertices();
 
   CollisionMesh mesh = {};
@@ -121,6 +124,47 @@ CollisionMesh createCollisionMesh(const Graphics::Geometry &geometry, const Enti
 
     mesh.vertices[i] = transformedVert;
   }
+
+  mesh.halfEdgeMesh = &halfEdgeMesh;
+  mesh.center = entity.position;
+
+  return mesh;
+}
+
+CollisionMesh createCubeCollisionMesh(
+  const Entity &entity, const HalfEdgeMesh &halfEdgeMesh) {
+  float r = 1.0f;
+
+  glm::vec3 vertices[] = {
+    { -r, -r, -r },
+    { +r, -r, -r },
+
+    { +r, +r, -r },
+    { -r, +r, -r },
+
+    { -r, -r, +r },
+    { +r, -r, +r },
+
+    { +r, +r, +r },
+    { -r, +r, +r },
+  };
+
+  uint32_t vertexCount = 8;
+
+  CollisionMesh mesh = {};
+  mesh.vertexCount = vertexCount;
+  mesh.vertices = lnAllocv<glm::vec3>(mesh.vertexCount);
+
+  for (int i = 0; i < mesh.vertexCount; ++i) {
+    glm::vec3 transformedVert = entity.position + 
+      glm::mat3_cast(entity.rotation) * 
+      (vertices[i] * entity.scale);
+
+    mesh.vertices[i] = transformedVert;
+  }
+
+  mesh.halfEdgeMesh = &halfEdgeMesh;
+  mesh.center = entity.position;
 
   return mesh;
 }
@@ -383,28 +427,127 @@ Collision detectCollision(const CollisionMesh &a, const CollisionMesh &b) {
   }
 }
 
-#if 0
+struct FaceQuery {
+  float separation;
+  int faceIdx;
+};
+
+FaceQuery queryFaceDirections(const CollisionMesh &a, const CollisionMesh &b) {
+  const auto *hMesh = a.halfEdgeMesh;
+
+  int polygonMaxDistance = 0;
+  float maxDistance = -FLT_MAX;
+
+  for (int i = 0; i < hMesh->getPolygonCount(); ++i) {
+    Plane plane = hMesh->getPlane(hMesh->polygon(i), a.vertices);
+    glm::vec3 supportB = findFurthestPoint(b, -plane.normal);
+    float distance = getDistanceFromPlane(plane, supportB);
+
+    if (distance > maxDistance) {
+      maxDistance = distance;
+      polygonMaxDistance = i;
+    }
+  }
+
+  return { maxDistance, polygonMaxDistance };
+}
+
+struct EdgeQuery {
+  float separation;
+  int edgeIdxA;
+  int edgeIdxB;
+};
+
+EdgeQuery queryEdgeDirections(const CollisionMesh &a, const CollisionMesh &b) {
+  const auto *hMeshA = a.halfEdgeMesh;
+  const auto *hMeshB = b.halfEdgeMesh;
+
+  int edgeAMaxDistance = 0;
+  int edgeBMaxDistance = 0;
+  float maxDistance = -FLT_MAX;
+
+  for (int edgeIdxA = 0; edgeIdxA < hMeshA->getEdgeCount(); ++edgeIdxA) {
+    auto edgeDataA = hMeshA->edge(edgeIdxA);
+
+    for (int edgeIdxB = 0; edgeIdxB < hMeshB->getEdgeCount(); ++edgeIdxB) {
+      auto edgeDataB = hMeshB->edge(edgeIdxB);
+
+      glm::vec3 edgeDirectionA = hMeshA->getEdgeDirection(edgeDataA, a.vertices);
+      glm::vec3 edgeDirectionB = hMeshB->getEdgeDirection(edgeDataB, b.vertices);
+
+      glm::vec3 axis = glm::normalize(glm::cross(edgeDirectionA, edgeDirectionB));
+
+      glm::vec3 edgeOriginA = hMeshA->getEdgeOrigin(edgeDataA, a.vertices);
+      glm::vec3 edgeOriginB = hMeshB->getEdgeOrigin(edgeDataB, b.vertices);
+      if (glm::dot(axis, edgeOriginA - a.center) < 0.0f) {
+        axis = -axis;
+      }
+
+      Plane planeA = Plane{ hMeshA->getEdgeOrigin(edgeDataA, a.vertices), axis };
+      glm::vec3 vertexB = findFurthestPoint(b, -planeA.normal);
+
+      float distance = getDistanceFromPlane(planeA, vertexB);
+
+      if (distance > maxDistance) {
+        maxDistance = distance;
+        edgeAMaxDistance = edgeIdxA;
+        edgeBMaxDistance = edgeIdxB;
+
+        if (1) {
+          glm::vec3 edgeDirectionA = hMeshA->getEdgeDirection(edgeDataA, a.vertices);
+          glm::vec3 edgeDirectionB = hMeshB->getEdgeDirection(edgeDataB, b.vertices);
+
+          glm::vec3 axis = glm::normalize(glm::cross(edgeDirectionA, edgeDirectionB));
+
+          glm::vec3 edgeOriginA = hMeshA->getEdgeOrigin(edgeDataA, a.vertices);
+          glm::vec3 edgeOriginB = hMeshB->getEdgeOrigin(edgeDataB, b.vertices);
+          glm::vec3 delta = edgeOriginA - a.center;
+          if (glm::dot(axis, delta) < 0.0f) {
+            axis = -axis;
+          }
+
+          Plane planeA = Plane{ hMeshA->getEdgeOrigin(edgeDataA, a.vertices), axis };
+          glm::vec3 vertexB = findFurthestPoint(b, -planeA.normal);
+
+          float distance = getDistanceFromPlane(planeA, vertexB);
+          // printf("%f\n", distance);
+        }
+      }
+    }
+  }
+
+  return { maxDistance, edgeAMaxDistance, edgeBMaxDistance };
+}
+
 void doSAT(Manifold &manifold, const CollisionMesh &a, const CollisionMesh &b) {
+#if 0
   FaceQuery faceQueryA = queryFaceDirections(a, b);
   if (faceQueryA.separation > 0.0f) {
     // There is a separating axis - no collision
+    LOG_INFOV("FACE SEPARATED! %f\n", faceQueryA.separation);
     return;
   }
 
   FaceQuery faceQueryB = queryFaceDirections(b, a);
   if (faceQueryB.separation > 0.0f) {
     // There is a separating axis - no collision
+    LOG_INFOV("FACE SEPARATED! %f\n", faceQueryB.separation);
     return;
   }
+#endif
 
   EdgeQuery edgeQuery = queryEdgeDirections(a, b);
   if (edgeQuery.separation > 0.0f) {
     // There is a separating axis - no collision
+    LOG_INFOV("EDGE SEPARATED! %f\n", edgeQuery.separation);
     return;
   }
 
+  LOG_INFOV("COLLISION! %f\n", edgeQuery.separation);
+
+  return;
+
   // No separating axis, the meshes overlap
 }
-#endif
 
 }

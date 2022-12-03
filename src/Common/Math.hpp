@@ -106,4 +106,17 @@ inline glm::vec3 getBarycentricCoordinates(
 
 static constexpr uint32_t kMaxUint32 = 0xFFFFFFFF;
 
+struct Plane {
+  glm::vec3 point;
+  // Has to be normalized
+  glm::vec3 normal;
+};
+
+// Returns the signed distance
+inline float getDistanceFromPlane(const Plane &plane, const glm::vec3 &a) {
+  float adotn = glm::dot(a, plane.normal);
+  float pdotn = glm::dot(plane.point, plane.normal);
+  return (adotn - pdotn);
+}
+
 }

@@ -57,6 +57,12 @@ EditorView::EditorView(
   initViewportRendering(graphicsContext);
   initImguiContext(contextInfo, graphicsContext);
 
+  gConsole->System().Log(csys::ItemType::INFO) << "Welcome to the imgui-console example!" << csys::endl;
+  gConsole->System().Log(csys::ItemType::INFO) << "The following variables have been exposed to the console:" << csys::endl << csys::endl;
+  gConsole->System().Log(csys::ItemType::INFO) << "\tbackground_color - set: [int int int int]" << csys::endl;
+  gConsole->System().Log(csys::ItemType::INFO) << csys::endl << "Try running the following command:" << csys::endl;
+  gConsole->System().Log(csys::ItemType::INFO) << "\tset background_color [255 0 0 255]" << csys::endl << csys::endl;
+
 #if 0
   auto *cursorChange = lnEmplaceAlloc<Core::EventCursorDisplayChange>();
   cursorChange->show = true;
@@ -365,20 +371,20 @@ void EditorView::initImguiContext(
 
   colors[ImGuiCol_Text] = ImVec4(1.000f, 1.000f, 1.000f, 1.000f);
   colors[ImGuiCol_TextDisabled] = ImVec4(0.500f, 0.500f, 0.500f, 1.000f);
-  colors[ImGuiCol_WindowBg] = ImVec4(0.180f, 0.180f, 0.180f, 1.000f);
-  // colors[ImGuiCol_WindowBg] = ImVec4(0.14f, 0.14f, 0.14f, 0.0f);
-  colors[ImGuiCol_ChildBg] = ImVec4(0.280f, 0.280f, 0.280f, 0.000f);
-  // colors[ImGuiCol_ChildBg] = ImVec4(0.2f, 0.2f, 0.2f, 0.0f);
+  // colors[ImGuiCol_WindowBg] = ImVec4(0.180f, 0.180f, 0.180f, 1.000f);
+  colors[ImGuiCol_WindowBg] = ImVec4(0.07f, 0.07f, 0.07f, 1.0f);
+  // colors[ImGuiCol_ChildBg] = ImVec4(0.280f, 0.280f, 0.280f, 0.000f);
+  colors[ImGuiCol_ChildBg] = ImVec4(0.2f, 0.2f, 0.2f, 0.0f);
   colors[ImGuiCol_PopupBg] = ImVec4(0.313f, 0.313f, 0.313f, 1.000f);
   colors[ImGuiCol_Border] = ImVec4(0.266f, 0.266f, 0.266f, 1.000f);
   colors[ImGuiCol_BorderShadow] = ImVec4(0.000f, 0.000f, 0.000f, 0.000f);
   colors[ImGuiCol_FrameBg] = ImVec4(0.160f, 0.160f, 0.160f, 1.000f);
   colors[ImGuiCol_FrameBgHovered] = ImVec4(0.200f, 0.200f, 0.200f, 1.000f);
   colors[ImGuiCol_FrameBgActive] = ImVec4(0.280f, 0.280f, 0.280f, 1.000f);
-  colors[ImGuiCol_TitleBg] = ImVec4(0.148f, 0.148f, 0.148f, 1.000f);
+  colors[ImGuiCol_TitleBg] = ImVec4(0.108f, 0.108f, 0.108f, 1.000f);
   colors[ImGuiCol_TitleBgActive] = ImVec4(0.048f, 0.048f, 0.048f, 1.000f);
   colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.148f, 0.148f, 0.148f, 1.000f);
-  colors[ImGuiCol_MenuBarBg] = ImVec4(0.195f, 0.195f, 0.195f, 1.000f);
+  colors[ImGuiCol_MenuBarBg] = ImVec4(0.095f, 0.095f, 0.095f, 1.000f);
   colors[ImGuiCol_ScrollbarBg] = ImVec4(0.160f, 0.160f, 0.160f, 1.000f);
   colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.277f, 0.277f, 0.277f, 1.000f);
   colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.300f, 0.300f, 0.300f, 1.000f);
@@ -429,6 +435,10 @@ void EditorView::initImguiContext(
   style->WindowRounding = 2.0f;
 
   graphicsContext.initImgui(contextInfo, mRenderPass);
+
+  if (!gConsole) {
+    gConsole = new ImGuiConsole(mWindowNames[(int)EditorWindow::Console]);
+  }
 }
 
 void EditorView::processInputEvent(Core::Event *ev, ViewProcessEventsParams &params) {
@@ -699,16 +709,7 @@ void EditorView::renderToolsWindow() {
 }
 
 void EditorView::renderConsoleWindow() {
-  if (ImGui::Begin(
-    windowName(EditorWindow::Console), nullptr,
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration)) {
-
-    if (ImGui::IsWindowFocused()) {
-      mFocusedWindow = EditorWindow::Console;
-    }
-  }
-
-  ImGui::End();
+  gConsole->Draw();
 }
 
 void EditorView::renderGraphicsWindow() {

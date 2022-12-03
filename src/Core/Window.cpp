@@ -62,6 +62,17 @@ WindowContextInfo Window::init(OnEventProc callback) {
     }
   } break;
 
+  case WindowMode::Maximized: {
+    const GLFWvidmode *vidmode = glfwGetVideoMode(primaryMonitor);
+    if (!mResolution.width) {
+      mResolution.width = vidmode->width;
+      mResolution.height = vidmode->height;
+    }
+
+    glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+
+  } break;
+
   }
 
   if (!(mHandle = glfwCreateWindow(

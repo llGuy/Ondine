@@ -12,6 +12,7 @@ namespace Ondine::Core {
 
 enum class WindowMode {
   Fullscreen,
+  Maximized,
   Windowed
 };
 

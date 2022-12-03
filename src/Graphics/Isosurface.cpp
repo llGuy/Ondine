@@ -1,6 +1,6 @@
-#include "Math.hpp"
 #include "Terrain.hpp"
 #include "Isosurface.hpp"
+#include "Math.hpp"
 
 namespace Ondine::Graphics {
 

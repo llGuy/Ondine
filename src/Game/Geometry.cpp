@@ -47,6 +47,8 @@ void HalfEdgeMesh::construct(
     HalfEdge *prev = &dummy;
     uint32_t firstPolygonHalfEdgeIdx = tmp.halfEdgeCount;
 
+    LOG_INFOV("%p vs %p\n", polygon, polygons.end());
+
     // Create a half edge for each of these
     for (int vIdx = 0; vIdx < vtxCount; ++vIdx) {
       VertexID a = polygon[vIdx];
@@ -57,6 +59,7 @@ void HalfEdgeMesh::construct(
       if (vtxPairToHalfEdge.find(edge) != vtxPairToHalfEdge.end()) {
         // This should never happen - most likely something wrong with polygon construction
         // and the orientation of the faces' vertex indices
+        setBreakpoint();
         LOG_ERROR("Error in polygon construction - check orientation of vertex indices\n");
         PANIC_AND_EXIT();
       }
@@ -93,9 +96,13 @@ void HalfEdgeMesh::construct(
   }
 
   // Copy all these to permanent storage in member pointers
+#if 0
   mVertices = flAllocv<glm::vec3>(vertexCount);
   memcpy(mVertices, vertices, sizeof(glm::vec3) * vertexCount);
   mVertexCount = vertexCount;
+
+  mTransformedVertices = flAllocv<glm::vec3>(vertexCount);
+#endif
 
   mPolygons = flAllocv<PolygonData>(tmp.polygonCount);
   memcpy(mPolygons, tmp.polygons, sizeof(PolygonData) * tmp.polygonCount);
@@ -133,14 +140,84 @@ void HalfEdgeMesh::constructCube() {
 
   // anti clockwise
   polygons.addPolygon(4, 0, 1, 2, 3); // -Z
-  polygons.addPolygon(4, 4, 5, 6, 7); // +Z
+  polygons.addPolygon(4, 7, 6, 5, 4); // +Z
   polygons.addPolygon(4, 3, 2, 6, 7); // +Y
 
-  polygons.addPolygon(4, 0, 1, 5, 4); // -Y
+  polygons.addPolygon(4, 4, 5, 1, 0); // -Y
   polygons.addPolygon(4, 5, 6, 2, 1); // +X
   polygons.addPolygon(4, 0, 3, 7, 4); // -X
 
   construct(polygons, 8, vertices);
 }
+
+void HalfEdgeMesh::transform(const glm::mat4 &transform) {
+#if 0
+  for (int i = 0; i < mVertexCount; ++i) {
+    mTransformedVertices[i] = glm::vec3(transform * glm::vec4(mVertices[i], 1.0f));
+  }
+#endif
+}
+
+glm::vec3 HalfEdgeMesh::getFaceNormal(const PolygonData &polygon, glm::vec3 *vertices) const {
+  glm::vec3 points[3] = {};
+
+  auto *hEdge = &halfEdge(polygon);
+  for (int i = 0; i < 3; ++i) {
+    points[i] = vertices[hEdge->rootVertex];
+    hEdge = &halfEdge(hEdge->next);
+  }
+
+  glm::vec3 a = points[1] - points[0];
+  glm::vec3 b = points[2] - points[0];
+
+  return glm::normalize(glm::cross(b, a));
+}
+
+glm::vec3 HalfEdgeMesh::getEdgeDirection(const EdgeData &edge, glm::vec3 *vertices) const {
+  auto *hEdge = &halfEdge(edge);
+
+  glm::vec3 a = vertices[hEdge->rootVertex];
+  glm::vec3 b = vertices[halfEdge(hEdge->next).rootVertex];
+
+  return glm::normalize(b - a);
+}
+
+glm::vec3 HalfEdgeMesh::getEdgeOrigin(const EdgeData &edge, glm::vec3 *vertices) const {
+  return vertices[halfEdge(edge).rootVertex];
+}
+
+Plane HalfEdgeMesh::getPlane(const PolygonData &polygon, glm::vec3 *vertices) const {
+  Plane plane = {};
+  plane.normal = getFaceNormal(polygon, vertices);
+  plane.point = vertices[halfEdge(polygon).rootVertex];
+  return plane;
+}
+
+uint32_t HalfEdgeMesh::getPolygonCount() const {
+  return mPolygonCount;
+}
+
+const PolygonData &HalfEdgeMesh::polygon(uint32_t id) const {
+  return mPolygons[id];
+}
+
+uint32_t HalfEdgeMesh::getEdgeCount() const {
+  return mEdgeCount;
+}
+
+const EdgeData &HalfEdgeMesh::edge(uint32_t id) const {
+  return mEdges[id];
+}
+
+// Can pass a polygon data into here - polygon data is just half edge ID
+const HalfEdge &HalfEdgeMesh::halfEdge(HalfEdgeID id) const {
+  return mHalfEdges[id];
+}
+
+#if 0
+const glm::vec3 &HalfEdgeMesh::vertex(VertexID id) const {
+  return mVertices[id];
+}
+#endif
 
 }

@@ -46,12 +46,28 @@ struct FastPolygonList {
   }
 
   uint32_t *end() {
-    return buffer + size;
+    return buffer + size + 1;
   }
 
   uint32_t getPolygonVertexCount(uint32_t *iterator) {
     return iterator[-1];
   }
+};
+
+// These are all just indices into the list of half edges.
+// If we need more information, we'll create a bitfield for each or something
+using PolygonData = uint32_t;
+using EdgeData = uint32_t;
+using HalfEdgeID = uint32_t;
+
+// This is an index into the mVertices array
+using VertexID = uint32_t;
+
+struct HalfEdge {
+  // Don't really need anything else for our purposes
+  HalfEdgeID next;
+  HalfEdgeID twin;
+  VertexID rootVertex;
 };
 
 // For our purposes, we just need to be able to easily iterate
@@ -65,29 +81,24 @@ public:
 
   void constructCube();
 
-  // void construct(/* some other format */);
+  void transform(const glm::mat4 &transform);
+
+  glm::vec3 getFaceNormal(const PolygonData &polygon, glm::vec3 *vertices) const;
+  Plane getPlane(const PolygonData &polygon, glm::vec3 *vertices) const;
+
+  glm::vec3 getEdgeDirection(const EdgeData &edge, glm::vec3 *vertices) const;
+  glm::vec3 getEdgeOrigin(const EdgeData &edge, glm::vec3 *vertices) const;
+
+public:
+  uint32_t getPolygonCount() const;
+  const PolygonData &polygon(uint32_t id) const;
+
+  uint32_t getEdgeCount() const;
+  const EdgeData &edge(uint32_t id) const;
+
+  const HalfEdge &halfEdge(HalfEdgeID id) const;
 
 private:
-  // This is an index into the mVertices array
-  using VertexID = uint32_t;
-
-  // These are all just indices into the list of half edges.
-  // If we need more information, we'll create a bitfield for each or something
-  using PolygonData = uint32_t;
-  using EdgeData = uint32_t;
-  using HalfEdgeID = uint32_t;
-
-  struct HalfEdge {
-    // Don't really need anything else for our purposes
-    HalfEdgeID next;
-    HalfEdgeID twin;
-    VertexID rootVertex;
-  };
-
-  // Where actual vertices get stored
-  glm::vec3   *mVertices;
-  uint32_t mVertexCount;
-
   // For now, just array of indices which point into the half edge array
   PolygonData *mPolygons;
   uint32_t mPolygonCount;

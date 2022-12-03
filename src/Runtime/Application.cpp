@@ -15,7 +15,7 @@
 namespace Ondine::Runtime {
 
 Application::Application(int argc, char **argv)
-  : mWindow(Core::WindowMode::Windowed, "Ondine"),
+  : mWindow(Core::WindowMode::Maximized, "Ondine"),
     mRenderer3D(mGraphicsContext),
     mViewStack(mRenderer3D, mGraphicsContext) {
   /* Initialise graphics context, etc... */
@@ -213,13 +213,7 @@ void Application::processDebugEvent(Core::Event *ev) {
   case Core::EventType::Breakpoint: {
     auto *event = (Core::EventBreakpoint *)ev;
     
-#if _WIN32
-    __debugbreak();
-#elif defined(__APPLE__)
-    raise(SIGTRAP);
-#else
-    asm("int $3");
-#endif
+    setBreakpoint();
 
     event->isHandled = true;
   } break;

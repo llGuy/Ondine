@@ -13,7 +13,8 @@ void Game::init(const DelegateGeometryManager &geometryManager) {
 
   { // Create main entity
     auto [primary, id] = mSimulation.createEntity();
-    primary.position = glm::vec3(100.0f, 140.0f, -180.0f);
+    // primary.position = glm::vec3(-1.44f, 151.0f, -15.0f);
+    primary.position = glm::vec3(-16.9f, 160.0f, 11.0f);
     primary.viewDirection = glm::normalize(glm::vec3(-0.3f, 0.1f, 1.0f));
 
     mEntityCamera.getAttachedEntity() = id;
@@ -32,20 +33,25 @@ void Game::init(const DelegateGeometryManager &geometryManager) {
     mRotation = 0.0f;
 
     auto [a, aID] = mSimulation.createEntity();
-    a.position = { 5.0f, 160.0f, 0.0f };
-    a.scale    = glm::vec3(20.0f);
-    a.rotation = glm::angleAxis(glm::radians(mRotation), glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f)));
-    a.velocity = glm::vec3(-10.0f, 0.0f, 0.0f);
+    // a.position = { -1.8f, 160.0f, 0.0f };
+    a.position = { -1.8f, 160.0f, 0.0f };
+    a.scale    = glm::vec3(10.0f);
+    a.rotation = glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    // a.rotation = glm::angleAxis(glm::radians, glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f)));
+    // a.velocity = glm::vec3(-3.0f, 0.0f, 0.0f);
     a.aabb = AABB::unitCube();
     a.geometryID = cubeID;
+    a.color = glm::vec3(1.0f, 0.2f, 0.2f);
     mCubeA = aID;
 
     auto [b, bID] = mSimulation.createEntity();
-    b.position = { -5.0f, 160.0f, 0.0f };
-    b.scale    = glm::vec3(20.0f);
-    b.rotation = glm::angleAxis(glm::radians(-20.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 1.0f)));
+    b.position = { -30.0f, 160.0f, 0.0f };
+    b.scale    = glm::vec3(10.0f);
+    // b.rotation = glm::angleAxis(glm::radians(-20.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 1.0f)));
+    b.rotation = glm::angleAxis(glm::radians(45.0f), glm::vec3(-0.0f, -0.0f, 1.0f));
     b.aabb = AABB::unitCube();
     b.geometryID = cubeID;
+    b.color = glm::vec3(0.2f, 1.0f, 0.2f);
     mCubeB = bID;
 
     auto [contactPoint, contactPointID] = mSimulation.createEntity();
@@ -83,9 +89,9 @@ void Game::initGameRendering(Graphics::Renderer3D &gfx) {
   mScene->lighting.rotationAngle = glm::radians(86.5f);
 
   // makeEntityRenderable(mSimulation.getEntity(mFloor), "CubeModelRenderMethod");
-  makeEntityRenderable(mSimulation.getEntity(mCubeA), "WireframeCubeModelRenderMethod");
-  makeEntityRenderable(mSimulation.getEntity(mCubeB), "WireframeCubeModelRenderMethod");
-  makeEntityRenderable(mSimulation.getEntity(mContactPoint), "SphereModelRenderMethod");
+  makeEntityRenderable(mSimulation.getEntity(mCubeA), "CubeModelRenderMethod");
+  makeEntityRenderable(mSimulation.getEntity(mCubeB), "CubeModelRenderMethod");
+  // makeEntityRenderable(mSimulation.getEntity(mContactPoint), "SphereModelRenderMethod");
 }
 
 void Game::tick(const Core::Tick &tick) {
@@ -97,17 +103,19 @@ void Game::tick(const Core::Tick &tick) {
 
   mEntityCamera.tick(tick, mSimulation);
 
+#if 0
   Entity &a = mSimulation.getEntity(mCubeA);
   a.rotation = glm::angleAxis(glm::radians(mRotation), glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f)));
 
   Entity &b = mSimulation.getEntity(mCubeB);
   b.rotation = glm::angleAxis(glm::radians(-20.0f - mRotation * 0.5f), glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f)));
+#endif
 
   mRotation += tick.dt * 90.0f;
 
   updateEntitySceneObject(mSimulation.getEntity(mCubeA));
   updateEntitySceneObject(mSimulation.getEntity(mCubeB));
-  updateEntitySceneObject(mSimulation.getEntity(mContactPoint));
+  // updateEntitySceneObject(mSimulation.getEntity(mContactPoint));
 
   // Update camera information
   Entity &controlledEntity = mSimulation.getEntity(mEntityCamera.getAttachedEntity());
@@ -131,7 +139,7 @@ void Game::trackInput(
 void Game::makeEntityRenderable(Entity &entity, const char *renderMethod) {
   auto handle = mScene->createSceneObject(renderMethod);
   auto &obj = mScene->getSceneObject(handle);
-  obj.pushConstant.color = glm::vec3(0.8f, 0.9f, 0.85f);
+  obj.pushConstant.color = entity.color;
   obj.position = entity.position;
   obj.scale = entity.scale;
   obj.rotation = entity.rotation;

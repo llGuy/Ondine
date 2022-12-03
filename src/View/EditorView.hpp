@@ -1,6 +1,7 @@
 #pragma once
 
 #include <imgui.h>
+#include <imgui_console/imgui_console.h>
 #include "View.hpp"
 #include "VulkanRenderPass.hpp"
 #include "VulkanFramebuffer.hpp"
@@ -97,3 +98,6 @@ private:
 };
 
 }
+
+extern ImGuiConsole *gConsole;
+extern char gCommandBuffer[4096];
