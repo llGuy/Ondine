@@ -68,6 +68,11 @@ void HalfEdgeMesh::construct(
         uint32_t hedgeIdx = tmp.halfEdgeCount++;
         HalfEdge *newHalfEdge = &tmp.halfEdges[hedgeIdx];
         newHalfEdge->rootVertex = a;
+        newHalfEdge->polygon = polygonIndex;
+
+        if (newHalfEdge->polygon > polygons.polygonCount) {
+          setBreakpoint();
+        }
 
         // Only set this if the twin was allocated
         std::pair<VertexID, VertexID> twinEdge = {b, a};
@@ -79,6 +84,8 @@ void HalfEdgeMesh::construct(
           // Only call allocate a new "edge" if the twin was already allocated
           EdgeData *newEdge = &tmp.edges[tmp.edgeCount++];
           *newEdge = twin->second;
+
+          assert(newHalfEdge->polygon != tmp.halfEdges[newHalfEdge->twin].polygon);
         }
 
         prev->next = hedgeIdx;
@@ -115,23 +122,40 @@ void HalfEdgeMesh::construct(
   mHalfEdges = flAllocv<HalfEdge>(tmp.halfEdgeCount);
   memcpy(mHalfEdges, tmp.halfEdges, sizeof(HalfEdge) * tmp.halfEdgeCount);
   mHalfEdgeCount = tmp.halfEdgeCount;
+
+  // validate
+  for (int i = 0; i < mHalfEdgeCount; ++i) {
+    auto &hEdge = halfEdge(i);
+
+    assert(hEdge.polygon != halfEdge(hEdge.twin).polygon);
+
+    glm::vec3 normal1 = getFaceNormal(hEdge.polygon, vertices);
+    glm::vec3 normal2 = getFaceNormal(halfEdge(hEdge.twin).polygon, vertices);
+
+    float d = glm::dot(normal1, normal2);
+
+    if (glm::abs(d) > 0.00001f) {
+      printf("%f\n", d);
+      assert(0);
+    }
+  }
 }
 
 void HalfEdgeMesh::constructCube() {
   float r = 1.0f;
 
   glm::vec3 vertices[] = {
-    { -r, -r, -r },
-    { +r, -r, -r },
+    { -r, -r, -r }, // 0
+    { +r, -r, -r }, // 1
 
-    { +r, +r, -r },
-    { -r, +r, -r },
+    { +r, +r, -r }, // 2
+    { -r, +r, -r }, // 3
 
-    { -r, -r, +r },
-    { +r, -r, +r },
+    { -r, -r, +r }, // 4
+    { +r, -r, +r }, // 5
 
-    { +r, +r, +r },
-    { -r, +r, +r },
+    { +r, +r, +r }, // 6
+    { -r, +r, +r }, // 7
   };
 
   FastPolygonList polygons;
@@ -148,6 +172,8 @@ void HalfEdgeMesh::constructCube() {
   polygons.addPolygon(4, 0, 3, 7, 4); // -X
 
   construct(polygons, 8, vertices);
+
+  polygons.free();
 }
 
 void HalfEdgeMesh::transform(const glm::mat4 &transform) {
@@ -161,7 +187,7 @@ void HalfEdgeMesh::transform(const glm::mat4 &transform) {
 glm::vec3 HalfEdgeMesh::getFaceNormal(const PolygonData &polygon, glm::vec3 *vertices) const {
   glm::vec3 points[3] = {};
 
-  auto *hEdge = &halfEdge(polygon);
+  auto *hEdge = &halfEdge(mPolygons[polygon]);
   for (int i = 0; i < 3; ++i) {
     points[i] = vertices[hEdge->rootVertex];
     hEdge = &halfEdge(hEdge->next);
@@ -182,15 +208,33 @@ glm::vec3 HalfEdgeMesh::getEdgeDirection(const EdgeData &edge, glm::vec3 *vertic
   return glm::normalize(b - a);
 }
 
+glm::vec3 HalfEdgeMesh::getEdgeDirection(const HalfEdge &edge, glm::vec3 *vertices) const {
+  glm::vec3 a = vertices[edge.rootVertex];
+  glm::vec3 b = vertices[halfEdge(edge.next).rootVertex];
+
+  return glm::normalize(b - a);
+}
+
 glm::vec3 HalfEdgeMesh::getEdgeOrigin(const EdgeData &edge, glm::vec3 *vertices) const {
   return vertices[halfEdge(edge).rootVertex];
+}
+
+glm::vec3 HalfEdgeMesh::getEdgeOrigin(const HalfEdge &edge, glm::vec3 *vertices) const {
+  return vertices[edge.rootVertex];
 }
 
 Plane HalfEdgeMesh::getPlane(const PolygonData &polygon, glm::vec3 *vertices) const {
   Plane plane = {};
   plane.normal = getFaceNormal(polygon, vertices);
-  plane.point = vertices[halfEdge(polygon).rootVertex];
+  plane.point = vertices[halfEdge(mPolygons[polygon]).rootVertex];
   return plane;
+}
+
+std::pair<glm::vec3, glm::vec3> HalfEdgeMesh::getEdgeNormals(const HalfEdge &hEdge, glm::vec3 *vertices) const {
+  glm::vec3 normal1 = getFaceNormal(hEdge.polygon, vertices);
+  glm::vec3 normal2 = getFaceNormal(halfEdge(hEdge.twin).polygon, vertices);
+
+  return {normal1, normal2};
 }
 
 uint32_t HalfEdgeMesh::getPolygonCount() const {

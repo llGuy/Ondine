@@ -50,6 +50,7 @@ struct CollisionMesh {
   uint32_t vertexCount;
   glm::vec3 *vertices;
 
+  // This is also going to contain FastPolygonList for information about each face
   const HalfEdgeMesh *halfEdgeMesh;
 
   glm::vec3 center;

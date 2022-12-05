@@ -33,12 +33,17 @@ void Game::init(const DelegateGeometryManager &geometryManager) {
     mRotation = 0.0f;
 
     auto [a, aID] = mSimulation.createEntity();
-    // a.position = { -1.8f, 160.0f, 0.0f };
+
+#if 0
     a.position = { -1.8f, 160.0f, 0.0f };
+#else
+    a.position = { 30.0f, 160.0f, 0.0f };
+    a.velocity = glm::vec3(-3.0f, 0.0f, 0.0f);
+#endif
+
     a.scale    = glm::vec3(10.0f);
     a.rotation = glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     // a.rotation = glm::angleAxis(glm::radians, glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f)));
-    // a.velocity = glm::vec3(-3.0f, 0.0f, 0.0f);
     a.aabb = AABB::unitCube();
     a.geometryID = cubeID;
     a.color = glm::vec3(1.0f, 0.2f, 0.2f);

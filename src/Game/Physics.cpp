@@ -110,7 +110,8 @@ bool nextSimplex(Simplex &simplex, glm::vec3 &d) {
 
 CollisionMesh createCollisionMesh(
   const Graphics::Geometry &geometry, const Entity &entity,
-  const HalfEdgeMesh &halfEdgeMesh) {
+  const HalfEdgeMesh &halfEdgeMesh,
+  const FastPolygonList &polygons) {
   auto [vertices, vertexCount] = geometry.getVertices();
 
   CollisionMesh mesh = {};
@@ -458,6 +459,7 @@ struct EdgeQuery {
   int edgeIdxB;
 };
 
+#if 0
 EdgeQuery queryEdgeDirections(const CollisionMesh &a, const CollisionMesh &b) {
   const auto *hMeshA = a.halfEdgeMesh;
   const auto *hMeshB = b.halfEdgeMesh;
@@ -518,6 +520,89 @@ EdgeQuery queryEdgeDirections(const CollisionMesh &a, const CollisionMesh &b) {
 
   return { maxDistance, edgeAMaxDistance, edgeBMaxDistance };
 }
+#endif
+
+bool isMinkowskiFace(
+  const glm::vec3 &a, const glm::vec3 &b,
+  const glm::vec3 &c, const glm::vec3 &d) {
+  glm::vec3 bxa = glm::cross(b, a);
+  glm::vec3 dxc = glm::cross(d, c);
+
+  float cba = glm::dot(c, bxa);
+  float dba = glm::dot(d, bxa);
+  float adc = glm::dot(a, dxc);
+  float bdc = glm::dot(b, dxc);
+
+  return cba * dba < 0.0f && adc * bdc < 0.0f && cba * bdc > 0.0f;
+}
+
+bool buildsMinkowskiFace(
+  const CollisionMesh &a, const CollisionMesh &b,
+  const HalfEdge &edgeA, const HalfEdge &edgeB) {
+  auto [aNormal1, aNormal2] = a.halfEdgeMesh->getEdgeNormals(edgeA, a.vertices);
+  auto [bNormal1, bNormal2] = b.halfEdgeMesh->getEdgeNormals(edgeB, b.vertices);
+
+  return isMinkowskiFace(aNormal1, aNormal2, -bNormal1, -bNormal2);
+}
+
+float edgeDistance(
+  const CollisionMesh &a, const CollisionMesh &b,
+  const HalfEdge &edgeA, const HalfEdge &edgeB) {
+  glm::vec3 dirA = a.halfEdgeMesh->getEdgeDirection(edgeA, a.vertices);
+  glm::vec3 pointA = a.halfEdgeMesh->getEdgeOrigin(edgeA, a.vertices);
+
+  glm::vec3 dirB = b.halfEdgeMesh->getEdgeDirection(edgeB, b.vertices);
+  glm::vec3 pointB = b.halfEdgeMesh->getEdgeOrigin(edgeB, b.vertices);
+
+  if (areParallel(dirA, dirB)) {
+    return -FLT_MAX;
+  }
+
+  glm::vec3 normal = glm::normalize(glm::cross(dirA, dirB));
+  
+  if (glm::dot(normal, pointA - a.center) < 0.0f) { 
+    normal = -normal;
+  }
+
+  return glm::dot(normal, pointB - pointA);
+}
+
+EdgeQuery queryEdgeDirections(const CollisionMesh &a, const CollisionMesh &b) {
+  const auto *hMeshA = a.halfEdgeMesh;
+  const auto *hMeshB = b.halfEdgeMesh;
+
+  int edgeAMaxDistance = 0;
+  int edgeBMaxDistance = 0;
+  float maxDistance = -FLT_MAX;
+
+  for (int edgeIdxA = 0; edgeIdxA < hMeshA->getEdgeCount(); ++edgeIdxA) {
+    auto edgeDataA = hMeshA->edge(edgeIdxA);
+    auto hEdgeA = hMeshA->halfEdge(edgeDataA);
+
+    for (int edgeIdxB = 0; edgeIdxB < hMeshB->getEdgeCount(); ++edgeIdxB) {
+      auto edgeDataB = hMeshB->edge(edgeIdxB);
+      auto hEdgeB = hMeshB->halfEdge(edgeDataB);
+
+      glm::vec3 edgeDirectionA = hMeshA->getEdgeDirection(edgeDataA, a.vertices);
+      glm::vec3 edgeDirectionB = hMeshB->getEdgeDirection(edgeDataB, b.vertices);
+
+      glm::vec3 axis = glm::normalize(glm::cross(edgeDirectionA, edgeDirectionB));
+
+      if (buildsMinkowskiFace(a, b, hEdgeA, hEdgeB)) {
+        float separation = edgeDistance(a, b, hEdgeA, hEdgeB);
+
+        if (separation > maxDistance) {
+          maxDistance = separation;
+          edgeAMaxDistance = edgeIdxA;
+          edgeBMaxDistance = edgeIdxB;
+        }
+      }
+    }
+  }
+
+  return { maxDistance, edgeAMaxDistance, edgeBMaxDistance };
+}
+
 
 void doSAT(Manifold &manifold, const CollisionMesh &a, const CollisionMesh &b) {
 #if 0

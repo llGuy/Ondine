@@ -119,4 +119,11 @@ inline float getDistanceFromPlane(const Plane &plane, const glm::vec3 &a) {
   return (adotn - pdotn);
 }
 
+// Need to be normalized
+inline bool areParallel(const glm::vec3 &a, const glm::vec3 &b) {
+  float d = glm::abs(glm::dot(a, b));
+  
+  return glm::abs(d - 1.0f) < 0.0001f;
+}
+
 }

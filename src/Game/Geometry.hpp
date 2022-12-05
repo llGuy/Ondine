@@ -6,12 +6,37 @@
 namespace Ondine::Game::Physics {
 
 struct FastPolygonList {
+  uint32_t maxIndices;
   uint32_t *buffer;
   uint32_t size;
   uint32_t edgeCount;
   uint32_t polygonCount;
 
-  void allocate(uint32_t maxIndices) {
+  FastPolygonList &operator=(const FastPolygonList &other) {
+    allocate(other.maxIndices);
+    this->size = other.size;
+    this->edgeCount = other.edgeCount;
+    this->polygonCount = other.polygonCount;
+
+    memcpy(buffer, other.buffer, sizeof(uint32_t) * maxIndices);
+
+    return *this;
+  }
+
+  void constructCube() {
+    allocate(5 * 6);
+
+    // anti clockwise
+    addPolygon(4, 0, 1, 2, 3); // -Z
+    addPolygon(4, 7, 6, 5, 4); // +Z
+    addPolygon(4, 3, 2, 6, 7); // +Y
+    addPolygon(4, 4, 5, 1, 0); // -Y
+    addPolygon(4, 5, 6, 2, 1); // +X
+    addPolygon(4, 0, 3, 7, 4); // -X
+  }
+
+  void allocate(uint32_t maxIdx) {
+    maxIndices = maxIdx;
     buffer = flAllocv<uint32_t>(maxIndices);
     size = 0;
   }
@@ -52,11 +77,20 @@ struct FastPolygonList {
   uint32_t getPolygonVertexCount(uint32_t *iterator) {
     return iterator[-1];
   }
+
+  uint32_t getIteratorIndex(uint32_t *iterator) {
+    return iterator - buffer;
+  }
+
+  uint32_t *getIteratorFromIteratorIndex(uint32_t index) {
+    return &buffer[index];
+  }
 };
 
 // These are all just indices into the list of half edges.
 // If we need more information, we'll create a bitfield for each or something
 using PolygonData = uint32_t;
+using PolygonID = uint32_t;
 using EdgeData = uint32_t;
 using HalfEdgeID = uint32_t;
 
@@ -68,6 +102,8 @@ struct HalfEdge {
   HalfEdgeID next;
   HalfEdgeID twin;
   VertexID rootVertex;
+  // Face (iterator in the polygon structure - for now into the fast polygon list)
+  PolygonID polygon;
 };
 
 // For our purposes, we just need to be able to easily iterate
@@ -83,11 +119,23 @@ public:
 
   void transform(const glm::mat4 &transform);
 
+  // Normalized
   glm::vec3 getFaceNormal(const PolygonData &polygon, glm::vec3 *vertices) const;
+
+  // Normalized normal
   Plane getPlane(const PolygonData &polygon, glm::vec3 *vertices) const;
 
+  // Normalized normals
+  std::pair<glm::vec3, glm::vec3> getEdgeNormals(const HalfEdge &hEdge, glm::vec3 *vertices) const;
+
+  // Normalized direction
   glm::vec3 getEdgeDirection(const EdgeData &edge, glm::vec3 *vertices) const;
+
+  // Normalized direction
+  glm::vec3 getEdgeDirection(const HalfEdge &edge, glm::vec3 *vertices) const;
+
   glm::vec3 getEdgeOrigin(const EdgeData &edge, glm::vec3 *vertices) const;
+  glm::vec3 getEdgeOrigin(const HalfEdge &edge, glm::vec3 *vertices) const;
 
 public:
   uint32_t getPolygonCount() const;
